@@ -37,7 +37,7 @@ export async function signup(formData: FormData) {
   const { email, password, name } = validatedFields.data;
 
   // Sign up the user
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -53,9 +53,14 @@ export async function signup(formData: FormData) {
     };
   }
 
-  // Create user record in database (if auto-created by trigger, this might not be needed)
-  // The Supabase trigger should handle this, but we can add it manually if needed
+  // Check if email confirmation is required
+  // If user is not immediately confirmed, redirect to confirmation page
+  if (data.user && !data.session) {
+    revalidatePath("/", "layout");
+    redirect("/auth/confirm-email");
+  }
 
+  // If user is auto-confirmed (email confirmation disabled in Supabase)
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
@@ -84,6 +89,13 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
+    // Provide better error message for unconfirmed email
+    if (error.message.includes("Email not confirmed")) {
+      return {
+        error:
+          "Please confirm your email address before signing in. Check your inbox for a confirmation link.",
+      };
+    }
     return {
       error: error.message,
     };
@@ -106,4 +118,31 @@ export async function logout() {
 
   revalidatePath("/", "layout");
   redirect("/login");
+}
+
+export async function resendConfirmation(formData: FormData) {
+  const supabase = await createClient();
+
+  const email = formData.get("email") as string;
+
+  if (!email) {
+    return {
+      error: "Email is required",
+    };
+  }
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+  });
+
+  if (error) {
+    return {
+      error: error.message,
+    };
+  }
+
+  return {
+    success: "Confirmation email sent! Check your inbox.",
+  };
 }

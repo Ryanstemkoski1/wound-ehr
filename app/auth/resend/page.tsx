@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { login } from "@/app/actions/auth";
+import { resendConfirmation } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,21 +15,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Mail } from "lucide-react";
 
-export default function LoginPage() {
+export default function ResendConfirmationPage() {
   const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError("");
+    setSuccess("");
 
-    const result = await login(formData);
+    const result = await resendConfirmation(formData);
 
     if (result?.error) {
       setError(result.error);
-      setLoading(false);
+    } else if (result?.success) {
+      setSuccess(result.success);
     }
+
+    setLoading(false);
   }
 
   return (
@@ -39,9 +45,16 @@ export default function LoginPage() {
           <div className="mb-4 flex justify-center">
             <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
           </div>
-          <CardTitle className="text-center text-2xl">Welcome back</CardTitle>
+          <div className="flex justify-center">
+            <div className="rounded-full bg-teal-50 p-3 dark:bg-teal-950">
+              <Mail className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+            </div>
+          </div>
+          <CardTitle className="text-center text-2xl">
+            Resend confirmation
+          </CardTitle>
           <CardDescription className="text-center">
-            Sign in to your Wound EHR account
+            Enter your email to receive a new confirmation link
           </CardDescription>
         </CardHeader>
         <form action={handleSubmit}>
@@ -49,6 +62,11 @@ export default function LoginPage() {
             {error && (
               <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
                 {error}
+              </div>
+            )}
+            {success && (
+              <div className="rounded-md bg-teal-50 p-3 text-sm text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+                {success}
               </div>
             )}
             <div className="space-y-2">
@@ -62,41 +80,20 @@ export default function LoginPage() {
                 autoComplete="email"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-              />
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Sending..." : "Send confirmation email"}
             </Button>
-            <div className="space-y-2 text-center text-sm">
-              <p className="text-zinc-600 dark:text-zinc-400">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href="/signup"
-                  className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
-                >
-                  Sign up
-                </Link>
-              </p>
-              <p className="text-zinc-600 dark:text-zinc-400">
-                Need to confirm your email?{" "}
-                <Link
-                  href="/auth/resend"
-                  className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
-                >
-                  Resend confirmation
-                </Link>
-              </p>
-            </div>
+            <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+              Already confirmed?{" "}
+              <Link
+                href="/login"
+                className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
+              >
+                Sign in
+              </Link>
+            </p>
           </CardFooter>
         </form>
       </Card>
