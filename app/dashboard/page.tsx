@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Users, FileText, Calendar } from "lucide-react";
+import prisma from "@/lib/prisma";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -14,29 +15,81 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // TODO: Fetch real stats from database
+  // Get stats across all user's facilities
+  const [totalPatients, activeWounds, visitsThisMonth, pendingVisits] =
+    await Promise.all([
+      prisma.patient.count({
+        where: {
+          isActive: true,
+          facility: {
+            users: {
+              some: { userId: user.id },
+            },
+          },
+        },
+      }),
+      prisma.wound.count({
+        where: {
+          status: "active",
+          patient: {
+            facility: {
+              users: {
+                some: { userId: user.id },
+              },
+            },
+          },
+        },
+      }),
+      prisma.visit.count({
+        where: {
+          patient: {
+            facility: {
+              users: {
+                some: { userId: user.id },
+              },
+            },
+          },
+          visitDate: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
+      }),
+      prisma.visit.count({
+        where: {
+          status: "incomplete",
+          patient: {
+            facility: {
+              users: {
+                some: { userId: user.id },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
   const stats = [
     {
       title: "Total Patients",
-      value: "0",
+      value: totalPatients.toString(),
       icon: Users,
       description: "Active patients",
     },
     {
       title: "Active Wounds",
-      value: "0",
+      value: activeWounds.toString(),
       icon: Activity,
       description: "Currently being tracked",
     },
     {
       title: "Visits This Month",
-      value: "0",
+      value: visitsThisMonth.toString(),
       icon: Calendar,
       description: "Completed visits",
     },
     {
       title: "Pending Visits",
-      value: "0",
+      value: pendingVisits.toString(),
       icon: FileText,
       description: "Incomplete documentation",
     },

@@ -1,9 +1,9 @@
 import { getUserFacilities } from "@/app/actions/facilities";
+import FacilityActions from "@/components/facilities/facility-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Building2, MapPin, Phone, Mail } from "lucide-react";
 import Link from "next/link";
-import FacilityActions from "@/components/facilities/facility-actions";
 
 type Facility = {
   id: string;
@@ -78,7 +78,10 @@ export default async function FacilitiesPage() {
                     </p>
                   </div>
                 </div>
-                <FacilityActions facilityId={facility.id} />
+                <FacilityActions
+                  facilityId={facility.id}
+                  facilityName={facility.name}
+                />
               </CardHeader>
               <CardContent className="space-y-2">
                 {facility.address && (

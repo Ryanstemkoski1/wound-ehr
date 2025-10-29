@@ -13,10 +13,7 @@ export default function Header({ user }: { user: User }) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center gap-4">
-        {/* TODO: Add facility selector here */}
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          {/* Facility selector will go here */}
-        </div>
+        {/* Reserved for breadcrumbs or page-specific filters */}
       </div>
 
       <div className="flex items-center gap-4">
