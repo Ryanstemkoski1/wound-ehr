@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { PatientDeleteButton } from "@/components/patients/patient-delete-button";
 import WoundCard from "@/components/wounds/wound-card";
+import VisitCard from "@/components/visits/visit-card";
 
 type Params = Promise<{ id: string }>;
 
@@ -443,10 +444,18 @@ export default async function PatientDetailPage({
           {/* Recent Visits */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Recent Visits
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Recent Visits
+                </CardTitle>
+                <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
+                  <Button size="sm" className="gap-1">
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {patient.visits.length > 0 ? (
@@ -456,31 +465,31 @@ export default async function PatientDetailPage({
                       id: string;
                       visitDate: Date;
                       visitType: string;
+                      location: string | null;
                       status: string;
+                      followUpType: string | null;
+                      followUpDate: Date | null;
                     }) => (
-                      <div
+                      <VisitCard
                         key={visit.id}
-                        className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">
-                              {new Date(visit.visitDate).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                              {visit.visitType}
-                            </p>
-                          </div>
-                          <Badge variant="outline">{visit.status}</Badge>
-                        </div>
-                      </div>
+                        visit={visit}
+                        patientId={patient.id}
+                      />
                     )
                   )}
                 </div>
               ) : (
-                <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-                  No visits recorded
-                </p>
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    No visits recorded
+                  </p>
+                  <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Plus className="h-4 w-4" />
+                      Schedule First Visit
+                    </Button>
+                  </Link>
+                </div>
               )}
             </CardContent>
           </Card>
