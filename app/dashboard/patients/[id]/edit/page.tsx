@@ -21,9 +21,9 @@ export default async function EditPatientPage({ params }: { params: Params }) {
   const patient = await prisma.patient.findFirst({
     where: {
       id,
-      isDeleted: false,
+      isActive: true,
       facility: {
-        userFacilities: {
+        users: {
           some: { userId: user.id },
         },
       },
@@ -47,5 +47,25 @@ export default async function EditPatientPage({ params }: { params: Params }) {
     })
   );
 
-  return <PatientForm patient={patient} facilities={facilities} />;
+  // Type-cast JSONB fields for the form
+  const patientData = {
+    ...patient,
+    allergies: patient.allergies as string[] | null,
+    medicalHistory: patient.medicalHistory as string[] | null,
+    insuranceInfo: patient.insuranceInfo as {
+      primary?: { provider: string; policyNumber: string; groupNumber: string };
+      secondary?: {
+        provider: string;
+        policyNumber: string;
+        groupNumber: string;
+      };
+    } | null,
+    emergencyContact: patient.emergencyContact as {
+      name: string;
+      phone: string;
+      relationship: string;
+    } | null,
+  };
+
+  return <PatientForm patient={patientData} facilities={facilities} />;
 }

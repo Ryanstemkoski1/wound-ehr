@@ -13,9 +13,11 @@ import {
   User,
   Activity,
   MapPin,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { PatientDeleteButton } from "@/components/patients/patient-delete-button";
+import WoundCard from "@/components/wounds/wound-card";
 
 type Params = Promise<{ id: string }>;
 
@@ -389,10 +391,18 @@ export default async function PatientDetailPage({
           {/* Active Wounds */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Active Wounds
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Active Wounds
+                </CardTitle>
+                <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
+                  <Button size="sm" className="gap-1">
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {patient.wounds.length > 0 ? (
@@ -400,31 +410,32 @@ export default async function PatientDetailPage({
                   {patient.wounds.map(
                     (wound: {
                       id: string;
+                      woundNumber: string;
                       location: string;
                       woundType: string;
+                      onsetDate: Date;
                       status: string;
                     }) => (
-                      <div
+                      <WoundCard
                         key={wound.id}
-                        className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium">{wound.location}</p>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                              {wound.woundType}
-                            </p>
-                          </div>
-                          <Badge variant="outline">{wound.status}</Badge>
-                        </div>
-                      </div>
+                        wound={wound}
+                        patientId={patient.id}
+                      />
                     )
                   )}
                 </div>
               ) : (
-                <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-                  No active wounds
-                </p>
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    No active wounds
+                  </p>
+                  <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <Plus className="h-4 w-4" />
+                      Add First Wound
+                    </Button>
+                  </Link>
+                </div>
               )}
             </CardContent>
           </Card>
