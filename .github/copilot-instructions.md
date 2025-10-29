@@ -4,6 +4,17 @@
 
 This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind CSS v4** for building an Electronic Health Record (EHR) system for wound care. The project uses the modern Next.js App Router architecture with shadcn/ui components.
 
+**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `SYSTEM_DESIGN.md` (v2.0 - Approved). This includes:**
+
+- Database schema (10+ tables with Supabase PostgreSQL)
+- Frontend architecture (app router structure, components)
+- Backend patterns (Server Components + Server Actions)
+- UI/UX workflows (assessment forms, photo management, calendar)
+- Implementation phases (10-week roadmap)
+- Design decisions (auth, multi-facility, billing, libraries)
+
+**Before implementing ANY feature, review the relevant section in `SYSTEM_DESIGN.md` first.**
+
 ## Tech Stack & Configuration
 
 - **Framework**: Next.js 16.0.1 (App Router)
@@ -72,6 +83,16 @@ import { cn } from "@/lib/utils";
 
 ## Development Workflow
 
+### Implementation Guidelines
+
+**ALWAYS consult `SYSTEM_DESIGN.md` before starting any development work:**
+
+1. **Database Changes**: Reference the ERD and schema notes (Section: Database Schema)
+2. **New Features**: Check implementation phases for correct sequencing (Section: Implementation Phases)
+3. **UI Components**: Follow the app structure and component hierarchy (Section: Frontend Architecture)
+4. **API/Actions**: Use Server Actions pattern, not API routes (Section: Technology Stack)
+5. **Design Decisions**: Respect all approved decisions (Section: Design Decisions)
+
 ### Commands
 
 ```bash
@@ -125,12 +146,16 @@ This project is configured for shadcn/ui. When adding components:
 
 ## Important Notes
 
-1. **Tailwind v4 Breaking Changes**: This project uses Tailwind CSS v4 alpha with PostCSS. Traditional `tailwind.config.js` is NOT used. All configuration is in `globals.css` via `@theme` directive.
+1. **System Design Document**: `SYSTEM_DESIGN.md` is the authoritative source for all architectural decisions, database schema, UI workflows, and implementation phases. Review it before making ANY changes.
 
-2. **ESLint Flat Config**: Uses the new ESLint flat config format (`eslint.config.mjs`) with Next.js preset and Prettier integration.
+2. **Tailwind v4 Breaking Changes**: This project uses Tailwind CSS v4 alpha with PostCSS. Traditional `tailwind.config.js` is NOT used. All configuration is in `globals.css` via `@theme` directive.
 
-3. **Module Resolution**: Uses `bundler` mode (for Next.js) - allows `.ts` extensions and proper tree-shaking.
+3. **ESLint Flat Config**: Uses the new ESLint flat config format (`eslint.config.mjs`) with Next.js preset and Prettier integration.
 
-4. **React 19**: Latest React with improved hooks, actions, and server component capabilities. Use modern patterns like `use()` hook and form actions where applicable.
+4. **Module Resolution**: Uses `bundler` mode (for Next.js) - allows `.ts` extensions and proper tree-shaking.
 
-5. **Clean Slate**: The project is freshly initialized with branding, tooling, and design system in place. `app/page.tsx` is a minimal placeholder ready for feature implementation.
+5. **React 19**: Latest React with improved hooks, actions, and server component capabilities. Use modern patterns like `use()` hook and form actions where applicable.
+
+6. **Supabase Backend**: All database operations use Supabase PostgreSQL via Prisma ORM. Authentication via Supabase Auth. Photo storage via Supabase Storage.
+
+7. **Server-First Architecture**: Use Server Components for data fetching (async/await DB queries) and Server Actions for mutations (`"use server"` directive). Avoid API routes unless absolutely necessary.
