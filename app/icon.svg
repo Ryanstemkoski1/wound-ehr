@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <rect width="512" height="512" rx="96" fill="#14b8a6"/>
+  
+  <!-- Medical cross with wound care symbol -->
+  <g transform="translate(256, 256)">
+    <!-- Cross arms -->
+    <rect x="-32" y="-128" width="64" height="256" rx="12" fill="white"/>
+    <rect x="-128" y="-32" width="256" height="64" rx="12" fill="white"/>
+    
+    <!-- Center circle (wound healing symbol) -->
+    <circle cx="0" cy="0" r="56" fill="#0d9488" stroke="white" stroke-width="8"/>
+    
+    <!-- Healing waves inside circle -->
+    <path d="M -28 0 Q -14 -12, 0 0 T 28 0" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M -20 12 Q -10 4, 0 12 T 20 12" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M -20 -12 Q -10 -20, 0 -12 T 20 -12" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>
