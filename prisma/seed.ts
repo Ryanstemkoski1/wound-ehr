@@ -664,7 +664,7 @@ async function main() {
   }
 
   // Check for existing assessments
-  const existingAssessments = await prisma.woundAssessment.findMany({
+  const existingAssessments = await prisma.assessment.findMany({
     where: {
       visit: {
         patient: {
@@ -784,7 +784,8 @@ async function main() {
                 "Slight maceration noted",
               ]),
               painLevel: randomInt(0, 10),
-              infectionSigns: infectionSigns.length > 0 ? infectionSigns : null,
+              infectionSigns:
+                infectionSigns.length > 0 ? infectionSigns : undefined,
               assessmentNotes:
                 Math.random() > 0.5
                   ? randomElement([
@@ -819,7 +820,7 @@ async function main() {
       },
     },
   });
-  const finalAssessments = await prisma.woundAssessment.count({
+  const finalAssessments = await prisma.assessment.count({
     where: {
       visit: {
         patient: {

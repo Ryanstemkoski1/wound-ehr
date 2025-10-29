@@ -1,8 +1,3 @@
-// Prisma Schema for Wound EHR
-// Database: Supabase PostgreSQL
-// ORM: Prisma
-// Last Updated: October 29, 2025
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,31 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// USER & AUTHENTICATION
-// ============================================
-
-// Users table (synced with Supabase Auth)
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  facilities UserFacility[]
+  id         String         @id @default(uuid()) @db.Uuid
+  email      String         @unique
+  name       String?
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
   patients   Patient[]      @relation("PatientCreatedBy")
+  facilities UserFacility[]
+  photos     Photo[]        @relation("PhotoUploadedBy")
 
   @@map("users")
 }
 
-// ============================================
-// FACILITIES & MULTI-FACILITY SUPPORT
-// ============================================
-
 model Facility {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String         @id @default(uuid()) @db.Uuid
   name          String
   address       String?
   city          String?
@@ -44,46 +29,37 @@ model Facility {
   zip           String?
   phone         String?
   fax           String?
-  contactPerson String?  @map("contact_person")
+  contactPerson String?        @map("contact_person")
   email         String?
-  notes         String?  @db.Text
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  users    UserFacility[]
-  patients Patient[]
+  notes         String?
+  isActive      Boolean        @default(true) @map("is_active")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  patients      Patient[]
+  users         UserFacility[]
 
   @@map("facilities")
 }
 
-// Junction table for many-to-many User-Facility relationship
 model UserFacility {
   userId     String   @map("user_id") @db.Uuid
   facilityId String   @map("facility_id") @db.Uuid
   isDefault  Boolean  @default(false) @map("is_default")
   createdAt  DateTime @default(now()) @map("created_at")
-
-  // Relations
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, facilityId])
   @@map("user_facilities")
 }
 
-// ============================================
-// PATIENT MANAGEMENT
-// ============================================
-
 model Patient {
-  id               String   @id @default(uuid()) @db.Uuid
-  facilityId       String   @map("facility_id") @db.Uuid
-  firstName        String   @map("first_name")
-  lastName         String   @map("last_name")
-  dob              DateTime @db.Date
-  mrn              String   // Medical Record Number (unique per facility)
+  id               String    @id @default(uuid()) @db.Uuid
+  facilityId       String    @map("facility_id") @db.Uuid
+  firstName        String    @map("first_name")
+  lastName         String    @map("last_name")
+  dob              DateTime  @db.Date
+  mrn              String
   gender           String?
   phone            String?
   email            String?
@@ -91,233 +67,172 @@ model Patient {
   city             String?
   state            String?
   zip              String?
-  insuranceInfo    Json?    @map("insurance_info") // {primary: {...}, secondary: {...}}
-  emergencyContact Json?    @map("emergency_contact") // {name, phone, relationship}
-  allergies        Json?    @db.JsonB // Array of allergy strings
-  medicalHistory   Json?    @map("medical_history") @db.JsonB // Array of medical history items
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-  createdBy        String   @map("created_by") @db.Uuid
+  insuranceInfo    Json?     @map("insurance_info")
+  emergencyContact Json?     @map("emergency_contact")
+  allergies        Json?
+  medicalHistory   Json?     @map("medical_history")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdBy        String    @map("created_by") @db.Uuid
+  billings         Billing[]
+  creator          User      @relation("PatientCreatedBy", fields: [createdBy], references: [id])
+  facility         Facility  @relation(fields: [facilityId], references: [id])
+  visits           Visit[]
+  wounds           Wound[]
 
-  // Relations
-  facility  Facility @relation(fields: [facilityId], references: [id])
-  creator   User     @relation("PatientCreatedBy", fields: [createdBy], references: [id])
-  wounds    Wound[]
-  visits    Visit[]
-  billings  Billing[]
-
-  @@unique([facilityId, mrn]) // MRN unique per facility
+  @@unique([facilityId, mrn])
   @@index([facilityId])
   @@index([lastName, firstName])
   @@map("patients")
 }
 
-// ============================================
-// WOUND MANAGEMENT
-// ============================================
-
 model Wound {
-  id          String    @id @default(uuid()) @db.Uuid
-  patientId   String    @map("patient_id") @db.Uuid
-  woundNumber String    @map("wound_number") // e.g., "Wound 1", "Wound 2"
-  location    String    // Anatomical location
-  woundType   String    @map("wound_type") // pressure_injury, diabetic, surgical, etc.
-  onsetDate   DateTime  @map("onset_date") @db.Date
-  status      String    @default("active") // active, healed, archived
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id          String       @id @default(uuid()) @db.Uuid
+  patientId   String       @map("patient_id") @db.Uuid
+  woundNumber String       @map("wound_number")
+  location    String
+  woundType   String       @map("wound_type")
+  onsetDate   DateTime     @map("onset_date") @db.Date
+  status      String       @default("active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
   assessments Assessment[]
   photos      Photo[]
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
   @@index([status])
   @@map("wounds")
 }
 
-// ============================================
-// VISIT DOCUMENTATION
-// ============================================
-
 model Visit {
-  id              String    @id @default(uuid()) @db.Uuid
-  patientId       String    @map("patient_id") @db.Uuid
-  visitDate       DateTime  @map("visit_date")
-  visitType       String    @map("visit_type") // in_person, telemed
-  location        String?   // Visit location details
-  status          String    @default("incomplete") // incomplete, complete
-  numberOfAddenda Int       @default(0) @map("number_of_addenda")
-  followUpType    String?   @map("follow_up_type") // appointment, discharge
-  followUpDate    DateTime? @map("follow_up_date")
-  followUpNotes   String?   @map("follow_up_notes") @db.Text
-  timeSpent       Boolean   @default(false) @map("time_spent") // "45+ minutes spent"
-  additionalNotes String?   @map("additional_notes") @db.Text
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  assessments Assessment[]
-  treatments  Treatment[]
-  billings    Billing[]
+  id              String       @id @default(uuid()) @db.Uuid
+  patientId       String       @map("patient_id") @db.Uuid
+  visitDate       DateTime     @map("visit_date")
+  visitType       String       @map("visit_type")
+  location        String?
+  status          String       @default("incomplete")
+  numberOfAddenda Int          @default(0) @map("number_of_addenda")
+  followUpType    String?      @map("follow_up_type")
+  followUpDate    DateTime?    @map("follow_up_date")
+  followUpNotes   String?      @map("follow_up_notes")
+  timeSpent       Boolean      @default(false) @map("time_spent")
+  additionalNotes String?      @map("additional_notes")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  assessments     Assessment[]
+  billings        Billing[]
+  treatments      Treatment[]
+  photos          Photo[]
+  patient         Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
   @@index([visitDate])
   @@map("visits")
 }
 
-// ============================================
-// WOUND ASSESSMENTS (PER VISIT)
-// ============================================
-
 model Assessment {
-  id        String   @id @default(uuid()) @db.Uuid
-  visitId   String   @map("visit_id") @db.Uuid
-  woundId   String   @map("wound_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Wound Type & Classification
-  woundType         String?  @map("wound_type")
-  pressureStage     String?  @map("pressure_stage") // Stage 1-4, Unstageable, DTI
-  healingStatus     String?  @map("healing_status") // initial, healing, stable, declined, healed, sign_off
-  atRiskReopening   Boolean? @map("at_risk_reopening")
-
-  // Measurements (in cm)
-  length       Decimal? @db.Decimal(5, 2)
-  width        Decimal? @db.Decimal(5, 2)
-  depth        Decimal? @db.Decimal(5, 2)
-  area         Decimal? @db.Decimal(7, 2) // Calculated: length × width
-  undermining  String?  @db.Text // Undermining measurements and locations
-  tunneling    String?  @db.Text // Tunneling measurements and clock positions
-
-  // Tissue Composition (percentages)
-  epithelialPercent   Int? @map("epithelial_percent")
-  granulationPercent  Int? @map("granulation_percent")
-  sloughPercent       Int? @map("slough_percent")
-
-  // Wound Characteristics
-  exudateAmount       String?  @map("exudate_amount") // none, minimal, moderate, heavy
-  exudateType         String?  @map("exudate_type") // serous, sanguineous, purulent
-  odor                String?  // none, mild, moderate, strong
-  periwoundCondition  String?  @map("periwound_condition") @db.Text
-  painLevel           Int?     @map("pain_level") // 0-10 scale
-
-  // Infection Signs
-  infectionSigns      Json?    @map("infection_signs") @db.JsonB // Array of signs
-
-  // Clinical Notes
-  assessmentNotes     String?  @map("assessment_notes") @db.Text
-
-  // Relations
-  visit Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
-  wound Wound @relation(fields: [woundId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(uuid()) @db.Uuid
+  visitId            String   @map("visit_id") @db.Uuid
+  woundId            String   @map("wound_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  woundType          String?  @map("wound_type")
+  pressureStage      String?  @map("pressure_stage")
+  healingStatus      String?  @map("healing_status")
+  atRiskReopening    Boolean? @map("at_risk_reopening")
+  length             Decimal? @db.Decimal(5, 2)
+  width              Decimal? @db.Decimal(5, 2)
+  depth              Decimal? @db.Decimal(5, 2)
+  area               Decimal? @db.Decimal(7, 2)
+  undermining        String?
+  tunneling          String?
+  epithelialPercent  Int?     @map("epithelial_percent")
+  granulationPercent Int?     @map("granulation_percent")
+  sloughPercent      Int?     @map("slough_percent")
+  exudateAmount      String?  @map("exudate_amount")
+  exudateType        String?  @map("exudate_type")
+  odor               String?
+  periwoundCondition String?  @map("periwound_condition")
+  painLevel          Int?     @map("pain_level")
+  infectionSigns     Json?    @map("infection_signs")
+  assessmentNotes    String?  @map("assessment_notes")
+  visit              Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  wound              Wound    @relation(fields: [woundId], references: [id], onDelete: Cascade)
+  photos             Photo[]
 
   @@index([visitId])
   @@index([woundId])
   @@map("assessments")
 }
 
-// ============================================
-// TREATMENT PLANNING
-// ============================================
-
 model Treatment {
-  id              String   @id @default(uuid()) @db.Uuid
-  visitId         String   @map("visit_id") @db.Uuid
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  // Treatment Categories (using JSONB for flexible structure)
-  primaryDressings    Json? @map("primary_dressings") @db.JsonB // Array of selected dressings
-  secondaryDressings  Json? @map("secondary_dressings") @db.JsonB
-  antimicrobials      Json? @db.JsonB // Array with type and instructions
-  debridement         Json? @db.JsonB
-  advancedTherapies   Json? @map("advanced_therapies") @db.JsonB
-  compression         Json? @db.JsonB
-  moistureManagement  Json? @map("moisture_management") @db.JsonB
-
-  // NPWT Settings
-  npwtPressure        Int?    @map("npwt_pressure") // mmHg
-  npwtFrequency       String? @map("npwt_frequency") // M-W-F, T-TH-SA, Clear
-
-  // Preventive Care
-  preventiveOrders    Json?   @map("preventive_orders") @db.JsonB // air_mattress, repositioning, etc.
-  chairCushionType    String? @map("chair_cushion_type") // gel, roho
-
-  // Treatment Frequency
-  frequencyDays       Int?    @map("frequency_days") // Every X days
-  prn                 Boolean @default(false) // PRN (as needed)
-
-  // Generated Treatment Orders
-  treatmentOrders     String? @map("treatment_orders") @db.Text
-
-  // Special Instructions
-  specialInstructions String? @map("special_instructions") @db.Text
-
-  // Relations
-  visit Visit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(uuid()) @db.Uuid
+  visitId             String   @map("visit_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  primaryDressings    Json?    @map("primary_dressings")
+  secondaryDressings  Json?    @map("secondary_dressings")
+  antimicrobials      Json?
+  debridement         Json?
+  advancedTherapies   Json?    @map("advanced_therapies")
+  compression         Json?
+  moistureManagement  Json?    @map("moisture_management")
+  npwtPressure        Int?     @map("npwt_pressure")
+  npwtFrequency       String?  @map("npwt_frequency")
+  preventiveOrders    Json?    @map("preventive_orders")
+  chairCushionType    String?  @map("chair_cushion_type")
+  frequencyDays       Int?     @map("frequency_days")
+  prn                 Boolean  @default(false)
+  treatmentOrders     String?  @map("treatment_orders")
+  specialInstructions String?  @map("special_instructions")
+  visit               Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([visitId])
   @@map("treatments")
 }
 
-// ============================================
-// PHOTO MANAGEMENT
-// ============================================
-
 model Photo {
-  id          String   @id @default(uuid()) @db.Uuid
-  woundId     String   @map("wound_id") @db.Uuid
-  visitId     String?  @map("visit_id") @db.Uuid // Optional: link to specific visit
-  filePath    String   @map("file_path") // Supabase Storage path
-  fileName    String   @map("file_name")
-  fileSize    Int      @map("file_size") // In bytes
-  mimeType    String   @map("mime_type") // image/jpeg, image/png, image/heic
-  thumbnailPath String? @map("thumbnail_path") // Path to thumbnail version
-  uploadedAt  DateTime @default(now()) @map("uploaded_at")
-  caption     String?  @db.Text
-
+  id           String      @id @default(uuid()) @db.Uuid
+  woundId      String      @map("wound_id") @db.Uuid
+  visitId      String?     @map("visit_id") @db.Uuid
+  assessmentId String?     @map("assessment_id") @db.Uuid
+  uploadedBy   String      @map("uploaded_by") @db.Uuid
+  url          String      // Supabase Storage URL
+  filename     String      @map("file_name")
+  fileSize     Int         @map("file_size")
+  mimeType     String      @map("mime_type")
+  thumbnailUrl String?     @map("thumbnail_url")
+  caption      String?     @db.Text
+  uploadedAt   DateTime    @default(now()) @map("uploaded_at")
+  
   // Relations
-  wound Wound @relation(fields: [woundId], references: [id], onDelete: Cascade)
+  wound      Wound       @relation(fields: [woundId], references: [id], onDelete: Cascade)
+  visit      Visit?      @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  assessment Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  uploader   User        @relation("PhotoUploadedBy", fields: [uploadedBy], references: [id])
 
   @@index([woundId])
   @@index([visitId])
+  @@index([assessmentId])
+  @@index([uploadedBy])
   @@map("photos")
 }
 
-// ============================================
-// BILLING & CPT CODES
-// ============================================
-
 model Billing {
-  id          String   @id @default(uuid()) @db.Uuid
-  visitId     String   @map("visit_id") @db.Uuid
-  patientId   String   @map("patient_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // CPT Codes
-  cptCodes    Json     @map("cpt_codes") @db.JsonB // Array of CPT codes
-
-  // ICD-10 Codes
-  icd10Codes  Json     @map("icd10_codes") @db.JsonB // Array of diagnosis codes
-
-  // Modifiers
-  modifiers   Json?    @db.JsonB // Array of billing modifiers
-
-  // Time Tracking
-  timeSpent   Boolean  @default(false) @map("time_spent") // "45+ minutes"
-  
-  // Billing Notes
-  notes       String?  @db.Text
-
-  // Relations
-  visit   Visit   @relation(fields: [visitId], references: [id], onDelete: Cascade)
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid()) @db.Uuid
+  visitId    String   @map("visit_id") @db.Uuid
+  patientId  String   @map("patient_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  cptCodes   Json     @map("cpt_codes")
+  icd10Codes Json     @map("icd10_codes")
+  modifiers  Json?
+  timeSpent  Boolean  @default(false) @map("time_spent")
+  notes      String?
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visit      Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([visitId])
   @@index([patientId])
