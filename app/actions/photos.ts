@@ -53,7 +53,7 @@ export async function uploadPhoto(formData: FormData) {
     const fileName = `${woundId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from("wound-photos")
       .upload(fileName, file, {
         cacheControl: "3600",
@@ -65,14 +65,17 @@ export async function uploadPhoto(formData: FormData) {
       return { error: `Failed to upload photo: ${uploadError.message}` };
     }
 
-    // Get public URL
+    // Get public URL - ensure bucket is public in Supabase Storage settings
     const { data: urlData } = supabase.storage
       .from("wound-photos")
       .getPublicUrl(fileName);
 
-    if (!urlData) {
+    if (!urlData || !urlData.publicUrl) {
       return { error: "Failed to get photo URL" };
     }
+
+    console.log("Photo uploaded:", fileName);
+    console.log("Public URL:", urlData.publicUrl);
 
     // Save photo metadata to database
     const photo = await prisma.photo.create({
