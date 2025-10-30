@@ -1,13 +1,23 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getVisit } from "@/app/actions/visits";
+import { getBillingForVisit } from "@/app/actions/billing";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, FileText, Plus, Edit } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  FileText,
+  Plus,
+  Edit,
+  DollarSign,
+} from "lucide-react";
 import Link from "next/link";
 import AssessmentCard from "@/components/assessments/assessment-card";
 import { Decimal } from "@prisma/client/runtime/library";
+import VisitPDFDownloadButton from "@/components/pdf/visit-pdf-download-button";
 
 type PageProps = {
   params: Promise<{
@@ -34,6 +44,10 @@ export default async function VisitDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  // Get billing information
+  const billingResult = await getBillingForVisit(visitId);
+  const billing = billingResult.success ? billingResult.billing : null;
+
   const statusVariant = visit.status === "complete" ? "secondary" : "default";
 
   return (
@@ -48,6 +62,11 @@ export default async function VisitDetailPage({ params }: PageProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <VisitPDFDownloadButton
+            visitId={visitId}
+            visitDate={visit.visitDate}
+            patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+          />
           <Link
             href={`/dashboard/patients/${patientId}/visits/${visitId}/edit`}
           >
@@ -149,6 +168,86 @@ export default async function VisitDetailPage({ params }: PageProps) {
               )}
             </CardContent>
           </Card>
+
+          {/* Billing Information */}
+          {billing && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Billing & Documentation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Array.isArray(billing.cptCodes) &&
+                  billing.cptCodes.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        CPT Codes
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {(billing.cptCodes as string[]).map((code) => (
+                          <Badge key={code} variant="outline">
+                            {code}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {Array.isArray(billing.icd10Codes) &&
+                  billing.icd10Codes.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        ICD-10 Codes
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {(billing.icd10Codes as string[]).map((code) => (
+                          <Badge key={code} variant="outline">
+                            {code}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {Array.isArray(billing.modifiers) &&
+                  billing.modifiers.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        Modifiers
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {(billing.modifiers as string[]).map((modifier) => (
+                          <Badge key={modifier} variant="secondary">
+                            {modifier}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {billing.timeSpent && (
+                  <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      ⏱️ Time-based billing applicable (45+ minutes)
+                    </p>
+                  </div>
+                )}
+
+                {billing.notes && (
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Billing Notes
+                    </p>
+                    <p className="mt-1 text-sm whitespace-pre-wrap">
+                      {billing.notes}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {visit.followUpType && (
             <Card>

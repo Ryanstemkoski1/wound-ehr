@@ -19,6 +19,7 @@ import Link from "next/link";
 import { PatientDeleteButton } from "@/components/patients/patient-delete-button";
 import WoundCard from "@/components/wounds/wound-card";
 import VisitCard from "@/components/visits/visit-card";
+import CSVDownloadButton from "@/components/pdf/csv-download-button";
 
 type Params = Promise<{ id: string }>;
 
@@ -397,12 +398,22 @@ export default async function PatientDetailPage({
                   <Activity className="h-5 w-5" />
                   Active Wounds
                 </CardTitle>
-                <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
-                  <Button size="sm" className="gap-1">
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </Button>
-                </Link>
+                <div className="flex gap-2">
+                  {patient.wounds.length > 0 && (
+                    <CSVDownloadButton
+                      type="wounds"
+                      patientId={patient.id}
+                      variant="ghost"
+                      size="sm"
+                    />
+                  )}
+                  <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
+                    <Button size="sm" className="gap-1">
+                      <Plus className="h-4 w-4" />
+                      Add
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

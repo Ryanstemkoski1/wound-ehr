@@ -1,7 +1,7 @@
 # Wound EHR - System Design Document
 
-> **Version**: 2.0  
-> **Date**: October 29, 2025  
+> **Version**: 2.1  
+> **Date**: October 30, 2025  
 > **Status**: ✅ **Approved - Ready for Implementation**
 
 ---
@@ -562,6 +562,9 @@ app/
 │   │   └── [id]/
 │   │       └── page.tsx        # Visit assessment form
 │   │
+│   ├── billing/
+│   │   └── page.tsx            # Billing reports dashboard (✅ Phase 6.5)
+│   │
 │   ├── calendar/
 │   │   └── page.tsx            # Interactive calendar view
 │   │
@@ -582,6 +585,7 @@ app/
     ├── wounds.ts               # Wound CRUD actions
     ├── visits.ts               # Visit CRUD actions
     ├── assessments.ts          # Assessment creation/update
+    ├── billing.ts              # Billing CRUD and reports (✅ Phase 6.5)
     ├── photos.ts               # Photo upload to Supabase Storage
     └── reports.ts              # PDF generation and export
             └── route.ts        # Export data to CSV
@@ -604,6 +608,10 @@ components/
 │   ├── wound-assessment-form.tsx
 │   ├── treatment-plan-form.tsx
 │   └── preventive-orders-form.tsx
+│
+├── billing/                    # Billing components (✅ Phase 6.5)
+│   ├── billing-form.tsx        # Searchable billing code form
+│   └── billing-reports-client.tsx # Billing reports with filtering
 │
 ├── layout/
 │   ├── sidebar.tsx
@@ -638,6 +646,7 @@ lib/
 │   ├── patient.ts              # Zod schemas for patient data
 │   ├── wound.ts                # Zod schemas for wound data
 │   └── visit.ts                # Zod schemas for visit data
+├── billing-codes.ts            # Common CPT/ICD-10/Modifier codes (✅ Phase 6.5)
 └── utils/
     ├── calculations.ts         # Wound area, healing rate calculations
     ├── formatters.ts           # Date, number formatting
@@ -904,15 +913,41 @@ lib/
 
 **Goal:** Professional document generation
 
-- [ ] PDF generation library integration (@react-pdf/renderer)
-- [ ] Visit summary PDF export
-- [ ] Wound progress report with photos
-- [ ] Treatment plan PDF for facilities
-- [ ] Custom date range reports
-- [ ] CSV export for external systems (custom implementation)
-- [ ] Batch report generation
+- [x] PDF generation library integration (@react-pdf/renderer)
+- [x] Visit summary PDF export
+- [x] Wound progress report with photos
+- [x] Treatment plan PDF for facilities
+- [x] Custom date range reports
+- [x] CSV export for external systems (custom implementation)
+- [x] Batch report generation
 
 **Deliverable:** Can generate and download professional PDF reports
+
+**Status:** ✅ **COMPLETED** (October 29, 2025)
+
+---
+
+### Phase 6.5: Billing System (Week 9-10)
+
+**Goal:** Comprehensive billing documentation and reporting
+
+- [x] Billing table with CPT codes, ICD-10 codes, modifiers, time tracking
+- [x] Searchable dropdown form for common wound care CPT codes (30+ codes)
+- [x] Searchable dropdown form for common ICD-10 diagnosis codes (40+ codes)
+- [x] Searchable dropdown form for billing modifiers (20+ codes)
+- [x] Custom code entry for non-standard codes
+- [x] Billing form integration into visit creation workflow
+- [x] Billing form integration into visit edit workflow
+- [x] Display billing codes on visit detail page
+- [x] Billing reports dashboard with filtering
+- [x] Filter billing by date range, facility, patient
+- [x] CSV export for insurance submissions
+- [x] Billing statistics (total visits, total codes)
+- [x] Include billing in Visit Summary PDF
+
+**Deliverable:** Complete billing documentation and reporting system
+
+**Status:** ✅ **COMPLETED** (October 30, 2025)
 
 ---
 
@@ -936,14 +971,14 @@ lib/
 ### Future Enhancements (Post-MVP)
 
 - [ ] Advanced role-based access control (admin, clinician, scribe)
-- [ ] Automated billing code suggestions
-- [ ] Integration with PointClickCare (read-only patient data)
-- [ ] Integration with Practice Fusion (read-only)
 - [ ] AI-powered wound analysis (healing prediction)
 - [ ] Patient portal (view own wound progress)
 - [ ] Mobile app (React Native)
+- [ ] Integration with PointClickCare (read-only patient data)
+- [ ] Integration with Practice Fusion (read-only)
 - [ ] Advanced PDF customization options
 - [ ] Live data sync with other EHR systems
+- [ ] Automated billing code suggestions based on visit type/treatments
 
 ---
 
@@ -973,13 +1008,18 @@ This section documents all approved design decisions based on client requirement
 
 ### 3. Billing & CPT Codes
 
-**Decision:** Basic billing structure included in Phase 1, advanced features deferred.
+**Decision:** Comprehensive billing system implemented in Phase 6.5 with searchable code selection.
 
 - **Rationale:** Client confirmed billing documentation needed for visit notes and time-based billing.
 - **Implementation:**
-  - `Billing` table with CPT codes, ICD-10 codes, time tracking, modifiers
-  - Time component: "45+ minutes spent" tracked per visit
-  - Manual entry of codes (no auto-suggestion in Phase 1)
+  - `Billing` table with CPT codes (procedures), ICD-10 codes (diagnoses), modifiers, time tracking, notes
+  - Time component: "45+ minutes spent" tracked per visit as boolean flag
+  - **Searchable Dropdowns:** 30+ common CPT codes, 40+ common ICD-10 codes, 20+ modifiers
+  - **Custom Entry:** Support for entering non-standard codes
+  - **Billing Reports:** `/dashboard/billing` page with filtering by date range, facility, patient
+  - **CSV Export:** One-click export for insurance submissions
+  - **PDF Integration:** Billing codes included in Visit Summary PDF
+- **Status:** ✅ **IMPLEMENTED** (Phase 6.5)
 - **Future:** Automated CPT code suggestions based on visit type/treatments moved to post-MVP.
 
 ### 4. Library Selections
@@ -1246,8 +1286,43 @@ This section documents all approved design decisions based on client requirement
 
 ---
 
-**Document Version:** 2.0 (Approved)
+## Version History
 
-**Last Updated:** {{current_date}}
+### Version 2.1 (October 30, 2025)
+
+**Changes:**
+
+- ✅ Added Phase 6.5: Billing System to implementation phases
+- ✅ Updated Design Decision #3 (Billing & CPT Codes) to reflect completed implementation
+- ✅ Added billing routes to Frontend Architecture (`/dashboard/billing`)
+- ✅ Added billing components (`billing-form.tsx`, `billing-reports-client.tsx`)
+- ✅ Added billing-codes.ts to lib structure
+- ✅ Marked Phase 6 (PDF Export & Reporting) as completed
+- ✅ Marked Phase 6.5 (Billing System) as completed
+- ✅ Moved automated billing code suggestions to Future Enhancements
+
+**Features Added:**
+
+- Searchable dropdowns for CPT codes (30+), ICD-10 codes (40+), modifiers (20+)
+- Billing reports dashboard with filtering and CSV export
+- Billing integration in visit workflow
+- Billing data in PDF exports
+
+### Version 2.0 (October 29, 2025)
+
+**Changes:**
+
+- Initial approved system design document
+- 10 implementation phases defined
+- Complete database schema with 10+ tables
+- Frontend architecture with app router structure
+- Technology stack finalized
+- Design decisions documented
+
+---
+
+**Document Version:** 2.1 (Approved)
+
+**Last Updated:** October 30, 2025
 
 **Ready for Implementation:** ✅ Yes

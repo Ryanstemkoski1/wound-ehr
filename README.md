@@ -107,27 +107,38 @@ wound-ehr/
 
 The project follows a **10-week implementation roadmap** (see `SYSTEM_DESIGN.md`):
 
-- **Phase 1-2 (Weeks 1-4)**: Foundation, auth, patient/wound/visit CRUD
-- **Phase 3 (Weeks 5-6)**: Complete assessment form with treatment options
-- **Phase 4 (Week 7)**: Photo upload and management
-- **Phase 5 (Week 8)**: Calendar and scheduling
-- **Phase 6 (Week 9)**: PDF export and reporting
-- **Phase 7 (Week 10)**: Analytics, polish, production readiness
+- ✅ **Phase 1-2 (Weeks 1-4)**: Foundation, auth, patient/wound/visit CRUD - **COMPLETED**
+- ✅ **Phase 3 (Weeks 5-6)**: Complete assessment form with treatment options - **COMPLETED**
+- ✅ **Phase 4 (Week 7)**: Photo upload and management - **COMPLETED**
+- ✅ **Phase 5 (Week 8)**: Calendar and scheduling - **COMPLETED**
+- ✅ **Phase 6 (Week 9)**: PDF export and reporting - **COMPLETED**
+- ✅ **Phase 6.5 (Week 9-10)**: Billing system with searchable codes - **COMPLETED**
+- ⏳ **Phase 7 (Week 10)**: Analytics, polish, production readiness - **IN PROGRESS**
 
-## Key Features (Planned)
+## Key Features
+
+### Completed Features ✅
 
 - ✅ Supabase authentication (email/password)
-- ✅ Multi-facility support
-- ✅ Patient and wound tracking
+- ✅ Multi-facility support with user-facility relationships
+- ✅ Patient and wound tracking with full CRUD
 - ✅ Comprehensive wound assessment forms
 - ✅ Photo documentation with Supabase Storage
-- ✅ Treatment plan management
-- ✅ Calendar-based visit scheduling
+- ✅ Treatment plan management and orders
+- ✅ Calendar-based visit scheduling (React Big Calendar)
 - ✅ PDF report generation (visit summaries, wound progress)
 - ✅ CSV data export
-- ✅ Billing/CPT code tracking
+- ✅ Billing system with searchable CPT/ICD-10 codes
+- ✅ Billing reports dashboard with filtering
 - ✅ Dark mode support
 - ✅ Desktop-first responsive design
+
+### In Progress ⏳
+
+- ⏳ Wound healing rate analytics
+- ⏳ Dashboard charts and metrics
+- ⏳ Mobile/tablet responsiveness
+- ⏳ Performance optimization
 
 ## VS Code Setup
 

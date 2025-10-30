@@ -16,6 +16,7 @@ import {
 import { PhotoUpload } from "@/components/photos/photo-upload";
 import { PhotoGallery } from "@/components/photos/photo-gallery";
 import { PhotoComparison } from "@/components/photos/photo-comparison";
+import WoundPDFDownloadButton from "@/components/pdf/wound-pdf-download-button";
 import { format } from "date-fns";
 
 export default async function WoundDetailPage({
@@ -64,12 +65,21 @@ export default async function WoundDetailPage({
           </p>
         </div>
 
-        <Link href={`/dashboard/patients/${patientId}/wounds/${woundId}/edit`}>
-          <Button>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Wound
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <WoundPDFDownloadButton
+            woundId={woundId}
+            location={wound.location}
+            patientName={`${wound.patient.firstName} ${wound.patient.lastName}`}
+          />
+          <Link
+            href={`/dashboard/patients/${patientId}/wounds/${woundId}/edit`}
+          >
+            <Button>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Wound
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Wound Info */}

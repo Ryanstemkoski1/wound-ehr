@@ -151,7 +151,7 @@ export async function createVisit(formData: FormData) {
     }
 
     // Create visit
-    await prisma.visit.create({
+    const visit = await prisma.visit.create({
       data: {
         patientId: validated.patientId,
         visitDate: new Date(validated.visitDate),
@@ -170,13 +170,13 @@ export async function createVisit(formData: FormData) {
 
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${validated.patientId}`);
-    return { success: true };
+    return { success: true as const, visit };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { error: error.issues[0].message };
+      return { success: false as const, error: error.issues[0].message };
     }
     console.error("Failed to create visit:", error);
-    return { error: "Failed to create visit" };
+    return { success: false as const, error: "Failed to create visit" };
   }
 }
 
@@ -227,7 +227,7 @@ export async function updateVisit(visitId: string, formData: FormData) {
     }
 
     // Update visit
-    await prisma.visit.update({
+    const visit = await prisma.visit.update({
       where: { id: visitId },
       data: {
         visitDate: new Date(validated.visitDate),
@@ -247,13 +247,13 @@ export async function updateVisit(visitId: string, formData: FormData) {
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${existingVisit.patientId}`);
     revalidatePath(`/dashboard/visits/${visitId}`);
-    return { success: true };
+    return { success: true as const, visit };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { error: error.issues[0].message };
+      return { success: false as const, error: error.issues[0].message };
     }
     console.error("Failed to update visit:", error);
-    return { error: "Failed to update visit" };
+    return { success: false as const, error: "Failed to update visit" };
   }
 }
 

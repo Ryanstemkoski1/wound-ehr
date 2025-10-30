@@ -15,6 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createVisit, updateVisit } from "@/app/actions/visits";
+import {
+  createBilling,
+  updateBilling,
+  getBillingForVisit,
+} from "@/app/actions/billing";
+import BillingForm, {
+  type BillingFormData,
+} from "@/components/billing/billing-form";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 type VisitFormProps = {
   patientId: string;
@@ -43,6 +53,42 @@ export default function VisitForm({
   const [error, setError] = useState("");
   const [timeSpent, setTimeSpent] = useState(visit?.timeSpent || false);
   const [followUpType, setFollowUpType] = useState(visit?.followUpType || "");
+  const [billingData, setBillingData] = useState<BillingFormData>({
+    cptCodes: [],
+    icd10Codes: [],
+    modifiers: [],
+    timeSpent: false,
+    notes: "",
+  });
+  const [existingBillingId, setExistingBillingId] = useState<string | null>(
+    null
+  );
+
+  // Load existing billing data if editing a visit
+  useEffect(() => {
+    if (visit?.id) {
+      getBillingForVisit(visit.id).then((result) => {
+        if (result.success && result.billing) {
+          setBillingData({
+            cptCodes: Array.isArray(result.billing.cptCodes)
+              ? (result.billing.cptCodes as string[])
+              : [],
+            icd10Codes: Array.isArray(result.billing.icd10Codes)
+              ? (result.billing.icd10Codes as string[])
+              : [],
+            modifiers:
+              result.billing.modifiers &&
+              Array.isArray(result.billing.modifiers)
+                ? (result.billing.modifiers as string[])
+                : [],
+            timeSpent: result.billing.timeSpent,
+            notes: result.billing.notes || "",
+          });
+          setExistingBillingId(result.billing.id);
+        }
+      });
+    }
+  }, [visit?.id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -57,17 +103,36 @@ export default function VisitForm({
       ? await updateVisit(visit.id, formData)
       : await createVisit(formData);
 
-    setIsSubmitting(false);
-
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
-    } else {
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Save or update billing information
+    const billingResult = existingBillingId
+      ? await updateBilling(existingBillingId, billingData)
+      : await createBilling({
+          visitId: result.visit.id,
+          patientId,
+          ...billingData,
+        });
+
+    if (billingResult.success) {
+      toast.success(
+        visit ? "Visit updated successfully" : "Visit created successfully"
+      );
       if (onSuccess) {
         onSuccess();
       } else {
         router.push(`/dashboard/patients/${patientId}`);
       }
+    } else {
+      toast.error("Visit saved but billing failed: " + billingResult.error);
+      setError("Visit saved but billing failed: " + billingResult.error);
     }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -207,6 +272,9 @@ export default function VisitForm({
           45+ minutes spent on this visit
         </Label>
       </div>
+
+      {/* Billing Information */}
+      <BillingForm initialData={billingData} onChange={setBillingData} />
 
       <div className="flex gap-3">
         <Button type="submit" disabled={isSubmitting}>

@@ -11,6 +11,7 @@ import {
   FileText,
   Activity,
   Settings,
+  DollarSign,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Patients", href: "/dashboard/patients", icon: Users },
   { name: "Facilities", href: "/dashboard/facilities", icon: Building2 },
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+  { name: "Billing", href: "/dashboard/billing", icon: DollarSign },
   { name: "Visits", href: "/dashboard/visits", icon: FileText },
   { name: "Wounds", href: "/dashboard/wounds", icon: Activity },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },

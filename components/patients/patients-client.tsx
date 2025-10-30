@@ -14,6 +14,7 @@ import {
 import { Plus, Search, Users as UsersIcon } from "lucide-react";
 import Link from "next/link";
 import PatientCard from "./patient-card";
+import CSVDownloadButton from "@/components/pdf/csv-download-button";
 
 type Patient = {
   id: string;
@@ -71,12 +72,19 @@ export default function PatientsClient({
             Manage patient records
           </p>
         </div>
-        <Link href="/dashboard/patients/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Patient
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <CSVDownloadButton
+            type="patients"
+            facilityId={facilityFilter === "all" ? undefined : facilityFilter}
+            variant="outline"
+          />
+          <Link href="/dashboard/patients/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Patient
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filters */}
