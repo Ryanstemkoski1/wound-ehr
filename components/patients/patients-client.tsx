@@ -93,16 +93,23 @@ export default function PatientsClient({
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Search
+                className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                aria-hidden="true"
+              />
               <Input
                 placeholder="Search by name or MRN..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
+                aria-label="Search patients by name or medical record number"
               />
             </div>
             <Select value={facilityFilter} onValueChange={setFacilityFilter}>
-              <SelectTrigger className="w-full sm:w-[250px]">
+              <SelectTrigger
+                className="w-full sm:w-[250px]"
+                aria-label="Filter by facility"
+              >
                 <SelectValue placeholder="All Facilities" />
               </SelectTrigger>
               <SelectContent>

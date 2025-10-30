@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,7 +99,15 @@ export default function WoundForm({
 
     if (result.error) {
       setError(result.error);
+      toast.error(wound ? "Failed to update wound" : "Failed to create wound", {
+        description: result.error,
+      });
     } else {
+      toast.success(wound ? "Wound updated successfully" : "Wound created successfully", {
+        description: wound 
+          ? `Wound ${wound.woundNumber} has been updated.`
+          : "You can now schedule visits and assessments.",
+      });
       if (onSuccess) {
         onSuccess();
       } else {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,7 +131,15 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
     if (result.error) {
       setError(result.error);
       setLoading(false);
+      toast.error(isEdit ? "Failed to update patient" : "Failed to create patient", {
+        description: result.error,
+      });
     } else {
+      toast.success(isEdit ? "Patient updated successfully" : "Patient created successfully", {
+        description: isEdit 
+          ? `${patient.firstName} ${patient.lastName}'s information has been updated.`
+          : "You can now add wounds and schedule visits.",
+      });
       router.push("/dashboard/patients");
       router.refresh();
     }

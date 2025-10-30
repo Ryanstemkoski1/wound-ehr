@@ -288,7 +288,10 @@ export default async function DashboardPage() {
                 <CardTitle className="text-sm font-medium">
                   {stat.title}
                 </CardTitle>
-                <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                <Icon
+                  className="h-4 w-4 text-zinc-600 dark:text-zinc-400"
+                  aria-hidden="true"
+                />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
@@ -336,6 +339,7 @@ export default async function DashboardPage() {
                       key={visit.id}
                       href={`/dashboard/patients/${visit.patient.id}/visits/${visit.id}`}
                       className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+                      aria-label={`View visit for ${visit.patient.firstName} ${visit.patient.lastName} on ${format(new Date(visit.visitDate), "MMM dd, yyyy")}, status: ${visit.status}`}
                     >
                       <div>
                         <p className="font-medium">
@@ -349,7 +353,7 @@ export default async function DashboardPage() {
                       <div>
                         {visit.status === "incomplete" ? (
                           <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                            <AlertCircle className="h-3 w-3" />
+                            <AlertCircle className="h-3 w-3" aria-hidden="true" />
                             Incomplete
                           </span>
                         ) : (
@@ -375,8 +379,9 @@ export default async function DashboardPage() {
             <Link
               href="/dashboard/patients/new"
               className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+              aria-label="Add New Patient - Register a new patient"
             >
-              <Users className="h-5 w-5 text-teal-600" />
+              <Users className="h-5 w-5 text-teal-600" aria-hidden="true" />
               <div>
                 <p className="font-medium">Add New Patient</p>
                 <p className="text-muted-foreground text-xs">
@@ -387,8 +392,9 @@ export default async function DashboardPage() {
             <Link
               href="/dashboard/calendar"
               className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+              aria-label="Schedule Visit - Book an appointment"
             >
-              <Calendar className="h-5 w-5 text-teal-600" />
+              <Calendar className="h-5 w-5 text-teal-600" aria-hidden="true" />
               <div>
                 <p className="font-medium">Schedule Visit</p>
                 <p className="text-muted-foreground text-xs">
@@ -399,8 +405,9 @@ export default async function DashboardPage() {
             <Link
               href="/dashboard/billing"
               className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+              aria-label="View Billing - Access billing reports"
             >
-              <FileText className="h-5 w-5 text-teal-600" />
+              <FileText className="h-5 w-5 text-teal-600" aria-hidden="true" />
               <div>
                 <p className="font-medium">View Billing</p>
                 <p className="text-muted-foreground text-xs">

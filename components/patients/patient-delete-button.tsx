@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,7 +39,13 @@ export function PatientDeleteButton({
     if (result.error) {
       setError(result.error);
       setLoading(false);
+      toast.error("Failed to delete patient", {
+        description: result.error,
+      });
     } else {
+      toast.success("Patient deleted successfully", {
+        description: `${patientName} has been permanently removed.`,
+      });
       setOpen(false);
       router.push("/dashboard/patients");
       router.refresh();

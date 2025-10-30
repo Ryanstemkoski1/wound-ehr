@@ -111,8 +111,8 @@ export default async function PatientDetailPage({
         </div>
         <div className="flex gap-2">
           <Link href={`/dashboard/patients/${patient.id}/edit`}>
-            <Button className="flex-1 gap-2 sm:flex-none">
-              <Edit className="h-4 w-4" />
+            <Button className="flex-1 gap-2 sm:flex-none" aria-label={`Edit patient ${patient.firstName} ${patient.lastName}`}>
+              <Edit className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Edit</span>
             </Button>
           </Link>
@@ -401,7 +401,7 @@ export default async function PatientDetailPage({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
+                  <Activity className="h-5 w-5" aria-hidden="true" />
                   Active Wounds
                 </CardTitle>
                 <div className="flex gap-2">
@@ -414,8 +414,8 @@ export default async function PatientDetailPage({
                     />
                   )}
                   <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
-                    <Button size="sm" className="gap-1">
-                      <Plus className="h-4 w-4" />
+                    <Button size="sm" className="gap-1" aria-label="Add new wound">
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                       Add
                     </Button>
                   </Link>
@@ -448,8 +448,8 @@ export default async function PatientDetailPage({
                     No active wounds
                   </p>
                   <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Plus className="h-4 w-4" />
+                    <Button variant="outline" size="sm" className="gap-1" aria-label="Add first wound">
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                       Add First Wound
                     </Button>
                   </Link>
@@ -463,12 +463,12 @@ export default async function PatientDetailPage({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                  <Calendar className="h-5 w-5" aria-hidden="true" />
                   Recent Visits
                 </CardTitle>
                 <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
-                  <Button size="sm" className="gap-1">
-                    <Plus className="h-4 w-4" />
+                  <Button size="sm" className="gap-1" aria-label="Schedule new visit">
+                    <Plus className="h-4 w-4" aria-hidden="true" />
                     Add
                   </Button>
                 </Link>

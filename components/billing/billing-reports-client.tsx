@@ -184,7 +184,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
-            <FileText className="text-muted-foreground h-4 w-4" />
+            <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalVisits}</div>
@@ -195,7 +195,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">CPT Codes</CardTitle>
-            <FileText className="text-muted-foreground h-4 w-4" />
+            <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCptCodes}</div>
@@ -206,7 +206,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">ICD-10 Codes</CardTitle>
-            <FileText className="text-muted-foreground h-4 w-4" />
+            <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalIcd10Codes}</div>
@@ -286,6 +286,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                 setEndDate("");
               }}
               className="w-full sm:w-auto"
+              aria-label="Clear all filters"
             >
               Clear Filters
             </Button>
@@ -293,8 +294,9 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
               onClick={exportToCSV}
               disabled={filteredBillings.length === 0}
               className="w-full sm:w-auto"
+              aria-label={`Export ${filteredBillings.length} billing records to CSV`}
             >
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 h-4 w-4" aria-hidden="true" />
               Export to CSV
             </Button>
           </div>

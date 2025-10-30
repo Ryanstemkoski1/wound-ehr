@@ -55,11 +55,13 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       )}
 
       {/* Sidebar */}
-      <div
+      <nav
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        aria-label="Main navigation"
+        role="navigation"
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-zinc-200 px-6 dark:border-zinc-800">
@@ -85,7 +87,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <div className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -95,6 +97,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 onClick={handleLinkClick}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
@@ -102,12 +105,12 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-5 w-5" aria-hidden="true" />
                 {item.name}
               </Link>
             );
           })}
-        </nav>
+        </div>
 
         {/* Footer */}
         <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
@@ -115,7 +118,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             Wound EHR v0.1.0
           </p>
         </div>
-      </div>
+      </nav>
     </>
   );
 }
