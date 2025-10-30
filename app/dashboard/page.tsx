@@ -255,16 +255,22 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Welcome back, {user.user_metadata?.name || user.email}
-        </p>
+    <div className="animate-fade-in space-y-6">
+      {/* Header with gradient */}
+      <div className="from-primary/10 via-background to-accent/5 shadow-soft relative overflow-hidden rounded-xl bg-linear-to-br p-8">
+        <div className="relative z-10">
+          <h1 className="gradient-text text-3xl font-bold">Dashboard</h1>
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Welcome back, {user.user_metadata?.name || user.email}
+          </p>
+        </div>
+        {/* Decorative circles */}
+        <div className="bg-primary/5 absolute -top-16 -right-16 h-64 w-64 rounded-full blur-3xl" />
+        <div className="bg-accent/5 absolute -bottom-12 -left-12 h-48 w-48 rounded-full blur-2xl" />
       </div>
 
       {hasError && (
-        <Card className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+        <Card className="animate-slide-in border-amber-500 bg-amber-50 dark:bg-amber-950/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
               <AlertCircle className="h-5 w-5" />
@@ -279,23 +285,29 @@ export default async function DashboardPage() {
         </Card>
       )}
 
+      {/* Enhanced Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
+        {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title}>
+            <Card
+              key={stat.title}
+              className="stat-card hover-lift overflow-hidden transition-all duration-300"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-muted-foreground text-sm font-medium">
                   {stat.title}
                 </CardTitle>
-                <Icon
-                  className="h-4 w-4 text-zinc-600 dark:text-zinc-400"
-                  aria-hidden="true"
-                />
+                <div className="bg-primary/10 rounded-lg p-2">
+                  <Icon className="text-primary h-4 w-4" aria-hidden="true" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <div className="text-3xl font-bold tracking-tight">
+                  {stat.value}
+                </div>
+                <p className="text-muted-foreground mt-1 text-xs">
                   {stat.description}
                 </p>
               </CardContent>

@@ -20,6 +20,7 @@ import { PatientDeleteButton } from "@/components/patients/patient-delete-button
 import WoundCard from "@/components/wounds/wound-card";
 import VisitCard from "@/components/visits/visit-card";
 import CSVDownloadButton from "@/components/pdf/csv-download-button";
+import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 
 type Params = Promise<{ id: string }>;
 
@@ -99,6 +100,14 @@ export default async function PatientDetailPage({
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <DynamicBreadcrumbs
+        customSegments={[
+          { label: "Patients", href: "/dashboard/patients" },
+          { label: `${patient.firstName} ${patient.lastName}` },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -398,9 +407,9 @@ export default async function PatientDetailPage({
         </div>
 
         {/* Right Column - Activity */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-6 lg:h-fit lg:max-h-[calc(100vh-8rem)]">
           {/* Active Wounds */}
-          <Card>
+          <Card className="flex flex-col overflow-hidden">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
@@ -429,7 +438,7 @@ export default async function PatientDetailPage({
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto">
               {patient.wounds.length > 0 ? (
                 <div className="space-y-3">
                   {patient.wounds.map(
@@ -471,7 +480,7 @@ export default async function PatientDetailPage({
           </Card>
 
           {/* Recent Visits */}
-          <Card>
+          <Card className="flex flex-col overflow-hidden">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
@@ -490,7 +499,7 @@ export default async function PatientDetailPage({
                 </Link>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto">
               {patient.visits.length > 0 ? (
                 <div className="space-y-3">
                   {patient.visits.map(

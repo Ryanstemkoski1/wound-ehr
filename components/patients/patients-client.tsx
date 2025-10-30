@@ -15,6 +15,7 @@ import { Plus, Search, Users as UsersIcon } from "lucide-react";
 import Link from "next/link";
 import PatientCard from "./patient-card";
 import CSVDownloadButton from "@/components/pdf/csv-download-button";
+import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 
 type Patient = {
   id: string;
@@ -64,7 +65,11 @@ export default function PatientsClient({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
+      {/* Breadcrumbs */}
+      <DynamicBreadcrumbs customSegments={[{ label: "Patients" }]} />
+
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">Patients</h1>
