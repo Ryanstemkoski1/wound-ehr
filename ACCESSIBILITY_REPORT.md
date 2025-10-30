@@ -13,8 +13,9 @@ This document tracks accessibility improvements implemented in the Wound EHR app
 ### 1. Keyboard Navigation
 
 #### Skip-to-Content Link
+
 - **Location**: `components/layout/dashboard-layout-client.tsx`
-- **Implementation**: 
+- **Implementation**:
   - Skip link positioned absolutely with `sr-only` class
   - Becomes visible on keyboard focus with `focus:not-sr-only`
   - Links to `#main-content` element
@@ -24,8 +25,9 @@ This document tracks accessibility improvements implemented in the Wound EHR app
 - **Status**: ✅ Complete
 
 #### Focus Indicators
+
 - **Implementation**: All interactive elements have visible focus states
-- **Styles**: 
+- **Styles**:
   - `focus-visible:ring-ring/50` - Semi-transparent ring
   - `focus-visible:ring-[3px]` - 3px ring width
   - `focus-visible:border-ring` - Border color change
@@ -35,6 +37,7 @@ This document tracks accessibility improvements implemented in the Wound EHR app
 ### 2. Semantic HTML
 
 #### Navigation
+
 - **Location**: `components/layout/sidebar.tsx`
 - **Changes**:
   - Changed outer container from `<div>` to `<nav>`
@@ -44,6 +47,7 @@ This document tracks accessibility improvements implemented in the Wound EHR app
 - **Status**: ✅ Complete
 
 #### Main Content
+
 - **Location**: `components/layout/dashboard-layout-client.tsx`
 - **Changes**:
   - Main content area uses `<main>` element
@@ -54,20 +58,23 @@ This document tracks accessibility improvements implemented in the Wound EHR app
 ### 3. ARIA Labels
 
 #### Search and Filters
+
 - **Patient Search**: `aria-label="Search patients by name or medical record number"`
 - **Facility Filter**: `aria-label="Filter by facility"`
 - **Status**: ✅ Complete
 
 #### Interactive Cards
-- **Patient Cards**: 
+
+- **Patient Cards**:
   - `aria-label="View details for patient {name}, MRN {mrn}"`
   - Location: `components/patients/patient-card.tsx`
-- **Recent Visits**: 
+- **Recent Visits**:
   - `aria-label="View visit for {name} on {date}, status: {status}"`
   - Location: `app/dashboard/page.tsx`
 - **Status**: ✅ Complete
 
 #### Action Buttons
+
 - **Dashboard Quick Actions**:
   - "Add New Patient - Register a new patient"
   - "Schedule Visit - Book an appointment"
@@ -89,28 +96,33 @@ This document tracks accessibility improvements implemented in the Wound EHR app
 All decorative icons have `aria-hidden="true"` to prevent screen reader announcement:
 
 #### Dashboard
+
 - Statistics card icons (Users, Activity, FileText)
 - Quick action icons (Users, Calendar, FileText)
 - Visit status icons (AlertCircle)
 - **Status**: ✅ Complete
 
 #### Navigation
+
 - All sidebar navigation icons
 - Mobile menu icons
 - **Status**: ✅ Complete
 
 #### Patient Components
+
 - Patient card icons (User, Phone, Building2, Activity)
 - Patient detail icons (Activity, Calendar)
 - Search icon
 - **Status**: ✅ Complete
 
 #### Billing
+
 - Statistics card icons (FileText)
 - Export button icon (Download)
 - **Status**: ✅ Complete
 
 #### Calendar
+
 - Calendar icon in header
 - New Visit button icon (Plus)
 - **Status**: ✅ Complete
@@ -118,7 +130,9 @@ All decorative icons have `aria-hidden="true"` to prevent screen reader announce
 ### 5. Form Accessibility
 
 #### Form Controls (shadcn/ui)
+
 All form components include built-in accessibility:
+
 - **Labels**: Properly associated with inputs via htmlFor
 - **Error States**: `aria-invalid` attribute when errors present
 - **Error Messages**: `aria-describedby` linking to error text
@@ -126,6 +140,7 @@ All form components include built-in accessibility:
 - **Status**: ✅ Complete (library default)
 
 #### Form Components
+
 - Input fields
 - Select dropdowns
 - Textareas
@@ -136,9 +151,11 @@ All form components include built-in accessibility:
 ### 6. Color Contrast
 
 #### Design System Colors (OKLCH)
+
 Current color palette with approximate contrast ratios:
 
 **Light Mode**:
+
 - Primary (Teal): `oklch(0.52 0.12 192)` on white background
   - Estimated contrast: ~8:1 ✅ Exceeds 4.5:1
 - Foreground: `oklch(0.141 0.005 285.823)` on white
@@ -147,6 +164,7 @@ Current color palette with approximate contrast ratios:
   - Estimated contrast: ~6:1 ✅ Exceeds 4.5:1
 
 **Dark Mode**:
+
 - Primary (Teal): `oklch(0.65 0.14 192)` on dark background
   - Estimated contrast: ~8:1 ✅ Exceeds 4.5:1
 - Foreground: `oklch(0.98 0 0)` on dark
@@ -157,15 +175,18 @@ Current color palette with approximate contrast ratios:
 ### 7. Screen Reader Support
 
 #### Landmarks
+
 - Navigation: `<nav>` with `aria-label`
 - Main content: `<main>` with `id` and `role`
 - **Status**: ✅ Complete
 
 #### Live Regions
+
 - Toast notifications: `aria-live` regions (when implemented)
 - **Status**: 🟡 Pending (Phase 7 - Bug Fixes & Polish)
 
 #### Hidden Content
+
 - Decorative icons: `aria-hidden="true"`
 - Mobile menu overlay: Proper focus management
 - **Status**: ✅ Complete
@@ -173,11 +194,13 @@ Current color palette with approximate contrast ratios:
 ### 8. Responsive Design
 
 All accessibility features work across breakpoints:
+
 - Mobile: 320px - 639px
 - Tablet: 640px - 1023px
 - Desktop: 1024px+
 
 **Features**:
+
 - Touch targets minimum 44x44px on mobile
 - Readable text sizes (14px/16px minimum)
 - No horizontal scrolling at any breakpoint
@@ -186,6 +209,7 @@ All accessibility features work across breakpoints:
 ## Testing Checklist
 
 ### Manual Testing
+
 - [ ] **Keyboard Navigation**
   - [ ] Tab through all interactive elements
   - [ ] Skip-to-content link appears and works
@@ -208,6 +232,7 @@ All accessibility features work across breakpoints:
   - [ ] UI components meet 3:1 ratio
 
 ### Automated Testing
+
 - [ ] **Lighthouse Audit**
   - [ ] Dashboard page
   - [ ] Patients list
@@ -252,18 +277,18 @@ None identified yet. Pending full Lighthouse audit.
 
 ## Compliance Summary
 
-| WCAG 2.1 Level AA Criteria | Status | Notes |
-|----------------------------|--------|-------|
-| **1.1 Text Alternatives** | ✅ | All icons marked decorative or have alt text |
-| **1.3 Adaptable** | ✅ | Semantic HTML, landmarks, heading hierarchy |
-| **1.4 Distinguishable** | 🟡 | Colors used, contrast pending audit |
-| **2.1 Keyboard Accessible** | ✅ | All functions keyboard accessible |
-| **2.4 Navigable** | ✅ | Skip links, landmarks, focus indicators |
-| **2.5 Input Modalities** | ✅ | Touch targets 44x44px, no motion-only actions |
-| **3.1 Readable** | ✅ | Clear language, proper labels |
-| **3.2 Predictable** | ✅ | Consistent navigation and behavior |
-| **3.3 Input Assistance** | ✅ | Error identification, labels, suggestions |
-| **4.1 Compatible** | ✅ | Valid HTML, ARIA attributes |
+| WCAG 2.1 Level AA Criteria  | Status | Notes                                         |
+| --------------------------- | ------ | --------------------------------------------- |
+| **1.1 Text Alternatives**   | ✅     | All icons marked decorative or have alt text  |
+| **1.3 Adaptable**           | ✅     | Semantic HTML, landmarks, heading hierarchy   |
+| **1.4 Distinguishable**     | 🟡     | Colors used, contrast pending audit           |
+| **2.1 Keyboard Accessible** | ✅     | All functions keyboard accessible             |
+| **2.4 Navigable**           | ✅     | Skip links, landmarks, focus indicators       |
+| **2.5 Input Modalities**    | ✅     | Touch targets 44x44px, no motion-only actions |
+| **3.1 Readable**            | ✅     | Clear language, proper labels                 |
+| **3.2 Predictable**         | ✅     | Consistent navigation and behavior            |
+| **3.3 Input Assistance**    | ✅     | Error identification, labels, suggestions     |
+| **4.1 Compatible**          | ✅     | Valid HTML, ARIA attributes                   |
 
 **Overall Status**: 🟡 95% Complete - Pending color contrast audit
 

@@ -25,12 +25,14 @@
 ## Getting Started
 
 ### System Requirements
+
 - **Browser**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
 - **Screen Resolution**: Minimum 320px width (mobile-optimized)
 - **Internet Connection**: Required for all features
 - **Recommended**: Desktop/tablet for optimal assessment form experience
 
 ### First-Time Login
+
 1. Navigate to the application URL
 2. Click "Sign In" or "Create Account"
 3. Enter your email and password
@@ -38,6 +40,7 @@
 5. You'll be redirected to the Dashboard
 
 ### Account Setup
+
 - Your account is tied to your facility
 - Contact your administrator to be added to the correct facility
 - Default view shows patients assigned to your facility
@@ -58,16 +61,19 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Charts (Analytics)
 
 **Wound Status Distribution (Pie Chart)**:
+
 - Shows breakdown of wounds by status: Active, Healing, Healed
 - Hover over sections for exact counts
 - Colors: Teal (Active), Green (Healing), Amber (Healed)
 
 **Visits Over Time (Bar Chart)**:
+
 - Displays visit trends for the last 6 months
 - Helps identify busy periods
 - Y-axis shows visit count per month
 
 **Healing Progress Trends (Line Chart)**:
+
 - Tracks wound healing status over 8 weeks
 - Three lines: Improving (green), Stable (blue), Declined (red)
 - Useful for identifying care effectiveness
@@ -90,13 +96,15 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Registering a New Patient
 
 **Steps**:
+
 1. Click "Add New Patient" from Dashboard or Patients page
 2. Fill out the form across three tabs:
    - **Demographics**: Basic info, contact details
    - **Insurance**: Primary and secondary insurance
    - **Medical Info**: Allergies, medical history
 
-**Required Fields** (marked with red *):
+**Required Fields** (marked with red \*):
+
 - Facility
 - First Name
 - Last Name
@@ -105,6 +113,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 - Medical Record Number (MRN)
 
 **Tips**:
+
 - MRN must be unique per facility
 - Emergency contact is optional but recommended
 - You can add multiple allergies and medical conditions
@@ -116,11 +125,13 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Searching for Patients
 
 **Search Options**:
+
 - By name (first or last)
 - By Medical Record Number (MRN)
 - By facility (filter dropdown)
 
 **Steps**:
+
 1. Navigate to Patients page
 2. Use the search bar at the top
 3. Or select a facility from the filter dropdown
@@ -129,6 +140,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Editing Patient Information
 
 **Steps**:
+
 1. Click on a patient card to view details
 2. Click the "Edit" button (top right)
 3. Update information across any tab
@@ -140,6 +152,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 **⚠️ Warning**: This action cannot be undone. All associated wounds, visits, and assessments will be permanently deleted.
 
 **Steps**:
+
 1. Navigate to patient detail page
 2. Click the red "Delete" button
 3. Confirm deletion in the dialog
@@ -152,6 +165,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Adding a New Wound
 
 **Steps**:
+
 1. Go to patient detail page
 2. Click "Add" in the Active Wounds section
 3. Fill out the form:
@@ -165,6 +179,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 5. Success toast appears
 
 **Anatomical Locations Include**:
+
 - Head, neck, chest, abdomen, back
 - Sacrum, coccyx (common pressure injury sites)
 - Upper extremities (shoulders, arms, elbows, hands)
@@ -173,16 +188,19 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Performing a Wound Assessment
 
 **When to Assess**:
+
 - During each patient visit
 - As part of the visit workflow
 - When wound status changes significantly
 
 **Steps**:
+
 1. Schedule or open an existing visit
 2. Click "New Assessment" from the visit detail page
 3. **Fill out the assessment form**:
 
 **Part 1: Wound Measurements**
+
 - Length (cm): Longest dimension
 - Width (cm): Perpendicular to length
 - Depth (cm): Deepest point
@@ -191,18 +209,21 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 - Tunneling: Extent of tissue destruction along tissue planes
 
 **Part 2: Wound Bed Assessment**
+
 - Tissue Types: Necrotic, slough, granulation, epithelial (percentages must total 100%)
 - Exudate Amount: None, minimal, moderate, copious
 - Exudate Type: Serous, serosanguineous, sanguineous, purulent
 - Odor: None, mild, moderate, strong
 
 **Part 3: Wound Edges & Periwound**
+
 - Edge Description: Attached, not attached, rolled under
 - Periwound Skin: Intact, macerated, erythematous, indurated
 - Pain Level: 0-10 scale
 - Signs of Infection: Yes/No
 
 **Part 4: Treatment Plan**
+
 - Cleansing Method
 - Dressings Applied
 - Debridement Performed (if any)
@@ -214,6 +235,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 6. Assessment is saved to the visit
 
 **Tips**:
+
 - Measurements should be in centimeters
 - Area is auto-calculated from length × width
 - Tissue type percentages must equal 100%
@@ -226,6 +248,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Creating a New Visit
 
 **From Calendar**:
+
 1. Navigate to Calendar page
 2. Click "New Visit" button
 3. Select patient from dropdown
@@ -233,6 +256,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 5. Save
 
 **From Patient Detail**:
+
 1. Go to patient detail page
 2. Click "Add" in Recent Visits section
 3. Fill out visit form
@@ -240,11 +264,13 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Visit Form Fields
 
 **Required**:
+
 - Patient (auto-filled if from patient detail)
 - Visit Date
 - Visit Type: Initial, Follow-up, Discharge, Consultation
 
 **Optional**:
+
 - Time Spent (minutes)
 - Visit Status: Incomplete (default), Complete
 - Clinical Notes
@@ -252,6 +278,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 - Follow-up Notes
 
 **Billing Information**:
+
 - CPT Codes (procedure codes)
 - ICD-10 Codes (diagnosis codes)
 - Modifiers (if applicable)
@@ -267,6 +294,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Marking a Visit as Complete
 
 **Steps**:
+
 1. Open the visit detail page
 2. Perform all assessments
 3. Click "Edit Visit"
@@ -274,6 +302,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 5. Save
 
 **Why Mark Complete?**:
+
 - Tracks workflow progress
 - Filters pending visits on dashboard
 - Required for accurate reporting
@@ -285,6 +314,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Understanding Billing Codes
 
 **CPT Codes** (Current Procedural Terminology):
+
 - Describe medical procedures performed
 - Examples:
   - `97597` - Debridement, selective (first 20 sq cm)
@@ -292,6 +322,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
   - `97602` - Wound care, non-selective debridement
 
 **ICD-10 Codes** (International Classification of Diseases):
+
 - Describe diagnoses and conditions
 - Examples:
   - `L89.154` - Pressure ulcer of sacral region, stage 4
@@ -299,6 +330,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
   - `I96` - Gangrene, not elsewhere classified
 
 **Modifiers**:
+
 - Two-character codes that alter procedure meaning
 - Examples:
   - `LT` - Left side
@@ -308,6 +340,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Adding Billing to a Visit
 
 **When Creating a Visit**:
+
 1. Scroll to "Billing Information" section
 2. Click "Add CPT Code" - search or browse
 3. Click "Add ICD-10 Code" - search or browse
@@ -316,6 +349,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 6. Save visit (billing saved automatically)
 
 **When Editing a Visit**:
+
 1. Navigate to visit detail page
 2. Click "Edit Visit"
 3. Update billing codes in the Billing Information section
@@ -324,16 +358,19 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Searching for Codes
 
 **CPT Code Search**:
+
 - Type procedure name: "debridement", "wound care"
 - Or enter code directly: "97597"
 - Filter by category for faster results
 
 **ICD-10 Code Search**:
+
 - Type condition: "pressure ulcer", "diabetes"
 - Or enter code: "L89.154"
 - Descriptions help you find the right code
 
 **Tips**:
+
 - Use specific descriptions for better search results
 - Verify codes match the actual procedure/diagnosis
 - Consult billing guidelines for complex cases
@@ -341,6 +378,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Viewing Billing Reports
 
 **Steps**:
+
 1. Navigate to Billing Reports page from sidebar
 2. Use filters to refine results:
    - **Date Range**: Start date and end date
@@ -357,12 +395,14 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Exporting Billing Data
 
 **Steps**:
+
 1. Apply desired filters on Billing Reports page
 2. Click "Export to CSV" button
 3. File downloads with all filtered records
 4. Open in Excel, Google Sheets, or billing software
 
 **CSV Columns Include**:
+
 - Date, Patient Name, MRN, Facility
 - Visit Type
 - CPT Codes, ICD-10 Codes, Modifiers
@@ -376,6 +416,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Uploading Wound Photos
 
 **During Assessment**:
+
 1. Fill out wound assessment form
 2. Scroll to "Wound Photo" section
 3. Click "Choose File" or drag-and-drop
@@ -383,6 +424,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 5. Photo uploads automatically on form submit
 
 **From Visit Detail**:
+
 1. Navigate to visit detail page
 2. Find wound assessment
 3. Click "Upload Photo" button
@@ -390,6 +432,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 5. Photo links to that specific assessment
 
 **Best Practices**:
+
 - Use good lighting
 - Include a measurement reference (ruler) if possible
 - Take from consistent angle for comparison
@@ -399,12 +442,14 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ### Viewing Photos
 
 **Photo Gallery**:
+
 1. Go to patient detail page or wound detail page
 2. Scroll to "Photos" section
 3. Click on any thumbnail to view full-size
 4. Navigation arrows to view previous/next
 
 **Photo Comparison Tool**:
+
 1. Navigate to wound detail page
 2. Click "Compare Photos"
 3. Select two dates to compare side-by-side
@@ -415,6 +460,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 **⚠️ Warning**: Photo deletion is permanent and cannot be undone.
 
 **Steps**:
+
 1. View photo in full-size mode
 2. Click "Delete Photo" button
 3. Confirm deletion
@@ -429,12 +475,14 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 **Purpose**: Comprehensive document of a single visit including all assessments, photos, and treatments.
 
 **How to Generate**:
+
 1. Navigate to visit detail page
 2. Click "Export PDF" button (top right)
 3. PDF generates automatically
 4. Download or print
 
 **Report Includes**:
+
 - Patient demographics
 - Visit information (date, type, provider)
 - All wound assessments from that visit
@@ -444,6 +492,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 - Billing codes (CPT, ICD-10)
 
 **Use Cases**:
+
 - Sharing with specialists or referring providers
 - Patient records for transfers
 - Insurance documentation
@@ -454,12 +503,14 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 **Purpose**: Timeline of a specific wound's healing journey across multiple visits.
 
 **How to Generate**:
+
 1. Navigate to wound detail page
 2. Click "Wound Progress Report" button
 3. Select date range (optional - defaults to all assessments)
 4. PDF generates
 
 **Report Includes**:
+
 - Wound identification (number, location, type)
 - Chart of measurements over time (length, width, depth, area)
 - Tissue type progression
@@ -469,6 +520,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 - Healing rate calculation
 
 **Use Cases**:
+
 - Demonstrating healing progress
 - Identifying plateau or decline
 - Treatment effectiveness evaluation
@@ -488,30 +540,30 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 ### Navigation
 
-| Shortcut | Action |
-|----------|--------|
-| `Tab` | Move to next interactive element |
-| `Shift + Tab` | Move to previous element |
-| `Enter` | Activate buttons, links |
-| `Space` | Toggle checkboxes, select dropdowns |
-| `Esc` | Close dialogs, menus |
-| `Arrow Keys` | Navigate dropdown options, calendar dates |
+| Shortcut      | Action                                    |
+| ------------- | ----------------------------------------- |
+| `Tab`         | Move to next interactive element          |
+| `Shift + Tab` | Move to previous element                  |
+| `Enter`       | Activate buttons, links                   |
+| `Space`       | Toggle checkboxes, select dropdowns       |
+| `Esc`         | Close dialogs, menus                      |
+| `Arrow Keys`  | Navigate dropdown options, calendar dates |
 
 ### Accessibility
 
-| Feature | How to Use |
-|---------|------------|
-| **Skip to Content** | Press `Tab` immediately after page load - skip link appears, press `Enter` |
-| **Form Navigation** | `Tab` through fields in logical order |
-| **Error Navigation** | Focus automatically moves to first error on form submit |
+| Feature              | How to Use                                                                 |
+| -------------------- | -------------------------------------------------------------------------- |
+| **Skip to Content**  | Press `Tab` immediately after page load - skip link appears, press `Enter` |
+| **Form Navigation**  | `Tab` through fields in logical order                                      |
+| **Error Navigation** | Focus automatically moves to first error on form submit                    |
 
 ### Calendar
 
-| Shortcut | Action |
-|----------|--------|
+| Shortcut     | Action                  |
+| ------------ | ----------------------- |
 | `Arrow Keys` | Navigate calendar dates |
-| `Enter` | Select highlighted date |
-| `Esc` | Close calendar picker |
+| `Enter`      | Select highlighted date |
+| `Esc`        | Close calendar picker   |
 
 ---
 
@@ -536,6 +588,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 - **Status Updates**: Toast notifications are live regions (announced automatically)
 
 **Example Screen Reader Output**:
+
 - "Search patients by name or medical record number, edit text"
 - "Add New Patient - Register a new patient, link"
 - "View details for patient John Doe, MRN 12345, link"
@@ -562,6 +615,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Cannot log in  
 **Solutions**:
+
 1. Verify email and password are correct
 2. Check if Caps Lock is on
 3. Try "Forgot Password" to reset
@@ -571,6 +625,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Email verification not received  
 **Solutions**:
+
 1. Check spam/junk folder
 2. Wait 5-10 minutes (emails may be delayed)
 3. Click "Resend verification email" on login page
@@ -584,6 +639,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Patient not appearing in search  
 **Solutions**:
+
 1. Clear search filters (click "Clear Filters")
 2. Verify patient's facility matches selected filter
 3. Try searching by MRN instead of name
@@ -593,14 +649,16 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Form won't submit  
 **Solutions**:
+
 1. Check for red error messages under fields
 2. Scroll to top of form - error summary may be there
-3. Ensure all required fields (marked with *) are filled
+3. Ensure all required fields (marked with \*) are filled
 4. For date fields, use the date picker or MM/DD/YYYY format
 5. For tissue percentages, ensure they total exactly 100%
 
 **Problem**: Changes not saving  
 **Solutions**:
+
 1. Check for error toast in top-right corner
 2. Verify internet connection is active
 3. Try refreshing the page and re-entering data
@@ -611,6 +669,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Photo won't upload  
 **Solutions**:
+
 1. Check file size (must be < 5MB)
 2. Verify file format (JPG, PNG, WEBP supported)
 3. Check internet connection
@@ -624,6 +683,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: PDF won't generate  
 **Solutions**:
+
 1. Ensure visit has at least one assessment
 2. Check browser's pop-up blocker settings
 3. Try a different browser
@@ -632,6 +692,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Photos missing from PDF  
 **Solutions**:
+
 1. Verify photos are attached to assessments
 2. Check that photos finished uploading before export
 3. Try exporting again after a few minutes
@@ -640,6 +701,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Page loading slowly  
 **Solutions**:
+
 1. Check internet connection speed
 2. Close unnecessary browser tabs
 3. Clear browser cache
@@ -648,6 +710,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Dashboard shows "Database Connection Issue"  
 **Solutions**:
+
 1. Check internet connection
 2. Refresh the page (F5)
 3. Wait a few minutes and try again
@@ -668,6 +731,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: Can't find a billing code  
 **Solutions**:
+
 1. Try broader search terms ("wound" instead of "chronic wound care")
 2. Browse by category instead of searching
 3. Ask a colleague for the correct code
@@ -676,6 +740,7 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 
 **Problem**: CSV export is empty  
 **Solutions**:
+
 1. Clear all filters and try again
 2. Verify there are billing records in the selected date range
 3. Check that patients have visits with billing codes attached
@@ -686,17 +751,21 @@ The Dashboard is your central hub for quick access to key metrics and recent act
 ## Getting Help
 
 ### Contact Support
+
 - **Email**: support@wound-ehr.com (example)
 - **Phone**: 1-800-WOUND-EHR (example)
 - **Hours**: Monday-Friday, 8 AM - 6 PM EST
 
 ### Training Resources
+
 - **Video Tutorials**: Available in Help menu
 - **Live Training Sessions**: Contact administrator
 - **Quick Reference Guides**: Print-friendly PDFs in Help section
 
 ### Reporting Bugs
+
 If you encounter a bug or error:
+
 1. Note what you were doing when the error occurred
 2. Take a screenshot if possible
 3. Check browser console for error messages (F12 → Console tab)
@@ -708,33 +777,33 @@ If you encounter a bug or error:
 
 ### Wound Type Reference
 
-| Type | Description | Common Locations |
-|------|-------------|------------------|
+| Type                | Description                           | Common Locations            |
+| ------------------- | ------------------------------------- | --------------------------- |
 | **Pressure Injury** | Tissue damage from prolonged pressure | Sacrum, heels, hips, elbows |
-| **Diabetic** | Ulcers related to diabetes | Feet, toes, plantar surface |
-| **Surgical** | Post-operative incisions | Varies by surgery |
-| **Venous** | Poor venous circulation | Lower legs, ankles |
-| **Arterial** | Inadequate arterial blood flow | Toes, feet, legs |
-| **Traumatic** | Injury from accident or trauma | Any location |
-| **Burn** | Thermal, chemical, or radiation | Varies |
+| **Diabetic**        | Ulcers related to diabetes            | Feet, toes, plantar surface |
+| **Surgical**        | Post-operative incisions              | Varies by surgery           |
+| **Venous**          | Poor venous circulation               | Lower legs, ankles          |
+| **Arterial**        | Inadequate arterial blood flow        | Toes, feet, legs            |
+| **Traumatic**       | Injury from accident or trauma        | Any location                |
+| **Burn**            | Thermal, chemical, or radiation       | Varies                      |
 
 ### Exudate Types
 
-| Type | Appearance | Significance |
-|------|------------|--------------|
-| **Serous** | Clear, watery | Normal healing |
-| **Serosanguineous** | Pink, watery | Minor bleeding, often normal |
-| **Sanguineous** | Bloody | Active bleeding, may need intervention |
-| **Purulent** | Thick, opaque, yellow/green | Infection present |
+| Type                | Appearance                  | Significance                           |
+| ------------------- | --------------------------- | -------------------------------------- |
+| **Serous**          | Clear, watery               | Normal healing                         |
+| **Serosanguineous** | Pink, watery                | Minor bleeding, often normal           |
+| **Sanguineous**     | Bloody                      | Active bleeding, may need intervention |
+| **Purulent**        | Thick, opaque, yellow/green | Infection present                      |
 
 ### Tissue Types
 
-| Type | Appearance | Action Required |
-|------|------------|-----------------|
-| **Necrotic (Black)** | Black, hard eschar | Debridement needed |
-| **Slough (Yellow)** | Yellow, stringy | Debridement recommended |
-| **Granulation (Red)** | Beefy red, bumpy | Healthy healing tissue |
-| **Epithelial (Pink)** | Pink, smooth | New skin forming, protect |
+| Type                  | Appearance         | Action Required           |
+| --------------------- | ------------------ | ------------------------- |
+| **Necrotic (Black)**  | Black, hard eschar | Debridement needed        |
+| **Slough (Yellow)**   | Yellow, stringy    | Debridement recommended   |
+| **Granulation (Red)** | Beefy red, bumpy   | Healthy healing tissue    |
+| **Epithelial (Pink)** | Pink, smooth       | New skin forming, protect |
 
 ---
 

@@ -103,11 +103,14 @@ export default function WoundForm({
         description: result.error,
       });
     } else {
-      toast.success(wound ? "Wound updated successfully" : "Wound created successfully", {
-        description: wound 
-          ? `Wound ${wound.woundNumber} has been updated.`
-          : "You can now schedule visits and assessments.",
-      });
+      toast.success(
+        wound ? "Wound updated successfully" : "Wound created successfully",
+        {
+          description: wound
+            ? `Wound ${wound.woundNumber} has been updated.`
+            : "You can now schedule visits and assessments.",
+        }
+      );
       if (onSuccess) {
         onSuccess();
       } else {

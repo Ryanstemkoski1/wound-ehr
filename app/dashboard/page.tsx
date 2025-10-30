@@ -353,7 +353,10 @@ export default async function DashboardPage() {
                       <div>
                         {visit.status === "incomplete" ? (
                           <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                            <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                            <AlertCircle
+                              className="h-3 w-3"
+                              aria-hidden="true"
+                            />
                             Incomplete
                           </span>
                         ) : (

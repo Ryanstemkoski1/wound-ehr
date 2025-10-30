@@ -35,7 +35,10 @@ export default function CalendarPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            <CalendarIcon className="h-6 w-6 sm:h-8 sm:w-8" aria-hidden="true" />
+            <CalendarIcon
+              className="h-6 w-6 sm:h-8 sm:w-8"
+              aria-hidden="true"
+            />
             Calendar
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">

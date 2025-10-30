@@ -184,7 +184,10 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
-            <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <FileText
+              className="text-muted-foreground h-4 w-4"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalVisits}</div>
@@ -195,7 +198,10 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">CPT Codes</CardTitle>
-            <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <FileText
+              className="text-muted-foreground h-4 w-4"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCptCodes}</div>
@@ -206,7 +212,10 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">ICD-10 Codes</CardTitle>
-            <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
+            <FileText
+              className="text-muted-foreground h-4 w-4"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalIcd10Codes}</div>
