@@ -65,10 +65,10 @@ export default function PatientsClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Patients</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-2xl font-bold sm:text-3xl">Patients</h1>
+          <p className="text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
             Manage patient records
           </p>
         </div>
@@ -81,7 +81,8 @@ export default function PatientsClient({
           <Link href="/dashboard/patients/new">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Patient
+              <span className="hidden sm:inline">Add Patient</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </Link>
         </div>
@@ -90,7 +91,7 @@ export default function PatientsClient({
       {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               <Input
@@ -101,7 +102,7 @@ export default function PatientsClient({
               />
             </div>
             <Select value={facilityFilter} onValueChange={setFacilityFilter}>
-              <SelectTrigger className="w-[250px]">
+              <SelectTrigger className="w-full sm:w-[250px]">
                 <SelectValue placeholder="All Facilities" />
               </SelectTrigger>
               <SelectContent>

@@ -276,7 +276,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
             </div>
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
               onClick={() => {
@@ -285,12 +285,14 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                 setStartDate("");
                 setEndDate("");
               }}
+              className="w-full sm:w-auto"
             >
               Clear Filters
             </Button>
             <Button
               onClick={exportToCSV}
               disabled={filteredBillings.length === 0}
+              className="w-full sm:w-auto"
             >
               <Download className="mr-2 h-4 w-4" />
               Export to CSV
@@ -314,109 +316,240 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
               No billing records found. Try adjusting your filters.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>MRN</TableHead>
-                    <TableHead>Facility</TableHead>
-                    <TableHead>CPT Codes</TableHead>
-                    <TableHead>ICD-10 Codes</TableHead>
-                    <TableHead>Modifiers</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBillings.map((billing) => (
-                    <TableRow key={billing.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {format(
-                          new Date(billing.visit.visitDate),
-                          "MM/dd/yyyy"
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <Link
-                          href={`/dashboard/patients/${billing.patient.id}`}
-                          className="font-medium hover:underline"
-                        >
-                          {billing.patient.firstName} {billing.patient.lastName}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{billing.patient.mrn}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {billing.patient.facility.name}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {Array.isArray(billing.cptCodes) &&
-                            billing.cptCodes.map((code) => (
-                              <Badge
-                                key={code}
-                                variant="default"
-                                className="text-xs"
-                              >
-                                {code}
-                              </Badge>
-                            ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {Array.isArray(billing.icd10Codes) &&
-                            billing.icd10Codes.map((code) => (
-                              <Badge
-                                key={code}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {code}
-                              </Badge>
-                            ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {Array.isArray(billing.modifiers) &&
-                            billing.modifiers.map((modifier) => (
-                              <Badge
-                                key={modifier}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {modifier}
-                              </Badge>
-                            ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {billing.timeSpent ? (
-                          <Badge variant="default" className="bg-green-600">
-                            Time
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            -
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link
-                            href={`/dashboard/patients/${billing.patient.id}/visits/${billing.visit.id}`}
-                          >
-                            View
-                          </Link>
-                        </Button>
-                      </TableCell>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden overflow-x-auto rounded-md border lg:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>MRN</TableHead>
+                      <TableHead>Facility</TableHead>
+                      <TableHead>CPT Codes</TableHead>
+                      <TableHead>ICD-10 Codes</TableHead>
+                      <TableHead>Modifiers</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredBillings.map((billing) => (
+                      <TableRow key={billing.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {format(
+                            new Date(billing.visit.visitDate),
+                            "MM/dd/yyyy"
+                          )}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Link
+                            href={`/dashboard/patients/${billing.patient.id}`}
+                            className="font-medium hover:underline"
+                          >
+                            {billing.patient.firstName}{" "}
+                            {billing.patient.lastName}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{billing.patient.mrn}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {billing.patient.facility.name}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {Array.isArray(billing.cptCodes) &&
+                              billing.cptCodes.map((code) => (
+                                <Badge
+                                  key={code}
+                                  variant="default"
+                                  className="text-xs"
+                                >
+                                  {code}
+                                </Badge>
+                              ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {Array.isArray(billing.icd10Codes) &&
+                              billing.icd10Codes.map((code) => (
+                                <Badge
+                                  key={code}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {code}
+                                </Badge>
+                              ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {Array.isArray(billing.modifiers) &&
+                              billing.modifiers.map((modifier) => (
+                                <Badge
+                                  key={modifier}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {modifier}
+                                </Badge>
+                              ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {billing.timeSpent ? (
+                            <Badge variant="default" className="bg-green-600">
+                              Time
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              -
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link
+                              href={`/dashboard/patients/${billing.patient.id}/visits/${billing.visit.id}`}
+                            >
+                              View
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="space-y-4 lg:hidden">
+                {filteredBillings.map((billing) => (
+                  <Card key={billing.id}>
+                    <CardContent className="pt-6">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <Link
+                              href={`/dashboard/patients/${billing.patient.id}`}
+                              className="text-base font-semibold hover:underline"
+                            >
+                              {billing.patient.firstName}{" "}
+                              {billing.patient.lastName}
+                            </Link>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                              MRN: {billing.patient.mrn}
+                            </p>
+                          </div>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link
+                              href={`/dashboard/patients/${billing.patient.id}/visits/${billing.visit.id}`}
+                            >
+                              View
+                            </Link>
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              Date:
+                            </span>
+                            <span className="font-medium">
+                              {format(
+                                new Date(billing.visit.visitDate),
+                                "MM/dd/yyyy"
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              Facility:
+                            </span>
+                            <span className="font-medium">
+                              {billing.patient.facility.name}
+                            </span>
+                          </div>
+                          {billing.timeSpent && (
+                            <div className="flex justify-between">
+                              <span className="text-zinc-600 dark:text-zinc-400">
+                                Time-Based:
+                              </span>
+                              <Badge variant="default" className="bg-green-600">
+                                Yes
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          {Array.isArray(billing.cptCodes) &&
+                            billing.cptCodes.length > 0 && (
+                              <div>
+                                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                  CPT Codes:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {billing.cptCodes.map((code) => (
+                                    <Badge
+                                      key={code}
+                                      variant="default"
+                                      className="text-xs"
+                                    >
+                                      {code}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          {Array.isArray(billing.icd10Codes) &&
+                            billing.icd10Codes.length > 0 && (
+                              <div>
+                                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                  ICD-10 Codes:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {billing.icd10Codes.map((code) => (
+                                    <Badge
+                                      key={code}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {code}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          {Array.isArray(billing.modifiers) &&
+                            billing.modifiers.length > 0 && (
+                              <div>
+                                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                  Modifiers:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {billing.modifiers.map((modifier) => (
+                                    <Badge
+                                      key={modifier}
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {modifier}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

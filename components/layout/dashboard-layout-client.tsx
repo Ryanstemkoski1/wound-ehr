@@ -23,11 +23,8 @@ export function DashboardLayoutClient({
         onMobileClose={() => setMobileMenuOpen(false)}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header
-          user={user}
-          onMobileMenuClick={() => setMobileMenuOpen(true)}
-        />
-        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 dark:bg-zinc-950 sm:p-6">
+        <Header user={user} onMobileMenuClick={() => setMobileMenuOpen(true)} />
+        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 sm:p-6 dark:bg-zinc-950">
           {children}
         </main>
       </div>

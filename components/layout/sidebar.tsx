@@ -33,10 +33,7 @@ type SidebarProps = {
   onMobileClose?: () => void;
 };
 
-export default function Sidebar({
-  mobileOpen,
-  onMobileClose,
-}: SidebarProps) {
+export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
 
   const handleLinkClick = () => {
@@ -60,7 +57,7 @@ export default function Sidebar({
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-200 bg-white transition-transform duration-300 dark:border-zinc-800 dark:bg-zinc-900 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

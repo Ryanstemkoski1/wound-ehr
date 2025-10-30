@@ -9,9 +9,9 @@ export function FormLoadingSkeleton() {
           <Skeleton className="h-10 w-full" />
         </div>
       ))}
-      <div className="flex gap-2 justify-end">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-24" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <Skeleton className="h-10 w-full sm:w-24" />
+        <Skeleton className="h-10 w-full sm:w-24" />
       </div>
     </div>
   );
@@ -21,14 +21,17 @@ export function TableLoadingSkeleton({ rows = 10 }: { rows?: number }) {
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex gap-4 p-4 bg-muted rounded-lg">
+      <div className="bg-muted hidden gap-4 rounded-lg p-4 sm:flex">
         {[...Array(5)].map((_, i) => (
           <Skeleton key={i} className="h-4 flex-1" />
         ))}
       </div>
       {/* Rows */}
       {[...Array(rows)].map((_, i) => (
-        <div key={i} className="flex gap-4 p-4 border rounded-lg">
+        <div
+          key={i}
+          className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:gap-4"
+        >
           {[...Array(5)].map((_, j) => (
             <Skeleton key={j} className="h-4 flex-1" />
           ))}
@@ -40,9 +43,9 @@ export function TableLoadingSkeleton({ rows = 10 }: { rows?: number }) {
 
 export function CardLoadingSkeleton() {
   return (
-    <div className="rounded-lg border bg-card p-6">
+    <div className="bg-card rounded-lg border p-6">
       <div className="space-y-4">
-        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-6 w-full max-w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-4 w-5/6" />
@@ -55,8 +58,8 @@ export function ChartLoadingSkeleton() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-5 w-full max-w-48" />
+        <Skeleton className="h-4 w-full max-w-64" />
       </div>
       <Skeleton className="h-[300px] w-full rounded-lg" />
     </div>

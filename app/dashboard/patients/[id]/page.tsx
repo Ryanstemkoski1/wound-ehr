@@ -100,20 +100,20 @@ export default async function PatientDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl font-bold sm:text-3xl">
             {patient.firstName} {patient.lastName}
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
             MRN: {patient.mrn} • {patient.facility.name}
           </p>
         </div>
         <div className="flex gap-2">
           <Link href={`/dashboard/patients/${patient.id}/edit`}>
-            <Button className="gap-2">
+            <Button className="flex-1 gap-2 sm:flex-none">
               <Edit className="h-4 w-4" />
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </Button>
           </Link>
           <PatientDeleteButton
@@ -128,9 +128,15 @@ export default async function PatientDetailPage({
         <div className="space-y-6 lg:col-span-2">
           <Tabs defaultValue="demographics">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="demographics">Demographics</TabsTrigger>
-              <TabsTrigger value="insurance">Insurance</TabsTrigger>
-              <TabsTrigger value="medical">Medical Info</TabsTrigger>
+              <TabsTrigger value="demographics" className="text-xs sm:text-sm">
+                Demographics
+              </TabsTrigger>
+              <TabsTrigger value="insurance" className="text-xs sm:text-sm">
+                Insurance
+              </TabsTrigger>
+              <TabsTrigger value="medical" className="text-xs sm:text-sm">
+                Medical Info
+              </TabsTrigger>
             </TabsList>
 
             {/* Demographics Tab */}
