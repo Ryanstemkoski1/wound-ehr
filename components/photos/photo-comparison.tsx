@@ -7,7 +7,6 @@ import { ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Decimal } from "@prisma/client/runtime/library";
 
 type ComparisonPhoto = {
   id: string;
@@ -19,10 +18,10 @@ type ComparisonPhoto = {
   } | null;
   assessment: {
     healingStatus: string | null;
-    length: Decimal | null;
-    width: Decimal | null;
-    depth: Decimal | null;
-    area: Decimal | null;
+    length: number | null;
+    width: number | null;
+    depth: number | null;
+    area: number | null;
   } | null;
 };
 

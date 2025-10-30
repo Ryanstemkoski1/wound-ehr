@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import AssessmentCard from "@/components/assessments/assessment-card";
-import { Decimal } from "@prisma/client/runtime/library";
 import VisitPDFDownloadButton from "@/components/pdf/visit-pdf-download-button";
+
+// Force dynamic rendering (requires auth)
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{
@@ -316,28 +318,20 @@ export default async function VisitDetailPage({ params }: PageProps) {
                       woundId: string;
                       wound: { woundNumber: string; location: string };
                       healingStatus: string | null;
-                      length: Decimal | null;
-                      width: Decimal | null;
-                      depth: Decimal | null;
-                      area: Decimal | null;
+                      length: number | null;
+                      width: number | null;
+                      depth: number | null;
+                      area: number | null;
                       createdAt: Date;
                     }) => (
                       <AssessmentCard
                         key={assessment.id}
                         assessment={{
                           ...assessment,
-                          length: assessment.length
-                            ? Number(assessment.length)
-                            : null,
-                          width: assessment.width
-                            ? Number(assessment.width)
-                            : null,
-                          depth: assessment.depth
-                            ? Number(assessment.depth)
-                            : null,
-                          area: assessment.area
-                            ? Number(assessment.area)
-                            : null,
+                          length: assessment.length,
+                          width: assessment.width,
+                          depth: assessment.depth,
+                          area: assessment.area,
                         }}
                         patientId={patientId}
                         visitId={visitId}

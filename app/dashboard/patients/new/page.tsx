@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import PatientForm from "@/components/patients/patient-form";
 
 export default async function NewPatientPage() {
@@ -15,17 +14,21 @@ export default async function NewPatientPage() {
   }
 
   // Get user's facilities
-  const userFacilities = await prisma.userFacility.findMany({
-    where: { userId: user.id },
-    include: { facility: true },
-  });
+  const { data: userFacilities } = await supabase
+    .from("user_facilities")
+    .select("facility_id, facility:facilities!inner(id, name)")
+    .eq("user_id", user.id);
 
-  const facilities = userFacilities.map(
-    (uf: { facility: { id: string; name: string } }) => ({
-      id: uf.facility.id,
-      name: uf.facility.name,
-    })
-  );
+  const facilities =
+    userFacilities?.map((uf) => {
+      const facility = Array.isArray(uf.facility)
+        ? uf.facility[0]
+        : uf.facility;
+      return {
+        id: facility.id,
+        name: facility.name,
+      };
+    }) || [];
 
   if (facilities.length === 0) {
     redirect("/dashboard/facilities/new");

@@ -1,8 +1,8 @@
 # Wound EHR - System Design Document
 
-> **Version**: 2.1  
+> **Version**: 2.2  
 > **Date**: October 30, 2025  
-> **Status**: ✅ **Approved - Ready for Implementation**
+> **Status**: ✅ **Approved - Production Ready** (Migrated from Prisma to Supabase JS)
 
 ---
 
@@ -246,7 +246,7 @@ A fully custom, web-based EHR platform with:
 │              Application Layer (Next.js 16 App Router)       │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  React Server Components (RSC)                       │   │
-│  │  - Direct DB queries with Prisma                     │   │
+│  │  - Direct DB queries with Supabase JS                │   │
 │  │  - Dashboard, Patient List, Calendar View            │   │
 │  │  - Wound Assessment Forms, Reports                   │   │
 │  └──────────────────────────────────────────────────────┘   │
@@ -303,7 +303,7 @@ A fully custom, web-based EHR platform with:
   - File storage with CDN
   - Row-level security (RLS) for HIPAA compliance
   - Real-time subscriptions (future feature)
-- **Prisma ORM**: Type-safe database queries, schema management, works seamlessly with Supabase
+- **Supabase JS Client**: Type-safe database queries with auto-generated TypeScript types
 
 **Deployment:**
 
@@ -635,13 +635,11 @@ components/
     └── healing-progress-indicator.tsx
 
 lib/
-├── db/
-│   ├── prisma.ts               # Prisma client instance (connects to Supabase)
-│   └── schema.prisma           # Prisma schema
 ├── supabase/
-│   ├── client.ts               # Supabase client (browser)
-│   ├── server.ts               # Supabase client (server)
-│   └── storage.ts              # Storage helpers for photo uploads
+│   ├── server.ts               # Server-side Supabase client
+│   ├── client.ts               # Client-side Supabase client
+│   └── middleware.ts           # Auth middleware utilities
+├── database.types.ts           # Generated TypeScript types from Supabase
 ├── validations/
 │   ├── patient.ts              # Zod schemas for patient data
 │   ├── wound.ts                # Zod schemas for wound data
@@ -810,8 +808,9 @@ lib/
 
 - **Data Fetching**: Server Components with async/await (direct DB queries)
 - **Mutations**: Server Actions with `"use server"` directive
-- **Database**: Supabase PostgreSQL
-- **ORM**: Prisma (for type-safe queries and schema management)
+- **Database**: Supabase PostgreSQL with auto-generated TypeScript types
+- **Query Layer**: Supabase JS client (@supabase/supabase-js)
+- **Type Safety**: Generated types via Supabase CLI (`npm run db:types`)
 - **Authentication**: Supabase Auth (email/password only)
 - **File Storage**: Supabase Storage (CDN-backed, HIPAA-compliant)
 - **CSV Export**: Custom implementation (no external library)
@@ -841,7 +840,10 @@ lib/
 **Goal:** Set up infrastructure and core models
 
 - [ ] Supabase project setup (database + auth + storage)
-- [ ] Prisma schema design and initial migration
+- [x] Supabase project setup with PostgreSQL
+- [x] SQL schema migration applied (00001_initial_schema.sql)
+- [x] RLS policies configured for all tables
+- [x] TypeScript types generated from database
 - [ ] Supabase Auth integration (email/password)
 - [ ] Basic patient CRUD with Server Actions
 - [ ] Basic UI layout (sidebar, header, navigation)
@@ -1192,30 +1194,34 @@ This section documents all approved design decisions based on client requirement
 
 **Design document has been approved and is ready for Phase 1 implementation.**
 
-### Immediate Actions (Week 1)
+### ✅ Completed Actions (Weeks 1-10)
 
-1. **Supabase Setup**
-   - Configure database tables using approved schema
-   - Enable Row-Level Security policies
-   - Set up storage buckets for wound photos
-   - Configure authentication with email/password
+1. **Supabase Setup** ✅
+   - Database tables configured using SQL schema
+   - Row-Level Security policies enabled on all tables
+   - Storage bucket configured for wound photos
+   - Authentication enabled with email/password
 
-2. **Prisma Schema Creation**
-   - Translate database schema to `schema.prisma`
-   - Generate initial migrations
-   - Set up Prisma client
+2. **SQL Schema Migration** ✅
+   - Complete SQL schema in `supabase/migrations/00001_initial_schema.sql`
+   - Applied via Supabase SQL Editor
+   - TypeScript types generated with `npm run db:types`
+   - Supabase clients configured (server/client)
 
-3. **Authentication Implementation**
-   - Supabase Auth integration
-   - Login/logout flow
-   - Protected routes middleware
-   - Session management
+3. **Authentication Implementation** ✅
+   - Supabase Auth integration complete
+   - Login/logout flow functional
+   - Protected routes middleware active
+   - Session management via middleware
 
-4. **Basic UI Scaffolding**
-   - Sidebar navigation
+4. **Full Application** ✅
+   - Complete UI with sidebar navigation
    - Header with user info
-   - Dashboard home page
-   - Patient list page (empty state)
+   - Dashboard with analytics charts
+   - Patient, wound, visit, assessment, billing, and calendar management
+   - PDF export and CSV reports
+   - Photo upload and management
+   - Seed script for test data
 
 ### Phase 1 Deliverables (Weeks 1-2)
 

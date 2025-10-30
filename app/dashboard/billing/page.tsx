@@ -2,6 +2,9 @@ import { getAllBilling } from "@/app/actions/billing";
 import { getUserFacilities } from "@/app/actions/facilities";
 import { BillingReportsClient } from "@/components/billing/billing-reports-client";
 
+// Force dynamic rendering (uses auth cookies)
+export const dynamic = "force-dynamic";
+
 export default async function BillingReportsPage() {
   const [billingResult, facilities] = await Promise.all([
     getAllBilling(),

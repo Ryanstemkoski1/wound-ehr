@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -31,21 +30,17 @@ export async function getVisits(patientId: string) {
   }
 
   try {
-    const visits = await prisma.visit.findMany({
-      where: {
-        patientId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-      orderBy: { visitDate: "desc" },
-    });
+    const { data: visits, error } = await supabase
+      .from("visits")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("visit_date", { ascending: false });
 
-    return visits;
+    if (error) {
+      throw error;
+    }
+
+    return visits || [];
   } catch (error) {
     console.error("Failed to fetch visits:", error);
     return [];
@@ -64,40 +59,54 @@ export async function getVisit(visitId: string) {
   }
 
   try {
-    const visit = await prisma.visit.findFirst({
-      where: {
-        id: visitId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-      include: {
-        patient: {
-          include: {
-            facility: true,
-          },
-        },
-        assessments: {
-          include: {
-            wound: {
-              select: {
-                woundNumber: true,
-                location: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        },
-        treatments: {
-          orderBy: { createdAt: "desc" },
-        },
-        billings: true,
-      },
-    });
+    const { data: visit, error } = await supabase
+      .from("visits")
+      .select(
+        `
+        *,
+        patient:patients(
+          *,
+          facility:facilities(*)
+        )
+      `
+      )
+      .eq("id", visitId)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (visit) {
+      // Fetch related assessments
+      const { data: assessments } = await supabase
+        .from("wound_assessments")
+        .select(
+          `
+          *,
+          wound:wounds(wound_number, location)
+        `
+        )
+        .eq("visit_id", visitId)
+        .order("created_at", { ascending: false });
+
+      // Fetch related treatments
+      const { data: treatments } = await supabase
+        .from("treatment_orders")
+        .select("*")
+        .eq("visit_id", visitId)
+        .order("created_at", { ascending: false });
+
+      // Fetch related billings
+      const { data: billings } = await supabase
+        .from("billing_codes")
+        .select("*")
+        .eq("visit_id", visitId);
+
+      visit.assessments = assessments || [];
+      visit.treatments = treatments || [];
+      visit.billings = billings || [];
+    }
 
     return visit;
   } catch (error) {
@@ -135,38 +144,37 @@ export async function createVisit(formData: FormData) {
     const validated = visitSchema.parse(data);
 
     // Check if user has access to this patient
-    const patient = await prisma.patient.findFirst({
-      where: {
-        id: validated.patientId,
-        facility: {
-          users: {
-            some: { userId: user.id },
-          },
-        },
-      },
-    });
+    const { data: patient, error: patientError } = await supabase
+      .from("patients")
+      .select("id")
+      .eq("id", validated.patientId)
+      .maybeSingle();
 
-    if (!patient) {
+    if (patientError || !patient) {
       return { error: "Patient not found or access denied" };
     }
 
     // Create visit
-    const visit = await prisma.visit.create({
-      data: {
-        patientId: validated.patientId,
-        visitDate: new Date(validated.visitDate),
-        visitType: validated.visitType,
+    const { data: visit, error: createError } = await supabase
+      .from("visits")
+      .insert({
+        patient_id: validated.patientId,
+        visit_date: validated.visitDate,
+        visit_type: validated.visitType,
         location: validated.location || null,
         status: validated.status,
-        followUpType: validated.followUpType || null,
-        followUpDate: validated.followUpDate
-          ? new Date(validated.followUpDate)
-          : null,
-        followUpNotes: validated.followUpNotes || null,
-        timeSpent: validated.timeSpent,
-        additionalNotes: validated.additionalNotes || null,
-      },
-    });
+        follow_up_type: validated.followUpType || null,
+        follow_up_date: validated.followUpDate || null,
+        follow_up_notes: validated.followUpNotes || null,
+        time_spent: validated.timeSpent,
+        additional_notes: validated.additionalNotes || null,
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      throw createError;
+    }
 
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${validated.patientId}`);
@@ -209,43 +217,40 @@ export async function updateVisit(visitId: string, formData: FormData) {
     const validated = visitSchema.parse(data);
 
     // Check if user has access to this visit
-    const existingVisit = await prisma.visit.findFirst({
-      where: {
-        id: visitId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-    });
+    const { data: existingVisit, error: visitError } = await supabase
+      .from("visits")
+      .select("id, patient_id")
+      .eq("id", visitId)
+      .maybeSingle();
 
-    if (!existingVisit) {
+    if (visitError || !existingVisit) {
       return { error: "Visit not found or access denied" };
     }
 
     // Update visit
-    const visit = await prisma.visit.update({
-      where: { id: visitId },
-      data: {
-        visitDate: new Date(validated.visitDate),
-        visitType: validated.visitType,
+    const { data: visit, error: updateError } = await supabase
+      .from("visits")
+      .update({
+        visit_date: validated.visitDate,
+        visit_type: validated.visitType,
         location: validated.location || null,
         status: validated.status,
-        followUpType: validated.followUpType || null,
-        followUpDate: validated.followUpDate
-          ? new Date(validated.followUpDate)
-          : null,
-        followUpNotes: validated.followUpNotes || null,
-        timeSpent: validated.timeSpent,
-        additionalNotes: validated.additionalNotes || null,
-      },
-    });
+        follow_up_type: validated.followUpType || null,
+        follow_up_date: validated.followUpDate || null,
+        follow_up_notes: validated.followUpNotes || null,
+        time_spent: validated.timeSpent,
+        additional_notes: validated.additionalNotes || null,
+      })
+      .eq("id", visitId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${existingVisit.patientId}`);
+    revalidatePath(`/dashboard/patients/${existingVisit.patient_id}`);
     revalidatePath(`/dashboard/visits/${visitId}`);
     return { success: true as const, visit };
   } catch (error) {
@@ -270,30 +275,28 @@ export async function deleteVisit(visitId: string) {
 
   try {
     // Check if user has access to this visit
-    const visit = await prisma.visit.findFirst({
-      where: {
-        id: visitId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-    });
+    const { data: visit, error: visitError } = await supabase
+      .from("visits")
+      .select("id, patient_id")
+      .eq("id", visitId)
+      .maybeSingle();
 
-    if (!visit) {
+    if (visitError || !visit) {
       return { error: "Visit not found or access denied" };
     }
 
     // Delete visit (cascade will handle assessments, treatments, billings)
-    await prisma.visit.delete({
-      where: { id: visitId },
-    });
+    const { error: deleteError } = await supabase
+      .from("visits")
+      .delete()
+      .eq("id", visitId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${visit.patientId}`);
+    revalidatePath(`/dashboard/patients/${visit.patient_id}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to delete visit:", error);
@@ -314,31 +317,28 @@ export async function markVisitComplete(visitId: string) {
 
   try {
     // Check if user has access to this visit
-    const visit = await prisma.visit.findFirst({
-      where: {
-        id: visitId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-    });
+    const { data: visit, error: visitError } = await supabase
+      .from("visits")
+      .select("id, patient_id")
+      .eq("id", visitId)
+      .maybeSingle();
 
-    if (!visit) {
+    if (visitError || !visit) {
       return { error: "Visit not found or access denied" };
     }
 
     // Update status to complete
-    await prisma.visit.update({
-      where: { id: visitId },
-      data: { status: "complete" },
-    });
+    const { error: updateError } = await supabase
+      .from("visits")
+      .update({ status: "complete" })
+      .eq("id", visitId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${visit.patientId}`);
+    revalidatePath(`/dashboard/patients/${visit.patient_id}`);
     revalidatePath(`/dashboard/visits/${visitId}`);
     return { success: true };
   } catch (error) {

@@ -30,7 +30,7 @@ export default function CalendarFilters({
     Array<{ id: string; name: string }>
   >([]);
   const [patients, setPatients] = useState<
-    Array<{ id: string; firstName: string; lastName: string; mrn: string }>
+    Array<{ id: string; first_name: string; last_name: string; mrn: string }>
   >([]);
   const [selectedFacility, setSelectedFacility] = useState<
     string | undefined
@@ -110,7 +110,7 @@ export default function CalendarFilters({
           <SelectItem value="all">All Patients</SelectItem>
           {patients.map((patient) => (
             <SelectItem key={patient.id} value={patient.id}>
-              {patient.lastName}, {patient.firstName} ({patient.mrn})
+              {patient.last_name}, {patient.first_name} ({patient.mrn})
             </SelectItem>
           ))}
         </SelectContent>

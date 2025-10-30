@@ -66,7 +66,7 @@ export default function NewVisitDialog({
     Array<{ id: string; name: string }>
   >([]);
   const [patients, setPatients] = useState<
-    Array<{ id: string; firstName: string; lastName: string; mrn: string }>
+    Array<{ id: string; first_name: string; last_name: string; mrn: string }>
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -208,8 +208,8 @@ export default function NewVisitDialog({
                     <SelectContent>
                       {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
-                          {patient.lastName}, {patient.firstName} ({patient.mrn}
-                          )
+                          {patient.last_name}, {patient.first_name} (
+                          {patient.mrn})
                         </SelectItem>
                       ))}
                     </SelectContent>

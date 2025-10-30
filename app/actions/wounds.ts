@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -27,21 +26,18 @@ export async function getWounds(patientId: string) {
   }
 
   try {
-    const wounds = await prisma.wound.findMany({
-      where: {
-        patientId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-    });
+    const { data: wounds, error } = await supabase
+      .from("wounds")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("status", { ascending: true })
+      .order("created_at", { ascending: false });
 
-    return wounds;
+    if (error) {
+      throw error;
+    }
+
+    return wounds || [];
   } catch (error) {
     console.error("Failed to fetch wounds:", error);
     return [];
@@ -60,33 +56,44 @@ export async function getWound(woundId: string) {
   }
 
   try {
-    const wound = await prisma.wound.findFirst({
-      where: {
-        id: woundId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-      include: {
-        patient: {
-          include: {
-            facility: true,
-          },
-        },
-        assessments: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-        photos: {
-          orderBy: { uploadedAt: "desc" },
-          take: 10,
-        },
-      },
-    });
+    const { data: wound, error } = await supabase
+      .from("wounds")
+      .select(
+        `
+        *,
+        patient:patients(
+          *,
+          facility:facilities(*)
+        )
+      `
+      )
+      .eq("id", woundId)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Fetch recent assessments separately (limit 5)
+    const { data: assessments } = await supabase
+      .from("wound_assessments")
+      .select("*")
+      .eq("wound_id", woundId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    // Fetch recent photos separately (limit 10)
+    const { data: photos } = await supabase
+      .from("wound_photos")
+      .select("*")
+      .eq("wound_id", woundId)
+      .order("uploaded_at", { ascending: false })
+      .limit(10);
+
+    if (wound) {
+      wound.assessments = assessments || [];
+      wound.photos = photos || [];
+    }
 
     return wound;
   } catch (error) {
@@ -120,32 +127,29 @@ export async function createWound(formData: FormData) {
     const validated = woundSchema.parse(data);
 
     // Check if user has access to this patient
-    const patient = await prisma.patient.findFirst({
-      where: {
-        id: validated.patientId,
-        facility: {
-          users: {
-            some: { userId: user.id },
-          },
-        },
-      },
-    });
+    const { data: patient, error: patientError } = await supabase
+      .from("patients")
+      .select("id")
+      .eq("id", validated.patientId)
+      .maybeSingle();
 
-    if (!patient) {
+    if (patientError || !patient) {
       return { error: "Patient not found or access denied" };
     }
 
     // Create wound
-    await prisma.wound.create({
-      data: {
-        patientId: validated.patientId,
-        woundNumber: validated.woundNumber,
-        location: validated.location,
-        woundType: validated.woundType,
-        onsetDate: new Date(validated.onsetDate),
-        status: validated.status,
-      },
+    const { error: createError } = await supabase.from("wounds").insert({
+      patient_id: validated.patientId,
+      wound_number: validated.woundNumber,
+      location: validated.location,
+      wound_type: validated.woundType,
+      onset_date: validated.onsetDate,
+      status: validated.status,
     });
+
+    if (createError) {
+      throw createError;
+    }
 
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${validated.patientId}`);
@@ -184,37 +188,34 @@ export async function updateWound(woundId: string, formData: FormData) {
     const validated = woundSchema.parse(data);
 
     // Check if user has access to this wound
-    const existingWound = await prisma.wound.findFirst({
-      where: {
-        id: woundId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-    });
+    const { data: existingWound, error: woundError } = await supabase
+      .from("wounds")
+      .select("id, patient_id")
+      .eq("id", woundId)
+      .maybeSingle();
 
-    if (!existingWound) {
+    if (woundError || !existingWound) {
       return { error: "Wound not found or access denied" };
     }
 
     // Update wound
-    await prisma.wound.update({
-      where: { id: woundId },
-      data: {
-        woundNumber: validated.woundNumber,
+    const { error: updateError } = await supabase
+      .from("wounds")
+      .update({
+        wound_number: validated.woundNumber,
         location: validated.location,
-        woundType: validated.woundType,
-        onsetDate: new Date(validated.onsetDate),
+        wound_type: validated.woundType,
+        onset_date: validated.onsetDate,
         status: validated.status,
-      },
-    });
+      })
+      .eq("id", woundId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${existingWound.patientId}`);
+    revalidatePath(`/dashboard/patients/${existingWound.patient_id}`);
     revalidatePath(`/dashboard/wounds/${woundId}`);
     return { success: true };
   } catch (error) {
@@ -239,30 +240,28 @@ export async function deleteWound(woundId: string) {
 
   try {
     // Check if user has access to this wound
-    const wound = await prisma.wound.findFirst({
-      where: {
-        id: woundId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-    });
+    const { data: wound, error: woundError } = await supabase
+      .from("wounds")
+      .select("id, patient_id")
+      .eq("id", woundId)
+      .maybeSingle();
 
-    if (!wound) {
+    if (woundError || !wound) {
       return { error: "Wound not found or access denied" };
     }
 
     // Delete wound (cascade will handle assessments and photos)
-    await prisma.wound.delete({
-      where: { id: woundId },
-    });
+    const { error: deleteError } = await supabase
+      .from("wounds")
+      .delete()
+      .eq("id", woundId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${wound.patientId}`);
+    revalidatePath(`/dashboard/patients/${wound.patient_id}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to delete wound:", error);
@@ -283,31 +282,28 @@ export async function markWoundHealed(woundId: string) {
 
   try {
     // Check if user has access to this wound
-    const wound = await prisma.wound.findFirst({
-      where: {
-        id: woundId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-    });
+    const { data: wound, error: woundError } = await supabase
+      .from("wounds")
+      .select("id, patient_id")
+      .eq("id", woundId)
+      .maybeSingle();
 
-    if (!wound) {
+    if (woundError || !wound) {
       return { error: "Wound not found or access denied" };
     }
 
     // Update status to healed
-    await prisma.wound.update({
-      where: { id: woundId },
-      data: { status: "healed" },
-    });
+    const { error: updateError } = await supabase
+      .from("wounds")
+      .update({ status: "healed" })
+      .eq("id", woundId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${wound.patientId}`);
+    revalidatePath(`/dashboard/patients/${wound.patient_id}`);
     revalidatePath(`/dashboard/wounds/${woundId}`);
     return { success: true };
   } catch (error) {

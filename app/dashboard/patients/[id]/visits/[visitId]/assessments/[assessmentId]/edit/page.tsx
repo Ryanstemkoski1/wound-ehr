@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import { getAssessment } from "@/app/actions/assessments";
 import AssessmentForm from "@/components/assessments/assessment-form";
 
@@ -30,21 +29,20 @@ export default async function EditAssessmentPage({ params }: PageProps) {
   }
 
   // Get active wounds for the patient
-  const wounds = await prisma.wound.findMany({
-    where: {
-      patientId,
-      status: "active",
-    },
-    select: {
-      id: true,
-      woundNumber: true,
-      location: true,
-      woundType: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
+  const { data: woundsData } = await supabase
+    .from("wounds")
+    .select("id, wound_number, location, wound_type")
+    .eq("patient_id", patientId)
+    .eq("status", "active")
+    .order("created_at", { ascending: true });
+
+  const wounds =
+    woundsData?.map((w) => ({
+      id: w.id,
+      woundNumber: w.wound_number,
+      location: w.location,
+      woundType: w.wound_type,
+    })) || [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">

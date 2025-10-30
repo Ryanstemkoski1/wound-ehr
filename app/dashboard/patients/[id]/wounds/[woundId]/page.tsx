@@ -19,6 +19,9 @@ import { PhotoComparison } from "@/components/photos/photo-comparison";
 import WoundPDFDownloadButton from "@/components/pdf/wound-pdf-download-button";
 import { format } from "date-fns";
 
+// Force dynamic rendering (requires auth)
+export const dynamic = "force-dynamic";
+
 export default async function WoundDetailPage({
   params,
 }: {

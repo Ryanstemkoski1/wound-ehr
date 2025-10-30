@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Building2, MapPin, Phone, Mail } from "lucide-react";
 import Link from "next/link";
 
+// Force dynamic rendering (requires auth)
+export const dynamic = "force-dynamic";
+
 type Facility = {
   id: string;
   name: string;

@@ -3,7 +3,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
 // Validation schema for facility
@@ -54,8 +53,9 @@ export async function createFacility(formData: FormData) {
 
   try {
     // Create facility
-    const facility = await prisma.facility.create({
-      data: {
+    const { data: facility, error: facilityError } = await supabase
+      .from("facilities")
+      .insert({
         name: data.name,
         address: data.address || null,
         city: data.city || null,
@@ -63,20 +63,29 @@ export async function createFacility(formData: FormData) {
         zip: data.zip || null,
         phone: data.phone || null,
         fax: data.fax || null,
-        contactPerson: data.contactPerson || null,
+        contact_person: data.contactPerson || null,
         email: data.email || null,
         notes: data.notes || null,
-      },
-    });
+      })
+      .select("id")
+      .single();
+
+    if (facilityError) {
+      throw facilityError;
+    }
 
     // Associate facility with current user
-    await prisma.userFacility.create({
-      data: {
-        userId: user.id,
-        facilityId: facility.id,
-        isDefault: false, // Can be updated later
-      },
-    });
+    const { error: userFacilityError } = await supabase
+      .from("user_facilities")
+      .insert({
+        user_id: user.id,
+        facility_id: facility.id,
+        is_default: false,
+      });
+
+    if (userFacilityError) {
+      throw userFacilityError;
+    }
 
     revalidatePath("/dashboard/facilities");
     return { success: true, facilityId: facility.id };
@@ -120,23 +129,21 @@ export async function updateFacility(facilityId: string, formData: FormData) {
 
   try {
     // Check if user has access to this facility
-    const userFacility = await prisma.userFacility.findUnique({
-      where: {
-        userId_facilityId: {
-          userId: user.id,
-          facilityId,
-        },
-      },
-    });
+    const { data: userFacility, error: checkError } = await supabase
+      .from("user_facilities")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("facility_id", facilityId)
+      .maybeSingle();
 
-    if (!userFacility) {
+    if (checkError || !userFacility) {
       return { error: "You don't have access to this facility" };
     }
 
     // Update facility
-    await prisma.facility.update({
-      where: { id: facilityId },
-      data: {
+    const { error: updateError } = await supabase
+      .from("facilities")
+      .update({
         name: data.name,
         address: data.address || null,
         city: data.city || null,
@@ -144,11 +151,15 @@ export async function updateFacility(facilityId: string, formData: FormData) {
         zip: data.zip || null,
         phone: data.phone || null,
         fax: data.fax || null,
-        contactPerson: data.contactPerson || null,
+        contact_person: data.contactPerson || null,
         email: data.email || null,
         notes: data.notes || null,
-      },
-    });
+      })
+      .eq("id", facilityId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/facilities");
     return { success: true };
@@ -170,24 +181,26 @@ export async function deleteFacility(facilityId: string) {
 
   try {
     // Check if user has access to this facility
-    const userFacility = await prisma.userFacility.findUnique({
-      where: {
-        userId_facilityId: {
-          userId: user.id,
-          facilityId,
-        },
-      },
-    });
+    const { data: userFacility, error: checkError } = await supabase
+      .from("user_facilities")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("facility_id", facilityId)
+      .maybeSingle();
 
-    if (!userFacility) {
+    if (checkError || !userFacility) {
       return { error: "You don't have access to this facility" };
     }
 
     // Soft delete (mark as inactive)
-    await prisma.facility.update({
-      where: { id: facilityId },
-      data: { isActive: false },
-    });
+    const { error: updateError } = await supabase
+      .from("facilities")
+      .update({ is_active: false })
+      .eq("id", facilityId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/facilities");
     return { success: true };
@@ -208,28 +221,46 @@ export async function getUserFacilities() {
   }
 
   try {
-    const facilities = await prisma.facility.findMany({
-      where: {
-        isActive: true,
-        users: {
-          some: {
-            userId: user.id,
-          },
-        },
-      },
-      include: {
-        _count: {
-          select: {
-            patients: true,
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
+    const { data: userFacilities, error: userError } = await supabase
+      .from("user_facilities")
+      .select("facility_id")
+      .eq("user_id", user.id);
 
-    return facilities;
+    if (userError) {
+      throw userError;
+    }
+
+    const facilityIds = userFacilities?.map((uf) => uf.facility_id) || [];
+
+    if (facilityIds.length === 0) {
+      return [];
+    }
+
+    const { data: facilities, error } = await supabase
+      .from("facilities")
+      .select(
+        `
+        *,
+        patients!left(id)
+      `
+      )
+      .eq("is_active", true)
+      .in("id", facilityIds)
+      .order("name", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    // Transform to include _count
+    return (
+      facilities?.map((facility) => ({
+        ...facility,
+        _count: {
+          patients: facility.patients?.length || 0,
+        },
+      })) || []
+    );
   } catch (error) {
     console.error("Failed to fetch facilities:", error);
     return [];

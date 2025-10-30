@@ -1,6 +1,5 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import PatientForm from "@/components/patients/patient-form";
 
 type Params = Promise<{ id: string }>;
@@ -17,42 +16,49 @@ export default async function EditPatientPage({ params }: { params: Params }) {
     redirect("/login");
   }
 
-  // Get patient with facility access check
-  const patient = await prisma.patient.findFirst({
-    where: {
-      id,
-      isActive: true,
-      facility: {
-        users: {
-          some: { userId: user.id },
-        },
-      },
-    },
-  });
+  // Get user's facility IDs
+  const { data: userFacilities } = await supabase
+    .from("user_facilities")
+    .select("facility_id")
+    .eq("user_id", user.id);
 
-  if (!patient) {
+  const facilityIds = userFacilities?.map((uf) => uf.facility_id) || [];
+
+  if (facilityIds.length === 0) {
+    notFound();
+  }
+
+  // Get patient with facility access check
+  const { data: patient, error: patientError } = await supabase
+    .from("patients")
+    .select("*")
+    .eq("id", id)
+    .eq("is_active", true)
+    .in("facility_id", facilityIds)
+    .maybeSingle();
+
+  if (patientError || !patient) {
     notFound();
   }
 
   // Get user's facilities
-  const userFacilities = await prisma.userFacility.findMany({
-    where: { userId: user.id },
-    include: { facility: true },
-  });
+  const { data: facilitiesData } = await supabase
+    .from("facilities")
+    .select("id, name")
+    .in("id", facilityIds);
 
-  const facilities = userFacilities.map(
-    (uf: { facility: { id: string; name: string } }) => ({
-      id: uf.facility.id,
-      name: uf.facility.name,
-    })
-  );
+  const facilities =
+    facilitiesData?.map((f) => ({
+      id: f.id,
+      name: f.name,
+    })) || [];
 
   // Type-cast JSONB fields for the form
   const patientData = {
     ...patient,
     allergies: patient.allergies as string[] | null,
-    medicalHistory: patient.medicalHistory as string[] | null,
-    insuranceInfo: patient.insuranceInfo as {
+    medical_history: patient.medical_history as string[] | null,
+    insurance_info: patient.insurance_info as {
       primary?: { provider: string; policyNumber: string; groupNumber: string };
       secondary?: {
         provider: string;
@@ -60,7 +66,7 @@ export default async function EditPatientPage({ params }: { params: Params }) {
         groupNumber: string;
       };
     } | null,
-    emergencyContact: patient.emergencyContact as {
+    emergency_contact: patient.emergency_contact as {
       name: string;
       phone: string;
       relationship: string;

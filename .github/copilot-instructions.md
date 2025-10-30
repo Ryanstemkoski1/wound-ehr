@@ -22,6 +22,8 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 - **Styling**: Tailwind CSS v4 (using PostCSS plugin `@tailwindcss/postcss`)
 - **UI Components**: shadcn/ui with "new-york" style variant
 - **Icons**: Lucide React
+- **Database**: Supabase PostgreSQL with auto-generated TypeScript types
+- **Query Layer**: Supabase JS (@supabase/supabase-js + @supabase/ssr)
 - **TypeScript**: Strict mode enabled
 - **Code Quality**: ESLint (flat config) + Prettier with Tailwind plugin
 
@@ -93,6 +95,65 @@ import { cn } from "@/lib/utils";
 4. **API/Actions**: Use Server Actions pattern, not API routes (Section: Technology Stack)
 5. **Design Decisions**: Respect all approved decisions (Section: Design Decisions)
 
+### Database Schema
+
+The database uses **10 tables** with Row Level Security (RLS):
+
+- `users` - User accounts (synced with auth.users via trigger)
+- `facilities` - Medical facilities/clinics
+- `user_facilities` - User-facility associations (many-to-many)
+- `patients` - Patient demographics and medical info
+- `wounds` - Wound records with location and type
+- `visits` - Patient visit records
+- `assessments` - Detailed wound assessments
+- `photos` - Wound photo metadata (files in Supabase Storage)
+- `treatments` - Treatment plans and medical orders
+- `billings` - Billing codes and claims
+
+Schema location: `supabase/migrations/00001_initial_schema.sql`
+
+### Supabase Backend Architecture
+
+**IMPORTANT**: This project uses **Supabase JS** directly, **NOT Prisma**.
+
+- All database operations use Supabase client (`@supabase/supabase-js` and `@supabase/ssr`)
+- Server Components: Use `createClient()` from `@/lib/supabase/server`
+- Client Components: Use `createClient()` from `@/lib/supabase/client`
+- Server Actions: Use server client with `"use server"` directive
+- TypeScript types: Auto-generated via `npm run db:types` → `lib/database.types.ts`
+- Column naming: `snake_case` (e.g., `first_name`, `visit_date`, `cpt_codes`)
+- JSONB columns: Used for arrays/objects (allergies, insurance_info, cpt_codes, etc.)
+
+### Query Patterns
+
+```typescript
+// ❌ WRONG - Don't use Prisma
+import { PrismaClient } from "@prisma/client";
+
+// ✅ CORRECT - Use Supabase client
+import { createClient } from "@/lib/supabase/server";
+
+// Server Action example
+export async function getPatient(id: string) {
+  const supabase = await createClient();
+
+  const { data: patient, error } = await supabase
+    .from("patients")
+    .select(
+      `
+      *,
+      facility:facilities(*),
+      wounds(*)
+    `
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return patient;
+}
+```
+
 ### Commands
 
 ```bash
@@ -103,6 +164,9 @@ npm run lint         # Run ESLint (uses flat config in eslint.config.mjs)
 npm run lint:fix     # Run ESLint and auto-fix issues
 npm run format       # Format all files with Prettier
 npm run format:check # Check formatting without writing changes
+npm run db:types     # Generate TypeScript types from Supabase database
+npm run seed         # Seed database with test data
+npm run seed:reset   # Reset and re-seed database
 ```
 
 ### Code Quality Tools
@@ -156,6 +220,6 @@ This project is configured for shadcn/ui. When adding components:
 
 5. **React 19**: Latest React with improved hooks, actions, and server component capabilities. Use modern patterns like `use()` hook and form actions where applicable.
 
-6. **Supabase Backend**: All database operations use Supabase PostgreSQL via Prisma ORM. Authentication via Supabase Auth. Photo storage via Supabase Storage.
+6. **Supabase Backend**: All database operations use Supabase PostgreSQL via Supabase JS. Authentication via Supabase Auth. Photo storage via Supabase Storage. TypeScript types generated from database schema.
 
-7. **Server-First Architecture**: Use Server Components for data fetching (async/await DB queries) and Server Actions for mutations (`"use server"` directive). Avoid API routes unless absolutely necessary.
+7. **Server-First Architecture**: Use Server Components for data fetching (async/await DB queries) and Server Actions for mutations (`"use server"` directive). Avoid Client Components unless absolutely necessary for interactivity.

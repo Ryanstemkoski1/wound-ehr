@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Get complete visit data for PDF generation
@@ -9,42 +9,57 @@ import prisma from "@/lib/prisma";
  */
 export async function getVisitDataForPDF(visitId: string) {
   try {
-    // Fetch complete visit data
-    const visit = await prisma.visit.findUnique({
-      where: { id: visitId },
-      include: {
-        patient: {
-          select: {
-            firstName: true,
-            lastName: true,
-            mrn: true,
-            dob: true,
-            facility: {
-              select: {
-                name: true,
-                address: true,
-                city: true,
-                state: true,
-                zip: true,
-              },
-            },
-          },
-        },
-        assessments: {
-          include: {
-            wound: true,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-        billings: true,
-      },
-    });
+    const supabase = await createClient();
 
-    if (!visit) {
+    // Fetch complete visit data
+    const { data: visit, error: visitError } = await supabase
+      .from("visits")
+      .select(
+        `
+        *,
+        patient:patients!inner(
+          first_name,
+          last_name,
+          mrn,
+          dob,
+          facility:facilities!inner(
+            name,
+            address,
+            city,
+            state,
+            zip
+          )
+        )
+      `
+      )
+      .eq("id", visitId)
+      .single();
+
+    if (visitError || !visit) {
       return { success: false as const, error: "Visit not found" };
     }
+
+    // Fetch assessments with wounds
+    const { data: assessments, error: assessmentsError } = await supabase
+      .from("wound_assessments")
+      .select(
+        `
+        *,
+        wound:wounds!inner(location, wound_type)
+      `
+      )
+      .eq("visit_id", visitId)
+      .order("created_at", { ascending: false });
+
+    if (assessmentsError) throw assessmentsError;
+
+    // Fetch billing
+    const { data: billings, error: billingsError } = await supabase
+      .from("billings")
+      .select("*")
+      .eq("visit_id", visitId);
+
+    if (billingsError) throw billingsError;
 
     // Transform data to match PDF component props
     return {
@@ -52,15 +67,15 @@ export async function getVisitDataForPDF(visitId: string) {
       data: {
         visit: {
           id: visit.id,
-          visitDate: visit.visitDate,
-          visitType: visit.visitType,
+          visitDate: visit.visit_date,
+          visitType: visit.visit_type,
           status: visit.status,
           location: visit.location,
-          notes: visit.additionalNotes,
+          notes: visit.additional_notes,
         },
         patient: {
-          firstName: visit.patient.firstName,
-          lastName: visit.patient.lastName,
+          firstName: visit.patient.first_name,
+          lastName: visit.patient.last_name,
           dateOfBirth: visit.patient.dob,
           mrn: visit.patient.mrn,
           facility: {
@@ -71,39 +86,37 @@ export async function getVisitDataForPDF(visitId: string) {
             zipCode: visit.patient.facility.zip || "",
           },
         },
-        assessments: visit.assessments.map(
-          (assessment: (typeof visit.assessments)[number]) => ({
+        assessments:
+          assessments?.map((assessment) => ({
             id: assessment.id,
             wound: {
               location: assessment.wound.location,
-              woundType: assessment.wound.woundType,
+              woundType: assessment.wound.wound_type,
             },
             length: assessment.length ? Number(assessment.length) : null,
             width: assessment.width ? Number(assessment.width) : null,
             depth: assessment.depth ? Number(assessment.depth) : null,
             undermining: assessment.undermining,
             tunneling: assessment.tunneling,
-            exudate: assessment.exudateAmount,
+            exudate: assessment.exudate_amount,
             odor: assessment.odor,
-            painLevel: assessment.painLevel,
-            healingStatus: assessment.healingStatus,
-            treatmentplan: assessment.assessmentNotes,
-          })
-        ),
+            painLevel: assessment.pain_level,
+            healingStatus: assessment.healing_status,
+            treatmentplan: assessment.assessment_notes,
+          })) || [],
         billing:
-          visit.billings && visit.billings.length > 0
+          billings && billings.length > 0
             ? {
-                cptCodes: Array.isArray(visit.billings[0].cptCodes)
-                  ? (visit.billings[0].cptCodes as string[])
+                cptCodes: Array.isArray(billings[0].cpt_codes)
+                  ? (billings[0].cpt_codes as string[])
                   : [],
-                icd10Codes: Array.isArray(visit.billings[0].icd10Codes)
-                  ? (visit.billings[0].icd10Codes as string[])
+                icd10Codes: Array.isArray(billings[0].icd10_codes)
+                  ? (billings[0].icd10_codes as string[])
                   : [],
-                timeSpent: visit.billings[0].timeSpent ? 45 : null, // Convert boolean to minutes (45+ standard)
+                timeSpent: billings[0].time_spent ? 45 : null,
                 modifiers:
-                  visit.billings[0].modifiers &&
-                  Array.isArray(visit.billings[0].modifiers)
-                    ? (visit.billings[0].modifiers as string[])
+                  billings[0].modifiers && Array.isArray(billings[0].modifiers)
+                    ? (billings[0].modifiers as string[])
                     : [],
               }
             : null,
@@ -125,42 +138,55 @@ export async function getVisitDataForPDF(visitId: string) {
  */
 export async function getWoundDataForPDF(woundId: string) {
   try {
-    // Fetch complete wound data with all assessments
-    const wound = await prisma.wound.findUnique({
-      where: { id: woundId },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            mrn: true,
-            dob: true,
-          },
-        },
-        assessments: {
-          include: {
-            photos: {
-              select: {
-                url: true,
-                caption: true,
-              },
-              orderBy: {
-                uploadedAt: "asc",
-              },
-              take: 2, // Limit to 2 photos per assessment for PDF
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
-    });
+    const supabase = await createClient();
 
-    if (!wound) {
+    // Fetch complete wound data
+    const { data: wound, error: woundError } = await supabase
+      .from("wounds")
+      .select(
+        `
+        *,
+        patient:patients!inner(
+          id,
+          first_name,
+          last_name,
+          mrn,
+          dob
+        )
+      `
+      )
+      .eq("id", woundId)
+      .single();
+
+    if (woundError || !wound) {
       return { success: false as const, error: "Wound not found" };
     }
+
+    // Fetch assessments for this wound
+    const { data: assessments, error: assessmentsError } = await supabase
+      .from("wound_assessments")
+      .select("*")
+      .eq("wound_id", woundId)
+      .order("created_at", { ascending: false });
+
+    if (assessmentsError) throw assessmentsError;
+
+    // Fetch photos for each assessment (limit 2 per assessment)
+    const assessmentsWithPhotos = await Promise.all(
+      (assessments || []).map(async (assessment) => {
+        const { data: photos } = await supabase
+          .from("wound_photos")
+          .select("url, caption")
+          .eq("assessment_id", assessment.id)
+          .order("uploaded_at", { ascending: true })
+          .limit(2);
+
+        return {
+          ...assessment,
+          photos: photos || [],
+        };
+      })
+    );
 
     // Transform data to match PDF component props
     return {
@@ -169,39 +195,37 @@ export async function getWoundDataForPDF(woundId: string) {
         wound: {
           id: wound.id,
           location: wound.location,
-          woundType: wound.woundType,
-          onsetDate: wound.onsetDate,
+          woundType: wound.wound_type,
+          onsetDate: wound.onset_date,
           status: wound.status,
           patient: {
-            firstName: wound.patient.firstName,
-            lastName: wound.patient.lastName,
+            firstName: wound.patient.first_name,
+            lastName: wound.patient.last_name,
             mrn: wound.patient.mrn,
             dateOfBirth: wound.patient.dob,
           },
         },
-        assessments: wound.assessments.map(
-          (assessment: (typeof wound.assessments)[number]) => ({
-            id: assessment.id,
-            createdAt: assessment.createdAt,
-            length: assessment.length ? Number(assessment.length) : null,
-            width: assessment.width ? Number(assessment.width) : null,
-            depth: assessment.depth ? Number(assessment.depth) : null,
-            area: assessment.area ? Number(assessment.area) : null,
-            undermining: assessment.undermining,
-            tunneling: assessment.tunneling,
-            exudate: assessment.exudateAmount,
-            odor: assessment.odor,
-            painLevel: assessment.painLevel,
-            healingStatus: assessment.healingStatus,
-            treatmentplan: assessment.assessmentNotes,
-            photos: assessment.photos.map(
-              (photo: (typeof assessment.photos)[number]) => ({
-                url: photo.url,
-                caption: photo.caption,
-              })
-            ),
-          })
-        ),
+        assessments: assessmentsWithPhotos.map((assessment) => ({
+          id: assessment.id,
+          createdAt: assessment.created_at,
+          length: assessment.length ? Number(assessment.length) : null,
+          width: assessment.width ? Number(assessment.width) : null,
+          depth: assessment.depth ? Number(assessment.depth) : null,
+          area: assessment.area ? Number(assessment.area) : null,
+          undermining: assessment.undermining,
+          tunneling: assessment.tunneling,
+          exudate: assessment.exudate_amount,
+          odor: assessment.odor,
+          painLevel: assessment.pain_level,
+          healingStatus: assessment.healing_status,
+          treatmentplan: assessment.assessment_notes,
+          photos: assessment.photos.map(
+            (photo: { url: string; caption: string | null }) => ({
+              url: photo.url,
+              caption: photo.caption,
+            })
+          ),
+        })),
       },
     };
   } catch (error) {
@@ -222,25 +246,50 @@ export async function generatePatientsCSV(
   facilityId?: string
 ): Promise<{ success: true; csv: string } | { success: false; error: string }> {
   try {
-    const patients = await prisma.patient.findMany({
-      where: facilityId ? { facilityId } : undefined,
-      include: {
-        facility: {
-          select: {
-            name: true,
-          },
-        },
-        wounds: {
-          select: {
-            id: true,
-            status: true,
-          },
-        },
-      },
-      orderBy: {
-        lastName: "asc",
-      },
-    });
+    const supabase = await createClient();
+
+    // Fetch patients
+    let query = supabase
+      .from("patients")
+      .select(
+        `
+        mrn,
+        first_name,
+        last_name,
+        dob,
+        gender,
+        is_active,
+        facility:facilities!inner(name)
+      `
+      )
+      .order("last_name", { ascending: true });
+
+    if (facilityId) {
+      query = query.eq("facility_id", facilityId);
+    }
+
+    const { data: patients, error: patientsError } = await query;
+    if (patientsError) throw patientsError;
+
+    // Fetch wound counts for each patient
+    const patientsWithWounds = await Promise.all(
+      (patients || []).map(async (patient) => {
+        const { data: wounds } = await supabase
+          .from("wounds")
+          .select("id, status")
+          .eq("patient_id", patient.mrn);
+
+        const activeWounds =
+          wounds?.filter((w) => w.status === "active").length || 0;
+        const totalWounds = wounds?.length || 0;
+
+        return {
+          ...patient,
+          activeWounds,
+          totalWounds,
+        };
+      })
+    );
 
     // Build CSV header
     const headers = [
@@ -256,21 +305,18 @@ export async function generatePatientsCSV(
     ];
 
     // Build CSV rows
-    const rows = patients.map((patient: (typeof patients)[number]) => {
-      const activeWounds = patient.wounds.filter(
-        (w: (typeof patient.wounds)[number]) => w.status === "active"
-      ).length;
+    const rows = patientsWithWounds.map((patient) => {
       return [
         patient.mrn,
-        patient.firstName,
-        patient.lastName,
+        patient.first_name,
+        patient.last_name,
         new Date(patient.dob).toLocaleDateString(),
         patient.gender || "",
-        patient.facility.name,
-        activeWounds.toString(),
-        patient.wounds.length.toString(),
-        patient.isActive ? "active" : "inactive",
-      ].map((cell: string) => `"${cell}"`); // Wrap in quotes to handle commas
+        Array.isArray(patient.facility) ? patient.facility[0]?.name || "" : "",
+        patient.activeWounds.toString(),
+        patient.totalWounds.toString(),
+        patient.is_active ? "active" : "inactive",
+      ].map((cell: string) => `"${cell}"`);
     });
 
     // Combine headers and rows
@@ -298,26 +344,44 @@ export async function generateWoundsCSV(
   patientId?: string
 ): Promise<{ success: true; csv: string } | { success: false; error: string }> {
   try {
-    const wounds = await prisma.wound.findMany({
-      where: patientId ? { patientId } : undefined,
-      include: {
-        patient: {
-          select: {
-            firstName: true,
-            lastName: true,
-            mrn: true,
-          },
-        },
-        assessments: {
-          select: {
-            id: true,
-          },
-        },
-      },
-      orderBy: {
-        onsetDate: "desc",
-      },
-    });
+    const supabase = await createClient();
+
+    // Fetch wounds
+    let query = supabase
+      .from("wounds")
+      .select(
+        `
+        id,
+        location,
+        wound_type,
+        onset_date,
+        status,
+        patient:patients!inner(first_name, last_name, mrn)
+      `
+      )
+      .order("onset_date", { ascending: false });
+
+    if (patientId) {
+      query = query.eq("patient_id", patientId);
+    }
+
+    const { data: wounds, error: woundsError } = await query;
+    if (woundsError) throw woundsError;
+
+    // Fetch assessment counts
+    const woundsWithCounts = await Promise.all(
+      (wounds || []).map(async (wound) => {
+        const { data: assessments } = await supabase
+          .from("wound_assessments")
+          .select("id")
+          .eq("wound_id", wound.id);
+
+        return {
+          ...wound,
+          assessmentCount: assessments?.length || 0,
+        };
+      })
+    );
 
     // Build CSV header
     const headers = [
@@ -332,16 +396,19 @@ export async function generateWoundsCSV(
     ];
 
     // Build CSV rows
-    const rows = wounds.map((wound: (typeof wounds)[number]) => {
+    const rows = woundsWithCounts.map((wound) => {
+      const patient = Array.isArray(wound.patient)
+        ? wound.patient[0]
+        : wound.patient;
       return [
         wound.id,
-        wound.patient.mrn,
-        `${wound.patient.firstName} ${wound.patient.lastName}`,
+        patient?.mrn || "",
+        `${patient?.first_name || ""} ${patient?.last_name || ""}`,
         wound.location,
-        wound.woundType,
-        new Date(wound.onsetDate).toLocaleDateString(),
+        wound.wound_type,
+        new Date(wound.onset_date).toLocaleDateString(),
         wound.status,
-        wound.assessments.length.toString(),
+        wound.assessmentCount.toString(),
       ].map((cell: string) => `"${cell}"`);
     });
 

@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 // Upload photo to Supabase Storage and save metadata to database
@@ -53,7 +52,7 @@ export async function uploadPhoto(formData: FormData) {
     const fileName = `${woundId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("wound-photos")
       .upload(fileName, file, {
         cacheControl: "3600",
@@ -78,34 +77,30 @@ export async function uploadPhoto(formData: FormData) {
     console.log("Public URL:", urlData.publicUrl);
 
     // Save photo metadata to database
-    const photo = await prisma.photo.create({
-      data: {
-        woundId,
-        visitId,
-        assessmentId,
-        uploadedBy: user.id,
+    const { data: photo, error: dbError } = await supabase
+      .from("wound_photos")
+      .insert({
+        wound_id: woundId,
+        visit_id: visitId,
+        assessment_id: assessmentId,
+        uploaded_by: user.id,
         url: urlData.publicUrl,
         filename: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
+        file_size: file.size,
+        mime_type: file.type,
         caption,
-      },
-      include: {
-        wound: {
-          select: {
-            id: true,
-            woundNumber: true,
-            location: true,
-          },
-        },
-        uploader: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+      })
+      .select(
+        `
+        *,
+        wound:wounds(id, wound_number, location)
+      `
+      )
+      .single();
+
+    if (dbError) {
+      throw dbError;
+    }
 
     // Revalidate relevant paths
     revalidatePath(`/dashboard/patients`);
@@ -133,42 +128,24 @@ export async function getPhotos(woundId: string) {
       return { error: "Unauthorized" };
     }
 
-    const photos = await prisma.photo.findMany({
-      where: { woundId },
-      include: {
-        wound: {
-          select: {
-            id: true,
-            woundNumber: true,
-            location: true,
-          },
-        },
-        visit: {
-          select: {
-            id: true,
-            visitDate: true,
-            visitType: true,
-          },
-        },
-        assessment: {
-          select: {
-            id: true,
-            healingStatus: true,
-          },
-        },
-        uploader: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        uploadedAt: "desc",
-      },
-    });
+    const { data: photos, error } = await supabase
+      .from("wound_photos")
+      .select(
+        `
+        *,
+        wound:wounds(id, wound_number, location),
+        visit:visits(id, visit_date, visit_type),
+        assessment:wound_assessments(id, healing_status)
+      `
+      )
+      .eq("wound_id", woundId)
+      .order("uploaded_at", { ascending: false });
 
-    return { photos };
+    if (error) {
+      throw error;
+    }
+
+    return { photos: photos || [] };
   } catch (error) {
     console.error("Get photos error:", error);
     return { error: "Failed to fetch photos" };
@@ -188,47 +165,27 @@ export async function getPhoto(photoId: string) {
       return { error: "Unauthorized" };
     }
 
-    const photo = await prisma.photo.findUnique({
-      where: { id: photoId },
-      include: {
-        wound: {
-          select: {
-            id: true,
-            woundNumber: true,
-            location: true,
-            patient: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-        visit: {
-          select: {
-            id: true,
-            visitDate: true,
-            visitType: true,
-          },
-        },
-        assessment: {
-          select: {
-            id: true,
-            healingStatus: true,
-            length: true,
-            width: true,
-            depth: true,
-          },
-        },
-        uploader: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const { data: photo, error } = await supabase
+      .from("wound_photos")
+      .select(
+        `
+        *,
+        wound:wounds(
+          id,
+          wound_number,
+          location,
+          patient:patients(id, first_name, last_name)
+        ),
+        visit:visits(id, visit_date, visit_type),
+        assessment:wound_assessments(id, healing_status, length, width, depth)
+      `
+      )
+      .eq("id", photoId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
 
     if (!photo) {
       return { error: "Photo not found" };
@@ -254,10 +211,16 @@ export async function updatePhotoCaption(photoId: string, caption: string) {
       return { error: "Unauthorized" };
     }
 
-    const photo = await prisma.photo.update({
-      where: { id: photoId },
-      data: { caption },
-    });
+    const { data: photo, error: updateError } = await supabase
+      .from("wound_photos")
+      .update({ caption })
+      .eq("id", photoId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath(`/dashboard/patients`);
 
@@ -282,11 +245,13 @@ export async function deletePhoto(photoId: string) {
     }
 
     // Get photo to find the file path
-    const photo = await prisma.photo.findUnique({
-      where: { id: photoId },
-    });
+    const { data: photo, error: photoError } = await supabase
+      .from("wound_photos")
+      .select("url")
+      .eq("id", photoId)
+      .maybeSingle();
 
-    if (!photo) {
+    if (photoError || !photo) {
       return { error: "Photo not found" };
     }
 
@@ -307,9 +272,14 @@ export async function deletePhoto(photoId: string) {
     }
 
     // Delete from database
-    await prisma.photo.delete({
-      where: { id: photoId },
-    });
+    const { error: deleteError } = await supabase
+      .from("wound_photos")
+      .delete()
+      .eq("id", photoId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     revalidatePath(`/dashboard/patients`);
 
@@ -333,31 +303,24 @@ export async function getPhotosForComparison(woundId: string, limit = 10) {
       return { error: "Unauthorized" };
     }
 
-    const photos = await prisma.photo.findMany({
-      where: { woundId },
-      include: {
-        visit: {
-          select: {
-            visitDate: true,
-          },
-        },
-        assessment: {
-          select: {
-            healingStatus: true,
-            length: true,
-            width: true,
-            depth: true,
-            area: true,
-          },
-        },
-      },
-      orderBy: {
-        uploadedAt: "asc", // Chronological order for comparison
-      },
-      take: limit,
-    });
+    const { data: photos, error } = await supabase
+      .from("wound_photos")
+      .select(
+        `
+        *,
+        visit:visits(visit_date),
+        assessment:wound_assessments(healing_status, length, width, depth, area)
+      `
+      )
+      .eq("wound_id", woundId)
+      .order("uploaded_at", { ascending: true })
+      .limit(limit);
 
-    return { photos };
+    if (error) {
+      throw error;
+    }
+
+    return { photos: photos || [] };
   } catch (error) {
     console.error("Get photos for comparison error:", error);
     return { error: "Failed to fetch photos for comparison" };

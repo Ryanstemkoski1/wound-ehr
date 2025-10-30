@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
+import { getPatient } from "@/app/actions/patients";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,9 @@ import VisitCard from "@/components/visits/visit-card";
 import CSVDownloadButton from "@/components/pdf/csv-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 
+// Force dynamic rendering (requires auth)
+export const dynamic = "force-dynamic";
+
 type Params = Promise<{ id: string }>;
 
 export default async function PatientDetailPage({
@@ -41,28 +44,7 @@ export default async function PatientDetailPage({
   }
 
   // Get patient with facility access check
-  const patient = await prisma.patient.findFirst({
-    where: {
-      id,
-      isActive: true,
-      facility: {
-        users: {
-          some: { userId: user.id },
-        },
-      },
-    },
-    include: {
-      facility: true,
-      wounds: {
-        where: { status: "active" },
-        orderBy: { createdAt: "desc" },
-      },
-      visits: {
-        orderBy: { visitDate: "desc" },
-        take: 5,
-      },
-    },
-  });
+  const patient = await getPatient(id);
 
   if (!patient) {
     notFound();

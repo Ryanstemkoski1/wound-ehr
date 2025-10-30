@@ -1,10 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Decimal } from "@prisma/client/runtime/library";
 
 // Validation schema
 const assessmentSchema = z.object({
@@ -43,26 +41,22 @@ export async function getAssessments(visitId: string) {
   }
 
   try {
-    const assessments = await prisma.assessment.findMany({
-      where: {
-        visitId,
-        visit: {
-          patient: {
-            facility: {
-              users: {
-                some: { userId: user.id },
-              },
-            },
-          },
-        },
-      },
-      include: {
-        wound: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { data: assessments, error } = await supabase
+      .from("wound_assessments")
+      .select(
+        `
+        *,
+        wound:wounds(*)
+      `
+      )
+      .eq("visit_id", visitId)
+      .order("created_at", { ascending: false });
 
-    return assessments;
+    if (error) {
+      throw error;
+    }
+
+    return assessments || [];
   } catch (error) {
     console.error("Failed to fetch assessments:", error);
     return [];
@@ -81,32 +75,27 @@ export async function getAssessment(assessmentId: string) {
   }
 
   try {
-    const assessment = await prisma.assessment.findFirst({
-      where: {
-        id: assessmentId,
-        visit: {
-          patient: {
-            facility: {
-              users: {
-                some: { userId: user.id },
-              },
-            },
-          },
-        },
-      },
-      include: {
-        visit: {
-          include: {
-            patient: {
-              include: {
-                facility: true,
-              },
-            },
-          },
-        },
-        wound: true,
-      },
-    });
+    const { data: assessment, error } = await supabase
+      .from("wound_assessments")
+      .select(
+        `
+        *,
+        visit:visits(
+          *,
+          patient:patients(
+            *,
+            facility:facilities(*)
+          )
+        ),
+        wound:wounds(*)
+      `
+      )
+      .eq("id", assessmentId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
 
     return assessment;
   } catch (error) {
@@ -155,35 +144,30 @@ export async function createAssessment(formData: FormData) {
     const validated = assessmentSchema.parse(data);
 
     // Check if user has access to this visit
-    const visit = await prisma.visit.findFirst({
-      where: {
-        id: validated.visitId,
-        patient: {
-          facility: {
-            users: {
-              some: { userId: user.id },
-            },
-          },
-        },
-      },
-      include: {
-        patient: true,
-      },
-    });
+    const { data: visit, error: visitError } = await supabase
+      .from("visits")
+      .select(
+        `
+        *,
+        patient:patients(*)
+      `
+      )
+      .eq("id", validated.visitId)
+      .maybeSingle();
 
-    if (!visit) {
+    if (visitError || !visit) {
       return { error: "Visit not found or access denied" };
     }
 
     // Check if wound belongs to patient
-    const wound = await prisma.wound.findFirst({
-      where: {
-        id: validated.woundId,
-        patientId: visit.patientId,
-      },
-    });
+    const { data: wound, error: woundError } = await supabase
+      .from("wounds")
+      .select("id")
+      .eq("id", validated.woundId)
+      .eq("patient_id", visit.patient.id)
+      .maybeSingle();
 
-    if (!wound) {
+    if (woundError || !wound) {
       return { error: "Wound not found or does not belong to this patient" };
     }
 
@@ -204,48 +188,50 @@ export async function createAssessment(formData: FormData) {
       const length = parseFloat(validated.length);
       const width = parseFloat(validated.width);
       if (!isNaN(length) && !isNaN(width)) {
-        area = new Decimal(length * width);
+        area = length * width;
       }
     }
 
     // Create assessment
-    await prisma.assessment.create({
-      data: {
-        visitId: validated.visitId,
-        woundId: validated.woundId,
-        woundType: validated.woundType || null,
-        pressureStage: validated.pressureStage || null,
-        healingStatus: validated.healingStatus || null,
-        atRiskReopening: validated.atRiskReopening || null,
-        length: validated.length ? new Decimal(validated.length) : null,
-        width: validated.width ? new Decimal(validated.width) : null,
-        depth: validated.depth ? new Decimal(validated.depth) : null,
+    const { error: createError } = await supabase
+      .from("wound_assessments")
+      .insert({
+        visit_id: validated.visitId,
+        wound_id: validated.woundId,
+        wound_type: validated.woundType || null,
+        pressure_stage: validated.pressureStage || null,
+        healing_status: validated.healingStatus || null,
+        at_risk_reopening: validated.atRiskReopening || null,
+        length: validated.length ? parseFloat(validated.length) : null,
+        width: validated.width ? parseFloat(validated.width) : null,
+        depth: validated.depth ? parseFloat(validated.depth) : null,
         area,
         undermining: validated.undermining || null,
         tunneling: validated.tunneling || null,
-        epithelialPercent: validated.epithelialPercent
+        epithelial_percent: validated.epithelialPercent
           ? parseInt(validated.epithelialPercent)
           : null,
-        granulationPercent: validated.granulationPercent
+        granulation_percent: validated.granulationPercent
           ? parseInt(validated.granulationPercent)
           : null,
-        sloughPercent: validated.sloughPercent
+        slough_percent: validated.sloughPercent
           ? parseInt(validated.sloughPercent)
           : null,
-        exudateAmount: validated.exudateAmount || null,
-        exudateType: validated.exudateType || null,
+        exudate_amount: validated.exudateAmount || null,
+        exudate_type: validated.exudateType || null,
         odor: validated.odor || null,
-        periwoundCondition: validated.periwoundCondition || null,
-        painLevel: validated.painLevel ? parseInt(validated.painLevel) : null,
-        infectionSigns,
-        assessmentNotes: validated.assessmentNotes || null,
-      },
-    });
+        periwound_condition: validated.periwoundCondition || null,
+        pain_level: validated.painLevel ? parseInt(validated.painLevel) : null,
+        infection_signs: infectionSigns,
+        assessment_notes: validated.assessmentNotes || null,
+      });
+
+    if (createError) throw createError;
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${visit.patientId}`);
+    revalidatePath(`/dashboard/patients/${visit.patient_id}`);
     revalidatePath(
-      `/dashboard/patients/${visit.patientId}/visits/${validated.visitId}`
+      `/dashboard/patients/${visit.patient_id}/visits/${validated.visitId}`
     );
     return { success: true };
   } catch (error) {
@@ -300,25 +286,26 @@ export async function updateAssessment(
     const validated = assessmentSchema.parse(data);
 
     // Check if user has access to this assessment
-    const existingAssessment = await prisma.assessment.findFirst({
-      where: {
-        id: assessmentId,
-        visit: {
-          patient: {
-            facility: {
-              users: {
-                some: { userId: user.id },
-              },
-            },
-          },
-        },
-      },
-      include: {
-        visit: true,
-      },
-    });
+    const { data: existingAssessment, error: existingError } = await supabase
+      .from("wound_assessments")
+      .select(
+        `
+        *,
+        visit:visits!inner(
+          *,
+          patient:patients!inner(
+            facility:facilities!inner(
+              user_facilities!inner(user_id)
+            )
+          )
+        )
+      `
+      )
+      .eq("id", assessmentId)
+      .eq("visit.patient.facility.user_facilities.user_id", user.id)
+      .maybeSingle();
 
-    if (!existingAssessment) {
+    if (existingError || !existingAssessment) {
       return { error: "Assessment not found or access denied" };
     }
 
@@ -338,47 +325,51 @@ export async function updateAssessment(
       const length = parseFloat(validated.length);
       const width = parseFloat(validated.width);
       if (!isNaN(length) && !isNaN(width)) {
-        area = new Decimal(length * width);
+        area = length * width;
       }
     }
 
     // Update assessment
-    await prisma.assessment.update({
-      where: { id: assessmentId },
-      data: {
-        woundType: validated.woundType || null,
-        pressureStage: validated.pressureStage || null,
-        healingStatus: validated.healingStatus || null,
-        atRiskReopening: validated.atRiskReopening || null,
-        length: validated.length ? new Decimal(validated.length) : null,
-        width: validated.width ? new Decimal(validated.width) : null,
-        depth: validated.depth ? new Decimal(validated.depth) : null,
+    const { error: updateError } = await supabase
+      .from("wound_assessments")
+      .update({
+        wound_type: validated.woundType || null,
+        pressure_stage: validated.pressureStage || null,
+        healing_status: validated.healingStatus || null,
+        at_risk_reopening: validated.atRiskReopening || null,
+        length: validated.length ? parseFloat(validated.length) : null,
+        width: validated.width ? parseFloat(validated.width) : null,
+        depth: validated.depth ? parseFloat(validated.depth) : null,
         area,
         undermining: validated.undermining || null,
         tunneling: validated.tunneling || null,
-        epithelialPercent: validated.epithelialPercent
+        epithelial_percent: validated.epithelialPercent
           ? parseInt(validated.epithelialPercent)
           : null,
-        granulationPercent: validated.granulationPercent
+        granulation_percent: validated.granulationPercent
           ? parseInt(validated.granulationPercent)
           : null,
-        sloughPercent: validated.sloughPercent
+        slough_percent: validated.sloughPercent
           ? parseInt(validated.sloughPercent)
           : null,
-        exudateAmount: validated.exudateAmount || null,
-        exudateType: validated.exudateType || null,
+        exudate_amount: validated.exudateAmount || null,
+        exudate_type: validated.exudateType || null,
         odor: validated.odor || null,
-        periwoundCondition: validated.periwoundCondition || null,
-        painLevel: validated.painLevel ? parseInt(validated.painLevel) : null,
-        infectionSigns,
-        assessmentNotes: validated.assessmentNotes || null,
-      },
-    });
+        periwound_condition: validated.periwoundCondition || null,
+        pain_level: validated.painLevel ? parseInt(validated.painLevel) : null,
+        infection_signs: infectionSigns,
+        assessment_notes: validated.assessmentNotes || null,
+      })
+      .eq("id", assessmentId);
+
+    if (updateError) throw updateError;
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${existingAssessment.visit.patientId}`);
     revalidatePath(
-      `/dashboard/patients/${existingAssessment.visit.patientId}/visits/${existingAssessment.visitId}`
+      `/dashboard/patients/${existingAssessment.visit.patient.id}`
+    );
+    revalidatePath(
+      `/dashboard/patients/${existingAssessment.visit.patient.id}/visits/${existingAssessment.visit_id}`
     );
     return { success: true };
   } catch (error) {
@@ -403,37 +394,41 @@ export async function deleteAssessment(assessmentId: string) {
 
   try {
     // Check if user has access to this assessment
-    const assessment = await prisma.assessment.findFirst({
-      where: {
-        id: assessmentId,
-        visit: {
-          patient: {
-            facility: {
-              users: {
-                some: { userId: user.id },
-              },
-            },
-          },
-        },
-      },
-      include: {
-        visit: true,
-      },
-    });
+    const { data: assessment, error: assessmentError } = await supabase
+      .from("wound_assessments")
+      .select(
+        `
+        *,
+        visit:visits!inner(
+          *,
+          patient:patients!inner(
+            facility:facilities!inner(
+              user_facilities!inner(user_id)
+            )
+          )
+        )
+      `
+      )
+      .eq("id", assessmentId)
+      .eq("visit.patient.facility.user_facilities.user_id", user.id)
+      .maybeSingle();
 
-    if (!assessment) {
+    if (assessmentError || !assessment) {
       return { error: "Assessment not found or access denied" };
     }
 
     // Delete assessment
-    await prisma.assessment.delete({
-      where: { id: assessmentId },
-    });
+    const { error: deleteError } = await supabase
+      .from("wound_assessments")
+      .delete()
+      .eq("id", assessmentId);
+
+    if (deleteError) throw deleteError;
 
     revalidatePath("/dashboard/patients");
-    revalidatePath(`/dashboard/patients/${assessment.visit.patientId}`);
+    revalidatePath(`/dashboard/patients/${assessment.visit.patient.id}`);
     revalidatePath(
-      `/dashboard/patients/${assessment.visit.patientId}/visits/${assessment.visitId}`
+      `/dashboard/patients/${assessment.visit.patient.id}/visits/${assessment.visit_id}`
     );
     return { success: true };
   } catch (error) {

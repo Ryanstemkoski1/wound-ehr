@@ -1,8 +1,8 @@
 "use server";
 
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 // Calendar event type for React Big Calendar
 export type CalendarEvent = {
@@ -50,66 +50,62 @@ export async function getCalendarEvents(
   { success: true; events: CalendarEvent[] } | { success: false; error: string }
 > {
   try {
-    const visits = await prisma.visit.findMany({
-      where: {
-        visitDate: {
-          gte: startDate,
-          lte: endDate,
-        },
-        ...(patientId && { patientId }),
-      },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            facilityId: true,
-            facility: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        assessments: {
-          select: {
-            id: true,
-          },
-        },
-      },
-      orderBy: {
-        visitDate: "asc",
-      },
-    });
+    const supabase = await createClient();
+
+    let query = supabase
+      .from("visits")
+      .select(
+        `
+        *,
+        patient:patients(
+          id,
+          first_name,
+          last_name,
+          facility_id,
+          facility:facilities(id, name)
+        ),
+        assessments:wound_assessments(id)
+      `
+      )
+      .gte("visit_date", startDate.toISOString())
+      .lte("visit_date", endDate.toISOString())
+      .order("visit_date", { ascending: true });
+
+    if (patientId) {
+      query = query.eq("patient_id", patientId);
+    }
+
+    const { data: visits, error } = await query;
+
+    if (error) {
+      throw error;
+    }
 
     // Filter by facility if provided
     const filteredVisits = facilityId
-      ? visits.filter(
-          (v: (typeof visits)[number]) => v.patient.facilityId === facilityId
-        )
-      : visits;
+      ? (visits || []).filter((v) => v.patient.facility_id === facilityId)
+      : visits || [];
 
     const events: CalendarEvent[] = filteredVisits.map(
-      (visit: (typeof visits)[number]): CalendarEvent => {
+      (visit): CalendarEvent => {
         const duration = 60; // default 60 minutes
-        const endDate = new Date(visit.visitDate);
+        const visitDate = new Date(visit.visit_date);
+        const endDate = new Date(visitDate);
         endDate.setMinutes(endDate.getMinutes() + duration);
 
         return {
           id: visit.id,
-          title: `${visit.patient.firstName} ${visit.patient.lastName}`,
-          start: visit.visitDate,
+          title: `${visit.patient.first_name} ${visit.patient.last_name}`,
+          start: visitDate,
           end: endDate,
           resource: {
             visitId: visit.id,
             patientId: visit.patient.id,
-            patientName: `${visit.patient.firstName} ${visit.patient.lastName}`,
+            patientName: `${visit.patient.first_name} ${visit.patient.last_name}`,
             facilityId: visit.patient.facility.id,
             facilityName: visit.patient.facility.name,
             status: visit.status,
-            woundCount: visit.assessments.length,
+            woundCount: visit.assessments?.length || 0,
           },
         };
       }
@@ -136,30 +132,33 @@ export async function createVisitFromCalendar(
 ) {
   try {
     const validated = createVisitFromCalendarSchema.parse(data);
+    const supabase = await createClient();
 
-    const visit = await prisma.visit.create({
-      data: {
-        patientId: validated.patientId,
-        visitDate: validated.visitDate,
-        visitType: validated.visitType,
+    const { data: visit, error } = await supabase
+      .from("visits")
+      .insert({
+        patient_id: validated.patientId,
+        visit_date: validated.visitDate.toISOString(),
+        visit_type: validated.visitType,
         location: validated.location,
         status: "incomplete",
-        additionalNotes: validated.notes,
-      },
-      include: {
-        patient: {
-          select: {
-            firstName: true,
-            lastName: true,
-            facility: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
+        additional_notes: validated.notes,
+      })
+      .select(
+        `
+        *,
+        patient:patients(
+          first_name,
+          last_name,
+          facility:facilities(name)
+        )
+      `
+      )
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     revalidatePath("/dashboard/calendar");
     revalidatePath("/dashboard/visits");
@@ -168,7 +167,7 @@ export async function createVisitFromCalendar(
       success: true,
       visit: {
         id: visit.id,
-        patientName: `${visit.patient.firstName} ${visit.patient.lastName}`,
+        patientName: `${visit.patient.first_name} ${visit.patient.last_name}`,
         facilityName: visit.patient.facility.name,
         visitDate: visit.visitDate,
       },
@@ -193,21 +192,25 @@ export async function rescheduleVisit(
 ) {
   try {
     const validated = rescheduleVisitSchema.parse(data);
+    const supabase = await createClient();
 
-    const visit = await prisma.visit.update({
-      where: { id: validated.visitId },
-      data: {
-        visitDate: validated.visitDate,
-      },
-      include: {
-        patient: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
+    const { data: visit, error } = await supabase
+      .from("visits")
+      .update({
+        visit_date: validated.visitDate.toISOString(),
+      })
+      .eq("id", validated.visitId)
+      .select(
+        `
+        *,
+        patient:patients(first_name, last_name)
+      `
+      )
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     revalidatePath("/dashboard/calendar");
     revalidatePath("/dashboard/visits");
@@ -216,8 +219,8 @@ export async function rescheduleVisit(
       success: true,
       visit: {
         id: visit.id,
-        patientName: `${visit.patient.firstName} ${visit.patient.lastName}`,
-        visitDate: visit.visitDate,
+        patientName: `${visit.patient.first_name} ${visit.patient.last_name}`,
+        visitDate: new Date(visit.visit_date),
       },
     };
   } catch (error) {
@@ -238,22 +241,24 @@ export async function rescheduleVisit(
  */
 export async function getPatientsForCalendar(facilityId?: string) {
   try {
-    const patients = await prisma.patient.findMany({
-      where: {
-        ...(facilityId && { facilityId }),
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        mrn: true,
-      },
-      orderBy: {
-        lastName: "asc",
-      },
-    });
+    const supabase = await createClient();
 
-    return { success: true, patients };
+    let query = supabase
+      .from("patients")
+      .select("id, first_name, last_name, mrn")
+      .order("last_name", { ascending: true });
+
+    if (facilityId) {
+      query = query.eq("facility_id", facilityId);
+    }
+
+    const { data: patients, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, patients: patients || [] };
   } catch (error) {
     console.error("Failed to get patients:", error);
     return {
@@ -268,17 +273,18 @@ export async function getPatientsForCalendar(facilityId?: string) {
  */
 export async function getFacilitiesForCalendar() {
   try {
-    const facilities = await prisma.facility.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
+    const supabase = await createClient();
 
-    return { success: true, facilities };
+    const { data: facilities, error } = await supabase
+      .from("facilities")
+      .select("id, name")
+      .order("name", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, facilities: facilities || [] };
   } catch (error) {
     console.error("Failed to get facilities:", error);
     return {

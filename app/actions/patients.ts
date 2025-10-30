@@ -3,7 +3,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
 // Validation schemas
@@ -58,13 +57,13 @@ export async function createPatient(formData: FormData) {
 
   try {
     // Check if MRN is unique within the facility
-    const existingPatient = await prisma.patient.findFirst({
-      where: {
-        facilityId: data.facilityId,
-        mrn: data.mrn,
-        isActive: true,
-      },
-    });
+    const { data: existingPatient } = await supabase
+      .from("patients")
+      .select("id")
+      .eq("facility_id", data.facilityId)
+      .eq("mrn", data.mrn)
+      .eq("is_active", true)
+      .maybeSingle();
 
     if (existingPatient) {
       return {
@@ -96,12 +95,13 @@ export async function createPatient(formData: FormData) {
       : [];
 
     // Create patient
-    const patient = await prisma.patient.create({
-      data: {
-        facilityId: data.facilityId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        dob: new Date(data.dob),
+    const { data: patient, error: createError } = await supabase
+      .from("patients")
+      .insert({
+        facility_id: data.facilityId,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        dob: data.dob,
         mrn: data.mrn,
         gender: data.gender || null,
         phone: data.phone || null,
@@ -110,13 +110,18 @@ export async function createPatient(formData: FormData) {
         city: data.city || null,
         state: data.state || null,
         zip: data.zip || null,
-        insuranceInfo: insuranceInfo,
-        emergencyContact: emergencyContactData,
+        insurance_info: insuranceInfo,
+        emergency_contact: emergencyContactData,
         allergies: allergiesData,
-        medicalHistory: medicalHistoryData,
-        createdBy: user.id,
-      },
-    });
+        medical_history: medicalHistoryData,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (createError) {
+      throw createError;
+    }
 
     revalidatePath("/dashboard/patients");
     return { success: true, patientId: patient.id };
@@ -161,17 +166,17 @@ export async function updatePatient(patientId: string, formData: FormData) {
   const data = validatedFields.data;
 
   try {
+    const supabase = await createClient();
+
     // Check if MRN is unique within the facility (excluding current patient)
-    const existingPatient = await prisma.patient.findFirst({
-      where: {
-        facilityId: data.facilityId,
-        mrn: data.mrn,
-        isActive: true,
-        NOT: {
-          id: patientId,
-        },
-      },
-    });
+    const { data: existingPatient } = await supabase
+      .from("patients")
+      .select("id")
+      .eq("facility_id", data.facilityId)
+      .eq("mrn", data.mrn)
+      .eq("is_active", true)
+      .neq("id", patientId)
+      .maybeSingle();
 
     if (existingPatient) {
       return {
@@ -203,13 +208,13 @@ export async function updatePatient(patientId: string, formData: FormData) {
       : [];
 
     // Update patient
-    await prisma.patient.update({
-      where: { id: patientId },
-      data: {
-        facilityId: data.facilityId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        dob: new Date(data.dob),
+    const { error: updateError } = await supabase
+      .from("patients")
+      .update({
+        facility_id: data.facilityId,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        dob: data.dob,
         mrn: data.mrn,
         gender: data.gender || null,
         phone: data.phone || null,
@@ -218,12 +223,16 @@ export async function updatePatient(patientId: string, formData: FormData) {
         city: data.city || null,
         state: data.state || null,
         zip: data.zip || null,
-        insuranceInfo: insuranceInfo,
-        emergencyContact: emergencyContactData,
+        insurance_info: insuranceInfo,
+        emergency_contact: emergencyContactData,
         allergies: allergiesData,
-        medicalHistory: medicalHistoryData,
-      },
-    });
+        medical_history: medicalHistoryData,
+      })
+      .eq("id", patientId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${patientId}`);
@@ -246,10 +255,14 @@ export async function deletePatient(patientId: string) {
 
   try {
     // Soft delete (mark as inactive)
-    await prisma.patient.update({
-      where: { id: patientId },
-      data: { isActive: false },
-    });
+    const { error: deleteError } = await supabase
+      .from("patients")
+      .update({ is_active: false })
+      .eq("id", patientId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     revalidatePath("/dashboard/patients");
     return { success: true };
@@ -270,55 +283,50 @@ export async function getPatients(facilityId?: string, search?: string) {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {
-      isActive: true,
-      facility: {
-        users: {
-          some: {
-            userId: user.id,
-          },
-        },
-      },
-    };
+    // Build query - start with patients that are active
+    let query = supabase
+      .from("patients")
+      .select(
+        `
+        *,
+        facility:facilities(id, name),
+        wounds!inner(id, status)
+      `
+      )
+      .eq("is_active", true)
+      .order("last_name", { ascending: true })
+      .order("first_name", { ascending: true });
 
     // Filter by facility if specified
     if (facilityId) {
-      where.facilityId = facilityId;
+      query = query.eq("facility_id", facilityId);
     }
 
     // Search by name or MRN
     if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { mrn: { contains: search, mode: "insensitive" } },
-      ];
+      query = query.or(
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,mrn.ilike.%${search}%`
+      );
     }
 
-    const patients = await prisma.patient.findMany({
-      where,
-      include: {
-        facility: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: {
-            wounds: {
-              where: {
-                status: "active",
-              },
-            },
-          },
-        },
-      },
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    });
+    const { data: patients, error } = await query;
 
-    return patients;
+    if (error) {
+      throw error;
+    }
+
+    // Transform data to match expected format (count active wounds)
+    return (
+      patients?.map((patient) => ({
+        ...patient,
+        _count: {
+          wounds:
+            patient.wounds?.filter(
+              (w: { status: string }) => w.status === "active"
+            ).length || 0,
+        },
+      })) || []
+    );
   } catch (error) {
     console.error("Failed to fetch patients:", error);
     return [];
@@ -336,36 +344,42 @@ export async function getPatient(patientId: string) {
   }
 
   try {
-    const patient = await prisma.patient.findFirst({
-      where: {
-        id: patientId,
-        isActive: true,
-        facility: {
-          users: {
-            some: {
-              userId: user.id,
-            },
-          },
-        },
-      },
-      include: {
-        facility: true,
-        wounds: {
-          where: {
-            status: "active",
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-        visits: {
-          orderBy: {
-            visitDate: "desc",
-          },
-          take: 10,
-        },
-      },
-    });
+    const { data: patient, error } = await supabase
+      .from("patients")
+      .select(
+        `
+        *,
+        facility:facilities(*),
+        wounds(*)
+      `
+      )
+      .eq("id", patientId)
+      .eq("is_active", true)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Filter wounds to active only and sort by created_at desc
+    if (patient) {
+      patient.wounds = patient.wounds
+        ?.filter((w: { status: string }) => w.status === "active")
+        .sort(
+          (a: { created_at: string }, b: { created_at: string }) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+      // Fetch recent visits separately (limit 10)
+      const { data: visits } = await supabase
+        .from("visits")
+        .select("*")
+        .eq("patient_id", patientId)
+        .order("visit_date", { ascending: false })
+        .limit(10);
+
+      patient.visits = visits || [];
+    }
 
     return patient;
   } catch (error) {

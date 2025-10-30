@@ -1,8 +1,8 @@
 "use server";
 
-import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 // Validation schemas
 const billingSchema = z.object({
@@ -23,18 +23,25 @@ type BillingInput = z.infer<typeof billingSchema>;
 export async function createBilling(data: BillingInput) {
   try {
     const validated = billingSchema.parse(data);
+    const supabase = await createClient();
 
-    const billing = await prisma.billing.create({
-      data: {
-        visitId: validated.visitId,
-        patientId: validated.patientId,
-        cptCodes: validated.cptCodes,
-        icd10Codes: validated.icd10Codes,
+    const { data: billing, error } = await supabase
+      .from("billing_codes")
+      .insert({
+        visit_id: validated.visitId,
+        patient_id: validated.patientId,
+        cpt_codes: validated.cptCodes,
+        icd10_codes: validated.icd10Codes,
         modifiers: validated.modifiers || [],
-        timeSpent: validated.timeSpent,
+        time_spent: validated.timeSpent,
         notes: validated.notes,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     revalidatePath(
       `/dashboard/patients/${validated.patientId}/visits/${validated.visitId}`
@@ -58,26 +65,33 @@ export async function updateBilling(
   data: Partial<BillingInput>
 ) {
   try {
-    const billing = await prisma.billing.update({
-      where: { id: billingId },
-      data: {
-        ...(data.cptCodes && { cptCodes: data.cptCodes }),
-        ...(data.icd10Codes && { icd10Codes: data.icd10Codes }),
-        ...(data.modifiers !== undefined && { modifiers: data.modifiers }),
-        ...(data.timeSpent !== undefined && { timeSpent: data.timeSpent }),
-        ...(data.notes !== undefined && { notes: data.notes }),
-      },
-      include: {
-        visit: {
-          select: {
-            patientId: true,
-          },
-        },
-      },
-    });
+    const supabase = await createClient();
+
+    const updateData: Record<string, unknown> = {};
+    if (data.cptCodes) updateData.cpt_codes = data.cptCodes;
+    if (data.icd10Codes) updateData.icd10_codes = data.icd10Codes;
+    if (data.modifiers !== undefined) updateData.modifiers = data.modifiers;
+    if (data.timeSpent !== undefined) updateData.time_spent = data.timeSpent;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+
+    const { data: billing, error } = await supabase
+      .from("billing_codes")
+      .update(updateData)
+      .eq("id", billingId)
+      .select(
+        `
+        *,
+        visit:visits(patient_id)
+      `
+      )
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     revalidatePath(
-      `/dashboard/patients/${billing.visit.patientId}/visits/${billing.visitId}`
+      `/dashboard/patients/${billing.visit.patient_id}/visits/${billing.visit_id}`
     );
     return { success: true as const, billing };
   } catch (error) {
@@ -95,24 +109,29 @@ export async function updateBilling(
  */
 export async function deleteBilling(billingId: string) {
   try {
-    const billing = await prisma.billing.findUnique({
-      where: { id: billingId },
-      select: {
-        visitId: true,
-        patientId: true,
-      },
-    });
+    const supabase = await createClient();
 
-    if (!billing) {
+    const { data: billing, error: fetchError } = await supabase
+      .from("billing_codes")
+      .select("visit_id, patient_id")
+      .eq("id", billingId)
+      .maybeSingle();
+
+    if (fetchError || !billing) {
       return { success: false as const, error: "Billing record not found" };
     }
 
-    await prisma.billing.delete({
-      where: { id: billingId },
-    });
+    const { error: deleteError } = await supabase
+      .from("billing_codes")
+      .delete()
+      .eq("id", billingId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     revalidatePath(
-      `/dashboard/patients/${billing.patientId}/visits/${billing.visitId}`
+      `/dashboard/patients/${billing.patient_id}/visits/${billing.visit_id}`
     );
     return { success: true as const };
   } catch (error) {
@@ -130,9 +149,17 @@ export async function deleteBilling(billingId: string) {
  */
 export async function getBillingForVisit(visitId: string) {
   try {
-    const billing = await prisma.billing.findFirst({
-      where: { visitId },
-    });
+    const supabase = await createClient();
+
+    const { data: billing, error } = await supabase
+      .from("billing_codes")
+      .select("*")
+      .eq("visit_id", visitId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
 
     return { success: true as const, billing };
   } catch (error) {
@@ -149,23 +176,24 @@ export async function getBillingForVisit(visitId: string) {
  */
 export async function getBillingForPatient(patientId: string) {
   try {
-    const billings = await prisma.billing.findMany({
-      where: { patientId },
-      include: {
-        visit: {
-          select: {
-            id: true,
-            visitDate: true,
-            visitType: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const supabase = await createClient();
 
-    return { success: true as const, billings };
+    const { data: billings, error } = await supabase
+      .from("billing_codes")
+      .select(
+        `
+        *,
+        visit:visits(id, visit_date, visit_type)
+      `
+      )
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true as const, billings: billings || [] };
   } catch (error) {
     console.error("Failed to get billings:", error);
     return {
@@ -185,75 +213,47 @@ export async function getAllBilling(filters?: {
   patientId?: string;
 }) {
   try {
-    // Build where conditions
-    const whereConditions: {
-      patientId?: string;
-      visit?: {
-        visitDate?: {
-          gte?: Date;
-          lte?: Date;
-        };
-      };
-      patient?: {
-        facilityId?: string;
-      };
-    } = {};
+    const supabase = await createClient();
+
+    let query = supabase.from("billing_codes").select(
+      `
+        *,
+        visit:visits(id, visit_date, visit_type),
+        patient:patients(
+          id,
+          first_name,
+          last_name,
+          mrn,
+          facility:facilities(id, name)
+        )
+      `
+    );
 
     if (filters?.patientId) {
-      whereConditions.patientId = filters.patientId;
+      query = query.eq("patient_id", filters.patientId);
     }
 
     if (filters?.facilityId) {
-      whereConditions.patient = {
-        facilityId: filters.facilityId,
-      };
+      query = query.eq("patient.facility_id", filters.facilityId);
     }
 
-    if (filters?.startDate || filters?.endDate) {
-      whereConditions.visit = {
-        visitDate: {},
-      };
-      if (filters.startDate && whereConditions.visit.visitDate) {
-        whereConditions.visit.visitDate.gte = filters.startDate;
-      }
-      if (filters.endDate && whereConditions.visit.visitDate) {
-        whereConditions.visit.visitDate.lte = filters.endDate;
-      }
+    if (filters?.startDate) {
+      query = query.gte("visit.visit_date", filters.startDate.toISOString());
     }
 
-    const billings = await prisma.billing.findMany({
-      where: whereConditions,
-      include: {
-        visit: {
-          select: {
-            id: true,
-            visitDate: true,
-            visitType: true,
-          },
-        },
-        patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            mrn: true,
-            facility: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        visit: {
-          visitDate: "desc",
-        },
-      },
+    if (filters?.endDate) {
+      query = query.lte("visit.visit_date", filters.endDate.toISOString());
+    }
+
+    const { data: billings, error } = await query.order("created_at", {
+      ascending: false,
     });
 
-    return { success: true as const, billings };
+    if (error) {
+      throw error;
+    }
+
+    return { success: true as const, billings: billings || [] };
   } catch (error) {
     console.error("Failed to get all billings:", error);
     return {
