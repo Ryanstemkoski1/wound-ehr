@@ -8,9 +8,6 @@ import {
   Users,
   Building2,
   Calendar,
-  FileText,
-  Activity,
-  Settings,
   DollarSign,
   X,
 } from "lucide-react";
@@ -23,9 +20,6 @@ const navigation = [
   { name: "Facilities", href: "/dashboard/facilities", icon: Building2 },
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { name: "Billing", href: "/dashboard/billing", icon: DollarSign },
-  { name: "Visits", href: "/dashboard/visits", icon: FileText },
-  { name: "Wounds", href: "/dashboard/wounds", icon: Activity },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 type SidebarProps = {

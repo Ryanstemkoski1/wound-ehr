@@ -4,7 +4,7 @@
 
 This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind CSS v4** for building an Electronic Health Record (EHR) system for wound care. The project uses the modern Next.js App Router architecture with shadcn/ui components.
 
-**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `SYSTEM_DESIGN.md` (v2.0 - Approved). This includes:**
+**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `SYSTEM_DESIGN.md` (v2.2 - Approved). This includes:**
 
 - Database schema (10+ tables with Supabase PostgreSQL)
 - Frontend architecture (app router structure, components)
@@ -31,10 +31,15 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 
 ### Key Directories
 
-- `app/` - Next.js App Router pages and layouts (root route at `app/page.tsx`)
-- `lib/` - Shared utilities (currently contains `utils.ts` with `cn()` helper)
-- `components/` - Will contain shadcn/ui components when added
+- `app/` - Next.js App Router pages and layouts (auth, dashboard, patient management)
+- `app/actions/` - Server Actions for all database operations (patients, visits, wounds, billing, etc.)
+- `lib/` - Shared utilities (`utils.ts`, `billing-codes.ts`, Supabase clients)
+- `lib/supabase/` - Supabase client configurations (server, client, middleware)
+- `components/` - React components organized by feature (ui, layout, patients, wounds, etc.)
+- `components/ui/` - shadcn/ui components (button, card, form, table, etc.)
+- `components/layout/` - Layout components (sidebar, header, dashboard layout)
 - `public/` - Static assets (logos, icons, favicon)
+- `supabase/` - Database migrations, seed scripts, schema documentation
 
 ### Import Paths (tsconfig aliases)
 
@@ -200,7 +205,8 @@ This project is configured for shadcn/ui. When adding components:
 - Prefer Server Components by default (RSC enabled)
 - Use `"use client"` directive only when needed (interactivity, hooks)
 - Async Server Components supported in App Router
-- `app/page.tsx` is currently a minimal placeholder - ready for implementation
+- Auth-protected pages use `export const dynamic = "force-dynamic"` to prevent static rendering
+- All dashboard pages configured for dynamic rendering (prevents auth errors at build time)
 
 ### File Naming
 
