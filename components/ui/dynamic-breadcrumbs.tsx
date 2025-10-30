@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
@@ -82,18 +83,20 @@ export function DynamicBreadcrumbs({
           {customSegments.map((segment, index) => {
             const isLast = index === customSegments.length - 1;
             return (
-              <BreadcrumbItem key={index}>
+              <Fragment key={index}>
                 <BreadcrumbSeparator />
-                {isLast ? (
-                  <BreadcrumbPage>{segment.label}</BreadcrumbPage>
-                ) : segment.href ? (
-                  <BreadcrumbLink href={segment.href}>
-                    {segment.label}
-                  </BreadcrumbLink>
-                ) : (
-                  <span>{segment.label}</span>
-                )}
-              </BreadcrumbItem>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage>{segment.label}</BreadcrumbPage>
+                  ) : segment.href ? (
+                    <BreadcrumbLink href={segment.href}>
+                      {segment.label}
+                    </BreadcrumbLink>
+                  ) : (
+                    <span>{segment.label}</span>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
             );
           })}
         </BreadcrumbList>
@@ -137,25 +140,27 @@ export function DynamicBreadcrumbs({
           }
 
           return (
-            <BreadcrumbItem key={`${segment}-${index}`}>
+            <Fragment key={`${segment}-${index}`}>
               <BreadcrumbSeparator />
-              {isLast ? (
-                <BreadcrumbPage className="flex items-center gap-1.5">
-                  {Icon && <Icon className="h-4 w-4" />}
-                  {isId ? "Details" : label}
-                </BreadcrumbPage>
-              ) : (
-                <BreadcrumbLink
-                  href={`/${breadcrumbPath}`}
-                  className="flex items-center gap-1.5"
-                >
-                  {Icon && <Icon className="h-4 w-4" />}
-                  <span className="hidden sm:inline">
-                    {isId ? "..." : label}
-                  </span>
-                </BreadcrumbLink>
-              )}
-            </BreadcrumbItem>
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage className="flex items-center gap-1.5">
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {isId ? "Details" : label}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    href={`/${breadcrumbPath}`}
+                    className="flex items-center gap-1.5"
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    <span className="hidden sm:inline">
+                      {isId ? "..." : label}
+                    </span>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </Fragment>
           );
         })}
       </BreadcrumbList>

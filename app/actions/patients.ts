@@ -318,7 +318,28 @@ export async function getPatients(facilityId?: string, search?: string) {
     // Transform data to match expected format (count active wounds)
     return (
       patients?.map((patient) => ({
-        ...patient,
+        id: patient.id,
+        firstName: patient.first_name,
+        lastName: patient.last_name,
+        dob: patient.dob,
+        mrn: patient.mrn,
+        gender: patient.gender,
+        phone: patient.phone,
+        email: patient.email,
+        address: patient.address,
+        city: patient.city,
+        state: patient.state,
+        zip: patient.zip,
+        insuranceInfo: patient.insurance_info,
+        emergencyContact: patient.emergency_contact,
+        allergies: patient.allergies,
+        medicalHistory: patient.medical_history,
+        isActive: patient.is_active,
+        createdAt: patient.created_at,
+        updatedAt: patient.updated_at,
+        createdBy: patient.created_by,
+        facilityId: patient.facility_id,
+        facility: patient.facility,
         _count: {
           wounds:
             patient.wounds?.filter(
@@ -363,7 +384,7 @@ export async function getPatient(patientId: string) {
 
     // Filter wounds to active only and sort by created_at desc
     if (patient) {
-      patient.wounds = patient.wounds
+      const activeWounds = patient.wounds
         ?.filter((w: { status: string }) => w.status === "active")
         .sort(
           (a: { created_at: string }, b: { created_at: string }) =>
@@ -378,10 +399,36 @@ export async function getPatient(patientId: string) {
         .order("visit_date", { ascending: false })
         .limit(10);
 
-      patient.visits = visits || [];
+      // Transform to camelCase
+      return {
+        id: patient.id,
+        firstName: patient.first_name,
+        lastName: patient.last_name,
+        dob: patient.dob,
+        mrn: patient.mrn,
+        gender: patient.gender,
+        phone: patient.phone,
+        email: patient.email,
+        address: patient.address,
+        city: patient.city,
+        state: patient.state,
+        zip: patient.zip,
+        insuranceInfo: patient.insurance_info,
+        emergencyContact: patient.emergency_contact,
+        allergies: patient.allergies,
+        medicalHistory: patient.medical_history,
+        isActive: patient.is_active,
+        createdAt: patient.created_at,
+        updatedAt: patient.updated_at,
+        createdBy: patient.created_by,
+        facilityId: patient.facility_id,
+        facility: patient.facility,
+        wounds: activeWounds || [],
+        visits: visits || [],
+      };
     }
 
-    return patient;
+    return null;
   } catch (error) {
     console.error("Failed to fetch patient:", error);
     return null;

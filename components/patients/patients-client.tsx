@@ -69,32 +69,39 @@ export default function PatientsClient({
       {/* Breadcrumbs */}
       <DynamicBreadcrumbs customSegments={[{ label: "Patients" }]} />
 
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">Patients</h1>
-          <p className="text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
-            Manage patient records
-          </p>
+      {/* Enhanced Header with gradient */}
+      <div className="via-background shadow-soft relative overflow-hidden rounded-xl bg-linear-to-br from-teal-500/10 to-blue-500/5 p-6 sm:p-8">
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="gradient-text text-2xl font-bold tracking-tight sm:text-3xl">
+              Patients
+            </h1>
+            <p className="mt-2 text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
+              Manage and track all patient records
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <CSVDownloadButton
+              type="patients"
+              facilityId={facilityFilter === "all" ? undefined : facilityFilter}
+              variant="outline"
+            />
+            <Link href="/dashboard/patients/new">
+              <Button className="gap-2 bg-linear-to-r from-teal-600 to-teal-500 shadow-md transition-all hover:from-teal-500 hover:to-teal-600 hover:shadow-lg">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Patient</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <CSVDownloadButton
-            type="patients"
-            facilityId={facilityFilter === "all" ? undefined : facilityFilter}
-            variant="outline"
-          />
-          <Link href="/dashboard/patients/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Patient</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </Link>
-        </div>
+        {/* Decorative elements */}
+        <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-teal-500/5 blur-3xl" />
+        <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-blue-500/5 blur-2xl" />
       </div>
 
-      {/* Search and Filters */}
-      <Card>
+      {/* Enhanced Search and Filters */}
+      <Card className="overflow-hidden border-l-4 border-l-teal-500 shadow-md">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="relative flex-1">
@@ -130,31 +137,40 @@ export default function PatientsClient({
         </CardContent>
       </Card>
 
-      {/* Results */}
+      {/* Results with count badge */}
       <div>
-        <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-          {filteredPatients.length} patient
-          {filteredPatients.length !== 1 ? "s" : ""} found
-        </p>
+        <div className="mb-4 flex items-center gap-2">
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {filteredPatients.length} patient
+            {filteredPatients.length !== 1 ? "s" : ""} found
+          </p>
+          {search && (
+            <span className="rounded-full bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-700 dark:text-teal-400">
+              Filtered
+            </span>
+          )}
+        </div>
 
         {filteredPatients.length === 0 ? (
-          <Card>
+          <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <UsersIcon className="mb-4 h-12 w-12 text-zinc-400" />
+              <div className="mb-4 rounded-full bg-zinc-100 p-4 dark:bg-zinc-800">
+                <UsersIcon className="h-12 w-12 text-zinc-400" />
+              </div>
               <h3 className="mb-2 text-lg font-semibold">
                 {initialPatients.length === 0
                   ? "No patients yet"
                   : "No patients match your search"}
               </h3>
-              <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mb-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
                 {initialPatients.length === 0
                   ? "Get started by adding your first patient"
                   : "Try adjusting your search or filters"}
               </p>
               {initialPatients.length === 0 && (
                 <Link href="/dashboard/patients/new">
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
                     Add Patient
                   </Button>
                 </Link>
@@ -163,8 +179,14 @@ export default function PatientsClient({
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredPatients.map((patient) => (
-              <PatientCard key={patient.id} patient={patient} />
+            {filteredPatients.map((patient, index) => (
+              <div
+                key={patient.id}
+                style={{ animationDelay: `${index * 50}ms` }}
+                className="animate-slide-in"
+              >
+                <PatientCard patient={patient} />
+              </div>
             ))}
           </div>
         )}

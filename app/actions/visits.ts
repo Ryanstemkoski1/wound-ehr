@@ -40,7 +40,25 @@ export async function getVisits(patientId: string) {
       throw error;
     }
 
-    return visits || [];
+    // Transform to camelCase
+    return (
+      visits?.map((visit) => ({
+        id: visit.id,
+        patientId: visit.patient_id,
+        visitDate: visit.visit_date,
+        visitType: visit.visit_type,
+        location: visit.location,
+        status: visit.status,
+        numberOfAddenda: visit.number_of_addenda,
+        followUpType: visit.follow_up_type,
+        followUpDate: visit.follow_up_date,
+        followUpNotes: visit.follow_up_notes,
+        timeSpent: visit.time_spent,
+        additionalNotes: visit.additional_notes,
+        createdAt: visit.created_at,
+        updatedAt: visit.updated_at,
+      })) || []
+    );
   } catch (error) {
     console.error("Failed to fetch visits:", error);
     return [];

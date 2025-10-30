@@ -6,7 +6,8 @@
 -- EXTENSIONS
 -- =====================================================
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable the pgcrypto extension for UUID generation (gen_random_uuid)
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =====================================================
 -- TABLES
@@ -14,7 +15,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Facilities Table
 CREATE TABLE IF NOT EXISTS facilities (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   address TEXT,
   city TEXT,
@@ -32,7 +33,7 @@ CREATE TABLE IF NOT EXISTS facilities (
 
 -- Patients Table
 CREATE TABLE IF NOT EXISTS patients (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facility_id UUID NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -58,7 +59,7 @@ CREATE TABLE IF NOT EXISTS patients (
 
 -- Wounds Table
 CREATE TABLE IF NOT EXISTS wounds (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
   wound_number TEXT NOT NULL,
   location TEXT NOT NULL,
@@ -71,7 +72,7 @@ CREATE TABLE IF NOT EXISTS wounds (
 
 -- Visits Table
 CREATE TABLE IF NOT EXISTS visits (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
   visit_date TIMESTAMPTZ NOT NULL,
   visit_type TEXT NOT NULL CHECK (visit_type IN ('in_person', 'telemed')),
@@ -89,7 +90,7 @@ CREATE TABLE IF NOT EXISTS visits (
 
 -- Assessments Table (Wound Assessments)
 CREATE TABLE IF NOT EXISTS assessments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
   wound_id UUID NOT NULL REFERENCES wounds(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -118,7 +119,7 @@ CREATE TABLE IF NOT EXISTS assessments (
 
 -- Photos Table (Wound Photos)
 CREATE TABLE IF NOT EXISTS photos (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wound_id UUID NOT NULL REFERENCES wounds(id) ON DELETE CASCADE,
   visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
   assessment_id UUID REFERENCES assessments(id) ON DELETE SET NULL,
@@ -134,7 +135,7 @@ CREATE TABLE IF NOT EXISTS photos (
 
 -- Treatments Table
 CREATE TABLE IF NOT EXISTS treatments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -157,7 +158,7 @@ CREATE TABLE IF NOT EXISTS treatments (
 
 -- Billings Table
 CREATE TABLE IF NOT EXISTS billings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
   patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -171,7 +172,7 @@ CREATE TABLE IF NOT EXISTS billings (
 
 -- User Facilities Junction Table (many-to-many)
 CREATE TABLE IF NOT EXISTS user_facilities (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   facility_id UUID NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
   is_default BOOLEAN DEFAULT false,
@@ -602,3 +603,4 @@ CREATE POLICY "Users can delete their own photos"
     auth.uid() IS NOT NULL AND
     (storage.foldername(name))[1] = auth.uid()::text
   );
+

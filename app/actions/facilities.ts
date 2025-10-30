@@ -252,10 +252,23 @@ export async function getUserFacilities() {
       throw error;
     }
 
-    // Transform to include _count
+    // Transform to include _count and camelCase
     return (
       facilities?.map((facility) => ({
-        ...facility,
+        id: facility.id,
+        name: facility.name,
+        address: facility.address,
+        city: facility.city,
+        state: facility.state,
+        zip: facility.zip,
+        phone: facility.phone,
+        fax: facility.fax,
+        contactPerson: facility.contact_person,
+        email: facility.email,
+        notes: facility.notes,
+        isActive: facility.is_active,
+        createdAt: facility.created_at,
+        updatedAt: facility.updated_at,
         _count: {
           patients: facility.patients?.length || 0,
         },

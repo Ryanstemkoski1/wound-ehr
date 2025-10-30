@@ -37,7 +37,20 @@ export async function getWounds(patientId: string) {
       throw error;
     }
 
-    return wounds || [];
+    // Transform to camelCase
+    return (
+      wounds?.map((wound) => ({
+        id: wound.id,
+        patientId: wound.patient_id,
+        woundNumber: wound.wound_number,
+        location: wound.location,
+        woundType: wound.wound_type,
+        onsetDate: wound.onset_date,
+        status: wound.status,
+        createdAt: wound.created_at,
+        updatedAt: wound.updated_at,
+      })) || []
+    );
   } catch (error) {
     console.error("Failed to fetch wounds:", error);
     return [];
