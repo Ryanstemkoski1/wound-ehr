@@ -47,11 +47,11 @@
   /* Enhanced radius system for modern feel */
   --radius: 0.75rem;
 
-  /* Refined light mode colors - softer, more sophisticated */
-  --background: oklch(0.99 0.002 264);
+  /* Sophisticated background palette */
+  --background: oklch(0.98 0.003 264);
   --foreground: oklch(0.15 0.008 264);
 
-  /* Cards with subtle elevation */
+  /* Cards with subtle warmth */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.008 264);
 
@@ -59,44 +59,56 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.008 264);
 
-  /* Enhanced teal primary - more vibrant and medical-feeling */
-  --primary: oklch(0.55 0.15 192);
+  /* Vibrant teal primary - medical and trustworthy */
+  --primary: oklch(0.52 0.16 195);
   --primary-foreground: oklch(0.99 0 0);
 
-  /* Warm amber secondary for highlights */
-  --secondary: oklch(0.94 0.06 85);
-  --secondary-foreground: oklch(0.25 0.05 85);
+  /* Warm amber secondary for energy */
+  --secondary: oklch(0.75 0.12 75);
+  --secondary-foreground: oklch(0.99 0 0);
 
-  /* Refined muted tones */
-  --muted: oklch(0.97 0.003 264);
-  --muted-foreground: oklch(0.5 0.012 264);
+  /* Refined muted tones with warmth */
+  --muted: oklch(0.96 0.005 264);
+  --muted-foreground: oklch(0.48 0.015 264);
 
-  /* Soft accent for hover states */
-  --accent: oklch(0.97 0.003 264);
-  --accent-foreground: oklch(0.15 0.008 264);
+  /* Soft accent purple for diversity */
+  --accent: oklch(0.65 0.14 285);
+  --accent-foreground: oklch(0.99 0 0);
 
   /* Professional red for destructive actions */
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
 
+  /* Success green for positive feedback */
+  --success: oklch(0.58 0.14 145);
+  --success-foreground: oklch(0.99 0 0);
+
+  /* Warning orange for caution */
+  --warning: oklch(0.68 0.16 60);
+  --warning-foreground: oklch(0.15 0 0);
+
+  /* Info blue for informational */
+  --info: oklch(0.58 0.15 240);
+  --info-foreground: oklch(0.99 0 0);
+
   /* Subtle borders and inputs */
-  --border: oklch(0.92 0.006 264);
-  --input: oklch(0.96 0.004 264);
-  --ring: oklch(0.55 0.15 192);
+  --border: oklch(0.9 0.008 264);
+  --input: oklch(0.95 0.005 264);
+  --ring: oklch(0.52 0.16 195);
 
-  /* Rich chart colors */
-  --chart-1: oklch(0.55 0.15 192);
-  --chart-2: oklch(0.68 0.14 145);
-  --chart-3: oklch(0.65 0.18 85);
-  --chart-4: oklch(0.58 0.16 265);
-  --chart-5: oklch(0.62 0.2 25);
+  /* Rich, diverse chart colors */
+  --chart-1: oklch(0.52 0.16 195); /* Teal */
+  --chart-2: oklch(0.58 0.14 145); /* Green */
+  --chart-3: oklch(0.68 0.16 60); /* Orange */
+  --chart-4: oklch(0.58 0.15 240); /* Blue */
+  --chart-5: oklch(0.65 0.14 285); /* Purple */
 
-  /* Clean sidebar with subtle contrast */
-  --sidebar: oklch(0.995 0.002 264);
+  /* Modern sidebar with teal tint */
+  --sidebar: oklch(0.995 0.005 195);
   --sidebar-foreground: oklch(0.15 0.008 264);
-  --sidebar-primary: oklch(0.55 0.15 192);
+  --sidebar-primary: oklch(0.52 0.16 195);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.97 0.003 264);
+  --sidebar-accent: oklch(0.96 0.008 195);
   --sidebar-accent-foreground: oklch(0.25 0.008 264);
   --sidebar-border: oklch(0.94 0.004 264);
   --sidebar-ring: oklch(0.55 0.15 192);
@@ -111,67 +123,71 @@
 }
 
 .dark {
-  /* Rich dark mode background - not pure black */
-  --background: oklch(0.16 0.008 264);
-  --foreground: oklch(0.98 0.002 264);
+  /* Rich dark backgrounds - not pure black */
+  --background: oklch(0.14 0.01 264);
+  --foreground: oklch(0.95 0.005 264);
 
-  /* Elevated cards in dark mode */
-  --card: oklch(0.22 0.01 264);
-  --card-foreground: oklch(0.98 0.002 264);
+  /* Elevated cards with subtle warmth */
+  --card: oklch(0.18 0.012 264);
+  --card-foreground: oklch(0.95 0.005 264);
 
-  /* Popovers with depth */
-  --popover: oklch(0.22 0.01 264);
-  --popover-foreground: oklch(0.98 0.002 264);
+  /* Popovers slightly lighter */
+  --popover: oklch(0.18 0.012 264);
+  --popover-foreground: oklch(0.95 0.005 264);
 
-  /* Vibrant teal primary for dark mode */
-  --primary: oklch(0.68 0.16 192);
-  --primary-foreground: oklch(0.15 0.02 192);
+  /* Vibrant teal for dark mode */
+  --primary: oklch(0.6 0.18 195);
+  --primary-foreground: oklch(0.15 0.008 264);
 
-  /* Warm amber secondary */
-  --secondary: oklch(0.35 0.08 85);
-  --secondary-foreground: oklch(0.95 0.02 85);
+  /* Bright amber for contrast */
+  --secondary: oklch(0.78 0.14 75);
+  --secondary-foreground: oklch(0.15 0.008 264);
 
-  /* Dark mode muted tones */
-  --muted: oklch(0.28 0.01 264);
-  --muted-foreground: oklch(0.68 0.015 264);
+  /* Muted with warmth */
+  --muted: oklch(0.22 0.015 264);
+  --muted-foreground: oklch(0.65 0.015 264);
 
-  /* Accent for hover states */
-  --accent: oklch(0.28 0.01 264);
-  --accent-foreground: oklch(0.98 0.002 264);
+  /* Purple accent stands out */
+  --accent: oklch(0.68 0.16 285);
+  --accent-foreground: oklch(0.15 0.008 264);
 
-  /* Destructive action in dark mode */
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  /* Bright red for visibility */
+  --destructive: oklch(0.62 0.24 25);
+  --destructive-foreground: oklch(0.99 0 0);
 
-  /* Subtle borders and inputs */
-  --border: oklch(0.32 0.01 264);
-  --input: oklch(0.25 0.012 264);
-  --ring: oklch(0.68 0.16 192);
+  /* Vibrant success green */
+  --success: oklch(0.65 0.16 145);
+  --success-foreground: oklch(0.15 0.008 264);
 
-  /* Vibrant chart colors for dark mode */
-  --chart-1: oklch(0.68 0.16 192);
-  --chart-2: oklch(0.72 0.15 145);
-  --chart-3: oklch(0.7 0.18 85);
-  --chart-4: oklch(0.65 0.18 265);
-  --chart-5: oklch(0.68 0.2 25);
+  /* Bright warning orange */
+  --warning: oklch(0.72 0.18 60);
+  --warning-foreground: oklch(0.15 0.008 264);
 
-  /* Dark sidebar with elevation */
-  --sidebar: oklch(0.19 0.01 264);
-  --sidebar-foreground: oklch(0.98 0.002 264);
-  --sidebar-primary: oklch(0.68 0.16 192);
-  --sidebar-primary-foreground: oklch(0.98 0.002 264);
-  --sidebar-accent: oklch(0.28 0.01 264);
-  --sidebar-accent-foreground: oklch(0.98 0.002 264);
-  --sidebar-border: oklch(0.32 0.01 264);
-  --sidebar-ring: oklch(0.68 0.16 192);
+  /* Clear info blue */
+  --info: oklch(0.65 0.17 240);
+  --info-foreground: oklch(0.15 0.008 264);
 
-  /* Success state */
-  --success: oklch(0.65 0.15 145);
-  --success-foreground: oklch(0.98 0 0);
+  /* Visible borders */
+  --border: oklch(0.28 0.015 264);
+  --input: oklch(0.22 0.015 264);
+  --ring: oklch(0.6 0.18 195);
 
-  /* Warning state */
-  --warning: oklch(0.75 0.15 85);
-  --warning-foreground: oklch(0.2 0.05 85);
+  /* Rich dark mode chart colors */
+  --chart-1: oklch(0.6 0.18 195); /* Bright teal */
+  --chart-2: oklch(0.65 0.16 145); /* Bright green */
+  --chart-3: oklch(0.72 0.18 60); /* Bright orange */
+  --chart-4: oklch(0.65 0.17 240); /* Bright blue */
+  --chart-5: oklch(0.68 0.16 285); /* Bright purple */
+
+  /* Dark sidebar with teal accent */
+  --sidebar: oklch(0.16 0.012 264);
+  --sidebar-foreground: oklch(0.95 0.005 264);
+  --sidebar-primary: oklch(0.6 0.18 195);
+  --sidebar-primary-foreground: oklch(0.15 0.008 264);
+  --sidebar-accent: oklch(0.2 0.015 264);
+  --sidebar-accent-foreground: oklch(0.85 0.008 264);
+  --sidebar-border: oklch(0.28 0.015 264);
+  --sidebar-ring: oklch(0.6 0.18 195);
 }
 
 @layer base {

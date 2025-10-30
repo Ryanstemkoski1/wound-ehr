@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 import type { User } from "@supabase/supabase-js";
 
 type DashboardLayoutClientProps = {
@@ -39,6 +40,7 @@ export function DashboardLayoutClient({
         >
           {children}
         </main>
+        <Footer />
       </div>
     </div>
   );

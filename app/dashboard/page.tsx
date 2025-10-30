@@ -233,24 +233,40 @@ export default async function DashboardPage() {
       value: totalPatients.toString(),
       icon: Users,
       description: "Active patients",
+      color: "teal",
+      gradient: "from-teal-500 to-teal-600",
+      iconBg: "bg-teal-500/10",
+      iconColor: "text-teal-600 dark:text-teal-400",
     },
     {
       title: "Active Wounds",
       value: activeWounds.toString(),
       icon: Activity,
       description: "Currently being tracked",
+      color: "amber",
+      gradient: "from-amber-500 to-orange-500",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-600 dark:text-amber-400",
     },
     {
       title: "Visits This Month",
       value: visitsThisMonth.toString(),
       icon: Calendar,
       description: "Completed visits",
+      color: "blue",
+      gradient: "from-blue-500 to-cyan-500",
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-600 dark:text-blue-400",
     },
     {
       title: "Pending Visits",
       value: pendingVisits.toString(),
       icon: FileText,
       description: "Incomplete documentation",
+      color: "purple",
+      gradient: "from-purple-500 to-pink-500",
+      iconBg: "bg-purple-500/10",
+      iconColor: "text-purple-600 dark:text-purple-400",
     },
   ];
 
@@ -285,25 +301,38 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Enhanced Stats Grid */}
+      {/* Enhanced Stats Grid with Individual Colors */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <Card
               key={stat.title}
-              className="stat-card hover-lift overflow-hidden transition-all duration-300"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className="group hover-lift relative overflow-hidden border-l-4 transition-all duration-300"
+              style={{
+                borderLeftColor: `var(--chart-${index + 1})`,
+                animationDelay: `${index * 50}ms`,
+              }}
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              {/* Gradient background overlay */}
+              <div
+                className={`absolute inset-0 bg-linear-to-br ${stat.gradient} opacity-[0.03] transition-opacity group-hover:opacity-[0.06]`}
+              />
+
+              <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-muted-foreground text-sm font-medium">
                   {stat.title}
                 </CardTitle>
-                <div className="bg-primary/10 rounded-lg p-2">
-                  <Icon className="text-primary h-4 w-4" aria-hidden="true" />
+                <div
+                  className={`rounded-lg ${stat.iconBg} p-2.5 transition-transform group-hover:scale-110`}
+                >
+                  <Icon
+                    className={`h-5 w-5 ${stat.iconColor}`}
+                    aria-hidden="true"
+                  />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
                 <div className="text-3xl font-bold tracking-tight">
                   {stat.value}
                 </div>
