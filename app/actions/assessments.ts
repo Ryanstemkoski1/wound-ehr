@@ -42,7 +42,7 @@ export async function getAssessments(visitId: string) {
 
   try {
     const { data: assessments, error } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select(
         `
         *,
@@ -76,7 +76,7 @@ export async function getAssessment(assessmentId: string) {
 
   try {
     const { data: assessment, error } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select(
         `
         *,
@@ -194,7 +194,7 @@ export async function createAssessment(formData: FormData) {
 
     // Create assessment
     const { error: createError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .insert({
         visit_id: validated.visitId,
         wound_id: validated.woundId,
@@ -287,7 +287,7 @@ export async function updateAssessment(
 
     // Check if user has access to this assessment
     const { data: existingAssessment, error: existingError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select(
         `
         *,
@@ -331,7 +331,7 @@ export async function updateAssessment(
 
     // Update assessment
     const { error: updateError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .update({
         wound_type: validated.woundType || null,
         pressure_stage: validated.pressureStage || null,
@@ -395,7 +395,7 @@ export async function deleteAssessment(assessmentId: string) {
   try {
     // Check if user has access to this assessment
     const { data: assessment, error: assessmentError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select(
         `
         *,
@@ -419,7 +419,7 @@ export async function deleteAssessment(assessmentId: string) {
 
     // Delete assessment
     const { error: deleteError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .delete()
       .eq("id", assessmentId);
 

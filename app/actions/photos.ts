@@ -78,21 +78,31 @@ export async function uploadPhoto(formData: FormData) {
 
     // Save photo metadata to database
     const { data: photo, error: dbError } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .insert({
         wound_id: woundId,
         visit_id: visitId,
         assessment_id: assessmentId,
         uploaded_by: user.id,
         url: urlData.publicUrl,
-        filename: file.name,
+        file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
         caption,
       })
       .select(
         `
-        *,
+        id,
+        wound_id,
+        visit_id,
+        assessment_id,
+        uploaded_by,
+        url,
+        filename:file_name,
+        file_size,
+        mime_type,
+        caption,
+        uploaded_at,
         wound:wounds(id, wound_number, location)
       `
       )
@@ -129,13 +139,23 @@ export async function getPhotos(woundId: string) {
     }
 
     const { data: photos, error } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .select(
         `
-        *,
+        id,
+        wound_id,
+        visit_id,
+        assessment_id,
+        uploaded_by,
+        url,
+        filename:file_name,
+        file_size,
+        mime_type,
+        caption,
+        uploaded_at,
         wound:wounds(id, wound_number, location),
         visit:visits(id, visit_date, visit_type),
-        assessment:wound_assessments(id, healing_status)
+        assessment:assessments(id, healing_status)
       `
       )
       .eq("wound_id", woundId)
@@ -166,10 +186,20 @@ export async function getPhoto(photoId: string) {
     }
 
     const { data: photo, error } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .select(
         `
-        *,
+        id,
+        wound_id,
+        visit_id,
+        assessment_id,
+        uploaded_by,
+        url,
+        filename:file_name,
+        file_size,
+        mime_type,
+        caption,
+        uploaded_at,
         wound:wounds(
           id,
           wound_number,
@@ -177,7 +207,7 @@ export async function getPhoto(photoId: string) {
           patient:patients(id, first_name, last_name)
         ),
         visit:visits(id, visit_date, visit_type),
-        assessment:wound_assessments(id, healing_status, length, width, depth)
+        assessment:assessments(id, healing_status, length, width, depth)
       `
       )
       .eq("id", photoId)
@@ -212,7 +242,7 @@ export async function updatePhotoCaption(photoId: string, caption: string) {
     }
 
     const { data: photo, error: updateError } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .update({ caption })
       .eq("id", photoId)
       .select()
@@ -246,7 +276,7 @@ export async function deletePhoto(photoId: string) {
 
     // Get photo to find the file path
     const { data: photo, error: photoError } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .select("url")
       .eq("id", photoId)
       .maybeSingle();
@@ -273,7 +303,7 @@ export async function deletePhoto(photoId: string) {
 
     // Delete from database
     const { error: deleteError } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .delete()
       .eq("id", photoId);
 
@@ -304,12 +334,22 @@ export async function getPhotosForComparison(woundId: string, limit = 10) {
     }
 
     const { data: photos, error } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .select(
         `
-        *,
+        id,
+        wound_id,
+        visit_id,
+        assessment_id,
+        uploaded_by,
+        url,
+        filename:file_name,
+        file_size,
+        mime_type,
+        caption,
+        uploaded_at,
         visit:visits(visit_date),
-        assessment:wound_assessments(healing_status, length, width, depth, area)
+        assessment:assessments(healing_status, length, width, depth, area)
       `
       )
       .eq("wound_id", woundId)

@@ -89,7 +89,13 @@ export default function CalendarView({
       const result = await getCalendarEvents(start, end, facilityId, patientId);
 
       if (result.success) {
-        setEvents(result.events);
+        // Server Actions serialize Dates as strings; coerce back to Date objects
+        const coerced = result.events.map((e) => ({
+          ...e,
+          start: typeof e.start === "string" ? new Date(e.start) : e.start,
+          end: typeof e.end === "string" ? new Date(e.end) : e.end,
+        }));
+        setEvents(coerced);
       } else {
         toast.error(result.error);
       }

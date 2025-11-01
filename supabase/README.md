@@ -43,7 +43,7 @@ When you need to modify the schema:
 
 ## Current Schema
 
-- **10 tables**: facilities, patients, wounds, visits, wound_assessments, wound_photos, treatment_orders, billing_codes, user_facilities
+- **10 tables**: users, facilities, user_facilities, patients, wounds, visits, assessments, photos, treatments, billings
 - **RLS enabled** on all tables with comprehensive policies
 - **Indexes** on all foreign keys and frequently queried columns
 - **Triggers** for automatic `updated_at` timestamp updates

@@ -89,7 +89,7 @@ export async function getWound(woundId: string) {
 
     // Fetch recent assessments separately (limit 5)
     const { data: assessments } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select("*")
       .eq("wound_id", woundId)
       .order("created_at", { ascending: false })
@@ -97,7 +97,7 @@ export async function getWound(woundId: string) {
 
     // Fetch recent photos separately (limit 10)
     const { data: photos } = await supabase
-      .from("wound_photos")
+      .from("photos")
       .select("*")
       .eq("wound_id", woundId)
       .order("uploaded_at", { ascending: false })

@@ -22,6 +22,48 @@ import { format } from "date-fns";
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
 
+// Normalize raw DB rows to the PhotoGallery shape
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapPhoto(p: any) {
+  const safeDate = (value: unknown) =>
+    value ? new Date(value as string) : new Date("1970-01-01T00:00:00.000Z");
+
+  return {
+    id: p.id,
+    url: p.url,
+    filename: p.filename,
+    caption: p.caption ?? null,
+    uploadedAt: safeDate(p.uploaded_at ?? p.uploadedAt),
+    wound: {
+      id: p.wound?.id,
+      woundNumber: p.wound?.wound_number ?? p.wound?.woundNumber,
+      location: p.wound?.location,
+    },
+    visit: p.visit
+      ? {
+          id: p.visit.id,
+          visitDate: safeDate(p.visit.visit_date ?? p.visit.visitDate),
+          visitType: p.visit.visit_type ?? p.visit.visitType,
+        }
+      : null,
+    assessment: p.assessment
+      ? {
+          id: p.assessment.id,
+          healingStatus:
+            p.assessment.healing_status ?? p.assessment.healingStatus ?? null,
+          length:
+            p.assessment.length !== undefined ? p.assessment.length : null,
+          width: p.assessment.width !== undefined ? p.assessment.width : null,
+          depth: p.assessment.depth !== undefined ? p.assessment.depth : null,
+          area: p.assessment.area !== undefined ? p.assessment.area : null,
+        }
+      : null,
+    uploader: p.uploader
+      ? { name: p.uploader.name ?? null, email: p.uploader.email ?? "" }
+      : { name: null, email: "" },
+  };
+}
+
 export default async function WoundDetailPage({
   params,
 }: {
@@ -38,8 +80,8 @@ export default async function WoundDetailPage({
   const photosResult = await getPhotos(woundId);
   const comparisonResult = await getPhotosForComparison(woundId);
 
-  const photos = photosResult.photos || [];
-  const comparisonPhotos = comparisonResult.photos || [];
+  const photos = (photosResult.photos || []).map(mapPhoto);
+  const comparisonPhotos = (comparisonResult.photos || []).map(mapPhoto);
 
   return (
     <div className="space-y-6">

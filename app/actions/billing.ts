@@ -26,7 +26,7 @@ export async function createBilling(data: BillingInput) {
     const supabase = await createClient();
 
     const { data: billing, error } = await supabase
-      .from("billing_codes")
+      .from("billings")
       .insert({
         visit_id: validated.visitId,
         patient_id: validated.patientId,
@@ -75,7 +75,7 @@ export async function updateBilling(
     if (data.notes !== undefined) updateData.notes = data.notes;
 
     const { data: billing, error } = await supabase
-      .from("billing_codes")
+      .from("billings")
       .update(updateData)
       .eq("id", billingId)
       .select(
@@ -112,7 +112,7 @@ export async function deleteBilling(billingId: string) {
     const supabase = await createClient();
 
     const { data: billing, error: fetchError } = await supabase
-      .from("billing_codes")
+      .from("billings")
       .select("visit_id, patient_id")
       .eq("id", billingId)
       .maybeSingle();
@@ -122,7 +122,7 @@ export async function deleteBilling(billingId: string) {
     }
 
     const { error: deleteError } = await supabase
-      .from("billing_codes")
+      .from("billings")
       .delete()
       .eq("id", billingId);
 
@@ -152,7 +152,7 @@ export async function getBillingForVisit(visitId: string) {
     const supabase = await createClient();
 
     const { data: billing, error } = await supabase
-      .from("billing_codes")
+      .from("billings")
       .select("*")
       .eq("visit_id", visitId)
       .maybeSingle();
@@ -179,7 +179,7 @@ export async function getBillingForPatient(patientId: string) {
     const supabase = await createClient();
 
     const { data: billings, error } = await supabase
-      .from("billing_codes")
+      .from("billings")
       .select(
         `
         *,
@@ -215,7 +215,7 @@ export async function getAllBilling(filters?: {
   try {
     const supabase = await createClient();
 
-    let query = supabase.from("billing_codes").select(
+    let query = supabase.from("billings").select(
       `
         *,
         visit:visits(id, visit_date, visit_type),
@@ -253,7 +253,37 @@ export async function getAllBilling(filters?: {
       throw error;
     }
 
-    return { success: true as const, billings: billings || [] };
+    // Map to camelCase shape expected by UI
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapped = (billings || []).map((b: any) => ({
+      id: b.id,
+      cptCodes: b.cpt_codes ?? [],
+      icd10Codes: b.icd10_codes ?? [],
+      modifiers: b.modifiers ?? [],
+      timeSpent: !!b.time_spent,
+      notes: b.notes ?? null,
+      createdAt: b.created_at,
+      visit: b.visit
+        ? {
+            id: b.visit.id,
+            visitDate: b.visit.visit_date,
+            visitType: b.visit.visit_type,
+          }
+        : { id: b.visit_id, visitDate: null, visitType: "" },
+      patient: b.patient
+        ? {
+            id: b.patient.id,
+            firstName: b.patient.first_name,
+            lastName: b.patient.last_name,
+            mrn: b.patient.mrn,
+            facility: b.patient.facility
+              ? { id: b.patient.facility.id, name: b.patient.facility.name }
+              : { id: "", name: "" },
+          }
+        : { id: b.patient_id, firstName: "", lastName: "", mrn: "", facility: { id: "", name: "" } },
+    }));
+
+    return { success: true as const, billings: mapped };
   } catch (error) {
     console.error("Failed to get all billings:", error);
     return {

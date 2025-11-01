@@ -63,8 +63,8 @@ export async function getCalendarEvents(
           last_name,
           facility_id,
           facility:facilities(id, name)
-        ),
-        assessments:wound_assessments(id)
+  ),
+  assessments:assessments(id)
       `
       )
       .gte("visit_date", startDate.toISOString())

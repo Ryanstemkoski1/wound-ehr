@@ -98,7 +98,7 @@ export async function getVisit(visitId: string) {
     if (visit) {
       // Fetch related assessments
       const { data: assessments } = await supabase
-        .from("wound_assessments")
+        .from("assessments")
         .select(
           `
           *,
@@ -110,14 +110,14 @@ export async function getVisit(visitId: string) {
 
       // Fetch related treatments
       const { data: treatments } = await supabase
-        .from("treatment_orders")
+        .from("treatments")
         .select("*")
         .eq("visit_id", visitId)
         .order("created_at", { ascending: false });
 
       // Fetch related billings
       const { data: billings } = await supabase
-        .from("billing_codes")
+        .from("billings")
         .select("*")
         .eq("visit_id", visitId);
 

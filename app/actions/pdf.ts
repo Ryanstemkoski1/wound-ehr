@@ -41,7 +41,7 @@ export async function getVisitDataForPDF(visitId: string) {
 
     // Fetch assessments with wounds
     const { data: assessments, error: assessmentsError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select(
         `
         *,
@@ -164,7 +164,7 @@ export async function getWoundDataForPDF(woundId: string) {
 
     // Fetch assessments for this wound
     const { data: assessments, error: assessmentsError } = await supabase
-      .from("wound_assessments")
+      .from("assessments")
       .select("*")
       .eq("wound_id", woundId)
       .order("created_at", { ascending: false });
@@ -175,7 +175,7 @@ export async function getWoundDataForPDF(woundId: string) {
     const assessmentsWithPhotos = await Promise.all(
       (assessments || []).map(async (assessment) => {
         const { data: photos } = await supabase
-          .from("wound_photos")
+          .from("photos")
           .select("url, caption")
           .eq("assessment_id", assessment.id)
           .order("uploaded_at", { ascending: true })
@@ -372,7 +372,7 @@ export async function generateWoundsCSV(
     const woundsWithCounts = await Promise.all(
       (wounds || []).map(async (wound) => {
         const { data: assessments } = await supabase
-          .from("wound_assessments")
+          .from("assessments")
           .select("id")
           .eq("wound_id", wound.id);
 
