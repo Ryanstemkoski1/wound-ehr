@@ -193,38 +193,36 @@ export async function createAssessment(formData: FormData) {
     }
 
     // Create assessment
-    const { error: createError } = await supabase
-      .from("assessments")
-      .insert({
-        visit_id: validated.visitId,
-        wound_id: validated.woundId,
-        wound_type: validated.woundType || null,
-        pressure_stage: validated.pressureStage || null,
-        healing_status: validated.healingStatus || null,
-        at_risk_reopening: validated.atRiskReopening || null,
-        length: validated.length ? parseFloat(validated.length) : null,
-        width: validated.width ? parseFloat(validated.width) : null,
-        depth: validated.depth ? parseFloat(validated.depth) : null,
-        area,
-        undermining: validated.undermining || null,
-        tunneling: validated.tunneling || null,
-        epithelial_percent: validated.epithelialPercent
-          ? parseInt(validated.epithelialPercent)
-          : null,
-        granulation_percent: validated.granulationPercent
-          ? parseInt(validated.granulationPercent)
-          : null,
-        slough_percent: validated.sloughPercent
-          ? parseInt(validated.sloughPercent)
-          : null,
-        exudate_amount: validated.exudateAmount || null,
-        exudate_type: validated.exudateType || null,
-        odor: validated.odor || null,
-        periwound_condition: validated.periwoundCondition || null,
-        pain_level: validated.painLevel ? parseInt(validated.painLevel) : null,
-        infection_signs: infectionSigns,
-        assessment_notes: validated.assessmentNotes || null,
-      });
+    const { error: createError } = await supabase.from("assessments").insert({
+      visit_id: validated.visitId,
+      wound_id: validated.woundId,
+      wound_type: validated.woundType || null,
+      pressure_stage: validated.pressureStage || null,
+      healing_status: validated.healingStatus || null,
+      at_risk_reopening: validated.atRiskReopening || null,
+      length: validated.length ? parseFloat(validated.length) : null,
+      width: validated.width ? parseFloat(validated.width) : null,
+      depth: validated.depth ? parseFloat(validated.depth) : null,
+      area,
+      undermining: validated.undermining || null,
+      tunneling: validated.tunneling || null,
+      epithelial_percent: validated.epithelialPercent
+        ? parseInt(validated.epithelialPercent)
+        : null,
+      granulation_percent: validated.granulationPercent
+        ? parseInt(validated.granulationPercent)
+        : null,
+      slough_percent: validated.sloughPercent
+        ? parseInt(validated.sloughPercent)
+        : null,
+      exudate_amount: validated.exudateAmount || null,
+      exudate_type: validated.exudateType || null,
+      odor: validated.odor || null,
+      periwound_condition: validated.periwoundCondition || null,
+      pain_level: validated.painLevel ? parseInt(validated.painLevel) : null,
+      infection_signs: infectionSigns,
+      assessment_notes: validated.assessmentNotes || null,
+    });
 
     if (createError) throw createError;
 

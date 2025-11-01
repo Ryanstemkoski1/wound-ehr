@@ -2,7 +2,18 @@
 
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import {
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek as dfStartOfWeek,
+  endOfWeek as dfEndOfWeek,
+  startOfDay,
+  endOfDay,
+} from "date-fns";
 import { enUS } from "date-fns/locale";
 import { useState, useCallback, useEffect } from "react";
 import {
@@ -79,12 +90,23 @@ export default function CalendarView({
   const loadEvents = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Calculate date range based on current view
-      const start = new Date(date);
-      start.setDate(1); // First day of month
-      const end = new Date(date);
-      end.setMonth(end.getMonth() + 1);
-      end.setDate(0); // Last day of month
+      // Calculate date range based on current view, including spillover days
+      let start: Date;
+      let end: Date;
+
+      if (view === "week") {
+        start = dfStartOfWeek(date, { locale: enUS });
+        end = dfEndOfWeek(date, { locale: enUS });
+      } else if (view === "day") {
+        start = startOfDay(date);
+        end = endOfDay(date);
+      } else {
+        // month view (default): include previous/next month spillover days
+        const monthStart = startOfMonth(date);
+        const monthEnd = endOfMonth(date);
+        start = dfStartOfWeek(monthStart, { locale: enUS });
+        end = dfEndOfWeek(monthEnd, { locale: enUS });
+      }
 
       const result = await getCalendarEvents(start, end, facilityId, patientId);
 
@@ -105,7 +127,7 @@ export default function CalendarView({
     } finally {
       setIsLoading(false);
     }
-  }, [date, facilityId, patientId]);
+  }, [date, facilityId, patientId, view]);
 
   useEffect(() => {
     loadEvents();

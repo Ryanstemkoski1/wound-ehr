@@ -254,8 +254,8 @@ export async function getAllBilling(filters?: {
     }
 
     // Map to camelCase shape expected by UI
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapped = (billings || []).map((b: any) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mapped = (billings || []).map((b: any) => ({
       id: b.id,
       cptCodes: b.cpt_codes ?? [],
       icd10Codes: b.icd10_codes ?? [],
@@ -280,7 +280,13 @@ export async function getAllBilling(filters?: {
               ? { id: b.patient.facility.id, name: b.patient.facility.name }
               : { id: "", name: "" },
           }
-        : { id: b.patient_id, firstName: "", lastName: "", mrn: "", facility: { id: "", name: "" } },
+        : {
+            id: b.patient_id,
+            firstName: "",
+            lastName: "",
+            mrn: "",
+            facility: { id: "", name: "" },
+          },
     }));
 
     return { success: true as const, billings: mapped };
