@@ -178,12 +178,12 @@ export default function PatientsClient({
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="columns-1 gap-x-4 md:columns-2 lg:columns-3">
             {filteredPatients.map((patient, index) => (
               <div
                 key={patient.id}
                 style={{ animationDelay: `${index * 50}ms` }}
-                className="animate-slide-in"
+                className="animate-slide-in mb-4 break-inside-avoid"
               >
                 <PatientCard patient={patient} />
               </div>
