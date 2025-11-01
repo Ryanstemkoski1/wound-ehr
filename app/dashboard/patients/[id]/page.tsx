@@ -20,6 +20,7 @@ import { PatientDeleteButton } from "@/components/patients/patient-delete-button
 import WoundCard from "@/components/wounds/wound-card";
 import VisitCard from "@/components/visits/visit-card";
 import CSVDownloadButton from "@/components/pdf/csv-download-button";
+import PatientPDFDownloadButton from "@/components/pdf/patient-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 
 // Force dynamic rendering (requires auth)
@@ -101,6 +102,11 @@ export default async function PatientDetailPage({
           </p>
         </div>
         <div className="flex gap-2">
+          <PatientPDFDownloadButton
+            patientId={patient.id}
+            patientName={`${patient.firstName} ${patient.lastName}`}
+            mrn={patient.mrn}
+          />
           <Link href={`/dashboard/patients/${patient.id}/edit`}>
             <Button
               className="flex-1 gap-2 sm:flex-none"

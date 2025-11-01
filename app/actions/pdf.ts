@@ -3,6 +3,181 @@
 import { createClient } from "@/lib/supabase/server";
 
 /**
+ * Get comprehensive patient data for PDF generation
+ * @param patientId - ID of the patient
+ * @returns Complete patient data or error
+ */
+export async function getPatientDataForPDF(patientId: string) {
+  try {
+    const supabase = await createClient();
+
+    // Fetch complete patient data
+    const { data: patient, error: patientError } = await supabase
+      .from("patients")
+      .select(
+        `
+        *,
+        facility:facilities!inner(
+          name,
+          address,
+          city,
+          state,
+          zip,
+          phone,
+          email
+        )
+      `
+      )
+      .eq("id", patientId)
+      .single();
+
+    if (patientError || !patient) {
+      return { success: false as const, error: "Patient not found" };
+    }
+
+    // Fetch all wounds
+    const { data: wounds, error: woundsError } = await supabase
+      .from("wounds")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("onset_date", { ascending: false });
+
+    if (woundsError) throw woundsError;
+
+    // Fetch recent visits (last 10)
+    const { data: visits, error: visitsError } = await supabase
+      .from("visits")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("visit_date", { ascending: false })
+      .limit(10);
+
+    if (visitsError) throw visitsError;
+
+    // Fetch assessments for all wounds
+    const woundsWithAssessments = await Promise.all(
+      (wounds || []).map(async (wound) => {
+        const { data: assessments } = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("wound_id", wound.id)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        // Get latest photo for each wound
+        const { data: photos } = await supabase
+          .from("photos")
+          .select("url, uploaded_at")
+          .eq("wound_id", wound.id)
+          .order("uploaded_at", { ascending: false })
+          .limit(1);
+
+        return {
+          ...wound,
+          assessments: assessments || [],
+          latestPhoto: photos && photos.length > 0 ? photos[0].url : null,
+        };
+      })
+    );
+
+    // Transform data to match PDF component props
+    return {
+      success: true as const,
+      data: {
+        patient: {
+          id: patient.id,
+          firstName: patient.first_name,
+          lastName: patient.last_name,
+          mrn: patient.mrn,
+          dateOfBirth: patient.dob,
+          gender: patient.gender,
+          phone: patient.phone,
+          email: patient.email,
+          address: patient.address,
+          city: patient.city,
+          state: patient.state,
+          zipCode: patient.zip,
+          allergies: Array.isArray(patient.allergies)
+            ? (patient.allergies as string[])
+            : [],
+          medicalHistory: Array.isArray(patient.medical_history)
+            ? (patient.medical_history as string[])
+            : [],
+          insurancePrimary: patient.insurance_primary
+            ? typeof patient.insurance_primary === "object"
+              ? (patient.insurance_primary as Record<string, unknown>)
+              : {}
+            : null,
+          insuranceSecondary: patient.insurance_secondary
+            ? typeof patient.insurance_secondary === "object"
+              ? (patient.insurance_secondary as Record<string, unknown>)
+              : {}
+            : null,
+          emergencyContact: patient.emergency_contact
+            ? typeof patient.emergency_contact === "object"
+              ? (patient.emergency_contact as Record<string, unknown>)
+              : {}
+            : null,
+        },
+        facility: {
+          name: patient.facility.name,
+          address: patient.facility.address || "",
+          city: patient.facility.city || "",
+          state: patient.facility.state || "",
+          zipCode: patient.facility.zip || "",
+          phone: patient.facility.phone || "",
+          email: patient.facility.email || "",
+        },
+        wounds: woundsWithAssessments.map((wound) => ({
+          id: wound.id,
+          location: wound.location,
+          woundType: wound.wound_type,
+          onsetDate: wound.onset_date,
+          status: wound.status,
+          woundNumber: wound.wound_number,
+          latestPhoto: wound.latestPhoto,
+          assessmentCount: wound.assessments.length,
+          latestAssessment: wound.assessments[0]
+            ? {
+                createdAt: wound.assessments[0].created_at,
+                length: wound.assessments[0].length
+                  ? Number(wound.assessments[0].length)
+                  : null,
+                width: wound.assessments[0].width
+                  ? Number(wound.assessments[0].width)
+                  : null,
+                depth: wound.assessments[0].depth
+                  ? Number(wound.assessments[0].depth)
+                  : null,
+                healingStatus: wound.assessments[0].healing_status,
+              }
+            : null,
+        })),
+        recentVisits: (visits || []).map((visit) => ({
+          id: visit.id,
+          visitDate: visit.visit_date,
+          visitType: visit.visit_type,
+          status: visit.status,
+          location: visit.location,
+        })),
+        summary: {
+          totalWounds: wounds?.length || 0,
+          activeWounds:
+            wounds?.filter((w) => w.status === "active").length || 0,
+          totalVisits: visits?.length || 0,
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Failed to get patient data:", error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Failed to load data",
+    };
+  }
+}
+
+/**
  * Get complete visit data for PDF generation
  * @param visitId - ID of the visit
  * @returns Visit data or error
