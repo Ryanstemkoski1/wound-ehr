@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import AssessmentCard from "@/components/assessments/assessment-card";
 import VisitPDFDownloadButton from "@/components/pdf/visit-pdf-download-button";
+import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -54,6 +55,18 @@ export default async function VisitDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <DynamicBreadcrumbs
+        customSegments={[
+          { label: "Patients", href: "/dashboard/patients" },
+          {
+            label: `${visit.patient.firstName} ${visit.patient.lastName}`,
+            href: `/dashboard/patients/${patientId}`,
+          },
+          { label: "Visit Details" },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

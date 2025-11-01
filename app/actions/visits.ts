@@ -45,13 +45,15 @@ export async function getVisits(patientId: string) {
       visits?.map((visit) => ({
         id: visit.id,
         patientId: visit.patient_id,
-        visitDate: visit.visit_date,
+        visitDate: new Date(visit.visit_date),
         visitType: visit.visit_type,
         location: visit.location,
         status: visit.status,
         numberOfAddenda: visit.number_of_addenda,
         followUpType: visit.follow_up_type,
-        followUpDate: visit.follow_up_date,
+        followUpDate: visit.follow_up_date
+          ? new Date(visit.follow_up_date)
+          : null,
         followUpNotes: visit.follow_up_notes,
         timeSpent: visit.time_spent,
         additionalNotes: visit.additional_notes,
@@ -121,12 +123,42 @@ export async function getVisit(visitId: string) {
         .select("*")
         .eq("visit_id", visitId);
 
-      visit.assessments = assessments || [];
-      visit.treatments = treatments || [];
-      visit.billings = billings || [];
+      // Transform to camelCase
+      return {
+        id: visit.id,
+        patientId: visit.patient_id,
+        facilityId: visit.facility_id,
+        visitDate: new Date(visit.visit_date),
+        visitType: visit.visit_type,
+        location: visit.location,
+        status: visit.status,
+        notes: visit.notes,
+        numberOfAddenda: visit.number_of_addenda,
+        followUpType: visit.follow_up_type,
+        followUpDate: visit.follow_up_date
+          ? new Date(visit.follow_up_date)
+          : null,
+        followUpNotes: visit.follow_up_notes,
+        timeSpent: visit.time_spent,
+        additionalNotes: visit.additional_notes,
+        createdAt: visit.created_at,
+        updatedAt: visit.updated_at,
+        createdBy: visit.created_by,
+        patient: {
+          id: visit.patient.id,
+          firstName: visit.patient.first_name,
+          lastName: visit.patient.last_name,
+          mrn: visit.patient.mrn,
+          dob: visit.patient.dob,
+          facility: visit.patient.facility,
+        },
+        assessments: assessments || [],
+        treatments: treatments || [],
+        billings: billings || [],
+      };
     }
 
-    return visit;
+    return null;
   } catch (error) {
     console.error("Failed to fetch visit:", error);
     return null;

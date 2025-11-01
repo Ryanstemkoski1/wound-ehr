@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, Calendar, MapPin } from "lucide-react";
+import { Edit, Calendar, MapPin } from "lucide-react";
 import { getWound } from "@/app/actions/wounds";
 import { getPhotos, getPhotosForComparison } from "@/app/actions/photos";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { PhotoUpload } from "@/components/photos/photo-upload";
 import { PhotoGallery } from "@/components/photos/photo-gallery";
 import { PhotoComparison } from "@/components/photos/photo-comparison";
 import WoundPDFDownloadButton from "@/components/pdf/wound-pdf-download-button";
+import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { format } from "date-fns";
 
 // Force dynamic rendering (requires auth)
@@ -85,18 +86,24 @@ export default async function WoundDetailPage({
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <DynamicBreadcrumbs
+        customSegments={[
+          { label: "Patients", href: "/dashboard/patients" },
+          {
+            label: `${wound.patient.firstName} ${wound.patient.lastName}`,
+            href: `/dashboard/patients/${patientId}`,
+          },
+          { label: `Wound #${wound.woundNumber}` },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Link
-              href={`/dashboard/patients/${patientId}`}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
             <h1 className="text-2xl font-bold tracking-tight">
-              {wound.woundNumber}
+              Wound #{wound.woundNumber}
             </h1>
             <Badge
               variant={wound.status === "active" ? "default" : "secondary"}

@@ -5,6 +5,37 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
+// Database types
+type DbWound = {
+  id: string;
+  patient_id: string;
+  wound_number: number;
+  location: string;
+  wound_type: string;
+  onset_date: string;
+  status: string;
+  healing_status: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type DbVisit = {
+  id: string;
+  patient_id: string;
+  facility_id: string;
+  visit_date: string;
+  visit_type: string;
+  location: string | null;
+  status: string;
+  notes: string | null;
+  follow_up_type: string | null;
+  follow_up_date: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+};
+
 // Validation schemas
 const patientSchema = z.object({
   facilityId: z.string().min(1, "Facility is required"),
@@ -321,7 +352,7 @@ export async function getPatients(facilityId?: string, search?: string) {
         id: patient.id,
         firstName: patient.first_name,
         lastName: patient.last_name,
-        dob: patient.dob,
+        dob: new Date(patient.dob),
         mrn: patient.mrn,
         gender: patient.gender,
         phone: patient.phone,
@@ -389,7 +420,20 @@ export async function getPatient(patientId: string) {
         .sort(
           (a: { created_at: string }, b: { created_at: string }) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        )
+        .map((wound: DbWound) => ({
+          id: wound.id,
+          patientId: wound.patient_id,
+          woundNumber: wound.wound_number,
+          location: wound.location,
+          woundType: wound.wound_type,
+          onsetDate: new Date(wound.onset_date),
+          status: wound.status,
+          healingStatus: wound.healing_status,
+          notes: wound.notes,
+          createdAt: wound.created_at,
+          updatedAt: wound.updated_at,
+        }));
 
       // Fetch recent visits separately (limit 10)
       const { data: visits } = await supabase
@@ -404,7 +448,7 @@ export async function getPatient(patientId: string) {
         id: patient.id,
         firstName: patient.first_name,
         lastName: patient.last_name,
-        dob: patient.dob,
+        dob: new Date(patient.dob),
         mrn: patient.mrn,
         gender: patient.gender,
         phone: patient.phone,
@@ -424,7 +468,24 @@ export async function getPatient(patientId: string) {
         facilityId: patient.facility_id,
         facility: patient.facility,
         wounds: activeWounds || [],
-        visits: visits || [],
+        visits:
+          visits?.map((visit: DbVisit) => ({
+            id: visit.id,
+            patientId: visit.patient_id,
+            facilityId: visit.facility_id,
+            visitDate: new Date(visit.visit_date),
+            visitType: visit.visit_type,
+            location: visit.location,
+            status: visit.status,
+            notes: visit.notes,
+            followUpType: visit.follow_up_type,
+            followUpDate: visit.follow_up_date
+              ? new Date(visit.follow_up_date)
+              : null,
+            createdAt: visit.created_at,
+            updatedAt: visit.updated_at,
+            createdBy: visit.created_by,
+          })) || [],
       };
     }
 

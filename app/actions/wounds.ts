@@ -45,7 +45,7 @@ export async function getWounds(patientId: string) {
         woundNumber: wound.wound_number,
         location: wound.location,
         woundType: wound.wound_type,
-        onsetDate: wound.onset_date,
+        onsetDate: new Date(wound.onset_date),
         status: wound.status,
         createdAt: wound.created_at,
         updatedAt: wound.updated_at,
@@ -104,11 +104,33 @@ export async function getWound(woundId: string) {
       .limit(10);
 
     if (wound) {
-      wound.assessments = assessments || [];
-      wound.photos = photos || [];
+      // Transform to camelCase
+      return {
+        id: wound.id,
+        patientId: wound.patient_id,
+        woundNumber: wound.wound_number,
+        location: wound.location,
+        woundType: wound.wound_type,
+        onsetDate: new Date(wound.onset_date),
+        status: wound.status,
+        healingStatus: wound.healing_status,
+        notes: wound.notes,
+        createdAt: wound.created_at,
+        updatedAt: wound.updated_at,
+        patient: {
+          id: wound.patient.id,
+          firstName: wound.patient.first_name,
+          lastName: wound.patient.last_name,
+          mrn: wound.patient.mrn,
+          dob: wound.patient.dob,
+          facility: wound.patient.facility,
+        },
+        assessments: assessments || [],
+        photos: photos || [],
+      };
     }
 
-    return wound;
+    return null;
   } catch (error) {
     console.error("Failed to fetch wound:", error);
     return null;
