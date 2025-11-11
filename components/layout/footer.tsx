@@ -32,7 +32,7 @@ export function Footer() {
               Patients
             </Link>
             <Link
-              href="/dashboard/facilities"
+              href="/dashboard/admin/facilities"
               className="hover:text-foreground transition-colors"
             >
               Facilities

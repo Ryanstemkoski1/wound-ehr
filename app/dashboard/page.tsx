@@ -250,6 +250,7 @@ export default async function DashboardPage() {
       gradient: "from-teal-500 to-teal-600",
       iconBg: "bg-teal-500/10",
       iconColor: "text-teal-600 dark:text-teal-400",
+      href: "/dashboard/patients",
     },
     {
       title: "Active Wounds",
@@ -260,6 +261,7 @@ export default async function DashboardPage() {
       gradient: "from-amber-500 to-orange-500",
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-600 dark:text-amber-400",
+      href: "/dashboard/wounds",
     },
     {
       title: "Visits This Month",
@@ -270,6 +272,7 @@ export default async function DashboardPage() {
       gradient: "from-blue-500 to-cyan-500",
       iconBg: "bg-blue-500/10",
       iconColor: "text-blue-600 dark:text-blue-400",
+      href: "/dashboard/calendar",
     },
     {
       title: "Pending Visits",
@@ -280,6 +283,7 @@ export default async function DashboardPage() {
       gradient: "from-purple-500 to-pink-500",
       iconBg: "bg-purple-500/10",
       iconColor: "text-purple-600 dark:text-purple-400",
+      href: "/dashboard/calendar",
     },
   ];
 
@@ -318,7 +322,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          return (
+          const StatCard = (
             <Card
               key={stat.title}
               className="group hover-lift relative overflow-hidden border-l-4 transition-all duration-300"
@@ -354,6 +358,15 @@ export default async function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
+          );
+
+          // Wrap in Link if href is provided
+          return stat.href ? (
+            <Link key={stat.title} href={stat.href} className="block">
+              {StatCard}
+            </Link>
+          ) : (
+            StatCard
           );
         })}
       </div>

@@ -420,20 +420,79 @@ export async function getPatient(patientId: string) {
         .sort(
           (a: { created_at: string }, b: { created_at: string }) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-        .map((wound: DbWound) => ({
-          id: wound.id,
-          patientId: wound.patient_id,
-          woundNumber: wound.wound_number,
-          location: wound.location,
-          woundType: wound.wound_type,
-          onsetDate: new Date(wound.onset_date),
-          status: wound.status,
-          healingStatus: wound.healing_status,
-          notes: wound.notes,
-          createdAt: wound.created_at,
-          updatedAt: wound.updated_at,
-        }));
+        );
+
+      // Fetch additional data for each wound
+      const enrichedWounds = await Promise.all(
+        (activeWounds || []).map(async (wound: DbWound) => {
+          // Get latest assessment for measurements
+          const { data: latestAssessment } = await supabase
+            .from("assessments")
+            .select("length, width, depth, area, healing_status")
+            .eq("wound_id", wound.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          // Get latest photo
+          const { data: latestPhoto } = await supabase
+            .from("photos")
+            .select("photo_url")
+            .eq("wound_id", wound.id)
+            .order("captured_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          // Get recent visits for this wound (via assessments)
+          const { data: recentAssessments } = await supabase
+            .from("assessments")
+            .select("visit_id, healing_status, visits(id, visit_date)")
+            .eq("wound_id", wound.id)
+            .order("created_at", { ascending: false })
+            .limit(5);
+
+          const recentVisits =
+            recentAssessments
+              ?.map((a: unknown) => {
+                const assessment = a as {
+                  visits: { id: string; visit_date: string };
+                  healing_status: string | null;
+                };
+                return {
+                  id: assessment.visits.id,
+                  visit_date: assessment.visits.visit_date,
+                  healing_status: assessment.healing_status,
+                };
+              })
+              .filter(Boolean) || [];
+
+          // Get wound notes
+          const { data: notes } = await supabase
+            .from("wound_notes")
+            .select("id, note, created_at")
+            .eq("wound_id", wound.id)
+            .order("created_at", { ascending: false })
+            .limit(5);
+
+          return {
+            id: wound.id,
+            patientId: wound.patient_id,
+            woundNumber: wound.wound_number,
+            location: wound.location,
+            woundType: wound.wound_type,
+            onsetDate: new Date(wound.onset_date),
+            status: wound.status,
+            healingStatus: wound.healing_status,
+            notes: wound.notes,
+            createdAt: wound.created_at,
+            updatedAt: wound.updated_at,
+            latestMeasurements: latestAssessment || undefined,
+            latestPhoto: latestPhoto?.photo_url || undefined,
+            recentVisits: recentVisits || [],
+            woundNotes: notes || [],
+          };
+        })
+      );
 
       // Fetch recent visits separately (limit 10)
       const { data: visits } = await supabase
@@ -467,7 +526,7 @@ export async function getPatient(patientId: string) {
         createdBy: patient.created_by,
         facilityId: patient.facility_id,
         facility: patient.facility,
-        wounds: activeWounds || [],
+        wounds: enrichedWounds || [],
         visits:
           visits?.map((visit: DbVisit) => ({
             id: visit.id,

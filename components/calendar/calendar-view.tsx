@@ -20,9 +20,11 @@ import {
   CalendarEvent,
   getCalendarEvents,
   rescheduleVisit,
+  updateVisitStatus,
+  deleteVisit,
 } from "@/app/actions/calendar";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { EventDetailsModal } from "./event-details-modal";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
@@ -80,11 +82,14 @@ export default function CalendarView({
   facilityId,
   patientId,
 }: CalendarViewProps) {
-  const router = useRouter();
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load events when filters change
   const loadEvents = useCallback(async () => {
@@ -133,14 +138,11 @@ export default function CalendarView({
     loadEvents();
   }, [loadEvents]);
 
-  // Handle event selection (click)
-  const handleSelectEvent = useCallback(
-    (event: CalendarEvent) => {
-      // Navigate to visit detail page
-      router.push(`/dashboard/visits/${event.resource.visitId}`);
-    },
-    [router]
-  );
+  // Handle event click - Open modal instead of navigate
+  const handleSelectEvent = useCallback((event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  }, []);
 
   // Handle drag-and-drop rescheduling
   const handleEventDrop = useCallback(
@@ -220,34 +222,90 @@ export default function CalendarView({
     };
   }, []);
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleStatusChange = async (event: CalendarEvent, newStatus: string) => {
+    if (!event.resource?.visitId) return;
+
+    const result = await updateVisitStatus(event.resource.visitId, newStatus);
+
+    if (result.success) {
+      toast.success("Visit status updated successfully");
+      handleCloseModal();
+      await loadEvents();
+    } else {
+      toast.error(result.error || "Failed to update visit status");
+    }
+  };
+
+  const handleEdit = (event: CalendarEvent) => {
+    if (!event.resource?.visitId || !event.resource?.patientId) return;
+    
+    // Navigate to visit edit page
+    window.location.href = `/dashboard/patients/${event.resource.patientId}/visits/${event.resource.visitId}/edit`;
+  };
+
+  const handleDelete = async (event: CalendarEvent) => {
+    if (!event.resource?.visitId) return;
+
+    if (!confirm("Are you sure you want to delete this visit? This action cannot be undone.")) {
+      return;
+    }
+
+    const result = await deleteVisit(event.resource.visitId);
+
+    if (result.success) {
+      toast.success("Visit deleted successfully");
+      handleCloseModal();
+      await loadEvents();
+    } else {
+      toast.error(result.error || "Failed to delete visit");
+    }
+  };
+
   return (
-    <div className="h-[calc(100vh-12rem)]">
-      {isLoading && (
-        <div className="text-muted-foreground mb-2 text-sm">
-          Loading calendar events...
-        </div>
-      )}
-      <DnDCalendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        view={view}
-        onView={setView}
-        date={date}
-        onNavigate={setDate}
-        onSelectEvent={handleSelectEvent}
-        onEventDrop={handleEventDrop}
-        onEventResize={handleEventResize}
-        eventPropGetter={eventStyleGetter}
-        resizable
-        popup
-        selectable
-        style={{ height: "100%" }}
-        tooltipAccessor={(event) =>
-          `${event.title}\n${event.resource.facilityName}\nStatus: ${event.resource.status}\nWounds: ${event.resource.woundCount}`
-        }
+    <>
+      <div className="h-[calc(100vh-12rem)]">
+        {isLoading && (
+          <div className="text-muted-foreground mb-2 text-sm">
+            Loading calendar events...
+          </div>
+        )}
+        <DnDCalendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          view={view}
+          onView={setView}
+          date={date}
+          onNavigate={setDate}
+          onSelectEvent={handleSelectEvent}
+          onEventDrop={handleEventDrop}
+          onEventResize={handleEventResize}
+          eventPropGetter={eventStyleGetter}
+          resizable
+          popup
+          selectable
+          style={{ height: "100%" }}
+          tooltipAccessor={(event) =>
+            `${event.title}\n${event.resource.facilityName}\nStatus: ${event.resource.status}\nWounds: ${event.resource.woundCount}`
+          }
+        />
+      </div>
+
+      {/* Event Details Modal */}
+      <EventDetailsModal
+        event={selectedEvent}
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onStatusChange={handleStatusChange}
       />
-    </div>
+    </>
   );
 }

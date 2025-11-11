@@ -9,13 +9,13 @@ const visitSchema = z.object({
   patientId: z.string().uuid(),
   visitDate: z.string().min(1, "Visit date is required"),
   visitType: z.enum(["in_person", "telemed"]),
-  location: z.string().optional(),
-  status: z.enum(["incomplete", "complete"]).default("incomplete"),
-  followUpType: z.enum(["appointment", "discharge"]).optional(),
-  followUpDate: z.string().optional(),
-  followUpNotes: z.string().optional(),
+  location: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
+  status: z.enum(["scheduled", "in-progress", "completed", "cancelled", "no-show"]).default("scheduled"),
+  followUpType: z.enum(["appointment", "discharge"]).optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
+  followUpDate: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
+  followUpNotes: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
   timeSpent: z.boolean().default(false),
-  additionalNotes: z.string().optional(),
+  additionalNotes: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
 });
 
 // Get all visits for a patient
@@ -182,7 +182,7 @@ export async function createVisit(formData: FormData) {
       visitDate: formData.get("visitDate") as string,
       visitType: formData.get("visitType") as string,
       location: formData.get("location") as string,
-      status: (formData.get("status") as string) || "incomplete",
+      status: (formData.get("status") as string) || "scheduled",
       followUpType: formData.get("followUpType") as string,
       followUpDate: formData.get("followUpDate") as string,
       followUpNotes: formData.get("followUpNotes") as string,
@@ -255,7 +255,7 @@ export async function updateVisit(visitId: string, formData: FormData) {
       visitDate: formData.get("visitDate") as string,
       visitType: formData.get("visitType") as string,
       location: formData.get("location") as string,
-      status: (formData.get("status") as string) || "incomplete",
+      status: (formData.get("status") as string) || "scheduled",
       followUpType: formData.get("followUpType") as string,
       followUpDate: formData.get("followUpDate") as string,
       followUpNotes: formData.get("followUpNotes") as string,
@@ -377,10 +377,10 @@ export async function markVisitComplete(visitId: string) {
       return { error: "Visit not found or access denied" };
     }
 
-    // Update status to complete
+    // Update status to completed
     const { error: updateError } = await supabase
       .from("visits")
-      .update({ status: "complete" })
+      .update({ status: "completed" })
       .eq("id", visitId);
 
     if (updateError) {
@@ -390,9 +390,10 @@ export async function markVisitComplete(visitId: string) {
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${visit.patient_id}`);
     revalidatePath(`/dashboard/visits/${visitId}`);
+    revalidatePath("/dashboard/calendar");
     return { success: true };
   } catch (error) {
-    console.error("Failed to mark visit as complete:", error);
-    return { error: "Failed to mark visit as complete" };
+    console.error("Failed to mark visit as completed:", error);
+    return { error: "Failed to mark visit as completed" };
   }
 }

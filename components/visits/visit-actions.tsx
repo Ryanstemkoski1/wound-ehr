@@ -94,10 +94,10 @@ export default function VisitActions({ visit, patientId }: VisitActionsProps) {
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          {visit.status === "incomplete" && (
+          {(visit.status === "scheduled" || visit.status === "in-progress") && (
             <DropdownMenuItem onClick={() => setShowCompleteDialog(true)}>
               <CheckCircle className="mr-2 h-4 w-4" />
-              Mark as Complete
+              Mark as Completed
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />

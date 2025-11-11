@@ -84,10 +84,12 @@ export default function PatientCard({ patient }: { patient: Patient }) {
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <Building2 className="h-4 w-4 text-zinc-400" aria-hidden="true" />
-            <span className="font-medium">{patient.facility.name}</span>
-          </div>
+          {patient.facility && (
+            <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <Building2 className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+              <span className="font-medium">{patient.facility.name}</span>
+            </div>
+          )}
 
           {patient._count.wounds > 0 && (
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-linear-to-br from-amber-500/10 to-orange-500/10 p-3 ring-1 ring-amber-500/20">

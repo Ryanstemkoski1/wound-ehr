@@ -1,5 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Calendar, MapPin, Activity } from "lucide-react";
+import Image from "next/image";
+import {
+  Calendar,
+  MapPin,
+  Activity,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -8,7 +22,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import WoundActions from "./wound-actions";
+import { WoundNoteForm } from "./wound-note-form";
+import { formatDistanceToNow } from "date-fns";
+
+type WoundNote = {
+  id: string;
+  note: string;
+  created_at: string;
+};
+
+type RecentVisit = {
+  id: string;
+  visit_date: string;
+  healing_status: string | null;
+};
 
 type WoundCardProps = {
   wound: {
@@ -20,6 +49,16 @@ type WoundCardProps = {
     status: string;
   };
   patientId: string;
+  latestMeasurements?: {
+    length: number | null;
+    width: number | null;
+    depth: number | null;
+    area: number | null;
+    healing_status: string | null;
+  };
+  latestPhoto?: string;
+  recentVisits?: RecentVisit[];
+  notes?: WoundNote[];
 };
 
 const WOUND_TYPE_LABELS: Record<string, string> = {
@@ -68,7 +107,15 @@ const LOCATION_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-export default function WoundCard({ wound, patientId }: WoundCardProps) {
+export default function WoundCard({
+  wound,
+  patientId,
+  latestMeasurements,
+  latestPhoto,
+  recentVisits,
+  notes,
+}: WoundCardProps) {
+  const [showAddNote, setShowAddNote] = useState(false);
   const statusVariant =
     wound.status === "active"
       ? "default"
@@ -139,7 +186,7 @@ export default function WoundCard({ wound, patientId }: WoundCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="relative space-y-2.5">
+      <CardContent className="relative space-y-3">
         <div className="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-900/50">
           <MapPin className="h-4 w-4 text-zinc-400" aria-hidden="true" />
           <span className="font-medium text-zinc-700 dark:text-zinc-300">
@@ -153,6 +200,187 @@ export default function WoundCard({ wound, patientId }: WoundCardProps) {
         <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
           <Activity className="h-4 w-4 text-zinc-400" aria-hidden="true" />
           <span className="font-semibold">{daysSinceOnset} days old</span>
+        </div>
+
+        {latestMeasurements && (
+          <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+              Latest Measurements
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  Length:
+                </span>
+                <div className="flex items-center gap-1 font-medium">
+                  <span>{latestMeasurements.length} cm</span>
+                  {latestMeasurements.healing_status === "improving" && (
+                    <TrendingDown className="h-3.5 w-3.5 text-green-500" />
+                  )}
+                  {latestMeasurements.healing_status === "worsening" && (
+                    <TrendingUp className="h-3.5 w-3.5 text-red-500" />
+                  )}
+                  {latestMeasurements.healing_status === "stable" && (
+                    <Minus className="h-3.5 w-3.5 text-amber-500" />
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-600 dark:text-zinc-400">Width:</span>
+                <span className="font-medium">
+                  {latestMeasurements.width} cm
+                </span>
+              </div>
+              {latestMeasurements.depth && (
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-400">
+                    Depth:
+                  </span>
+                  <span className="font-medium">
+                    {latestMeasurements.depth} cm
+                  </span>
+                </div>
+              )}
+              {latestMeasurements.area && (
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-400">
+                    Area:
+                  </span>
+                  <span className="font-medium">
+                    {latestMeasurements.area} cm²
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {latestPhoto && (
+          <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+              Latest Photo
+            </div>
+            <div className="relative h-32 w-full overflow-hidden rounded-md">
+              <Image
+                src={latestPhoto}
+                alt="Latest wound photo"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
+        )}
+
+        {recentVisits && recentVisits.length > 0 && (
+          <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+              Recent Visits
+            </div>
+            <div className="space-y-1.5">
+              {recentVisits.slice(0, 3).map((visit) => (
+                <div
+                  key={visit.id}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-zinc-600 dark:text-zinc-400">
+                    {new Date(visit.visit_date).toLocaleDateString()}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {visit.healing_status === "improving" && (
+                      <>
+                        <TrendingDown className="h-3.5 w-3.5 text-green-500" />
+                        <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                          Improving
+                        </span>
+                      </>
+                    )}
+                    {visit.healing_status === "worsening" && (
+                      <>
+                        <TrendingUp className="h-3.5 w-3.5 text-red-500" />
+                        <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                          Worsening
+                        </span>
+                      </>
+                    )}
+                    {visit.healing_status === "stable" && (
+                      <>
+                        <Minus className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                          Stable
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notes Section */}
+        <div className="space-y-3">
+          {notes && notes.length > 0 && (
+            <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  <span>Notes ({notes.length})</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {notes.slice(0, 2).map((note) => (
+                  <div
+                    key={note.id}
+                    className="rounded-md bg-zinc-50 p-2 text-sm dark:bg-zinc-900/50"
+                  >
+                    <p className="text-zinc-700 dark:text-zinc-300">
+                      {note.note}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {formatDistanceToNow(new Date(note.created_at), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                  </div>
+                ))}
+                {notes.length > 2 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    asChild
+                  >
+                    <Link
+                      href={`/dashboard/patients/${patientId}/wounds/${wound.id}`}
+                    >
+                      View all {notes.length} notes
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Add Note Section */}
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-3 w-full justify-between text-xs font-semibold"
+              onClick={() => setShowAddNote(!showAddNote)}
+            >
+              <span className="flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Add Note
+              </span>
+              {showAddNote ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+            {showAddNote && <WoundNoteForm woundId={wound.id} />}
+          </div>
         </div>
       </CardContent>
     </Card>

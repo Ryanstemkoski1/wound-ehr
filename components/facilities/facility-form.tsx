@@ -45,7 +45,7 @@ export default function FacilityForm({ facility }: FacilityFormProps) {
       setError(result.error);
       setLoading(false);
     } else {
-      router.push("/dashboard/facilities");
+      router.push("/dashboard/admin/facilities");
       router.refresh();
     }
   }
@@ -53,7 +53,7 @@ export default function FacilityForm({ facility }: FacilityFormProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/facilities">
+        <Link href="/dashboard/admin/facilities">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -208,7 +208,7 @@ export default function FacilityForm({ facility }: FacilityFormProps) {
                     ? "Update Facility"
                     : "Create Facility"}
               </Button>
-              <Link href="/dashboard/facilities">
+              <Link href="/dashboard/admin/facilities">
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>

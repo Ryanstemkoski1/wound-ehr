@@ -191,8 +191,11 @@ export default function VisitForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="incomplete">Incomplete</SelectItem>
-              <SelectItem value="complete">Complete</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="in-progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="no-show">No Show</SelectItem>
             </SelectContent>
           </Select>
         </div>

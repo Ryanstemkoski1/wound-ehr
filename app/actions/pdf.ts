@@ -119,15 +119,17 @@ export async function getPatientDataForPDF(patientId: string) {
               : {}
             : null,
         },
-        facility: {
-          name: patient.facility.name,
-          address: patient.facility.address || "",
-          city: patient.facility.city || "",
-          state: patient.facility.state || "",
-          zipCode: patient.facility.zip || "",
-          phone: patient.facility.phone || "",
-          email: patient.facility.email || "",
-        },
+        facility: patient.facility
+          ? {
+              name: patient.facility.name,
+              address: patient.facility.address || "",
+              city: patient.facility.city || "",
+              state: patient.facility.state || "",
+              zipCode: patient.facility.zip || "",
+              phone: patient.facility.phone || "",
+              email: patient.facility.email || "",
+            }
+          : null,
         wounds: woundsWithAssessments.map((wound) => ({
           id: wound.id,
           location: wound.location,
@@ -253,13 +255,15 @@ export async function getVisitDataForPDF(visitId: string) {
           lastName: visit.patient.last_name,
           dateOfBirth: visit.patient.dob,
           mrn: visit.patient.mrn,
-          facility: {
-            name: visit.patient.facility.name,
-            address: visit.patient.facility.address || "",
-            city: visit.patient.facility.city || "",
-            state: visit.patient.facility.state || "",
-            zipCode: visit.patient.facility.zip || "",
-          },
+          facility: visit.patient.facility
+            ? {
+                name: visit.patient.facility.name,
+                address: visit.patient.facility.address || "",
+                city: visit.patient.facility.city || "",
+                state: visit.patient.facility.state || "",
+                zipCode: visit.patient.facility.zip || "",
+              }
+            : null,
         },
         assessments:
           assessments?.map((assessment) => ({

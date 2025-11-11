@@ -31,7 +31,7 @@ export default async function NewPatientPage() {
     }) || [];
 
   if (facilities.length === 0) {
-    redirect("/dashboard/facilities/new");
+    redirect("/dashboard");
   }
 
   return <PatientForm facilities={facilities} />;

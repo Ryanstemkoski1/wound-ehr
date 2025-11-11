@@ -147,7 +147,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
       format(new Date(billing.visit.visitDate), "MM/dd/yyyy"),
       `${billing.patient.firstName} ${billing.patient.lastName}`,
       billing.patient.mrn,
-      billing.patient.facility.name,
+      billing.patient.facility?.name || "No Facility",
       billing.visit.visitType,
       Array.isArray(billing.cptCodes) ? billing.cptCodes.join("; ") : "",
       Array.isArray(billing.icd10Codes) ? billing.icd10Codes.join("; ") : "",
@@ -364,7 +364,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                         </TableCell>
                         <TableCell>{billing.patient.mrn}</TableCell>
                         <TableCell className="whitespace-nowrap">
-                          {billing.patient.facility.name}
+                          {billing.patient.facility?.name || "No Facility"}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
@@ -479,7 +479,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                               Facility:
                             </span>
                             <span className="font-medium">
-                              {billing.patient.facility.name}
+                              {billing.patient.facility?.name || "No Facility"}
                             </span>
                           </div>
                           {billing.timeSpent && (

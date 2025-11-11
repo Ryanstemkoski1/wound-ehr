@@ -17,11 +17,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PatientDeleteButton } from "@/components/patients/patient-delete-button";
-import WoundCard from "@/components/wounds/wound-card";
 import VisitCard from "@/components/visits/visit-card";
-import CSVDownloadButton from "@/components/pdf/csv-download-button";
 import PatientPDFDownloadButton from "@/components/pdf/patient-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
+import { WoundsListClient } from "@/components/wounds/wounds-list-client";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -98,7 +97,8 @@ export default async function PatientDetailPage({
             {patient.firstName} {patient.lastName}
           </h1>
           <p className="text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
-            MRN: {patient.mrn} • {patient.facility.name}
+            MRN: {patient.mrn}
+            {patient.facility && ` • ${patient.facility.name}`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -396,74 +396,19 @@ export default async function PatientDetailPage({
 
         {/* Right Column - Activity */}
         <div className="space-y-6 lg:sticky lg:top-6 lg:h-fit lg:max-h-[calc(100vh-8rem)]">
-          {/* Active Wounds */}
+          {/* Wounds Section */}
           <Card className="flex flex-col overflow-hidden">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" aria-hidden="true" />
-                  Active Wounds
-                </CardTitle>
-                <div className="flex gap-2">
-                  {patient.wounds.length > 0 && (
-                    <CSVDownloadButton
-                      type="wounds"
-                      patientId={patient.id}
-                      variant="ghost"
-                      size="sm"
-                    />
-                  )}
-                  <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
-                    <Button
-                      size="sm"
-                      className="gap-1"
-                      aria-label="Add new wound"
-                    >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                      Add
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" aria-hidden="true" />
+                Wounds
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto">
-              {patient.wounds.length > 0 ? (
-                <div className="space-y-3">
-                  {patient.wounds.map(
-                    (wound: {
-                      id: string;
-                      woundNumber: string;
-                      location: string;
-                      woundType: string;
-                      onsetDate: Date;
-                      status: string;
-                    }) => (
-                      <WoundCard
-                        key={wound.id}
-                        wound={wound}
-                        patientId={patient.id}
-                      />
-                    )
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3 text-center">
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    No active wounds
-                  </p>
-                  <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      aria-label="Add first wound"
-                    >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                      Add First Wound
-                    </Button>
-                  </Link>
-                </div>
-              )}
+              <WoundsListClient
+                wounds={patient.wounds}
+                patientId={patient.id}
+              />
             </CardContent>
           </Card>
 

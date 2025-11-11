@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import AssessmentForm from "@/components/assessments/assessment-form";
+import MultiWoundAssessmentForm from "@/components/assessments/multi-wound-assessment-form";
 
 type PageProps = {
   params: Promise<{
@@ -85,7 +85,11 @@ export default async function NewAssessmentPage({ params }: PageProps) {
           {new Date(visit.visit_date).toLocaleDateString()}
         </p>
       </div>
-      <AssessmentForm visitId={visitId} patientId={patientId} wounds={wounds} />
+      <MultiWoundAssessmentForm
+        visitId={visitId}
+        patientId={patientId}
+        wounds={wounds}
+      />
     </div>
   );
 }

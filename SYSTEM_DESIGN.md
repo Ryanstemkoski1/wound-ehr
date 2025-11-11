@@ -1,22 +1,93 @@
 # Wound EHR - System Design Document
 
-> **Version**: 2.2  
-> **Date**: October 30, 2025  
-> **Status**: ✅ **Approved - Production Ready** (Migrated from Prisma to Supabase JS)
+> **Version**: 3.0  
+> **Date**: November 4, 2025  
+> **Status**: ✅ **Approved - Production Ready** (Major UX Redesign: Wound-Based Layout)
 
 ---
 
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)
-2. [Project Requirements](#project-requirements)
-3. [System Architecture](#system-architecture)
-4. [Database Schema](#database-schema)
-5. [Frontend Architecture](#frontend-architecture)
-6. [Key Features & Workflows](#key-features--workflows)
-7. [Technology Stack](#technology-stack)
-8. [Implementation Phases](#implementation-phases)
-9. [Design Decisions](#design-decisions)
+2. [Version 3.0 Key Changes](#version-30-key-changes)
+3. [Project Requirements](#project-requirements)
+4. [System Architecture](#system-architecture)
+5. [Database Schema](#database-schema)
+6. [Frontend Architecture](#frontend-architecture)
+7. [Key Features & Workflows](#key-features--workflows)
+8. [Technology Stack](#technology-stack)
+9. [Implementation Phases](#implementation-phases)
+10. [Design Decisions](#design-decisions)
+
+---
+
+## Version 3.0 Key Changes
+
+### 🎯 Critical Client Requirements (November 4, 2025)
+
+This version addresses major UX and access management requirements from the client:
+
+#### 1. **Wound-Based Layout** (MOST IMPORTANT) 🔥
+
+**Problem:** Current visit-centric layout makes managing multiple wounds difficult.
+
+**Solution:**
+
+- **Patient Detail Page**: Redesigned with wound cards as primary content
+  - Each wound shows: location, type, status, measurements, latest photo, recent visits
+  - Per-wound notes with timestamps (can add notes anytime)
+  - Quick wound switcher for easy navigation
+  - Patient demographics moved to sidebar (secondary)
+- **Visit Assessment Form**: Easy multi-wound management
+  - Wound switcher (tabs for 2-5 wounds, sidebar for 6+)
+  - Auto-save when switching between wounds
+  - Progress indicator (wound X of Y, checkmarks)
+  - Per-wound notes section for multiple timestamped notes
+  - Checkboxes replace dropdowns for multi-select (tissue types, infection signs, etc.)
+  - Radio buttons replace dropdowns for single-select (wound type, healing status, etc.)
+
+**Why This Matters:** Clinicians think in terms of wounds, not visits. A patient with 5 wounds needs 5 separate assessments per visit. The wound-based layout makes this workflow natural and efficient.
+
+#### 2. **Multi-Tenant Access Management** (RBAC)
+
+**Problem:** Need SaaS-style multi-tenancy with proper access controls.
+
+**Solution:**
+
+- **Three roles**: Tenant Admin, Facility Admin, User
+- **Tenant Admin**: Full access, can invite other admins and facility admins, manage all facilities
+- **Facility Admin**: Can only view/manage assigned facility, can invite users within facility
+- **User**: Basic access to assigned facilities
+- Email-based invite system with role assignment
+- Complete tenant isolation (users cannot see other tenant data)
+
+**New Tables:** `tenants`, `user_roles`, `wound_notes`
+
+#### 3. **Enhanced Calendar** (Google Calendar-Style)
+
+**Problem:** 404 error when clicking calendar events, no easy way to create appointments.
+
+**Solution:**
+
+- **Modal opens on event click** (not page redirect) - fixes 404 error
+- Modal shows: patient, visit, time, quick links (View Patient, View Visit Details)
+- **Drag-select time range** to create new appointment
+- **Click empty slot** to create appointment
+- New appointment modal with patient search and wound selection
+
+**Why This Matters:** Faster appointment management without context switching.
+
+#### 4. **Per-Wound Notes System**
+
+**Problem:** Need to track notes per wound with timestamps, including post-visit addenda.
+
+**Solution:**
+
+- New `wound_notes` table for timestamped notes
+- Add notes anytime (during visit, after visit, standalone)
+- Multiple notes per wound per visit
+- Shows author, timestamp, content
+- Addendum tracking: Post-visit notes increment `visit.number_of_addenda`
 
 ---
 
@@ -512,17 +583,59 @@ A fully custom, web-based EHR platform with:
 └──────────────────────┘
 ```
 
+### Schema Updates for Version 3.0
+
+**New Tables:**
+
+```sql
+-- User Roles Table (for tenant admin and facility admin)
+CREATE TABLE user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('tenant_admin', 'facility_admin', 'user')),
+  facility_id UUID REFERENCES facilities(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Wound Notes Table (for per-wound timestamped notes)
+CREATE TABLE wound_notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wound_id UUID NOT NULL REFERENCES wounds(id) ON DELETE CASCADE,
+  visit_id UUID REFERENCES visits(id) ON DELETE SET NULL,
+  note TEXT NOT NULL,
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tenant Table (for SaaS multi-tenancy)
+CREATE TABLE tenants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  subdomain TEXT UNIQUE,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Update users table to link to tenant
+ALTER TABLE auth.users ADD COLUMN tenant_id UUID REFERENCES tenants(id);
+```
+
 ### Key Schema Notes
 
-1. **Authentication**: Simple email/password via Supabase Auth (no RBAC/roles)
-2. **Multi-Facility Support**: Users can belong to multiple facilities via `UserFacilities` junction table, patients belong to one facility
-3. **Patients & Wounds**: One patient can have multiple wounds (1:N)
-4. **Visits**: Each visit is linked to a patient and can assess multiple wounds
-5. **WoundAssessments**: Links a specific wound to a visit with all measurements
-6. **Flexible Fields**: Use JSONB for arrays (infection_signs, risk_factors) to avoid rigid schema
-7. **Billing**: CPT/ICD-10 codes tracked per visit for time-based and procedure-based billing
-8. **Audit Trail**: All tables include `created_at`, `updated_at`, and `created_by` for tracking
-9. **Soft Deletes**: Use `status` and `is_active` fields instead of hard deletes for compliance
+1. **Authentication & Authorization**: Multi-role system with tenant admin, facility admin, and regular users
+2. **Multi-Tenancy**: SaaS-style multi-tenant architecture with tenant isolation
+3. **Multi-Facility Support**: Users can belong to multiple facilities via `UserFacilities` junction table, patients belong to one facility
+4. **Patients & Wounds**: One patient can have multiple wounds (1:N) - **Wound-centric UI design**
+5. **Visits**: Each visit is linked to a patient and can assess multiple wounds
+6. **WoundAssessments**: Links a specific wound to a visit with all measurements (checkboxes/radio buttons for most fields)
+7. **Wound Notes**: Per-wound timestamped notes with ability to add multiple notes during and after visits
+8. **Flexible Fields**: Use JSONB for arrays (infection_signs, risk_factors) to avoid rigid schema
+9. **Billing**: CPT/ICD-10 codes tracked per visit for time-based and procedure-based billing
+10. **Audit Trail**: All tables include `created_at`, `updated_at`, and `created_by` for tracking
+11. **Soft Deletes**: Use `status` and `is_active` fields instead of hard deletes for compliance
 
 ---
 
@@ -535,6 +648,8 @@ app/
 ├── (auth)/
 │   ├── login/
 │   │   └── page.tsx           # Login page
+│   ├── signup/
+│   │   └── page.tsx           # Tenant signup page (creates tenant + admin)
 │   └── layout.tsx              # Auth layout (no sidebar)
 │
 ├── (dashboard)/
@@ -544,29 +659,45 @@ app/
 │   ├── patients/
 │   │   ├── page.tsx            # Patient list (searchable table)
 │   │   ├── [id]/
-│   │   │   ├── page.tsx        # Patient detail (overview, wounds, visits)
+│   │   │   ├── page.tsx        # **WOUND-BASED PATIENT DETAIL** (Primary View)
+│   │   │   │                   # Layout: Wound cards as primary content
+│   │   │   │                   # Each wound shows: location, type, onset, status
+│   │   │   │                   # Recent visit history per wound
+│   │   │   │                   # Quick wound switcher
+│   │   │   │                   # Per-wound notes with timestamps
+│   │   │   │                   # Patient demographics in sidebar/header
 │   │   │   ├── wounds/
-│   │   │   │   └── [woundId]/
-│   │   │   │       └── page.tsx # Wound detail (history, photos)
+│   │   │   │   ├── [woundId]/
+│   │   │   │   │   └── page.tsx # Wound detail (history, photos, all visits)
+│   │   │   │   └── new/
+│   │   │   │       └── page.tsx # Add new wound to patient
 │   │   │   └── visits/
-│   │   │       ├── page.tsx    # Visit history for patient
+│   │   │       ├── page.tsx    # All visits for patient (legacy view)
 │   │   │       └── [visitId]/
-│   │   │           └── page.tsx # Visit detail/edit
+│   │   │           └── page.tsx # Visit detail (multi-wound assessment)
 │   │   └── new/
 │   │       └── page.tsx        # Create new patient
 │   │
 │   ├── visits/
-│   │   ├── page.tsx            # Calendar view of all visits
 │   │   ├── new/
-│   │   │   └── page.tsx        # Create new visit (select patient)
+│   │   │   └── page.tsx        # Create new visit (select patient, then wounds)
 │   │   └── [id]/
-│   │       └── page.tsx        # Visit assessment form
+│   │       └── page.tsx        # **WOUND-BASED VISIT ASSESSMENT FORM**
+│   │                           # Easy wound switcher (tabs or sidebar)
+│   │                           # Per-wound notes section
+│   │                           # Checkboxes for multi-select fields
+│   │                           # Radio buttons for single-select fields
+│   │                           # Add timestamped notes during/after visit
 │   │
 │   ├── billing/
 │   │   └── page.tsx            # Billing reports dashboard (✅ Phase 6.5)
 │   │
 │   ├── calendar/
-│   │   └── page.tsx            # Interactive calendar view
+│   │   └── page.tsx            # **ENHANCED CALENDAR VIEW**
+│   │                           # Google Calendar-style interaction
+│   │                           # Modal on event click (not 404 redirect)
+│   │                           # Drag-select to create new appointment
+│   │                           # Modal shows: patient, visit, time, links
 │   │
 │   ├── reports/
 │   │   ├── page.tsx            # Reports dashboard
@@ -577,18 +708,28 @@ app/
 │   │       └── [woundId]/
 │   │           └── page.tsx    # PDF export page for wound
 │   │
+│   ├── admin/                  # **NEW: Admin Management**
+│   │   ├── users/
+│   │   │   └── page.tsx        # User management (tenant/facility admins only)
+│   │   ├── facilities/
+│   │   │   └── page.tsx        # Facility management (tenant admin only)
+│   │   └── invites/
+│   │       └── page.tsx        # Invite users (tenant/facility admins)
+│   │
 │   └── settings/
-│       └── page.tsx            # User settings, facility management
+│       └── page.tsx            # User settings, profile
 │
 └── actions/                    # Server Actions (Next.js 16)
     ├── patients.ts             # Patient CRUD actions
-    ├── wounds.ts               # Wound CRUD actions
+    ├── wounds.ts               # Wound CRUD actions (with notes)
+    ├── wound-notes.ts          # **NEW: Per-wound timestamped notes**
     ├── visits.ts               # Visit CRUD actions
     ├── assessments.ts          # Assessment creation/update
     ├── billing.ts              # Billing CRUD and reports (✅ Phase 6.5)
     ├── photos.ts               # Photo upload to Supabase Storage
+    ├── auth.ts                 # **UPDATED: Role-based auth actions**
+    ├── admin.ts                # **NEW: User/facility management actions**
     └── reports.ts              # PDF generation and export
-            └── route.ts        # Export data to CSV
 
 components/
 ├── ui/                         # shadcn/ui components
@@ -599,15 +740,23 @@ components/
 │   ├── radio-group.tsx
 │   ├── textarea.tsx
 │   ├── dialog.tsx
+│   ├── modal.tsx               # **NEW: Calendar event modal**
 │   ├── table.tsx
 │   ├── calendar.tsx
 │   └── ...
 │
 ├── forms/                      # Custom form components
 │   ├── patient-form.tsx
-│   ├── wound-assessment-form.tsx
+│   ├── wound-assessment-form.tsx  # **UPDATED: Checkboxes/radio buttons**
 │   ├── treatment-plan-form.tsx
 │   └── preventive-orders-form.tsx
+│
+├── wounds/                     # **NEW: Wound-specific components**
+│   ├── wound-card.tsx          # Wound card for patient detail page
+│   ├── wound-switcher.tsx      # Easy wound switcher in assessment form
+│   ├── wound-notes.tsx         # Per-wound timestamped notes display
+│   ├── wound-note-form.tsx     # Add new note to wound
+│   └── wound-timeline.tsx      # Visit timeline per wound
 │
 ├── billing/                    # Billing components (✅ Phase 6.5)
 │   ├── billing-form.tsx        # Searchable billing code form
@@ -619,9 +768,15 @@ components/
 │   └── breadcrumbs.tsx
 │
 ├── calendar/                   # Calendar components
-│   ├── visit-calendar.tsx     # React Big Calendar wrapper
+│   ├── visit-calendar.tsx     # **UPDATED: React Big Calendar wrapper**
+│   ├── calendar-event-modal.tsx # **NEW: Modal for event details**
 │   ├── calendar-event.tsx     # Custom event rendering
 │   └── calendar-toolbar.tsx   # Custom toolbar
+│
+├── admin/                      # **NEW: Admin components**
+│   ├── user-management.tsx    # User list with role assignment
+│   ├── invite-user-form.tsx   # Invite user with role selection
+│   └── facility-assignment.tsx # Assign users to facilities
 │
 ├── pdf/                        # PDF generation components
 │   ├── visit-summary-pdf.tsx
@@ -638,13 +793,15 @@ lib/
 ├── supabase/
 │   ├── server.ts               # Server-side Supabase client
 │   ├── client.ts               # Client-side Supabase client
-│   └── middleware.ts           # Auth middleware utilities
+│   └── middleware.ts           # **UPDATED: Role-based auth middleware**
 ├── database.types.ts           # Generated TypeScript types from Supabase
 ├── validations/
 │   ├── patient.ts              # Zod schemas for patient data
 │   ├── wound.ts                # Zod schemas for wound data
+│   ├── wound-note.ts           # **NEW: Wound note validation**
 │   └── visit.ts                # Zod schemas for visit data
 ├── billing-codes.ts            # Common CPT/ICD-10/Modifier codes (✅ Phase 6.5)
+├── rbac.ts                     # **NEW: Role-based access control utilities**
 └── utils/
     ├── calculations.ts         # Wound area, healing rate calculations
     ├── formatters.ts           # Date, number formatting
@@ -654,49 +811,135 @@ lib/
 
 ### Key UI Components & Workflows
 
-#### 1. Patient List (Dashboard Home)
+#### 1. **WOUND-BASED PATIENT DETAIL PAGE** (Primary View - REDESIGNED)
 
-- Searchable/filterable table
-- Columns: Name, MRN, Active Wounds, Last Visit, Next Scheduled
-- Quick actions: View, New Visit, Edit
-- Pagination
+**Layout Philosophy:** Wounds are the primary focus, not visits.
 
-#### 2. Wound Assessment Form (Core Feature)
+**Top Section:** Patient Header
 
-**Layout:** Split-screen design inspired by Aprima screenshots
+- Patient name, MRN, DOB, facility
+- Quick stats: Total wounds (active/healed), last visit date
+- Quick actions: New Visit, Edit Patient, Export PDF
 
-**Left Panel:** Treatment Options (Checkboxes + Details)
+**Main Content:** Wound Cards (Grid/List View)
 
-- Collapsible sections by category
-- Frequency dropdowns
-- Conditional fields (e.g., "Type" when Collagen selected)
+- Each wound displays as a prominent card:
+  - **Wound header**: Location, type, onset date, days since onset
+  - **Status badge**: Active, Healing, Stable, Healed
+  - **Latest measurements**: L×W×D, area trend (↑↓→)
+  - **Latest photo thumbnail** (click to expand gallery)
+  - **Recent visit summary**: Last assessed date, healing status
+  - **Per-wound notes section** with timestamps
+  - **Actions**: View full history, Add note, Mark healed
+- Sort by: Most recent activity, oldest wound, location
+- Filter by: Active only, all wounds, healed
 
-**Right Panel:** Treatment Orders/Instructions (Auto-generated)
+**Sidebar/Secondary Panel:**
 
-- Yellow highlighted sections for selected treatments
-- Pre-filled instructions based on selections
-- Editable text areas for custom notes
+- Patient demographics (collapsible)
+- Medical history, allergies
+- Contact information
+- Emergency contact
 
-**Top Section:** Patient Info + Wound Selection
+**Wound Notes Feature:**
 
-- Patient name, visit date
-- Dropdown to select which wound(s) to assess
-- "Add New Wound" button
+- Each wound card shows most recent note
+- Click to expand full note history (timestamped)
+- Add new note inline (saves with timestamp and user)
+- Notes persist across visits
+- Color-coded by author (for multi-user facilities)
 
-**Bottom Section:** Assessment Details
+**Recent Visits Per Wound:**
 
-- Measurements (length, width, depth)
-- Tissue composition (% sliders or inputs)
-- Pressure stage (radio buttons)
-- Healing status (radio buttons)
-- Risk factors (checkboxes)
-- Photo upload zone
+- Timeline view within each wound card
+- Shows last 3-5 visits with:
+  - Date, visit type (in-person/telemed)
+  - Healing status change
+  - Measurement changes
+  - Quick link to full visit detail
+- "View all visits" link expands full timeline
 
-**Footer:**
+#### 2. **WOUND-BASED VISIT ASSESSMENT FORM** (REDESIGNED)
 
-- Save Draft
-- Complete Visit
-- Print Summary
+**Layout:** Multi-wound assessment made easy
+
+**Top Bar:** Visit Info
+
+- Patient name, visit date/time, visit type
+- Progress indicator: "Assessing wound 2 of 4"
+- Save draft / Complete visit buttons
+
+**Wound Switcher** (Easy Navigation)
+
+- **Tab-based switcher** (for 2-5 wounds) OR
+- **Sidebar list** (for 6+ wounds)
+- Each tab/item shows: Wound name, location, completion status (✓)
+- Click to switch between wounds instantly
+- Auto-save when switching wounds
+
+**Assessment Form** (Per Wound)
+
+**Section 1: Measurements**
+
+- Length × Width × Depth (numeric inputs)
+- Undermining, tunneling (text inputs with position clock reference)
+- Tissue composition:
+  - **Checkboxes** (multi-select): Epithelial, Granulation, Slough, Necrotic, Eschar
+  - Percentage sliders for each selected tissue type
+
+**Section 2: Wound Characteristics**
+
+- Wound type: **Radio buttons** (single select)
+  - Pressure Injury, Diabetic, Venous, Arterial, Surgical, etc.
+- Pressure stage (if applicable): **Radio buttons**
+  - Stage 1, 2, 3, 4, Unstageable, DTPI
+- Healing status: **Radio buttons**
+  - Initial, Healing, Same/Stable, Declined, Healed, Sign Off
+- Exudate amount: **Radio buttons** (None, Scant, Moderate, Large)
+- Exudate type: **Checkboxes** (Serous, Sanguineous, Purulent, etc.)
+
+**Section 3: Assessment Details**
+
+- Odor: **Radio buttons** (None, Mild, Moderate, Strong, Foul)
+- Pain level: Numeric slider (0-10)
+- Periwound condition: **Checkboxes** (Intact, Macerated, Erythema, Edema, Induration)
+- Infection signs: **Checkboxes** (Increased warmth, Purulent drainage, Delayed healing, etc.)
+- Risk factors: **Checkboxes** (Diabetes, Incontinence, Limited mobility, Poor nutrition, etc.)
+
+**Section 4: Treatment Selection**
+
+- **Left Panel:** Treatment checkboxes by category (collapsible sections)
+  - Primary dressings (hydrogel, foam, alginate, etc.)
+  - Secondary dressings (gauze, transparent film, etc.)
+  - Antimicrobials (silver, iodine, etc.)
+  - Debridement (enzymatic, autolytic, etc.)
+  - Advanced therapies (NPWT, collagen, etc.)
+  - Compression (UNNA boot, wraps, etc.)
+- **Right Panel:** Auto-generated treatment orders (yellow highlights)
+  - Pre-filled instructions based on selections
+  - Editable text areas for customization
+  - Frequency dropdowns per treatment
+
+**Section 5: Wound Notes**
+
+- Large text area for visit-specific notes
+- Auto-timestamps when saved
+- Displays all previous notes below (collapsible)
+- Shows author, timestamp, note content
+
+**Section 6: Photo Upload**
+
+- Drag-and-drop photo zone
+- Preview uploaded photos
+- Caption per photo (optional)
+- Compare with previous photos (side-by-side viewer)
+
+**Footer Actions:**
+
+- Previous wound / Next wound buttons
+- Save draft (partial completion)
+- Complete assessment (marks wound as assessed for this visit)
+- Complete visit (when all wounds assessed)
 
 #### 3. Wound Comparison View
 
@@ -712,79 +955,217 @@ lib/
 - Date stamps
 - Compare mode (side-by-side)
 
+#### 5. **ENHANCED CALENDAR VIEW** (Google Calendar-Style)
+
+**Main Features:**
+
+- Month, week, day views
+- Color-coded events by status (scheduled, completed, cancelled)
+- Drag-and-drop to reschedule appointments
+- Filter by patient, facility, provider
+
+**NEW: Event Click Behavior**
+
+- **Modal opens** (not page redirect) when clicking calendar event
+- Modal displays:
+  - Patient name + photo (if available)
+  - Visit date and time
+  - Visit type (in-person/telemed)
+  - Visit status (scheduled, completed, etc.)
+  - Wounds to be assessed (list)
+  - Assigned provider/clinician
+  - Location/facility
+  - Actions:
+    - "View Patient" button → `/patients/[id]`
+    - "View Visit Details" button → `/visits/[id]`
+    - "Edit Appointment" button (inline edit: date, time, notes)
+    - "Cancel Appointment" button
+    - Close modal button
+
+**NEW: Create Appointment (Google Calendar-Style)**
+
+- **Drag-select** time slot on calendar (e.g., Monday 2pm-3pm)
+- Modal opens: "New Appointment"
+  - Quick patient search (autocomplete dropdown)
+  - Select patient → Auto-loads active wounds
+  - Select wounds to assess (checkboxes)
+  - Set visit type (in-person/telemed)
+  - Add notes (optional)
+  - Save button creates appointment
+- **Alternative**: Click empty time slot → Same modal opens
+- **Fallback**: If drag-select is complex, simple click-to-create is acceptable
+
+**Error Handling:**
+
+- 404 error fixed: Calendar events link to modal, not direct page URLs
+- Graceful error messages if patient/visit data missing
+
 ---
 
 ## Key Features & Workflows
 
-### Workflow 1: New Patient Visit
+### Workflow 1: New Patient Visit (Wound-Based)
 
 1. **Start Visit**
-   - Navigate to "New Visit" or click patient → "New Visit"
+   - From calendar: Click time slot → Select patient → Create visit
+   - From patient detail: Click "New Visit" button
    - System creates visit record (status: incomplete)
 
-2. **Patient Selection** (if not pre-selected)
-   - Search by name or MRN
-   - Select patient
-   - View patient summary (demographics, active wounds)
+2. **Wound Selection**
+   - View all active wounds for patient
+   - Select which wounds to assess this visit (checkboxes)
+   - Option to add new wound if needed
 
-3. **Wound Assessment**
-   - For each active wound:
-     - Record measurements
-     - Take/upload photos
-     - Document tissue composition
-     - Note healing status
-     - Check for infection signs
+3. **Wound Assessment** (Per Wound)
+   - Use wound switcher (tabs/sidebar) to navigate between wounds
+   - For each wound:
+     - Record measurements (L×W×D)
+     - Take/upload photos with comparison viewer
+     - Document tissue composition (checkboxes + percentages)
+     - Select wound characteristics (radio buttons)
+     - Note healing status (radio buttons)
+     - Check infection signs, risk factors (checkboxes)
+     - Add per-wound notes (timestamped)
+   - Auto-save when switching wounds
+   - Completion indicator (✓) for each assessed wound
 
-4. **Treatment Planning**
-   - Select treatment options from checklist
+4. **Treatment Planning** (Multi-Wound)
+   - Select treatment options from checklist (checkboxes)
    - System auto-generates treatment orders
    - Customize instructions as needed
-   - Set frequency and schedule
+   - Set frequency and schedule per treatment
+   - Treatment plan can apply to all wounds or specific wounds
 
 5. **Preventive Orders**
-   - Select applicable recommendations
+   - Select applicable recommendations (checkboxes)
    - Specify details (e.g., cushion type)
 
 6. **Follow-Up**
-   - Schedule next appointment OR
-   - Mark for discharge
+   - Schedule next appointment (opens calendar modal) OR
+   - Mark for discharge (radio buttons)
 
 7. **Complete Visit**
-   - Review summary
+   - Review summary (all wounds assessed confirmation)
    - Save (status: complete)
-   - Option to print/export
+   - Option to print/export PDF
 
-### Workflow 2: Add New Wound to Existing Patient
+### Workflow 2: Add Per-Wound Notes (Anytime)
+
+1. **From Patient Detail Page**
+   - Navigate to patient → wound card
+   - Click "Add Note" button on wound card
+   - Enter note in text area
+   - Note auto-timestamps with user info
+   - Saves to `wound_notes` table
+
+2. **During Visit Assessment**
+   - While assessing wound, add notes in "Wound Notes" section
+   - Notes tied to both wound and visit
+   - Multiple notes can be added throughout visit
+
+3. **After Visit (Addendum)**
+   - Navigate to patient → wound card
+   - View recent visit details
+   - Click "Add Note" to append post-visit note
+   - Note shows timestamp and "Addendum" badge
+   - Increments `visit.number_of_addenda` if tied to visit
+
+### Workflow 3: Add New Wound to Existing Patient
 
 1. Navigate to patient detail page
-2. Click "Add Wound"
+2. Click "Add Wound" button (prominent placement)
 3. Fill out wound creation form:
    - Location (dropdown or body diagram)
-   - Wound type
-   - Onset date
-   - Initial assessment
+   - Wound type (radio buttons)
+   - Onset date (date picker)
+   - Initial notes (optional)
 4. Save wound
-5. Wound appears in patient's active wound list
+5. Wound appears as new card in patient's wound list (marked "New - Not Yet Assessed")
 
-### Workflow 3: Compare Wound Progress
+### Workflow 4: Compare Wound Progress
 
-1. Navigate to wound detail page
-2. Click "Compare Visits"
+1. Navigate to wound card on patient detail page
+2. Click "View History" or "Compare" button
 3. Select 2+ visits from timeline
-4. View side-by-side:
-   - Photos
-   - Measurements (table + chart)
-   - Tissue composition
-   - Healing status
-5. Export comparison report
+4. View side-by-side comparison:
+   - Photos (before/after slider)
+   - Measurements (table + line chart)
+   - Tissue composition (pie charts)
+   - Healing status progression
+   - Treatment changes
+5. Export comparison report (PDF)
 
-### Workflow 4: Mark Wound as Healed
+### Workflow 5: Mark Wound as Healed
 
-1. During visit assessment, select "Healed" status
+1. During visit assessment, select "Healed" healing status (radio button)
 2. System prompts: "Archive this wound?"
 3. Confirm
-4. Wound moved to "Healed Wounds" section (read-only)
-5. No longer appears in active assessments
+4. Wound status updated to `healed`
+5. Wound card moves to "Healed Wounds" section (collapsible)
+6. No longer appears in active wound list
+7. Full history retained (read-only)
+
+### Workflow 6: Calendar Appointment Management
+
+**View Appointments:**
+
+- Navigate to `/calendar`
+- Switch between month/week/day views
+- Filter by patient, facility, or provider
+
+**Click Existing Appointment:**
+
+- Modal opens (not page redirect)
+- View patient, visit, time details
+- Quick links to patient detail or visit detail
+- Edit/cancel options inline
+
+**Create New Appointment (Google Calendar-Style):**
+
+- **Method 1**: Drag-select time range on calendar
+- **Method 2**: Click empty time slot
+- Modal opens with new appointment form:
+  - Search/select patient
+  - Select wounds to assess
+  - Set visit type (in-person/telemed)
+  - Add notes
+  - Save creates appointment
+
+### Workflow 7: Multi-Tenant Access Management
+
+**Tenant Admin Workflow:**
+
+1. Sign up creates new tenant
+2. Tenant admin can:
+   - Create facilities
+   - Invite other admins (tenant-level or facility-level)
+   - Assign users to facilities
+   - View all data across all facilities
+
+**Invite User:**
+
+1. Navigate to `/admin/invites`
+2. Enter email address
+3. Select role:
+   - Tenant Admin (full access)
+   - Facility Admin (single facility access)
+   - User (basic access)
+4. If Facility Admin/User: Select facility assignment
+5. Send invite email
+6. User signs up and auto-assigned to tenant + role
+
+**Facility Admin Workflow:**
+
+1. Facility admin logs in
+2. Can only view/manage data within assigned facility
+3. Can invite users within their facility (Users role only)
+4. Cannot create new facilities or manage other facilities
+
+**User Workflow:**
+
+1. Regular user logs in
+2. Can view/manage data within assigned facilities
+3. Cannot invite other users or manage settings
 
 ---
 
@@ -970,9 +1351,90 @@ lib/
 
 ---
 
+### Phase 8: Wound-Based UX Redesign & RBAC (Week 11-12) ⭐ NEW
+
+**Goal:** Implement wound-centric UI and multi-tenant access management
+
+**8.1: Multi-Tenant RBAC (Week 11)**
+
+- [ ] Create `tenants` table with subdomain support
+- [ ] Create `user_roles` table (tenant_admin, facility_admin, user)
+- [ ] Create `wound_notes` table for per-wound timestamped notes
+- [ ] Update auth middleware for role-based access control
+- [ ] Implement RLS policies for tenant isolation
+- [ ] Add `tenant_id` foreign key to facilities, users
+- [ ] Build tenant signup flow (creates tenant + admin)
+- [ ] Build invite system (email invites with role assignment)
+- [ ] Create `/admin/users` page (user management)
+- [ ] Create `/admin/facilities` page (tenant admin only)
+- [ ] Create `/admin/invites` page (send invites with role selection)
+- [ ] Implement role badges in UI
+- [ ] Add facility admin restrictions (can only invite users, view assigned facility)
+- [ ] Test tenant isolation (users cannot see other tenant data)
+
+**Deliverable:** Full multi-tenant SaaS with role-based access control
+
+**8.2: Wound-Based Patient Detail Page (Week 11)**
+
+- [ ] Redesign patient detail page layout (wound cards as primary content)
+- [ ] Build wound card component (location, type, status, measurements, photo)
+- [ ] Implement per-wound notes display with timestamps
+- [ ] Build "Add Note" inline form for wound cards
+- [ ] Create wound notes action handlers (create, read)
+- [ ] Display recent visit history within each wound card (last 3-5 visits)
+- [ ] Add wound sorting (recent activity, oldest, location)
+- [ ] Add wound filtering (active only, all, healed)
+- [ ] Move patient demographics to sidebar/header (collapsible)
+- [ ] Add quick actions per wound (View History, Add Note, Mark Healed)
+- [ ] Implement wound status badges (Active, Healing, Stable, Healed)
+- [ ] Add measurement trend indicators (↑↓→)
+- [ ] Build healed wounds collapsible section
+- [ ] Test multi-wound patient scenarios (2-10 wounds)
+
+**Deliverable:** Wound-centric patient detail page
+
+**8.3: Wound-Based Visit Assessment Form (Week 12)**
+
+- [ ] Build wound switcher component (tabs for 2-5 wounds, sidebar for 6+)
+- [ ] Implement auto-save when switching wounds
+- [ ] Add progress indicator (wound X of Y, completion checkmarks)
+- [ ] Convert dropdowns to checkboxes (tissue types, exudate types, periwound, infection signs, risk factors)
+- [ ] Convert dropdowns to radio buttons (wound type, pressure stage, healing status, exudate amount, odor)
+- [ ] Build per-wound notes section in assessment form
+- [ ] Implement multiple timestamped notes per wound during visit
+- [ ] Add Previous/Next wound navigation buttons
+- [ ] Update treatment plan form to support per-wound treatments
+- [ ] Add completion status tracking per wound
+- [ ] Implement "Save Draft" for partial assessments
+- [ ] Build "Complete Assessment" action per wound
+- [ ] Update "Complete Visit" to require all wounds assessed
+- [ ] Test rapid wound switching with auto-save
+
+**Deliverable:** Efficient multi-wound assessment workflow
+
+**8.4: Enhanced Calendar with Modal (Week 12)**
+
+- [ ] Build calendar event modal component
+- [ ] Fix 404 error (event click opens modal, not page navigation)
+- [ ] Display patient info, visit details, time in modal
+- [ ] Add quick links (View Patient, View Visit Details) in modal
+- [ ] Add inline edit/cancel actions in modal
+- [ ] Implement drag-select time range detection
+- [ ] Build new appointment modal (opens on drag-select or click)
+- [ ] Add patient search autocomplete in new appointment modal
+- [ ] Add wound selection checkboxes (auto-load patient's active wounds)
+- [ ] Add visit type selection (in-person/telemed)
+- [ ] Connect new appointment modal to create visit action
+- [ ] Test drag-select on different time scales (hour, day, week)
+- [ ] Add fallback: simple click-to-create if drag-select too complex
+- [ ] Update calendar event rendering (show patient name + wound count)
+
+**Deliverable:** Google Calendar-style appointment management
+
+---
+
 ### Future Enhancements (Post-MVP)
 
-- [ ] Advanced role-based access control (admin, clinician, scribe)
 - [ ] AI-powered wound analysis (healing prediction)
 - [ ] Patient portal (view own wound progress)
 - [ ] Mobile app (React Native)
@@ -981,6 +1443,9 @@ lib/
 - [ ] Advanced PDF customization options
 - [ ] Live data sync with other EHR systems
 - [ ] Automated billing code suggestions based on visit type/treatments
+- [ ] Body diagram wound location selector (visual wound placement)
+- [ ] Advanced wound comparison (multi-visit, multi-wound)
+- [ ] Automated appointment reminders (email/SMS)
 
 ---
 
@@ -990,23 +1455,46 @@ This section documents all approved design decisions based on client requirement
 
 ### 1. Authentication & Authorization
 
-**Decision:** Simple email/password authentication via Supabase Auth, no role-based access control (RBAC) in Phase 1.
+**Decision:** Multi-role authentication with SaaS-style multi-tenancy.
 
-- **Rationale:** Client confirmed simple auth is sufficient initially. RBAC can be added in future enhancements if team grows.
-- **Implementation:** Supabase Auth with email/password only. All authenticated users have equal access to all features.
-- **Future:** Multi-role support (admin/clinician/scribe) moved to post-MVP enhancements.
+**Version 3.0 Update:** Complete overhaul from simple auth to role-based access control (RBAC).
+
+- **Rationale:** Client requires tenant admin and facility admin roles for proper access management in multi-tenant SaaS environment.
+- **Implementation:**
+  - Supabase Auth with email/password
+  - **Tenant isolation**: Each signup creates new tenant (organization)
+  - **Three roles**:
+    1. **Tenant Admin**: Full access to all facilities, can invite other admins and facility admins
+    2. **Facility Admin**: Access only to assigned facility, can invite users within their facility
+    3. **User**: Basic access to assigned facilities, no admin privileges
+  - `user_roles` table links users to roles and facilities
+  - `tenants` table for multi-tenant isolation
+  - Middleware enforces role-based access control
+  - Row-Level Security (RLS) policies filter data by tenant and facility access
+- **UI:**
+  - Tenant admin: Full admin panel at `/admin/*`
+  - Facility admin: Limited admin panel (user invites only)
+  - User: No admin access
+  - Role badge displayed in user profile
+- **Invite System:**
+  - Email-based invites with role assignment
+  - Auto-assigns to tenant during signup via invite token
+  - Facility assignment for facility admins and users
 
 ### 2. Multi-Facility Support
 
-**Decision:** Multi-facility support included in Phase 1.
+**Decision:** Multi-facility support included in Phase 1 with tenant-based isolation.
 
-- **Rationale:** Client confirmed multi-facility capability is required from the start.
+- **Rationale:** Client confirmed multi-facility capability required from start, with proper tenant isolation for SaaS.
 - **Implementation:**
-  - `Facilities` table with full facility details
+  - Each tenant can have multiple facilities
+  - `Facilities` table includes `tenant_id` foreign key
   - `UserFacilities` junction table for many-to-many relationships
   - Each patient belongs to one facility (`patient.facility_id`)
-  - Users can switch between facilities they have access to
-- **UI:** Facility selector in header/settings, patient list filters by selected facility.
+  - Tenant admins can access all facilities within their tenant
+  - Facility admins can only access their assigned facility
+  - Users can be assigned to multiple facilities (within same tenant)
+- **UI:** Facility selector in header/settings, patient list filters by accessible facilities based on role.
 
 ### 3. Billing & CPT Codes
 
@@ -1031,8 +1519,16 @@ This section documents all approved design decisions based on client requirement
 **Calendar:**
 
 - **Library:** React Big Calendar
-- **Rationale:** Industry standard, highly customizable, supports Google Calendar sync
-- **Features:** Drag-and-drop rescheduling, color-coded events, month/week/day views
+- **Rationale:** Industry standard, highly customizable, supports drag-and-drop
+- **Version 3.0 Update:** Enhanced with modal-based event interaction (Google Calendar-style)
+- **Features:**
+  - Drag-and-drop rescheduling
+  - Color-coded events by status
+  - Month/week/day views
+  - **NEW**: Modal opens on event click (not page navigation) - fixes 404 error
+  - **NEW**: Drag-select time range to create new appointment
+  - **NEW**: Click empty slot to create appointment
+  - **NEW**: Event modal displays patient/visit info with quick links
 
 **PDF Export:**
 
@@ -1067,9 +1563,27 @@ This section documents all approved design decisions based on client requirement
 
 ### 7. Wound Types & Treatment Options
 
-**Decision:** Agent uses medical knowledge to define comprehensive wound types and treatment options.
+**Decision:** Agent uses medical knowledge to define comprehensive wound types and treatment options. Assessment forms use checkboxes and radio buttons for efficiency.
 
-- **Rationale:** Client relies on agent's expertise for clinical accuracy.
+**Version 3.0 Update:** Converted most dropdowns to checkboxes (multi-select) and radio buttons (single-select) for faster data entry.
+
+- **Rationale:** Client feedback - dropdowns slow down workflow. Checkboxes/radio buttons allow faster, more intuitive selection.
+- **Implementation:**
+  - **Checkboxes** for multi-select fields:
+    - Tissue types (epithelial, granulation, slough, etc.)
+    - Exudate types (serous, sanguineous, purulent, etc.)
+    - Periwound conditions (macerated, erythema, edema, etc.)
+    - Infection signs (warmth, purulent drainage, delayed healing, etc.)
+    - Risk factors (diabetes, incontinence, limited mobility, etc.)
+    - Treatment options (all categories)
+  - **Radio buttons** for single-select fields:
+    - Wound type (pressure injury, diabetic, venous, arterial, etc.)
+    - Pressure stage (1, 2, 3, 4, unstageable, DTPI)
+    - Healing status (initial, healing, stable, declined, healed)
+    - Exudate amount (none, scant, moderate, large)
+    - Odor level (none, mild, moderate, strong, foul)
+  - **Numeric inputs** for measurements (length, width, depth)
+  - **Sliders** for percentages (tissue composition)
 - **Wound Types (Expanded):**
   - Pressure Injuries (Stage 1-4, Unstageable, Deep Tissue Injury)
   - Diabetic Foot Ulcers (neuropathic, ischemic, neuro-ischemic)
@@ -1092,7 +1606,44 @@ This section documents all approved design decisions based on client requirement
   - Preventive (air mattress, repositioning, off-loading)
 - **Customization:** Treatment checklist hardcoded in Phase 1, customizable admin panel added in post-MVP.
 
-### 8. Reporting Requirements
+### 8. Wound-Based UI Philosophy (NEW)
+
+**Decision:** Redesign patient detail page and visit assessment to be wound-centric rather than visit-centric.
+
+**Version 3.0 Update:** Major UX overhaul based on client feedback.
+
+- **Rationale:** Client confirmed wounds are the primary entity clinicians think about, not visits. Current visit-based layout creates confusion when managing multiple wounds.
+- **Implementation:**
+  - **Patient Detail Page:**
+    - Wounds displayed as primary content (cards/grid)
+    - Each wound card shows: location, type, status, latest measurements, latest photo, recent visit history
+    - Per-wound notes displayed prominently with timestamps
+    - Patient demographics moved to sidebar/header (secondary)
+    - Quick wound switcher for easy navigation
+  - **Visit Assessment Form:**
+    - Easy wound switcher (tabs for 2-5 wounds, sidebar for 6+)
+    - Auto-save when switching between wounds
+    - Progress indicator shows completion status per wound
+    - Per-wound notes section in assessment form
+    - Ability to add multiple timestamped notes during and after visit
+  - **Wound Notes System:**
+    - New `wound_notes` table for per-wound timestamped notes
+    - Notes can be added anytime (during visit, after visit, standalone)
+    - Display author, timestamp, content
+    - Notes linked to wound (required) and visit (optional)
+    - Addendum tracking: Post-visit notes increment `visit.number_of_addenda`
+  - **Visit History:**
+    - Recent visits shown within each wound card (last 3-5)
+    - Full visit timeline accessible via "View History" link
+    - Timeline shows healing progression per wound
+- **Benefits:**
+  - Easier management of patients with multiple wounds
+  - Clearer wound history and progression tracking
+  - Faster navigation during assessments
+  - Better support for longitudinal wound care
+- **Legacy Support:** Original visit-centric views remain accessible at `/patients/[id]/visits`
+
+### 9. Reporting Requirements
 
 **Decision:** PDF export for visit summaries and wound progress, CSV export for data analysis.
 
@@ -1294,6 +1845,80 @@ This section documents all approved design decisions based on client requirement
 
 ## Version History
 
+### Version 3.0 (November 4, 2025) ⭐ MAJOR UPDATE
+
+**Status:** Approved - Ready for Implementation
+
+**Changes:**
+
+- ✅ **MAJOR**: Wound-based UI redesign (most important change)
+  - Patient detail page restructured with wound cards as primary content
+  - Per-wound notes with timestamps
+  - Recent visit history displayed per wound
+  - Wound switcher for easy navigation
+- ✅ **MAJOR**: Visit assessment form redesigned for multi-wound efficiency
+  - Easy wound switcher (tabs/sidebar)
+  - Auto-save when switching wounds
+  - Checkboxes for multi-select fields (tissue types, infection signs, etc.)
+  - Radio buttons for single-select fields (wound type, healing status, etc.)
+  - Per-wound notes section with multiple timestamped notes
+  - Progress indicator shows completion per wound
+- ✅ **MAJOR**: Multi-tenant RBAC implementation
+  - SaaS-style multi-tenancy with tenant isolation
+  - Three roles: Tenant Admin, Facility Admin, User
+  - Tenant admins can invite other admins and facility admins
+  - Facility admins can only view/manage assigned facility
+  - Facility admins can invite users within their facility
+  - Email-based invite system with role assignment
+- ✅ Enhanced calendar with modal interaction (Google Calendar-style)
+  - Fixed 404 error: event click opens modal instead of navigation
+  - Modal displays patient, visit, time info with quick links
+  - Drag-select time range to create new appointment
+  - Click empty slot to create appointment
+  - New appointment modal with patient search and wound selection
+- ✅ Added new database tables
+  - `tenants` - Multi-tenant isolation
+  - `user_roles` - Role-based access control
+  - `wound_notes` - Per-wound timestamped notes
+- ✅ Added Phase 8 to implementation roadmap (2 weeks)
+  - Phase 8.1: Multi-tenant RBAC
+  - Phase 8.2: Wound-based patient detail page
+  - Phase 8.3: Wound-based visit assessment form
+  - Phase 8.4: Enhanced calendar with modal
+- ✅ Updated design decisions (sections 1, 4, 7, 8)
+- ✅ Updated frontend architecture with new routes and components
+- ✅ Updated workflows to reflect wound-centric approach
+
+**Features Added:**
+
+- Wound-centric patient detail page with cards
+- Per-wound notes system with timestamps and author tracking
+- Multi-wound visit assessment with easy wound switcher
+- Multi-tenant SaaS with role-based access control
+- Tenant admin, facility admin, and user roles
+- Email-based user invitation system
+- Calendar event modal (fixes 404 error)
+- Google Calendar-style appointment creation
+- Checkboxes and radio buttons for faster data entry
+- Auto-save when switching wounds
+- Progress tracking per wound in visit assessment
+
+**Migration Impact:**
+
+- **Database**: 3 new tables required (`tenants`, `user_roles`, `wound_notes`)
+- **Auth**: Migration path needed for existing users → assign to tenant and role
+- **Facilities**: Add `tenant_id` foreign key to existing facilities
+- **UI**: Major frontend redesign - both old and new views should coexist during transition
+- **Backward Compatibility**: Legacy visit-centric views remain at `/patients/[id]/visits`
+
+### Version 2.2 (October 30, 2025)
+
+**Changes:**
+
+- ✅ Migrated from Prisma to Supabase JS
+- ✅ Updated all documentation to reflect Supabase-only backend
+- ✅ Confirmed Phase 6 and Phase 6.5 completion
+
 ### Version 2.1 (October 30, 2025)
 
 **Changes:**
@@ -1327,8 +1952,8 @@ This section documents all approved design decisions based on client requirement
 
 ---
 
-**Document Version:** 2.1 (Approved)
+**Document Version:** 3.0 (Approved)
 
-**Last Updated:** October 30, 2025
+**Last Updated:** November 4, 2025
 
-**Ready for Implementation:** ✅ Yes
+**Ready for Implementation:** ✅ Yes (Phase 8 - Weeks 11-12)

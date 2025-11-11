@@ -33,18 +33,34 @@ const VISIT_TYPE_LABELS: Record<string, string> = {
   telemed: "Telemedicine",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  scheduled: "Scheduled",
+  "in-progress": "In Progress",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  "no-show": "No Show",
+};
+
 export default function VisitCard({ visit, patientId }: VisitCardProps) {
-  const statusVariant = visit.status === "complete" ? "secondary" : "default";
-  const statusColor =
-    visit.status === "complete" ? "border-l-green-500" : "border-l-blue-500";
-  const iconBg =
-    visit.status === "complete"
-      ? "bg-linear-to-br from-green-500/10 to-emerald-500/10 ring-1 ring-green-500/20"
-      : "bg-linear-to-br from-blue-500/10 to-cyan-500/10 ring-1 ring-blue-500/20";
-  const iconColor =
-    visit.status === "complete"
-      ? "text-green-600 dark:text-green-400"
-      : "text-blue-600 dark:text-blue-400";
+  const isCompleted = visit.status === "completed";
+  const isCancelled = visit.status === "cancelled" || visit.status === "no-show";
+  
+  const statusVariant = isCompleted ? "secondary" : "default";
+  const statusColor = isCompleted 
+    ? "border-l-green-500" 
+    : isCancelled 
+    ? "border-l-gray-400" 
+    : "border-l-blue-500";
+  const iconBg = isCompleted
+    ? "bg-linear-to-br from-green-500/10 to-emerald-500/10 ring-1 ring-green-500/20"
+    : isCancelled
+    ? "bg-linear-to-br from-gray-500/10 to-zinc-500/10 ring-1 ring-gray-500/20"
+    : "bg-linear-to-br from-blue-500/10 to-cyan-500/10 ring-1 ring-blue-500/20";
+  const iconColor = isCompleted
+    ? "text-green-600 dark:text-green-400"
+    : isCancelled
+    ? "text-gray-600 dark:text-gray-400"
+    : "text-blue-600 dark:text-blue-400";
 
   return (
     <Card
@@ -85,7 +101,7 @@ export default function VisitCard({ visit, patientId }: VisitCardProps) {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={statusVariant} className="font-semibold">
-              {visit.status}
+              {STATUS_LABELS[visit.status] || visit.status}
             </Badge>
             <VisitActions visit={visit} patientId={patientId} />
           </div>

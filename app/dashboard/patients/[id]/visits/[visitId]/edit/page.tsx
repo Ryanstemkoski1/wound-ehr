@@ -32,8 +32,8 @@ export default async function EditVisitPage({ params }: PageProps) {
       <div>
         <h1 className="text-3xl font-bold">Edit Visit</h1>
         <p className="text-muted-foreground">
-          Patient: {visit.patient.firstName} {visit.patient.lastName} (
-          {visit.patient.facility.name})
+          Patient: {visit.patient.firstName} {visit.patient.lastName}
+          {visit.patient.facility && ` (${visit.patient.facility.name})`}
         </p>
       </div>
       <VisitForm

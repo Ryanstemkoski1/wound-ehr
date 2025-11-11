@@ -72,8 +72,8 @@ export default async function VisitDetailPage({ params }: PageProps) {
         <div>
           <h1 className="text-3xl font-bold">Visit Details</h1>
           <p className="text-zinc-600 dark:text-zinc-400">
-            {visit.patient.firstName} {visit.patient.lastName} •{" "}
-            {visit.patient.facility.name}
+            {visit.patient.firstName} {visit.patient.lastName}
+            {visit.patient.facility && ` • ${visit.patient.facility.name}`}
           </p>
         </div>
         <div className="flex gap-2">

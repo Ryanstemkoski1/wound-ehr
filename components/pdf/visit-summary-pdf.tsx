@@ -22,7 +22,7 @@ type VisitSummaryData = {
       city: string;
       state: string;
       zipCode: string;
-    };
+    } | null;
   };
   assessments: Array<{
     id: string;
@@ -212,17 +212,21 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
               {calculateAge(patient.dateOfBirth)})
             </Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Facility:</Text>
-            <Text style={styles.value}>{patient.facility.name}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>
-              {patient.facility.address}, {patient.facility.city},{" "}
-              {patient.facility.state} {patient.facility.zipCode}
-            </Text>
-          </View>
+          {patient.facility && (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.label}>Facility:</Text>
+                <Text style={styles.value}>{patient.facility.name}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Address:</Text>
+                <Text style={styles.value}>
+                  {patient.facility.address}, {patient.facility.city},{" "}
+                  {patient.facility.state} {patient.facility.zipCode}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Visit Information */}

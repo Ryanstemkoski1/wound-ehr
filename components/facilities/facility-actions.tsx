@@ -48,7 +48,7 @@ export default function FacilityActions({
   }
 
   function handleEdit() {
-    router.push(`/dashboard/facilities/${facilityId}/edit`);
+    router.push(`/dashboard/admin/facilities/${facilityId}/edit`);
   }
 
   return (

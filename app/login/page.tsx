@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { login } from "@/app/actions/auth";
@@ -17,6 +18,9 @@ import {
 } from "@/components/ui/card";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const successMessage = searchParams.get("message");
+  
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +50,11 @@ export default function LoginPage() {
         </CardHeader>
         <form action={handleSubmit}>
           <CardContent className="space-y-4">
+            {successMessage === "password_updated" && (
+              <div className="rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200">
+                ✓ Password updated successfully! You can now login with your new password.
+              </div>
+            )}
             {error && (
               <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
                 {error}
@@ -63,7 +72,15 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 name="password"
@@ -81,20 +98,15 @@ export default function LoginPage() {
               <p className="text-zinc-600 dark:text-zinc-400">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href="/signup"
-                  className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
-                >
-                  Sign up
-                </Link>
-              </p>
-              <p className="text-zinc-600 dark:text-zinc-400">
-                Need to confirm your email?{" "}
-                <Link
                   href="/auth/resend"
                   className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
                 >
                   Resend confirmation
                 </Link>
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                This system uses invite-only registration. Contact your
+                administrator for access.
               </p>
             </div>
           </CardFooter>

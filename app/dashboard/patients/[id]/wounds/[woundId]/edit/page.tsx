@@ -32,8 +32,8 @@ export default async function EditWoundPage({ params }: PageProps) {
       <div>
         <h1 className="text-3xl font-bold">Edit Wound</h1>
         <p className="text-muted-foreground">
-          Patient: {wound.patient.firstName} {wound.patient.lastName} (
-          {wound.patient.facility.name})
+          Patient: {wound.patient.firstName} {wound.patient.lastName}
+          {wound.patient.facility && ` (${wound.patient.facility.name})`}
         </p>
       </div>
       <WoundForm

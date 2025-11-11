@@ -102,8 +102,8 @@ export async function getCalendarEvents(
             visitId: visit.id,
             patientId: visit.patient.id,
             patientName: `${visit.patient.first_name} ${visit.patient.last_name}`,
-            facilityId: visit.patient.facility.id,
-            facilityName: visit.patient.facility.name,
+            facilityId: visit.patient.facility?.id || null,
+            facilityName: visit.patient.facility?.name || "No Facility",
             status: visit.status,
             woundCount: visit.assessments?.length || 0,
           },
@@ -168,7 +168,7 @@ export async function createVisitFromCalendar(
       visit: {
         id: visit.id,
         patientName: `${visit.patient.first_name} ${visit.patient.last_name}`,
-        facilityName: visit.patient.facility.name,
+        facilityName: visit.patient.facility?.name || "No Facility",
         visitDate: visit.visitDate,
       },
     };
@@ -291,6 +291,69 @@ export async function getFacilitiesForCalendar() {
       success: false,
       error:
         error instanceof Error ? error.message : "Failed to load facilities",
+    };
+  }
+}
+
+/**
+ * Update visit status
+ */
+export async function updateVisitStatus(visitId: string, status: string) {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("visits")
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", visitId);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/dashboard/calendar");
+    revalidatePath("/dashboard/patients");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update visit status:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update visit status",
+    };
+  }
+}
+
+/**
+ * Delete visit
+ */
+export async function deleteVisit(visitId: string) {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("visits")
+      .delete()
+      .eq("id", visitId);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/dashboard/calendar");
+    revalidatePath("/dashboard/patients");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete visit:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to delete visit",
     };
   }
 }

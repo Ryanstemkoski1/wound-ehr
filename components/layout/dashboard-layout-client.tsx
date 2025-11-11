@@ -5,14 +5,17 @@ import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import type { User } from "@supabase/supabase-js";
+import type { UserRole } from "@/lib/rbac";
 
 type DashboardLayoutClientProps = {
   user: User;
+  userRole: UserRole | null;
   children: React.ReactNode;
 };
 
 export function DashboardLayoutClient({
   user,
+  userRole,
   children,
 }: DashboardLayoutClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -28,6 +31,7 @@ export function DashboardLayoutClient({
       </a>
 
       <Sidebar
+        userRole={userRole}
         mobileOpen={mobileMenuOpen}
         onMobileClose={() => setMobileMenuOpen(false)}
       />

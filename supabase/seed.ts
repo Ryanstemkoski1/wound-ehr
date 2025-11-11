@@ -829,7 +829,7 @@ async function main() {
       .eq("wounds.status", "active");
 
     const visitTypes = ["in_person", "in_person", "telemed"];
-    const visitStatuses = ["complete", "complete", "incomplete"];
+    const visitStatuses = ["completed", "completed", "scheduled", "in-progress"];
     const followUpTypes = ["appointment", "discharge"];
 
     const visitInserts = [];
