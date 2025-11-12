@@ -159,7 +159,7 @@ type PatientSummaryPDFProps = {
       zipCode: string;
       phone: string;
       email: string;
-    };
+    } | null;
     wounds: Array<{
       id: string;
       location: string;
@@ -262,26 +262,28 @@ export default function PatientSummaryPDF({ data }: PatientSummaryPDFProps) {
         </View>
 
         {/* Facility Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Facility</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{facility.name}</Text>
+        {facility && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Facility</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Name:</Text>
+              <Text style={styles.value}>{facility.name}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Address:</Text>
+              <Text style={styles.value}>
+                {facility.address}, {facility.city}, {facility.state}{" "}
+                {facility.zipCode}
+              </Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Contact:</Text>
+              <Text style={styles.value}>
+                {facility.phone} • {facility.email}
+              </Text>
+            </View>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>
-              {facility.address}, {facility.city}, {facility.state}{" "}
-              {facility.zipCode}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Contact:</Text>
-            <Text style={styles.value}>
-              {facility.phone} • {facility.email}
-            </Text>
-          </View>
-        </View>
+        )}
 
         {/* Medical Information */}
         <View style={styles.section}>
