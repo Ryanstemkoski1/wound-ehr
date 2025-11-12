@@ -79,7 +79,7 @@ export default function NewVisitDialog({
         ? format(initialDate, "yyyy-MM-dd")
         : format(new Date(), "yyyy-MM-dd"),
       visitTime: initialDate ? format(initialDate, "HH:mm") : "09:00",
-      visitType: "routine",
+      visitType: "in_person",
       location: "",
       notes: "",
     },
@@ -145,11 +145,13 @@ export default function NewVisitDialog({
         onOpenChange(false);
         onSuccess?.();
       } else {
-        toast.error(result.error);
+        toast.error(result.error || "Failed to create visit");
       }
     } catch (error) {
-      console.error("Failed to create visit:", error);
-      toast.error("Failed to create visit");
+      console.error("Exception during visit creation:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create visit"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -269,10 +271,8 @@ export default function NewVisitDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="routine">Routine</SelectItem>
-                      <SelectItem value="follow-up">Follow-up</SelectItem>
-                      <SelectItem value="initial">Initial</SelectItem>
-                      <SelectItem value="discharge">Discharge</SelectItem>
+                      <SelectItem value="in_person">In-Person</SelectItem>
+                      <SelectItem value="telemed">Telemedicine</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

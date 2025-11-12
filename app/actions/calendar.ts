@@ -134,15 +134,24 @@ export async function createVisitFromCalendar(
     const validated = createVisitFromCalendarSchema.parse(data);
     const supabase = await createClient();
 
+    // Get user ID for authentication check
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // Visits table doesn't have facility_id - it gets facility through patient relationship
     const { data: visit, error } = await supabase
       .from("visits")
       .insert({
         patient_id: validated.patientId,
         visit_date: validated.visitDate.toISOString(),
         visit_type: validated.visitType,
-        location: validated.location,
+        location: validated.location || null,
         status: "incomplete",
-        additional_notes: validated.notes,
+        additional_notes: validated.notes || null,
       })
       .select(
         `
@@ -169,7 +178,7 @@ export async function createVisitFromCalendar(
         id: visit.id,
         patientName: `${visit.patient.first_name} ${visit.patient.last_name}`,
         facilityName: visit.patient.facility?.name || "No Facility",
-        visitDate: visit.visitDate,
+        visitDate: visit.visit_date,
       },
     };
   } catch (error) {
