@@ -25,6 +25,7 @@ import {
 } from "@/app/actions/calendar";
 import { toast } from "sonner";
 import { EventDetailsModal } from "./event-details-modal";
+import NewVisitDialog from "./new-visit-dialog";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
@@ -90,6 +91,13 @@ export default function CalendarView({
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // New appointment creation state
+  const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
 
   // Load events when filters change
   const loadEvents = useCallback(async () => {
@@ -142,6 +150,23 @@ export default function CalendarView({
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
+  }, []);
+
+  // Handle slot selection (clicking/dragging on empty calendar space)
+  const handleSelectSlot = useCallback((slotInfo: {
+    start: string | Date;
+    end: string | Date;
+    slots: Date[] | string[];
+    action: "select" | "click" | "doubleClick";
+  }) => {
+    const startDate = typeof slotInfo.start === "string" ? new Date(slotInfo.start) : slotInfo.start;
+    const endDate = typeof slotInfo.end === "string" ? new Date(slotInfo.end) : slotInfo.end;
+    
+    setSelectedSlot({
+      start: startDate,
+      end: endDate,
+    });
+    setIsNewAppointmentModalOpen(true);
   }, []);
 
   // Handle drag-and-drop rescheduling
@@ -227,6 +252,17 @@ export default function CalendarView({
     setSelectedEvent(null);
   };
 
+  const handleCloseNewAppointmentModal = () => {
+    setIsNewAppointmentModalOpen(false);
+    setSelectedSlot(null);
+  };
+
+  const handleAppointmentCreated = async () => {
+    handleCloseNewAppointmentModal();
+    await loadEvents();
+    toast.success("Appointment created successfully");
+  };
+
   const handleStatusChange = async (event: CalendarEvent, newStatus: string) => {
     if (!event.resource?.visitId) return;
 
@@ -284,6 +320,7 @@ export default function CalendarView({
           date={date}
           onNavigate={setDate}
           onSelectEvent={handleSelectEvent}
+          onSelectSlot={handleSelectSlot}
           onEventDrop={handleEventDrop}
           onEventResize={handleEventResize}
           eventPropGetter={eventStyleGetter}
@@ -305,6 +342,14 @@ export default function CalendarView({
         onEdit={handleEdit}
         onDelete={handleDelete}
         onStatusChange={handleStatusChange}
+      />
+
+      {/* New Appointment Dialog */}
+      <NewVisitDialog
+        open={isNewAppointmentModalOpen}
+        onOpenChange={setIsNewAppointmentModalOpen}
+        initialDate={selectedSlot?.start}
+        onSuccess={handleAppointmentCreated}
       />
     </>
   );

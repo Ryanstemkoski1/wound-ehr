@@ -270,21 +270,51 @@ export async function getPatientsForCalendar(facilityId?: string) {
 
 /**
  * Get facilities for dropdown (calendar filters)
+ * Only returns facilities the user has access to via user_facilities
  */
 export async function getFacilitiesForCalendar() {
   try {
     const supabase = await createClient();
 
+    // Get current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: true, facilities: [] };
+    }
+
+    // Get user's assigned facilities (same logic as admin page)
+    const { data: userFacilities, error: userError } = await supabase
+      .from("user_facilities")
+      .select("facility_id")
+      .eq("user_id", user.id);
+
+    if (userError) throw userError;
+
+    const facilityIds = userFacilities?.map((uf) => uf.facility_id) || [];
+
+    if (facilityIds.length === 0) {
+      return { success: true, facilities: [] };
+    }
+
     const { data: facilities, error } = await supabase
       .from("facilities")
       .select("id, name")
+      .eq("is_active", true)
+      .in("id", facilityIds)
       .order("name", { ascending: true });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    return { success: true, facilities: facilities || [] };
+    // Deduplicate by name (keep first occurrence of each name)
+    const uniqueFacilities = (facilities || []).filter(
+      (facility, index, self) =>
+        index === self.findIndex((f) => f.name === facility.name)
+    );
+
+    return { success: true, facilities: uniqueFacilities };
   } catch (error) {
     console.error("Failed to get facilities:", error);
     return {

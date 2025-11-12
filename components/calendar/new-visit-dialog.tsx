@@ -98,7 +98,12 @@ export default function NewVisitDialog({
     async function loadFacilities() {
       const result = await getFacilitiesForCalendar();
       if (result.success && result.facilities) {
-        setFacilities(result.facilities);
+        // Deduplicate facilities by name (keep first occurrence)
+        const uniqueFacilities = result.facilities.filter(
+          (facility, index, self) =>
+            index === self.findIndex((f) => f.name === facility.name)
+        );
+        setFacilities(uniqueFacilities);
       }
     }
     loadFacilities();
