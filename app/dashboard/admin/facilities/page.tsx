@@ -37,7 +37,7 @@ export default async function AdminFacilitiesPage() {
   return (
     <div className="space-y-6 p-6">
       <DynamicBreadcrumbs
-        items={[
+        customSegments={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Admin" },
           { label: "Facilities" },

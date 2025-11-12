@@ -24,7 +24,7 @@ export default async function AdminUsersPage() {
     return (
       <div className="p-6">
         <DynamicBreadcrumbs
-          items={[
+          customSegments={[
             { label: "Dashboard", href: "/dashboard" },
             { label: "Admin" },
             { label: "Users" },
@@ -40,7 +40,7 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6 p-6">
       <DynamicBreadcrumbs
-        items={[
+        customSegments={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Admin" },
           { label: "Users" },
