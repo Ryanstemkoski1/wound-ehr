@@ -30,12 +30,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
-  getPatientsForCalendar,
   getFacilitiesForCalendar,
+  getPatientsForCalendar,
   createVisitFromCalendar,
 } from "@/app/actions/calendar";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 const newVisitSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
@@ -110,11 +111,11 @@ export default function NewVisitDialog({
   }, []);
 
   // Load patients when facility changes
-  const selectedFacility = form.watch("facilityId");
   useEffect(() => {
     async function loadPatients() {
-      if (selectedFacility) {
-        const result = await getPatientsForCalendar(selectedFacility);
+      const facilityId = form.watch("facilityId");
+      if (facilityId) {
+        const result = await getPatientsForCalendar(facilityId);
         if (result.success && result.patients) {
           setPatients(result.patients);
         }
@@ -123,7 +124,7 @@ export default function NewVisitDialog({
       }
     }
     loadPatients();
-  }, [selectedFacility]);
+  }, [form.watch("facilityId")]);
 
   const onSubmit = async (data: NewVisitFormData) => {
     setIsSubmitting(true);
@@ -159,7 +160,7 @@ export default function NewVisitDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Schedule New Visit</DialogTitle>
           <DialogDescription>
@@ -205,7 +206,7 @@ export default function NewVisitDialog({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={!selectedFacility}
+                    disabled={!form.watch("facilityId")}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -215,7 +216,7 @@ export default function NewVisitDialog({
                     <SelectContent>
                       {patients.map((patient) => (
                         <SelectItem key={patient.id} value={patient.id}>
-                          {patient.last_name}, {patient.first_name} (
+                          {patient.last_name}, {patient.first_name} (MRN:{" "}
                           {patient.mrn})
                         </SelectItem>
                       ))}

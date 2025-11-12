@@ -396,3 +396,111 @@ export async function deleteVisit(visitId: string) {
     };
   }
 }
+
+/**
+ * Search patients for calendar appointment creation
+ * @param facilityId - Facility to search within
+ * @param searchTerm - Search term (name or MRN)
+ */
+export async function searchPatientsForCalendar(
+  facilityId: string,
+  searchTerm: string
+): Promise<
+  | { success: true; patients: Array<{
+      id: string;
+      first_name: string;
+      last_name: string;
+      mrn: string;
+      facility_id: string;
+    }> }
+  | { success: false; error: string }
+> {
+  try {
+    const supabase = await createClient();
+
+    // Search by name (case-insensitive) or MRN
+    const { data: patients, error } = await supabase
+      .from("patients")
+      .select("id, first_name, last_name, mrn, facility_id")
+      .eq("facility_id", facilityId)
+      .or(
+        `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,mrn.ilike.%${searchTerm}%`
+      )
+      .order("last_name", { ascending: true })
+      .order("first_name", { ascending: true })
+      .limit(10);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, patients: patients || [] };
+  } catch (error) {
+    console.error("Failed to search patients:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to search patients",
+    };
+  }
+}
+
+/**
+ * Get active wounds for a patient (for visit creation)
+ * @param patientId - Patient ID
+ */
+export async function getPatientWoundsForVisit(
+  patientId: string
+): Promise<
+  | { success: true; wounds: Array<{
+      id: string;
+      location: string;
+      wound_type: string;
+      status: string;
+      last_assessment_date?: string;
+    }> }
+  | { success: false; error: string }
+> {
+  try {
+    const supabase = await createClient();
+
+    // Get active wounds with last assessment date
+    const { data: wounds, error } = await supabase
+      .from("wounds")
+      .select(
+        `
+        id,
+        location,
+        wound_type,
+        status,
+        assessments(created_at)
+      `
+      )
+      .eq("patient_id", patientId)
+      .neq("status", "healed")
+      .order("location", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    // Format wounds with last assessment date
+    const formattedWounds = (wounds || []).map((wound: any) => ({
+      id: wound.id,
+      location: wound.location,
+      wound_type: wound.wound_type,
+      status: wound.status,
+      last_assessment_date:
+        wound.assessments && wound.assessments.length > 0
+          ? wound.assessments[0].created_at
+          : undefined,
+    }));
+
+    return { success: true, wounds: formattedWounds };
+  } catch (error) {
+    console.error("Failed to get patient wounds:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get wounds",
+    };
+  }
+}
