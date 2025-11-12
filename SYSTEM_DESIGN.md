@@ -1655,7 +1655,7 @@ This section documents all approved design decisions based on client requirement
 - **Frequency:** On-demand generation (no scheduled/automated reports in Phase 1)
 - **Future:** Weekly/monthly automated reports, custom date range filtering, batch exports.
 
-### 9. Device & Responsiveness
+### 10. Device & Responsiveness
 
 **Decision:** Desktop-first design with tablet/mobile responsiveness.
 
@@ -1666,7 +1666,7 @@ This section documents all approved design decisions based on client requirement
 - **Forms:** Optimized for mouse/keyboard on desktop, touch-friendly on tablet
 - **Future:** Dedicated mobile app (React Native) in post-MVP.
 
-### 10. EHR Integration
+### 11. EHR Integration
 
 **Decision:** CSV export sufficient for Phase 1, live integrations deferred.
 
@@ -1675,69 +1675,6 @@ This section documents all approved design decisions based on client requirement
   - Export patient list, visit logs, wound data as CSV
   - Manual import into Practice Fusion/PointClickCare as needed
 - **Future:** Live read-only integration with PointClickCare and Practice Fusion APIs moved to post-MVP enhancements.
-
----
-
-## Next Steps
-
----
-
-## Appendix: Screenshots Analysis
-
-### Screenshot 1: Treatment Order Form (Bottom Section)
-
-- Treatment options (left panel): Wound Gel, Xeroform, Hydrogel, Oil Emulsion, etc.
-- Treatment orders (right panel): Auto-generated instructions
-- Frequency selector: "Every X Days (and PRN)"
-- Key insight: **Split-screen design for efficient data entry**
-
-### Screenshot 2: Negative Pressure Wound Therapy + Preventive Care
-
-- NPWT settings: mmHg pressure, frequency (M-W-F, T-TH-SA, Clear)
-- Preventive recommendations: Air mattress, repositioning, off-load, etc.
-- Chair cushion type: Gel vs. ROHO (for stage 3/4 pressure injury)
-- Key insight: **Conditional fields based on wound severity**
-
-### Screenshot 3: Protection/Secondary Dressings + More
-
-- Multiple dressing types with custom input fields
-- Enzymatic debridement (Santyl)
-- MASD/Moisture management options
-- Venous/lymphatic insufficiency treatments (UNNA boots, etc.)
-- Key insight: **Extensive treatment catalog with mix of checkboxes and text inputs**
-
-### Screenshot 4: Additional Antimicrobial + NPWT (Repeated)
-
-- Cadexomer Iodine directions
-- Hydrofera Blue frequency
-- PHMB (Polyhexamethylene Biguanide) notes section
-- Key insight: **Notes sections for special instructions**
-
-### Screenshot 5: Follow-Up + Time Component
-
-- Follow-up appointment vs. Discharge radio buttons
-- Time component: "45+ minutes spent including examination, treatment, counseling"
-- Additional notes/orders text area
-- Key insight: **Billing documentation embedded in visit workflow**
-
-### Screenshot 6: Wound Assessment Tab
-
-- Visit location: In-person vs. Telemed
-- Wound type selection (extensive list)
-- Wound onset date picker
-- Pressure injury staging
-- Healing status: Initial, Healing, Same/Stable, Declined, Healed, Sign Off
-- At risk for reopening (checkboxes)
-- Measurements section (L × W × D)
-- Tissue composition (Epithelial %, Granulation %, Slough %)
-- Key insight: **Comprehensive assessment form with yellow highlights for required fields**
-
-### Screenshot 7: Visit History Sidebar
-
-- Left sidebar shows visit dates with "Number of Addenda"
-- Tracks incomplete visits
-- Quick navigation between visit records
-- Key insight: **Visit timeline for easy access to historical data**
 
 ---
 
