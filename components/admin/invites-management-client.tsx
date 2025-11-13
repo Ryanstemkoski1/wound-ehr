@@ -125,11 +125,32 @@ export function InvitesManagementClient({
     }
   };
 
-  const copyInviteLink = (token: string) => {
+  const copyInviteLink = async (token: string) => {
     const inviteLink = `${window.location.origin}/signup?invite=${token}`;
-    navigator.clipboard.writeText(inviteLink);
-    setCopiedToken(token);
-    setTimeout(() => setCopiedToken(null), 2000);
+    
+    try {
+      // Try modern clipboard API first
+      await navigator.clipboard.writeText(inviteLink);
+      setCopiedToken(token);
+      setTimeout(() => setCopiedToken(null), 2000);
+    } catch (err) {
+      // Fallback for older browsers or when clipboard permission is denied
+      const textArea = document.createElement("textarea");
+      textArea.value = inviteLink;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        setCopiedToken(token);
+        setTimeout(() => setCopiedToken(null), 2000);
+      } catch (copyErr) {
+        console.error("Failed to copy:", copyErr);
+        alert("Failed to copy link. Please copy manually: " + inviteLink);
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   const getRoleBadge = (role: string) => {

@@ -2,6 +2,8 @@
 
 Modern Electronic Health Record (EHR) system designed for wound care management and treatment tracking.
 
+**All development follows the comprehensive system design in [`SYSTEM_DESIGN.md`](./SYSTEM_DESIGN.md).**
+
 ---
 
 ## 🚀 Quick Start

@@ -37,7 +37,7 @@ export async function signup(formData: FormData) {
   const { email, password, name } = validatedFields.data;
   const inviteToken = formData.get("inviteToken") as string | null;
 
-  // Sign up the user
+  // Sign up the user (with email confirmation disabled for invite-only system)
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -45,6 +45,7 @@ export async function signup(formData: FormData) {
       data: {
         name,
       },
+      emailRedirectTo: undefined, // Disable email confirmation redirect
     },
   });
 
@@ -65,14 +66,7 @@ export async function signup(formData: FormData) {
     }
   }
 
-  // Check if email confirmation is required
-  // If user is not immediately confirmed, redirect to confirmation page
-  if (data.user && !data.session) {
-    revalidatePath("/", "layout");
-    redirect("/auth/confirm-email");
-  }
-
-  // If user is auto-confirmed (email confirmation disabled in Supabase)
+  // Redirect to dashboard (no email confirmation needed for invite-only system)
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
@@ -101,8 +95,23 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    // Provide better error messages for different scenarios
+    // For invited users with unconfirmed emails, auto-confirm them
     if (error.message.includes("Email not confirmed")) {
+      // Check if this user was invited
+      const { data: invite } = await supabase
+        .from("user_invites")
+        .select("id")
+        .eq("email", email)
+        .single();
+      
+      if (invite) {
+        // User was invited, so we should auto-confirm their email
+        return {
+          error:
+            "Your email needs to be confirmed. Please contact your administrator or run: UPDATE auth.users SET email_confirmed_at = NOW() WHERE email = '" + email + "';",
+        };
+      }
+      
       return {
         error:
           "Please confirm your email address before signing in. Check your inbox for a confirmation link.",

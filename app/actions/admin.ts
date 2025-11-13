@@ -451,6 +451,24 @@ export async function acceptInvite(inviteToken: string) {
 
     if (roleError) throw roleError;
 
+    // Create user_facilities entry if facility_id is provided
+    if (invite.facility_id) {
+      const { error: facilityError } = await supabase
+        .from("user_facilities")
+        .insert({
+          user_id: user.id,
+          facility_id: invite.facility_id,
+          is_default: true,
+        });
+
+      if (facilityError) {
+        // Only log error if it's not a duplicate (user might already have facility access)
+        if (!facilityError.message?.includes("duplicate")) {
+          console.error("Error adding user to facility:", facilityError);
+        }
+      }
+    }
+
     // Mark invite as accepted
     const { error: updateError } = await supabase
       .from("user_invites")
