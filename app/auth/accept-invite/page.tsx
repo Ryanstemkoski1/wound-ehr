@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,7 @@ const signupSchema = z
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("token");
@@ -394,5 +394,26 @@ export default function AcceptInvitePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+          <Card className="w-full max-w-md">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                Loading...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <AcceptInviteContent />
+    </Suspense>
   );
 }
