@@ -2,6 +2,8 @@
 // Provides helper functions for checking user roles and permissions
 
 import { createClient } from "@/lib/supabase/server";
+import type { Credentials } from "@/lib/credentials";
+import { requiresPatientSignature as requiresPatientSig } from "@/lib/credentials";
 
 export type UserRole = "tenant_admin" | "facility_admin" | "user";
 
@@ -217,3 +219,79 @@ export async function requireFacilityAccess(facilityId: string) {
     throw new Error("Unauthorized: No access to this facility");
   }
 }
+
+/**
+ * Get current user's credentials
+ */
+export async function getUserCredentials(): Promise<Credentials | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("credentials")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !data) return null;
+  return data.credentials as Credentials;
+}
+
+/**
+ * Check if current user's credentials require patient signatures
+ */
+export async function requiresPatientSignature(): Promise<boolean> {
+  const credentials = await getUserCredentials();
+  return requiresPatientSig(credentials);
+}
+
+/**
+ * Get allowed procedures for current user based on credentials
+ */
+export async function getAllowedProcedures(): Promise<string[]> {
+  const credentials = await getUserCredentials();
+  if (!credentials) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("procedure_scopes")
+    .select("procedure_code")
+    .contains("allowed_credentials", [credentials]);
+
+  if (error) return [];
+  return data?.map((p) => p.procedure_code) || [];
+}
+
+/**
+ * Check if current user can perform a specific procedure
+ */
+export async function canPerformProcedure(procedureCode: string): Promise<boolean> {
+  const credentials = await getUserCredentials();
+  if (!credentials) return false;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("procedure_scopes")
+    .select("allowed_credentials")
+    .eq("procedure_code", procedureCode)
+    .single();
+
+  if (error || !data) return true; // Default allow if procedure not in scopes
+  
+  return data.allowed_credentials.includes(credentials);
+}
+
+/**
+ * Require specific credentials (throws error if not authorized)
+ */
+export async function requireCredentials(allowedCredentials: Credentials[]) {
+  const credentials = await getUserCredentials();
+  if (!credentials || !allowedCredentials.includes(credentials)) {
+    throw new Error(`Unauthorized: Requires credentials: ${allowedCredentials.join(', ')}`);
+  }
+}
+

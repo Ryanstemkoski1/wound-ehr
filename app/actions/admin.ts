@@ -21,12 +21,14 @@ import { sendInviteEmail } from "@/lib/email";
 const inviteUserSchema = z.object({
   email: z.string().email("Invalid email address"),
   role: z.enum(["tenant_admin", "facility_admin", "user"]),
+  credentials: z.enum(["RN", "LVN", "MD", "DO", "PA", "NP", "CNA", "Admin"]),
   facilityId: z.string().optional(),
 });
 
 const updateUserRoleSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   role: z.enum(["tenant_admin", "facility_admin", "user"]),
+  credentials: z.enum(["RN", "LVN", "MD", "DO", "PA", "NP", "CNA", "Admin"]),
   facilityId: z.string().optional(),
 });
 
@@ -73,7 +75,7 @@ export async function getTenantUsers() {
 
     const { data: usersData, error: usersError } = await supabase
       .from("users")
-      .select("id, email, name")
+      .select("id, email, name, credentials")
       .in("id", userIds);
 
     if (usersError) {
@@ -115,19 +117,20 @@ export async function inviteUser(formData: FormData) {
     }
 
     // Validate input
-    const validatedFields = inviteUserSchema.safeParse({
+    const result = inviteUserSchema.safeParse({
       email: formData.get("email"),
       role: formData.get("role"),
-      facilityId: formData.get("facilityId") || undefined,
+      credentials: formData.get("credentials"),
+      facilityId: formData.get("facilityId"),
     });
 
-    if (!validatedFields.success) {
+    if (!result.success) {
       return {
-        error: validatedFields.error.issues[0].message,
+        error: result.error.issues[0].message,
       };
     }
 
-    const { email, role, facilityId } = validatedFields.data;
+    const { email, role, credentials, facilityId } = result.data;
 
     // Check permissions
     if (role === "tenant_admin" || role === "facility_admin") {
@@ -175,6 +178,7 @@ export async function inviteUser(formData: FormData) {
       email,
       tenant_id: currentRole.tenant_id,
       role,
+      credentials,
       facility_id: facilityId || null,
       invited_by: currentUser.id,
       invite_token: inviteToken,
@@ -238,6 +242,7 @@ export async function updateUserRole(formData: FormData) {
     const validatedFields = updateUserRoleSchema.safeParse({
       userId: formData.get("userId"),
       role: formData.get("role"),
+      credentials: formData.get("credentials"),
       facilityId: formData.get("facilityId") || undefined,
     });
 
@@ -247,13 +252,24 @@ export async function updateUserRole(formData: FormData) {
       };
     }
 
-    const { userId, role, facilityId } = validatedFields.data;
+    const { userId, role, credentials, facilityId } = validatedFields.data;
 
     // Validate facility requirement
     if ((role === "facility_admin" || role === "user") && !facilityId) {
       return {
         error: "Facility is required for facility admin and user roles",
       };
+    }
+
+    // Update user credentials in users table
+    const { error: updateUserError } = await supabase
+      .from("users")
+      .update({ credentials })
+      .eq("id", userId);
+
+    if (updateUserError) {
+      console.error("Error updating user credentials:", updateUserError);
+      return { error: "Failed to update user credentials" };
     }
 
     // Update user role
@@ -267,7 +283,10 @@ export async function updateUserRole(formData: FormData) {
       .eq("user_id", userId)
       .eq("tenant_id", tenantId!);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("Error updating user role:", updateError);
+      return { error: "Failed to update user role" };
+    }
 
     revalidatePath("/admin/users");
 
@@ -441,15 +460,48 @@ export async function acceptInvite(inviteToken: string) {
       return { error: "Invite email does not match user email" };
     }
 
-    // Create user role
-    const { error: roleError } = await supabase.from("user_roles").insert({
-      user_id: user.id,
-      tenant_id: invite.tenant_id,
-      role: invite.role,
-      facility_id: invite.facility_id,
-    });
+    // Update user credentials in users table
+    const { error: updateUserError } = await supabase
+      .from("users")
+      .update({ credentials: invite.credentials })
+      .eq("id", user.id);
 
-    if (roleError) throw roleError;
+    if (updateUserError) {
+      console.error("Error updating user credentials:", updateUserError);
+      // Continue even if this fails - role assignment is more critical
+    }
+
+    // Check if user already has a role in this tenant
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("tenant_id", invite.tenant_id)
+      .single();
+
+    if (existingRole) {
+      // Update existing role
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .update({
+          role: invite.role,
+          facility_id: invite.facility_id,
+        })
+        .eq("user_id", user.id)
+        .eq("tenant_id", invite.tenant_id);
+
+      if (roleError) throw roleError;
+    } else {
+      // Create new user role
+      const { error: roleError } = await supabase.from("user_roles").insert({
+        user_id: user.id,
+        tenant_id: invite.tenant_id,
+        role: invite.role,
+        facility_id: invite.facility_id,
+      });
+
+      if (roleError) throw roleError;
+    }
 
     // Create user_facilities entry if facility_id is provided
     if (invite.facility_id) {

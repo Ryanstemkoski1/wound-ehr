@@ -114,6 +114,7 @@ export default function WoundForm({
       if (onSuccess) {
         onSuccess();
       } else {
+        router.refresh();
         router.push(`/dashboard/patients/${patientId}`);
       }
     }

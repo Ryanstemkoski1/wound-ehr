@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteUser, cancelInvite } from "@/app/actions/admin";
 import { formatDistanceToNow } from "date-fns";
+import type { Credentials } from "@/lib/credentials";
+import { CREDENTIALS_LABELS } from "@/lib/credentials";
 
 type Invite = {
   id: string;
@@ -86,6 +88,7 @@ export function InvitesManagementClient({
   const [inviteForm, setInviteForm] = useState({
     email: "",
     role: "user" as "tenant_admin" | "facility_admin" | "user",
+    credentials: "Admin" as Credentials,
     facilityId: "",
   });
 
@@ -96,6 +99,7 @@ export function InvitesManagementClient({
     const formData = new FormData();
     formData.append("email", inviteForm.email);
     formData.append("role", inviteForm.role);
+    formData.append("credentials", inviteForm.credentials);
     if (inviteForm.facilityId) {
       formData.append("facilityId", inviteForm.facilityId);
     }
@@ -106,7 +110,7 @@ export function InvitesManagementClient({
       alert(result.error);
     } else {
       setShowInviteDialog(false);
-      setInviteForm({ email: "", role: "user", facilityId: "" });
+      setInviteForm({ email: "", role: "user", credentials: "Admin", facilityId: "" });
       router.refresh();
     }
 
@@ -330,7 +334,7 @@ export function InvitesManagementClient({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">Administrative Role</Label>
                 <Select
                   value={inviteForm.role}
                   onValueChange={(value: typeof inviteForm.role) =>
@@ -348,6 +352,30 @@ export function InvitesManagementClient({
                     <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="credentials">Clinical Credentials</Label>
+                <Select
+                  value={inviteForm.credentials}
+                  onValueChange={(value: Credentials) =>
+                    setInviteForm({ ...inviteForm, credentials: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CREDENTIALS_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-zinc-500">
+                  Determines clinical scope and signature requirements
+                </p>
               </div>
 
               {requiresFacility && (

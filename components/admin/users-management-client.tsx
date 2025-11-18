@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, UserCog, Mail, Shield, Building2, User } from "lucide-react";
+import { Trash2, UserCog, Mail, Shield, Building2, User, Stethoscope } from "lucide-react";
+import { CREDENTIALS_SHORT_LABELS, CREDENTIALS_LABELS, type Credentials } from "@/lib/credentials";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,6 +63,7 @@ type UserRole = {
   users?: {
     email: string;
     name: string | null;
+    credentials: Credentials;
   } | null;
 };
 
@@ -89,6 +91,7 @@ export function UsersManagementClient({
   const [editForm, setEditForm] = useState({
     role: "" as "tenant_admin" | "facility_admin" | "user",
     facilityId: "",
+    credentials: "Admin" as Credentials,
   });
 
   const handleDeleteUser = async () => {
@@ -116,6 +119,7 @@ export function UsersManagementClient({
     setEditForm({
       role: user.role,
       facilityId: user.facility_id || "",
+      credentials: user.users?.credentials || "Admin",
     });
   };
 
@@ -128,6 +132,7 @@ export function UsersManagementClient({
       const formData = new FormData();
       formData.append("userId", userToEdit.user_id);
       formData.append("role", editForm.role);
+      formData.append("credentials", editForm.credentials);
       if (editForm.facilityId) {
         formData.append("facilityId", editForm.facilityId);
       }
@@ -138,9 +143,11 @@ export function UsersManagementClient({
         alert(result.error);
       } else {
         setUserToEdit(null);
-        router.refresh();
+        // Force a hard refresh to ensure credentials update shows
+        window.location.reload();
       }
-    } catch {
+    } catch (error) {
+      console.error("Update error:", error);
       alert("Failed to update user role");
     } finally {
       setIsEditing(false);
@@ -212,6 +219,7 @@ export function UsersManagementClient({
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Credentials</TableHead>
                     <TableHead>Facility</TableHead>
                     <TableHead>Joined</TableHead>
                     {isTenantAdmin && <TableHead>Actions</TableHead>}
@@ -233,6 +241,16 @@ export function UsersManagementClient({
                         )}
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell>
+                        {user.users?.credentials ? (
+                          <Badge variant="outline" className="gap-1 font-mono">
+                            <Stethoscope className="h-3 w-3" />
+                            {CREDENTIALS_SHORT_LABELS[user.users.credentials]}
+                          </Badge>
+                        ) : (
+                          <span className="text-zinc-400 italic">Not set</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {user.facility ? (
                           <div className="flex items-center gap-2">
@@ -334,6 +352,27 @@ export function UsersManagementClient({
                       Facility Admin
                     </SelectItem>
                     <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-credentials">Clinical Credentials</Label>
+                <Select
+                  value={editForm.credentials}
+                  onValueChange={(value: Credentials) =>
+                    setEditForm({ ...editForm, credentials: value })
+                  }
+                >
+                  <SelectTrigger id="edit-credentials">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CREDENTIALS_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

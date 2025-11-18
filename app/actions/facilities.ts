@@ -244,10 +244,9 @@ export async function getUserFacilities() {
         patients!left(id)
       `
       )
-      .eq("is_active", true)
       .in("id", facilityIds)
       .order("name", { ascending: true });
-
+    
     if (error) {
       throw error;
     }

@@ -79,6 +79,9 @@ function AcceptInviteContent() {
       try {
         const supabase = createClient();
 
+        // Check if user is already logged in
+        const { data: { user } } = await supabase.auth.getUser();
+
         // Get invite details
         const { data: invite, error: inviteError } = await supabase
           .from("user_invites")
@@ -105,7 +108,39 @@ function AcceptInviteContent() {
           return;
         }
 
-        // Set invite data
+        // If user is already logged in with matching email, auto-accept the invite
+        if (user && user.email === invite.email) {
+          console.log("Auto-accepting invite for logged-in user:", user.email);
+          try {
+            const { acceptInvite } = await import("@/app/actions/admin");
+            const result = await acceptInvite(inviteToken);
+            
+            console.log("Accept invite result:", result);
+            
+            if (result.error) {
+              console.error("Accept invite error:", result.error);
+              setError(result.error);
+              setIsValidating(false);
+              return;
+            }
+
+            // Success - keep validating state, show success, then redirect
+            console.log("Invite accepted successfully, redirecting...");
+            setIsValidating(false);
+            setSuccess(true);
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 1500);
+            return;
+          } catch (err) {
+            console.error("Exception during auto-accept:", err);
+            setError("Failed to accept invite automatically");
+            setIsValidating(false);
+            return;
+          }
+        }
+
+        // Set invite data for signup form
         setInviteData({
           email: invite.email,
           role: invite.role,
@@ -124,7 +159,7 @@ function AcceptInviteContent() {
     }
 
     validateInvite();
-  }, [inviteToken, form]);
+  }, [inviteToken, form, router]);
 
   const onSubmit = async (data: SignupFormData) => {
     if (!inviteToken) return;
@@ -229,16 +264,16 @@ function AcceptInviteContent() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
-              <CardTitle>Account Created!</CardTitle>
+              <CardTitle>Invitation Accepted!</CardTitle>
             </div>
             <CardDescription>
-              Your account has been successfully created
+              Your role and credentials have been updated
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950/20">
               <p className="text-sm text-green-800 dark:text-green-200">
-                Please check your email to verify your account, then you can log in.
+                Your account has been updated with the new role and credentials.
               </p>
             </div>
             <div className="text-center">
