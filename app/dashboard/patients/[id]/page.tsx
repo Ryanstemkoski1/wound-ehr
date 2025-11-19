@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPatient } from "@/app/actions/patients";
+import { getPatientConsent } from "@/app/actions/signatures";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import VisitCard from "@/components/visits/visit-card";
 import PatientPDFDownloadButton from "@/components/pdf/patient-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { WoundsListClient } from "@/components/wounds/wounds-list-client";
+import { ConsentDialog } from "@/components/patients/consent-dialog";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -49,6 +51,10 @@ export default async function PatientDetailPage({
   if (!patient) {
     notFound();
   }
+
+  // Check if patient has consent-to-treat
+  const consentResult = await getPatientConsent(id);
+  const hasConsent = !consentResult.error && consentResult.data !== null;
 
   // Calculate age
   const calculateAge = (dob: Date) => {
@@ -82,6 +88,14 @@ export default async function PatientDetailPage({
 
   return (
     <div className="space-y-6">
+      {/* Consent Dialog - Shows if no consent exists */}
+      {!hasConsent && (
+        <ConsentDialog
+          patientId={id}
+          patientName={`${patient.firstName} ${patient.lastName}`}
+        />
+      )}
+
       {/* Breadcrumbs */}
       <DynamicBreadcrumbs
         customSegments={[

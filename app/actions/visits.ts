@@ -3,19 +3,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requiresPatientSignature } from "@/app/actions/signatures";
 
 // Validation schema
 const visitSchema = z.object({
   patientId: z.string().uuid(),
   visitDate: z.string().min(1, "Visit date is required"),
   visitType: z.enum(["in_person", "telemed"]),
-  location: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
-  status: z.enum(["scheduled", "in-progress", "completed", "cancelled", "no-show"]).default("scheduled"),
-  followUpType: z.enum(["appointment", "discharge"]).optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
-  followUpDate: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
-  followUpNotes: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
+  location: z.string().optional().nullable().transform(val => val || undefined),
+  status: z.enum(["draft", "ready_for_signature", "signed", "submitted", "scheduled", "in-progress", "completed", "cancelled", "no-show", "incomplete", "complete"]).default("draft"),
+  followUpType: z.enum(["appointment", "discharge"]).optional().nullable().transform(val => val || undefined),
+  followUpDate: z.string().optional().nullable().transform(val => val || undefined),
+  followUpNotes: z.string().optional().nullable().transform(val => val || undefined),
   timeSpent: z.boolean().default(false),
-  additionalNotes: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
+  additionalNotes: z.string().optional().nullable().transform(val => val || undefined),
 });
 
 // Get all visits for a patient
@@ -132,6 +133,11 @@ export async function getVisit(visitId: string) {
         visitType: visit.visit_type,
         location: visit.location,
         status: visit.status,
+        requiresPatientSignature: visit.requires_patient_signature,
+        providerSignatureId: visit.provider_signature_id,
+        patientSignatureId: visit.patient_signature_id,
+        clinicianName: visit.clinician_name,
+        clinicianCredentials: visit.clinician_credentials,
         notes: visit.notes,
         numberOfAddenda: visit.number_of_addenda,
         followUpType: visit.follow_up_type,
@@ -182,7 +188,7 @@ export async function createVisit(formData: FormData) {
       visitDate: formData.get("visitDate") as string,
       visitType: formData.get("visitType") as string,
       location: formData.get("location") as string,
-      status: (formData.get("status") as string) || "scheduled",
+      status: (formData.get("status") as string) || "draft",
       followUpType: formData.get("followUpType") as string,
       followUpDate: formData.get("followUpDate") as string,
       followUpNotes: formData.get("followUpNotes") as string,
@@ -204,6 +210,17 @@ export async function createVisit(formData: FormData) {
       return { error: "Patient not found or access denied" };
     }
 
+    // Get user's credentials for signature requirements
+    const { data: userDataArray } = await supabase
+      .rpc("get_current_user_credentials");
+
+    const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+    const clinicianName = userData?.name || "";
+    const clinicianCredentials = userData?.credentials || "";
+
+    // Determine if patient signature will be required based on credentials
+    const needsPatientSignature = await requiresPatientSignature();
+
     // Create visit
     const { data: visit, error: createError } = await supabase
       .from("visits")
@@ -212,7 +229,10 @@ export async function createVisit(formData: FormData) {
         visit_date: validated.visitDate,
         visit_type: validated.visitType,
         location: validated.location || null,
-        status: validated.status,
+        status: "draft", // Always start as draft for signature workflow
+        requires_patient_signature: needsPatientSignature,
+        clinician_name: clinicianName,
+        clinician_credentials: clinicianCredentials,
         follow_up_type: validated.followUpType || null,
         follow_up_date: validated.followUpDate || null,
         follow_up_notes: validated.followUpNotes || null,
@@ -223,7 +243,8 @@ export async function createVisit(formData: FormData) {
       .single();
 
     if (createError) {
-      throw createError;
+      console.error("Database error creating visit:", createError);
+      return { success: false as const, error: createError.message || "Failed to create visit" };
     }
 
     revalidatePath("/dashboard/patients");
@@ -231,10 +252,12 @@ export async function createVisit(formData: FormData) {
     return { success: true as const, visit };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false as const, error: error.issues[0].message };
+      console.error("Validation error:", error.issues);
+      return { success: false as const, error: `${error.issues[0].path}: ${error.issues[0].message}` };
     }
     console.error("Failed to create visit:", error);
-    return { success: false as const, error: "Failed to create visit" };
+    const errorMessage = error instanceof Error ? error.message : "Failed to create visit";
+    return { success: false as const, error: errorMessage };
   }
 }
 
@@ -269,12 +292,23 @@ export async function updateVisit(visitId: string, formData: FormData) {
     // Check if user has access to this visit
     const { data: existingVisit, error: visitError } = await supabase
       .from("visits")
-      .select("id, patient_id")
+      .select("id, patient_id, status")
       .eq("id", visitId)
       .maybeSingle();
 
     if (visitError || !existingVisit) {
       return { error: "Visit not found or access denied" };
+    }
+
+    // Prevent editing if visit is signed or submitted
+    if (
+      existingVisit.status === "signed" ||
+      existingVisit.status === "submitted"
+    ) {
+      return {
+        error:
+          "Cannot edit visit that has been signed or submitted. Contact administrator if changes are needed.",
+      };
     }
 
     // Update visit
@@ -327,12 +361,20 @@ export async function deleteVisit(visitId: string) {
     // Check if user has access to this visit
     const { data: visit, error: visitError } = await supabase
       .from("visits")
-      .select("id, patient_id")
+      .select("id, patient_id, status")
       .eq("id", visitId)
       .maybeSingle();
 
     if (visitError || !visit) {
       return { error: "Visit not found or access denied" };
+    }
+
+    // Prevent deletion if visit is signed or submitted
+    if (visit.status === "signed" || visit.status === "submitted") {
+      return {
+        error:
+          "Cannot delete visit that has been signed or submitted. Contact administrator if deletion is needed.",
+      };
     }
 
     // Delete visit (cascade will handle assessments, treatments, billings)

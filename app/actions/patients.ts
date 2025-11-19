@@ -321,7 +321,7 @@ export async function getPatients(facilityId?: string, search?: string) {
         `
         *,
         facility:facilities(id, name),
-        wounds!inner(id, status)
+        wounds(id, status)
       `
       )
       .eq("is_active", true)

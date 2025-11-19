@@ -35,18 +35,18 @@ export async function getUserRole(): Promise<UserRoleData | null> {
 
   if (!user) return null;
 
+  // Use RPC function to avoid RLS infinite recursion
   const { data, error } = await supabase
-    .from("user_roles")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .rpc("get_user_role_info", { user_uuid: user.id });
 
-  if (error) return null;
-  if (!data) return null;
+  if (error) {
+    console.error("Error fetching user role:", error);
+    return null;
+  }
+  if (!data || data.length === 0) return null;
   
-  return data as UserRoleData;
+  // RPC returns an array, get the first item
+  return data[0] as UserRoleData;
 }
 
 /**

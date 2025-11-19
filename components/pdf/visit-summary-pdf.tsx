@@ -1,5 +1,5 @@
 import React from "react";
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
 // Define types for the visit data
 type VisitSummaryData = {
@@ -47,6 +47,19 @@ type VisitSummaryData = {
     timeSpent: number | null;
     modifiers: string[];
   } | null;
+  signatures?: {
+    provider?: {
+      signerName: string;
+      signerRole: string;
+      signatureData: string;
+      signedAt: Date;
+    };
+    patient?: {
+      signerName: string;
+      signatureData: string;
+      signedAt: Date;
+    };
+  };
 };
 
 // PDF Styles
@@ -142,6 +155,36 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     fontSize: 9,
     lineHeight: 1.4,
+  },
+  signatureSection: {
+    marginTop: 20,
+    paddingTop: 15,
+    borderTop: "2pt solid #e2e8f0",
+  },
+  signatureContainer: {
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: "#f8fafc",
+    border: "1pt solid #e2e8f0",
+    borderRadius: 4,
+  },
+  signatureLabel: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#0d9488",
+    marginBottom: 5,
+  },
+  signatureImage: {
+    width: 200,
+    height: 60,
+    marginVertical: 5,
+    border: "1pt solid #cbd5e1",
+    backgroundColor: "#ffffff",
+  },
+  signatureInfo: {
+    fontSize: 9,
+    color: "#475569",
+    marginTop: 3,
   },
 });
 
@@ -382,6 +425,49 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
               <View style={styles.row}>
                 <Text style={styles.label}>Modifiers:</Text>
                 <Text style={styles.value}>{billing.modifiers.join(", ")}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Signatures */}
+        {data.signatures && (data.signatures.provider || data.signatures.patient) && (
+          <View style={styles.signatureSection}>
+            <Text style={styles.sectionTitle}>Electronic Signatures</Text>
+
+            {/* Provider Signature */}
+            {data.signatures.provider && (
+              <View style={styles.signatureContainer}>
+                <Text style={styles.signatureLabel}>Provider Signature</Text>
+                <Image
+                  src={data.signatures.provider.signatureData}
+                  style={styles.signatureImage}
+                />
+                <Text style={styles.signatureInfo}>
+                  Signed by: {data.signatures.provider.signerName} ({data.signatures.provider.signerRole})
+                </Text>
+                <Text style={styles.signatureInfo}>
+                  Date: {data.signatures.provider.signedAt.toLocaleDateString()}{" "}
+                  {data.signatures.provider.signedAt.toLocaleTimeString()}
+                </Text>
+              </View>
+            )}
+
+            {/* Patient Signature */}
+            {data.signatures.patient && (
+              <View style={styles.signatureContainer}>
+                <Text style={styles.signatureLabel}>Patient Signature</Text>
+                <Image
+                  src={data.signatures.patient.signatureData}
+                  style={styles.signatureImage}
+                />
+                <Text style={styles.signatureInfo}>
+                  Signed by: {data.signatures.patient.signerName}
+                </Text>
+                <Text style={styles.signatureInfo}>
+                  Date: {data.signatures.patient.signedAt.toLocaleDateString()}{" "}
+                  {data.signatures.patient.signedAt.toLocaleTimeString()}
+                </Text>
               </View>
             )}
           </View>

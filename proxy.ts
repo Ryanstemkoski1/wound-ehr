@@ -31,19 +31,18 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // Get user role
-    const { data: userRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
+    // Get user role using RPC to avoid RLS recursion
+    const { data: userRoleData, error: roleError } = await supabase
+      .rpc("get_user_role_info", { user_uuid: user.id });
 
-    if (!userRole) {
+    if (roleError || !userRoleData || userRoleData.length === 0) {
       // No role assigned, redirect to dashboard with error
       return NextResponse.redirect(
         new URL("/dashboard?error=no_role", request.url)
       );
     }
+
+    const userRole = userRoleData[0];
 
     // Check if user has required role for specific routes
     // Tenant admin only routes

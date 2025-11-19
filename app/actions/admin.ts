@@ -50,25 +50,38 @@ export async function getTenantUsers() {
       return { error: "No tenant found" };
     }
 
-    // Get all user roles in tenant
+    // Get all user roles in tenant using RPC to avoid RLS recursion
     const { data: userRoles, error: rolesError } = await supabase
-      .from("user_roles")
-      .select(
-        `
-        *,
-        facility:facilities(id, name)
-      `
-      )
-      .eq("tenant_id", tenantId)
-      .order("created_at", { ascending: false });
+      .rpc("get_tenant_user_roles", { tenant_uuid: tenantId });
 
     if (rolesError) {
       console.error("Error fetching user roles:", rolesError);
       throw rolesError;
     }
 
+    // Get facility info for roles that have facility_id
+    const facilityIds = (userRoles as any[])
+      ?.filter((ur: any) => ur.facility_id)
+      .map((ur: any) => ur.facility_id) || [];
+    
+    let facilitiesMap = new Map();
+    if (facilityIds.length > 0) {
+      const { data: facilities } = await supabase
+        .from("facilities")
+        .select("id, name")
+        .in("id", facilityIds);
+      
+      facilitiesMap = new Map(facilities?.map((f) => [f.id, f]) || []);
+    }
+
+    // Add facility info to user roles
+    const userRolesWithFacility = (userRoles as any[])?.map((role: any) => ({
+      ...role,
+      facility: role.facility_id ? facilitiesMap.get(role.facility_id) : null,
+    }));
+
     // Get user details from the users table
-    const userIds = userRoles?.map((ur) => ur.user_id) || [];
+    const userIds = userRolesWithFacility?.map((ur: any) => ur.user_id) || [];
     if (userIds.length === 0) {
       return { data: [] };
     }
@@ -85,7 +98,7 @@ export async function getTenantUsers() {
 
     // Combine user roles with user details
     const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
-    const combinedData = userRoles?.map((role) => ({
+    const combinedData = userRolesWithFacility?.map((role: any) => ({
       ...role,
       users: usersMap.get(role.user_id) || null,
     }));

@@ -42,7 +42,10 @@ Visit `http://localhost:3000`
 
 ## 📚 Documentation
 
-- **[SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)** - ⚠️ **READ FIRST** - Complete system architecture, database schema, implementation roadmap
+- **[SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)** - ⚠️ **READ FIRST** - Complete system architecture, database schema, implementation roadmap (v4.1)
+- **[PHASE_9_COMPREHENSIVE_REVIEW.md](./PHASE_9_COMPREHENSIVE_REVIEW.md)** - Phase 9 implementation review and production readiness assessment
+- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Production deployment steps and testing procedures
+- **[docs/PHASE_9.2_COMPLETION.md](./docs/PHASE_9.2_COMPLETION.md)** - Electronic signatures implementation details
 
 ---
 
@@ -68,36 +71,51 @@ Visit `http://localhost:3000`
 
 ## 🗄️ Database
 
-**10 core tables** with Row Level Security (RLS):
+**12 core tables** with Row Level Security (RLS):
 
-- `users` - User accounts (synced with auth.users)
+- `users` - User accounts with credentials (RN, LVN, MD, etc.)
 - `facilities` - Medical facilities/clinics
 - `user_facilities` - User-facility associations (many-to-many)
 - `patients` - Patient demographics and medical info
 - `wounds` - Wound records with location and type
-- `visits` - Patient visit records
+- `visits` - Patient visit records with signature workflow
 - `assessments` - Detailed wound assessments
 - `photos` - Wound photo metadata (files in Supabase Storage)
 - `treatments` - Treatment plans and medical orders
 - `billings` - Billing codes (CPT, ICD-10) and claims
+- `signatures` - Electronic signatures with audit trail ✨ NEW
+- `patient_consents` - Initial consent-to-treat forms ✨ NEW
 
-**Schema:** `supabase/migrations/00001_initial_schema.sql`
+**Schema:** See `supabase/migrations/` (17 migrations executed)
 
 ---
 
 ## 🎯 Key Features
 
-### ✅ Completed
+### ✅ Phase 1-8: Core Application (COMPLETE)
 
 - 👥 Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
 - 🏥 Patient & wound management with CRUD operations
 - 📅 Calendar with drag-and-drop scheduling
-- 📝 Multi-wound visit assessments with auto-save
+- 📝 Multi-wound visit assessments with wound-centric UI
 - 📸 Photo upload/management with comparison view
 - 📄 PDF export (visit summaries, wound progress reports)
 - 💰 Billing system (CPT/ICD-10 codes, reports, CSV export)
 - 📧 Email-based user invites with role assignment
 - 🔐 Row Level Security for data isolation
+- 📋 Admin dashboard with user/facility/invite management
+
+### ✅ Phase 9.1-9.2: Compliance & Signatures (COMPLETE) ✨ NEW
+
+- 🏥 **Credentials-based roles** (RN, LVN, MD, DO, PA, NP, CNA, Admin)
+- ✍️ **Electronic signatures** with immutable audit trail
+- 📝 **Initial consent** workflow (blocks first visit until signed)
+- 👤 **Patient signatures** (required for RN/LVN visits only)
+- 👨‍⚕️ **Provider signatures** (all clinical staff)
+- 🔄 **Visit status workflow**: draft → ready → signed → submitted
+- 🔒 **Read-only enforcement** for signed/submitted visits
+- 📄 **PDF signatures** included in visit exports
+- 📱 **Dual-mode signature pad** (draw with canvas OR type with keyboard)
 
 ### 🚧 Next Phase
 
@@ -200,17 +218,32 @@ npm run seed:reset       # Reset and re-seed database
 
 ## 🔐 Authentication & Roles
 
-### Role Hierarchy
+### Administrative Roles
 
-1. **Tenant Admin** - Full access to all facilities, can invite other admins
-2. **Facility Admin** - Access to assigned facility only, can invite users
-3. **User** - Basic access to assigned facilities
+1. **Tenant Admin** - Full access to all facilities, manage users, facilities, and invites
+2. **Facility Admin** - Access to assigned facility, can invite users to their facility
+3. **User** - Basic access to assigned facilities for patient care
+
+### Clinical Credentials (NEW - Phase 9.1)
+
+All users must have ONE credential:
+- **RN** (Registered Nurse) - Requires patient signatures
+- **LVN** (Licensed Vocational Nurse) - Requires patient signatures
+- **MD** (Medical Doctor) - No patient signatures required
+- **DO** (Doctor of Osteopathy) - No patient signatures required
+- **PA** (Physician Assistant) - No patient signatures required
+- **NP** (Nurse Practitioner) - No patient signatures required
+- **CNA** (Certified Nursing Assistant)
+- **Admin** (Non-clinical administrative staff)
+
+**Example:** A user can be "Facility Admin (RN)" - both an administrative role AND clinical credential.
 
 ### Invite System
 
-- Email-based invites with role assignment
+- Email-based invites with role + credentials assignment
 - Auto-assigns to tenant during signup via invite token
 - Facility assignment for facility admins and users
+- Credentials captured during invite and stored on user record
 
 ---
 

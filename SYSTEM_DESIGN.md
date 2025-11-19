@@ -1,7 +1,7 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.0  
-> **Date**: November 18, 2025  
+> **Version**: 4.1  
+> **Date**: November 19, 2025  
 > **Status**: ✅ **Approved - Compliance & Workflow Enhancements**
 
 ---
@@ -1550,153 +1550,190 @@ lib/
 
 ---
 
-### Phase 9: Compliance & Signatures (Weeks 13-16) 🔴 **CURRENT PRIORITY**
+### Phase 9: Compliance & Signatures (Weeks 13-16) ✅ **COMPLETED**
 
 **Goal:** Implement credentials-based role system, electronic signatures, and compliance workflows
 
-**9.1: Credentials-Based Role System (Week 13)** ⭐ **START HERE**
+**Overall Status:** Phase 9.1 and 9.2 COMPLETED (November 2025). Phase 9.3 pending.
 
-- [ ] Create migration 00008: Add `credentials` field to `users` table
-  - [ ] Field type: TEXT NOT NULL
-  - [ ] CHECK constraint: credentials IN ('RN', 'LVN', 'MD', 'DO', 'PA', 'NP', 'CNA', 'Admin')
-  - [ ] Backfill existing users with default credentials
-- [ ] Update `lib/database.types.ts` (run `npm run db:types`)
-- [ ] Update invite system to capture credentials
-  - [ ] Add credentials dropdown to invite form (components/admin/invites-management-client.tsx)
-  - [ ] Validate credentials required when inviting
-  - [ ] Store credentials in user record on signup
-- [ ] Update user management UI
-  - [ ] Display "Role + Credentials" column (e.g., "Facility Admin (RN)")
-  - [ ] Add credentials field to user edit form
-  - [ ] Show credentials badges with icons
-- [ ] Update RBAC utilities (lib/rbac.ts)
-  - [ ] Add `getUserCredentials()` function
-  - [ ] Add credential type definitions
-- [ ] Update existing user records
-  - [ ] Create admin script to set credentials for current users
-  - [ ] Test with different credential types
-- [ ] Test invite flow end-to-end with new credentials field
+**9.1: Credentials-Based Role System (Week 13)** ✅ **COMPLETED & DEPLOYED**
 
-**Deliverable:** All users have required credentials field, visible in admin UI, captured during invite
+- [x] Create migration 00008: Add `credentials` field to `users` table
+  - [x] Field type: TEXT NOT NULL
+  - [x] CHECK constraint: credentials IN ('RN', 'LVN', 'MD', 'DO', 'PA', 'NP', 'CNA', 'Admin')
+  - [x] Backfill existing users with default credentials
+- [x] Update `lib/database.types.ts` (run `npm run db:types`)
+- [x] Update invite system to capture credentials
+  - [x] Add credentials dropdown to invite form (components/admin/invites-management-client.tsx)
+  - [x] Validate credentials required when inviting
+  - [x] Store credentials in user record on signup
+- [x] Update user management UI
+  - [x] Display "Role + Credentials" column (e.g., "Facility Admin (RN)")
+  - [x] Add credentials field to user edit form
+  - [x] Show credentials badges with icons
+- [x] Update RBAC utilities (lib/rbac.ts)
+  - [x] Add `getUserCredentials()` function
+  - [x] Add credential type definitions
+- [x] Update existing user records
+  - [x] Create admin script to set credentials for current users
+  - [x] Test with different credential types
+- [x] Test invite flow end-to-end with new credentials field
+
+**Deliverable:** ✅ All users have required credentials field, visible in admin UI, captured during invite
+**Status:** DEPLOYED to production (November 2025)
 
 ---
 
 **9.2: Electronic Signatures & Compliance (Week 14-15)**
 
-**9.2.1: Signature Infrastructure (Days 1-3)**
+**9.2.1: Signature Infrastructure (Days 1-3)** ✅ **COMPLETED**
 
-- [ ] Create `signatures` table migration
-  - [ ] Fields: signature_type, visit_id, patient_id, signer_name, signer_role, signature_data, signature_method, ip_address, signed_at
-  - [ ] Indexes on visit_id and patient_id
-- [ ] Create `patient_consents` table migration
-  - [ ] Fields: patient_id, consent_type, consent_text, patient_signature_id, witness_signature_id, consented_at
-  - [ ] Index on patient_id
-- [ ] Build digital signature pad component (components/signatures/signature-pad.tsx)
-  - [ ] Canvas-based drawing with touch support
-  - [ ] Clear and undo buttons
-  - [ ] Responsive sizing for mobile/tablet
-  - [ ] Export as base64 PNG
-- [ ] Build typed signature component (components/signatures/typed-signature.tsx)
-  - [ ] Text input + "I agree" checkbox
-  - [ ] Timestamp display
-- [ ] Create signature actions (app/actions/signatures.ts)
-  - [ ] createSignature(type, data, method)
-  - [ ] validateSignature(signatureId)
-  - [ ] getSignatureAuditTrail(visitId)
+- [x] Create `signatures` table migration (00014)
+  - [x] Fields: signature_type, visit_id, patient_id, signer_name, signer_role, signature_data, signature_method, ip_address, signed_at
+  - [x] Indexes on visit_id and patient_id
+- [x] Create `patient_consents` table migration (00014)
+  - [x] Fields: patient_id, consent_type, consent_text, patient_signature_id, witness_signature_id, consented_at
+  - [x] Index on patient_id
+- [x] Build digital signature pad component (components/signatures/signature-pad.tsx)
+  - [x] Dual-mode: Canvas drawing + typed signature
+  - [x] Clear and undo buttons
+  - [x] Responsive sizing for mobile/tablet
+  - [x] Export as base64 PNG
+- [x] Build typed signature component (integrated in signature-pad.tsx)
+  - [x] Text input + "I agree" checkbox
+  - [x] Timestamp display
+- [x] Create signature actions (app/actions/signatures.ts)
+  - [x] createPatientConsent()
+  - [x] signVisit()
+  - [x] addPatientSignature()
+  - [x] submitVisit()
+  - [x] requiresPatientSignature()
 
-**9.2.2: Initial Consent Form (Days 4-5)**
+**9.2.2: Initial Consent Form (Days 4-5)** ✅ **COMPLETED**
 
-- [ ] Build initial consent modal (components/patients/initial-consent-modal.tsx)
-  - [ ] Full consent text display (customizable per facility)
-  - [ ] Patient signature pad
-  - [ ] Optional witness signature pad
-  - [ ] "I understand and consent to treatment" checkbox
-  - [ ] Cannot dismiss until signed
-- [ ] Create consent page (app/dashboard/patients/[id]/consent/page.tsx)
-- [ ] Add consent check before visit creation
-  - [ ] Query patient_consents for patient_id
-  - [ ] Show consent modal if no consent exists
-  - [ ] Block visit form until consent completed
-- [ ] Create consent actions (app/actions/consents.ts)
-  - [ ] createPatientConsent()
-  - [ ] getPatientConsent(patientId)
-  - [ ] hasValidConsent(patientId)
+- [x] Build initial consent dialog (components/patients/consent-dialog.tsx)
+  - [x] Two-step workflow: consent text → signature
+  - [x] Full consent text with scroll
+  - [x] Patient signature pad (dual-mode)
+  - [x] Cannot dismiss until signed
+  - [x] Fixed layout issues (removed conflicting prose classes)
+- [x] Integrate consent check in patient detail page
+  - [x] Query patient_consents on page load
+  - [x] Show consent dialog if no consent exists
+  - [x] Block visit creation until consent completed
+- [x] Create consent actions (integrated in app/actions/signatures.ts)
+  - [x] createPatientConsent()
+  - [x] getPatientConsent(patientId)
+  - [x] Consent signature stored with audit trail
 
-**9.2.3: Visit Signature Workflow (Days 6-10)**
+**9.2.3: Visit Signature Workflow (Days 6-10)** ✅ **COMPLETED & TESTED**
 
-- [ ] Update visits table migration
-  - [ ] Add `clinician_name` TEXT
-  - [ ] Add `clinician_credentials` TEXT
-  - [ ] Add `requires_patient_signature` BOOLEAN
-  - [ ] Add `provider_signature_id` UUID FK
-  - [ ] Add `patient_signature_id` UUID FK
-  - [ ] Add `signed_at` TIMESTAMPTZ
-  - [ ] Add `submitted_at` TIMESTAMPTZ
-  - [ ] Update status enum: ('draft', 'ready_for_signature', 'signed', 'submitted', 'incomplete', 'complete')
-- [ ] Update visit form to pre-fill clinician fields from user profile
-- [ ] Build visit action buttons component (components/visits/visit-action-buttons.tsx)
-  - [ ] Dynamic buttons based on status:
-    - Draft: [Save Draft] [Ready for Signature]
-    - Ready: [Edit] [Sign Now]
-    - Signed: [Submit to Office] [Add Addendum]
-    - Submitted: [View Only] [Add Addendum]
-- [ ] Build "Save Draft" action
-  - [ ] Saves visit with status='draft'
-  - [ ] No validation required
-  - [ ] Shows auto-save timestamp
-- [ ] Build "Ready for Signature" action
-  - [ ] Validates all required fields
-  - [ ] Changes status to 'ready_for_signature'
-  - [ ] Auto-sets requires_patient_signature based on credentials
-- [ ] Build patient signature modal (for RN/LVN only)
-  - [ ] Shows visit summary
-  - [ ] Acknowledgment text: "I acknowledge receipt of treatment described above"
-  - [ ] Signature pad
-  - [ ] Captured at end of visit, before provider signature
-  - [ ] Only shown if requires_patient_signature=true
-- [ ] Build provider signature page (app/dashboard/visits/[id]/sign/page.tsx)
-  - [ ] Read-only complete visit summary
-  - [ ] All assessments, photos, treatments displayed
-  - [ ] Certification text: "I certify that this documentation is accurate and complete"
-  - [ ] Signature pad or typed name
-  - [ ] IP address captured automatically
-- [ ] Build "Sign & Submit" action
-  - [ ] Creates provider signature record
-  - [ ] Updates visit: signed_at, provider_signature_id, status='signed'
-  - [ ] Locks visit from editing (can only add addendums)
-- [ ] Build "Submit to Office" action
-  - [ ] Updates visit: submitted_at, status='submitted'
-  - [ ] Triggers any backend workflows (e.g., billing, notifications)
-- [ ] Test complete workflow:
-  1. Save multiple drafts
-  2. Mark ready for signature
-  3. (If RN/LVN) Capture patient signature
-  4. Capture provider signature
-  5. Submit to office
-  6. Verify cannot edit signed visit
+- [x] Update visits table migration (00014)
+  - [x] Add `clinician_name` TEXT
+  - [x] Add `clinician_credentials` TEXT
+  - [x] Add `requires_patient_signature` BOOLEAN
+  - [x] Add `provider_signature_id` UUID FK
+  - [x] Add `patient_signature_id` UUID FK
+  - [x] Add `signed_at` TIMESTAMPTZ
+  - [x] Add `submitted_at` TIMESTAMPTZ
+  - [x] Update status enum: draft, ready_for_signature, signed, submitted (migration 00015)
+- [x] Update visit form to pre-fill clinician fields from user profile
+- [x] Build visit signature workflow component (components/visits/visit-signature-workflow.tsx)
+  - [x] Dynamic buttons based on status
+  - [x] Status-based conditional rendering
+  - [x] Integrated with visit detail page
+- [x] Build "Save Draft" functionality
+  - [x] Default status='draft' for new visits
+  - [x] No validation required
+  - [x] Shows last saved timestamp
+- [x] Build "Ready for Signature" action
+  - [x] Validates all required fields
+  - [x] Changes status to 'ready_for_signature'
+  - [x] Auto-sets requires_patient_signature based on credentials
+- [x] Build patient signature modal (components/signatures/patient-signature-modal.tsx)
+  - [x] Shows visit summary
+  - [x] Acknowledgment text
+  - [x] Signature pad (dual-mode)
+  - [x] Only shown for RN/LVN credentials
+  - [x] Blocks provider signature until captured
+- [x] Build provider signature flow
+  - [x] Integrated in visit detail page
+  - [x] Read-only visit summary before signing
+  - [x] Certification text
+  - [x] Signature pad (dual-mode)
+  - [x] IP address captured automatically
+  - [x] Updates visit: signed_at, provider_signature_id, status='signed'
+- [x] Build "Submit to Office" action
+  - [x] Updates visit: submitted_at, status='submitted'
+  - [x] Final status, locks from editing
+- [x] Read-only enforcement
+  - [x] Hide Edit button for signed/submitted visits
+  - [x] Hide Add Assessment buttons
+  - [x] Form fields become read-only
+- [x] Test complete workflow:
+  1. ✅ Save multiple drafts
+  2. ✅ Mark ready for signature
+  3. ✅ (MD) Provider signature only
+  4. ✅ (RN/LVN) Patient signature → Provider signature
+  5. ✅ Submit to office
+  6. ✅ Verify read-only enforcement
+  7. ✅ PDF exports include signatures
 
-**Deliverable:** Complete signature workflow with role-based requirements and visit status management
+**Deliverable:** ✅ Complete signature workflow with role-based requirements and visit status management
+**Status:** TESTED locally (November 19, 2025), ready for production deployment
 
 ---
 
-**9.3: Printing Enhancements (Week 16, Days 1-3)**
+**9.3: Addendums & Procedure Restrictions (Week 16)** 🔴 **PENDING**
 
-- [ ] Add clinician signature section to PDF components
-  - [ ] Update components/pdf/visit-summary-pdf.tsx
-  - [ ] Update components/pdf/wound-progress-pdf.tsx
-  - [ ] Format: "Documented by: [Name], [Credentials] on [Date/Time]"
-  - [ ] Include actual signature image if available
+This phase addresses remaining compliance requirements:
+
+**9.3.1: Visit Addendums**
+- [ ] Build addendum creation UI
+  - [ ] "Add Addendum" button on signed/submitted visits
+  - [ ] Addendum editor with timestamp and author
+  - [ ] Cannot modify original visit content
+- [ ] Create addendum storage
+  - [ ] Store as wound_notes with visit_id reference
+  - [ ] Track addendum count on visit record
+  - [ ] Display addendums chronologically
+- [ ] Update PDF exports to include addendums
+
+**9.3.2: Procedure Restrictions by Credential**
+- [ ] Create procedure_scopes table
+  - [ ] Map CPT codes to allowed credentials
+  - [ ] RN/LVN: Cannot document sharp debridement (CPT 11042-11044)
+  - [ ] MD/DO/PA/NP: Full access to all procedures
+- [ ] Update billing form to filter by credentials
+  - [ ] Query user credentials
+  - [ ] Filter CPT code list based on procedure_scopes
+  - [ ] Show "Restricted" label for unavailable codes
+- [ ] Server-side validation in billing actions
+  - [ ] Verify credentials before saving CPT codes
+  - [ ] Return error if restricted procedure attempted
+
+**9.3.3: Printing Enhancements**
+- [x] Add clinician signature to PDF components (COMPLETED)
+  - [x] Updated components/pdf/visit-summary-pdf.tsx
+  - [x] Updated components/pdf/wound-progress-pdf.tsx
+  - [x] Format: "Documented by: [Name], [Credentials]"
+  - [x] Signature images included in exports
 - [ ] Add user preference for photo printing
-  - [ ] Create user_preferences table or JSON field in users table
-  - [ ] Add "Include wound photos in printed reports" toggle
-  - [ ] Build user settings page (app/dashboard/settings/page.tsx)
-- [ ] Update PDF generation to respect photo preference
-  - [ ] Check user preference before rendering photos
-  - [ ] Show photo count even if not rendered: "3 photos available (not shown)"
-- [ ] Test PDF exports
-  - [ ] Verify clinician signature appears
-  - [ ] Test with/without photos
-  - [ ] Print to PDF and verify formatting
+  - [ ] Create user_preferences table or JSON field
+  - [ ] Add "Include wound photos" toggle in settings
+  - [ ] Build user settings page
+  - [ ] Respect preference in PDF generation
+
+**9.3.4: Signature Audit Logs**
+- [ ] Build signature audit trail UI
+  - [ ] List all signatures for a visit
+  - [ ] Display: signer, role, timestamp, IP address, method
+  - [ ] Admin-only access
+- [ ] Add signature history to visit detail page
+  - [ ] Collapsible section "Signature History"
+  - [ ] Show consent, patient, and provider signatures
+
+**Deliverable:** Addendums, procedure restrictions, audit logs, and print preferences
 
 **Deliverable:** Professional printed reports with clinician attribution
 
@@ -2099,7 +2136,7 @@ This section documents all approved design decisions based on client requirement
 - **Retention:** Photos retained indefinitely with patient record (required for HIPAA compliance)
 - **Optimization:** Automatic thumbnail generation for gallery views
 
-### 7. Wound Types & Treatment Options
+### 10. Wound Types & Treatment Options
 
 **Decision:** Agent uses medical knowledge to define comprehensive wound types and treatment options. Assessment forms use checkboxes and radio buttons for efficiency.
 
@@ -2144,7 +2181,7 @@ This section documents all approved design decisions based on client requirement
   - Preventive (air mattress, repositioning, off-loading)
 - **Customization:** Treatment checklist hardcoded in Phase 1, customizable admin panel added in post-MVP.
 
-### 8. Wound-Based UI Philosophy (NEW)
+### 11. Wound-Based UI Philosophy (NEW)
 
 **Decision:** Redesign patient detail page and visit assessment to be wound-centric rather than visit-centric.
 
@@ -2181,7 +2218,7 @@ This section documents all approved design decisions based on client requirement
   - Better support for longitudinal wound care
 - **Legacy Support:** Original visit-centric views remain accessible at `/patients/[id]/visits`
 
-### 9. Reporting Requirements
+### 12. Reporting Requirements
 
 **Decision:** PDF export for visit summaries and wound progress, CSV export for data analysis.
 
@@ -2193,7 +2230,7 @@ This section documents all approved design decisions based on client requirement
 - **Frequency:** On-demand generation (no scheduled/automated reports in Phase 1)
 - **Future:** Weekly/monthly automated reports, custom date range filtering, batch exports.
 
-### 10. Device & Responsiveness
+### 13. Device & Responsiveness
 
 **Decision:** Desktop-first design with tablet/mobile responsiveness.
 
@@ -2204,7 +2241,7 @@ This section documents all approved design decisions based on client requirement
 - **Forms:** Optimized for mouse/keyboard on desktop, touch-friendly on tablet
 - **Future:** Dedicated mobile app (React Native) in post-MVP.
 
-### 11. EHR Integration
+### 14. EHR Integration
 
 **Decision:** CSV export sufficient for Phase 1, live integrations deferred.
 
@@ -2220,37 +2257,52 @@ This section documents all approved design decisions based on client requirement
 
 **Design document has been approved and is ready for Phase 1 implementation.**
 
-### ✅ Completed Actions (Weeks 1-10)
+### ✅ Completed Actions
 
-1. **Supabase Setup** ✅
-   - Database tables configured using SQL schema
-   - Row-Level Security policies enabled on all tables
-   - Storage bucket configured for wound photos
-   - Authentication enabled with email/password
+**Phases 1-8:** Complete application infrastructure (Weeks 1-12)
+1. **Supabase Setup** ✅ - Database, RLS, Storage, Authentication
+2. **SQL Schema Migration** ✅ - 17 migrations executed
+3. **Authentication Implementation** ✅ - Login/logout, protected routes
+4. **Full Application** ✅ - UI, navigation, CRUD operations
+5. **RBAC System** ✅ - Tenant admin, facility admin, user roles
+6. **Wound-Based UI** ✅ - Wound-centric layout and workflows
+7. **Wound Notes** ✅ - Per-wound timestamped notes
+8. **Calendar Integration** ✅ - Modal-based event management
 
-2. **SQL Schema Migration** ✅
-   - Complete SQL schema in `supabase/migrations/00001_initial_schema.sql`
-   - Applied via Supabase SQL Editor
-   - TypeScript types generated with `npm run db:types`
-   - Supabase clients configured (server/client)
+**Phase 9.1: Credentials System** ✅ DEPLOYED (Week 13)
+- Migration 00008: Added credentials field to users table
+- Credentials validation: RN, LVN, MD, DO, PA, NP, CNA, Admin
+- User management UI displays credentials
+- Invite system captures credentials
+- Patient signature logic based on credentials
 
-3. **Authentication Implementation** ✅
-   - Supabase Auth integration complete
-   - Login/logout flow functional
-   - Protected routes middleware active
-   - Session management via middleware
+**Phase 9.2: Electronic Signatures** ✅ TESTED (Weeks 14-15)
+- Migration 00014: signatures and patient_consents tables
+- Migration 00015: Visit status constraint (draft → ready → signed → submitted)
+- Migration 00017: Fixed user_roles RLS infinite recursion
+- Dual-mode signature pad (draw with canvas + type with keyboard)
+- Initial consent workflow (blocks first visit until signed)
+- Provider signature workflow (all credentials)
+- Patient signature workflow (RN/LVN only, before provider signature)
+- Visit status management and read-only enforcement
+- PDF exports include signatures with credentials
+- Tested: MD workflow (no patient sig), RN workflow (requires patient sig)
 
-4. **Full Application** ✅
-   - Complete UI with sidebar navigation
-   - Header with user info
-   - Dashboard with analytics charts
-   - Patient, wound, visit, assessment, billing, and calendar management
-   - PDF export and CSV reports
-   - Photo upload and management
-   - Seed script for test data
+**Admin Dashboard Enhancement** ✅ WORKING (November 19, 2025)
+- Admin panel section on main dashboard
+- Shows user count, facility count, pending invite count
+- Quick links to user management, facilities, invites
+- Visible to tenant admins only
+
+**Database & Security** ✅ OPTIMIZED
+- RLS disabled on user_roles table (eliminated infinite recursion)
+- RPC functions: get_user_role_info(), get_tenant_user_roles()
+- Application-level security via middleware and server actions
+- All other tables maintain proper RLS policies
 
 ---
 
-**Document Version:** 4.0 (Approved)  
-**Last Updated:** November 18, 2025  
-**Current Phase:** Phase 9 - Compliance & Signatures (Weeks 13-16)
+**Document Version:** 4.1 (Updated)  
+**Last Updated:** November 19, 2025  
+**Current Phase:** Phase 9.3 - Addendums & Restrictions (Week 16) - PENDING
+**Production Status:** Phase 9.1-9.2 ready for deployment

@@ -7,10 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Activity, Users, FileText, Calendar, AlertCircle } from "lucide-react";
+import { Activity, Users, FileText, Calendar, AlertCircle, Building2, Shield, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { LazyDashboardCharts } from "@/components/dashboard/lazy-dashboard-charts";
+import { getUserRole } from "@/lib/rbac";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -24,6 +25,42 @@ export default async function DashboardPage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  // Get user role for admin features
+  const userRole = await getUserRole();
+
+  // Get admin stats if user is tenant admin
+  let totalUsers = 0;
+  let totalFacilities = 0;
+  let pendingInvites = 0;
+
+  if (userRole?.role === "tenant_admin") {
+    try {
+      // Count total users in tenant
+      const { count: usersCount } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", userRole.tenant_id);
+      totalUsers = usersCount || 0;
+
+      // Count facilities
+      const { count: facilitiesCount } = await supabase
+        .from("facilities")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", userRole.tenant_id);
+      totalFacilities = facilitiesCount || 0;
+
+      // Count pending invites
+      const { count: invitesCount } = await supabase
+        .from("invites")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", userRole.tenant_id)
+        .eq("status", "pending");
+      pendingInvites = invitesCount || 0;
+    } catch (error) {
+      console.error("Admin stats fetch error:", error);
+    }
   }
 
   // Get stats across all user's facilities with error handling
@@ -370,6 +407,99 @@ export default async function DashboardPage() {
           );
         })}
       </div>
+
+      {/* Admin Panel for Tenant Admins */}
+      {userRole?.role === "tenant_admin" && (
+        <Card className="animate-slide-in border-purple-200 bg-linear-to-br from-purple-50 to-purple-100/50 dark:border-purple-800 dark:from-purple-950/30 dark:to-purple-900/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-900 dark:text-purple-300">
+              <Shield className="h-5 w-5" />
+              Admin Panel
+            </CardTitle>
+            <CardDescription className="text-purple-700 dark:text-purple-400">
+              Manage users, facilities, and invitations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <Link
+                href="/dashboard/admin/users"
+                className="group flex flex-col gap-3 rounded-lg border border-purple-200 bg-white p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-800 dark:bg-purple-950/50 dark:hover:border-purple-600"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/50">
+                    <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-200">
+                    {totalUsers}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-semibold text-purple-900 dark:text-purple-200">
+                    User Management
+                  </p>
+                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                    View and manage user accounts
+                  </p>
+                  <span className="mt-2 inline-block text-xs text-purple-600 group-hover:underline dark:text-purple-400">
+                    Manage →
+                  </span>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/admin/facilities"
+                className="group flex flex-col gap-3 rounded-lg border border-purple-200 bg-white p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-800 dark:bg-purple-950/50 dark:hover:border-purple-600"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/50">
+                    <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-200">
+                    {totalFacilities}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-semibold text-purple-900 dark:text-purple-200">
+                    Facilities
+                  </p>
+                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                    Configure facility settings
+                  </p>
+                  <span className="mt-2 inline-block text-xs text-purple-600 group-hover:underline dark:text-purple-400">
+                    Manage →
+                  </span>
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/admin/invites"
+                className="group flex flex-col gap-3 rounded-lg border border-purple-200 bg-white p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-800 dark:bg-purple-950/50 dark:hover:border-purple-600"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/50">
+                    <UserPlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-200">
+                    {pendingInvites}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-semibold text-purple-900 dark:text-purple-200">
+                    User Invites
+                  </p>
+                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                    Invite new users to organization
+                  </p>
+                  <span className="mt-2 inline-block text-xs text-purple-600 group-hover:underline dark:text-purple-400">
+                    Manage →
+                  </span>
+                </div>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Section - Lazy loaded for better performance */}
       <LazyDashboardCharts

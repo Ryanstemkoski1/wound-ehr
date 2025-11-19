@@ -35,11 +35,11 @@ if (!projectRef) {
   process.exit(1);
 }
 
-// Use the Supabase project's own API endpoint for types
-const url = `${SUPABASE_URL}/rest/v1/?apikey=${SERVICE_ROLE_KEY}`;
+// Use the Supabase project's types generation API endpoint
+const url = `https://api.supabase.com/v1/projects/${projectRef}/types/typescript`;
 
 console.log("🔄 Generating TypeScript types from Supabase...\n");
-console.log("Fetching schema from:", SUPABASE_URL);
+console.log("Project ID:", projectRef);
 
 const options = {
   headers: {

@@ -51,6 +51,8 @@ export default function VisitForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [visitType, setVisitType] = useState(visit?.visitType || "");
+  const [status, setStatus] = useState(visit?.status || "scheduled");
   const [timeSpent, setTimeSpent] = useState(visit?.timeSpent || false);
   const [followUpType, setFollowUpType] = useState(visit?.followUpType || "");
   const [billingData, setBillingData] = useState<BillingFormData>({
@@ -95,9 +97,23 @@ export default function VisitForm({
     setIsSubmitting(true);
     setError("");
 
+    // Validate required fields
+    if (!visitType) {
+      setError("Please select a visit type");
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     formData.append("patientId", patientId);
+    formData.append("visitType", visitType);
     formData.append("timeSpent", timeSpent.toString());
+    if (followUpType) {
+      formData.append("followUpType", followUpType);
+    }
+    if (visit) {
+      formData.append("status", status);
+    }
 
     const result = visit
       ? await updateVisit(visit.id, formData)
@@ -161,7 +177,7 @@ export default function VisitForm({
 
         <div className="space-y-2">
           <Label htmlFor="visitType">Visit Type</Label>
-          <Select name="visitType" defaultValue={visit?.visitType} required>
+          <Select value={visitType} onValueChange={setVisitType} required>
             <SelectTrigger>
               <SelectValue placeholder="Select visit type" />
             </SelectTrigger>
@@ -186,7 +202,7 @@ export default function VisitForm({
       {visit && (
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select name="status" defaultValue={visit.status}>
+          <Select value={status} onValueChange={setStatus}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -208,7 +224,6 @@ export default function VisitForm({
           <div className="space-y-2">
             <Label htmlFor="followUpType">Follow-Up Type</Label>
             <Select
-              name="followUpType"
               value={followUpType}
               onValueChange={setFollowUpType}
             >

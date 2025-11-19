@@ -238,6 +238,42 @@ export async function getVisitDataForPDF(visitId: string) {
 
     if (billingsError) throw billingsError;
 
+    // Fetch signatures if visit is signed or submitted
+    let signatures = undefined;
+    if (visit.status === "signed" || visit.status === "submitted") {
+      const { data: providerSig } = await supabase
+        .from("signatures")
+        .select("*")
+        .eq("id", visit.provider_signature_id)
+        .maybeSingle();
+
+      const { data: patientSig } = visit.patient_signature_id
+        ? await supabase
+            .from("signatures")
+            .select("*")
+            .eq("id", visit.patient_signature_id)
+            .maybeSingle()
+        : { data: null };
+
+      signatures = {
+        provider: providerSig
+          ? {
+              signerName: providerSig.signer_name,
+              signerRole: providerSig.signer_role,
+              signatureData: providerSig.signature_data,
+              signedAt: new Date(providerSig.signed_at),
+            }
+          : undefined,
+        patient: patientSig
+          ? {
+              signerName: patientSig.signer_name,
+              signatureData: patientSig.signature_data,
+              signedAt: new Date(patientSig.signed_at),
+            }
+          : undefined,
+      };
+    }
+
     // Transform data to match PDF component props
     return {
       success: true as const,
@@ -299,6 +335,7 @@ export async function getVisitDataForPDF(visitId: string) {
                     : [],
               }
             : null,
+        signatures,
       },
     };
   } catch (error) {

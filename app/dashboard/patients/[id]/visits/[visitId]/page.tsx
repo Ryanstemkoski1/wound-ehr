@@ -18,6 +18,7 @@ import Link from "next/link";
 import AssessmentCard from "@/components/assessments/assessment-card";
 import VisitPDFDownloadButton from "@/components/pdf/visit-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
+import { VisitSignatureWorkflow } from "@/components/visits/visit-signature-workflow";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -51,6 +52,13 @@ export default async function VisitDetailPage({ params }: PageProps) {
   const billingResult = await getBillingForVisit(visitId);
   const billing = billingResult.success ? billingResult.billing : null;
 
+  // Get current user's name and credentials for signing
+  const { data: userData } = await supabase
+    .rpc("get_current_user_credentials");
+
+  const userName = userData && userData.length > 0 ? userData[0].name : "";
+  const userCredentials = userData && userData.length > 0 ? userData[0].credentials : "";
+
   const statusVariant = visit.status === "complete" ? "secondary" : "default";
 
   return (
@@ -82,14 +90,16 @@ export default async function VisitDetailPage({ params }: PageProps) {
             visitDate={visit.visitDate}
             patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
           />
-          <Link
-            href={`/dashboard/patients/${patientId}/visits/${visitId}/edit`}
-          >
-            <Button variant="outline" className="gap-2">
-              <Edit className="h-4 w-4" />
-              Edit Visit
-            </Button>
-          </Link>
+          {visit.status !== "signed" && visit.status !== "submitted" && (
+            <Link
+              href={`/dashboard/patients/${patientId}/visits/${visitId}/edit`}
+            >
+              <Button variant="outline" className="gap-2">
+                <Edit className="h-4 w-4" />
+                Edit Visit
+              </Button>
+            </Link>
+          )}
           <Badge variant={statusVariant} className="h-fit">
             {visit.status}
           </Badge>
@@ -306,20 +316,43 @@ export default async function VisitDetailPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Assessments */}
+        {/* Signature Workflow & Assessments */}
         <div className="space-y-6">
+          {/* Signature Workflow */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Visit Status & Signatures</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <VisitSignatureWorkflow
+                visitId={visitId}
+                patientId={patientId}
+                patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+                currentStatus={(visit.status || "draft") as "draft" | "ready_for_signature" | "signed" | "submitted"}
+                requiresPatientSignature={visit.requiresPatientSignature || false}
+                providerSignatureId={visit.providerSignatureId || null}
+                patientSignatureId={visit.patientSignatureId || null}
+                userName={userName}
+                userCredentials={userCredentials}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Assessments */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Wound Assessments</CardTitle>
-                <Link
-                  href={`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`}
-                >
-                  <Button size="sm" className="gap-1">
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </Button>
-                </Link>
+                {visit.status !== "signed" && visit.status !== "submitted" && (
+                  <Link
+                    href={`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`}
+                  >
+                    <Button size="sm" className="gap-1">
+                      <Plus className="h-4 w-4" />
+                      Add
+                    </Button>
+                  </Link>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -357,14 +390,16 @@ export default async function VisitDetailPage({ params }: PageProps) {
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     No assessments recorded
                   </p>
-                  <Link
-                    href={`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`}
-                  >
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Plus className="h-4 w-4" />
-                      Add First Assessment
-                    </Button>
-                  </Link>
+                  {visit.status !== "signed" && visit.status !== "submitted" && (
+                    <Link
+                      href={`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`}
+                    >
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Plus className="h-4 w-4" />
+                        Add First Assessment
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               )}
             </CardContent>
