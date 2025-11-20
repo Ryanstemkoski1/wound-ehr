@@ -210,7 +210,57 @@ export async function deleteFacility(facilityId: string) {
   }
 }
 
-export async function getUserFacilities() {
+/**
+ * Get facilities for current user (minimal mode)
+ */
+export async function getUserFacilities(minimal: true): Promise<Array<{ id: string; name: string }>>;
+
+/**
+ * Get facilities for current user (full mode)
+ */
+export async function getUserFacilities(minimal?: false): Promise<Array<{
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  phone: string | null;
+  fax: string | null;
+  contactPerson: string | null;
+  email: string | null;
+  notes: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count: { patients: number };
+}>>;
+
+/**
+ * Implementation
+ */
+export async function getUserFacilities(
+  minimal = false
+): Promise<
+  | Array<{ id: string; name: string }>
+  | Array<{
+      id: string;
+      name: string;
+      address: string | null;
+      city: string | null;
+      state: string | null;
+      zip: string | null;
+      phone: string | null;
+      fax: string | null;
+      contactPerson: string | null;
+      email: string | null;
+      notes: string | null;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+      _count: { patients: number };
+    }>
+> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -236,6 +286,23 @@ export async function getUserFacilities() {
       return [];
     }
 
+    // Minimal mode for dropdowns/filters
+    if (minimal) {
+      const { data: facilities, error } = await supabase
+        .from("facilities")
+        .select("id, name")
+        .eq("is_active", true)
+        .in("id", facilityIds)
+        .order("name", { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return facilities || [];
+    }
+
+    // Full mode for admin/management pages
     const { data: facilities, error } = await supabase
       .from("facilities")
       .select(

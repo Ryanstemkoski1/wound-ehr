@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,14 +20,21 @@ import {
   updateBilling,
   getBillingForVisit,
 } from "@/app/actions/billing";
-import BillingForm, {
+import BillingFormWithCredentials, {
   type BillingFormData,
-} from "@/components/billing/billing-form";
-import { useEffect } from "react";
+} from "@/components/billing/billing-form-with-credentials";
+import type { Credentials } from "@/lib/credentials";
 import { toast } from "sonner";
 
 type VisitFormProps = {
   patientId: string;
+  userCredentials: Credentials | null;
+  allowedCPTCodes: string[];
+  restrictedCPTCodes: Array<{
+    code: string;
+    name: string;
+    requiredCredentials: string[];
+  }>;
   visit?: {
     id: string;
     visitDate: Date;
@@ -45,6 +52,9 @@ type VisitFormProps = {
 
 export default function VisitForm({
   patientId,
+  userCredentials,
+  allowedCPTCodes,
+  restrictedCPTCodes,
   visit,
   onSuccess,
 }: VisitFormProps) {
@@ -292,7 +302,22 @@ export default function VisitForm({
       </div>
 
       {/* Billing Information */}
-      <BillingForm initialData={billingData} onChange={setBillingData} />
+      <BillingFormWithCredentials
+        visitId={visit?.id || ""}
+        patientId={patientId}
+        userCredentials={userCredentials}
+        allowedCPTCodes={allowedCPTCodes}
+        restrictedCPTCodes={restrictedCPTCodes}
+        existingBilling={visit && existingBillingId ? {
+          id: existingBillingId,
+          cptCodes: billingData.cptCodes,
+          icd10Codes: billingData.icd10Codes,
+          modifiers: billingData.modifiers,
+          timeSpent: billingData.timeSpent,
+          notes: billingData.notes,
+        } : null}
+        onChange={setBillingData}
+      />
 
       <div className="flex gap-3">
         <Button type="submit" disabled={isSubmitting}>

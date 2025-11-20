@@ -48,11 +48,6 @@ export default async function WoundsPage() {
 
   const patientIds = patients?.map((p) => p.id) || [];
 
-  console.log("Wounds Page - Debug Info:");
-  console.log("- Facility IDs:", facilityIds);
-  console.log("- Patients found:", patients?.length || 0);
-  console.log("- Patient IDs:", patientIds);
-
   // If no patients, return empty wounds list
   if (patientIds.length === 0) {
     return (
@@ -92,8 +87,6 @@ export default async function WoundsPage() {
   if (error) {
     console.error("Error fetching wounds:", error);
   }
-
-  console.log("- Wounds found:", wounds?.length || 0);
 
   // Get latest assessment for each wound
   const woundIds = wounds?.map((w) => w.id) || [];

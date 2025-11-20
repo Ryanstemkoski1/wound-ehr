@@ -60,8 +60,6 @@ type WoundsBoardProps = {
 };
 
 export function WoundsBoard({ wounds }: WoundsBoardProps) {
-  console.log("🔍 WoundsBoard - Received wounds:", wounds?.length || 0);
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");

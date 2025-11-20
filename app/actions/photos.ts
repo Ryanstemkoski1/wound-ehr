@@ -73,9 +73,6 @@ export async function uploadPhoto(formData: FormData) {
       return { error: "Failed to get photo URL" };
     }
 
-    console.log("Photo uploaded:", fileName);
-    console.log("Public URL:", urlData.publicUrl);
-
     // Save photo metadata to database
     const { data: photo, error: dbError } = await supabase
       .from("photos")

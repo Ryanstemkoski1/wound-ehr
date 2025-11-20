@@ -265,15 +265,13 @@ export async function requiresPatientSignature(): Promise<boolean> {
   if (!user) return false;
 
   try {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("credentials")
-      .eq("id", user.id)
-      .single();
+    // Use RPC function to bypass RLS
+    const { data: userDataArray } = await supabase
+      .rpc("get_current_user_credentials");
 
-    if (!userData?.credentials) return false;
+    if (!userDataArray || userDataArray.length === 0 || !userDataArray[0]?.credentials) return false;
 
-    return requiresPatientSig(userData.credentials as Credentials);
+    return requiresPatientSig(userDataArray[0].credentials as Credentials);
   } catch (error) {
     console.error("Error checking signature requirement:", error);
     return false;

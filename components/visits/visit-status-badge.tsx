@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { 
   FileEdit, 
-  FileCheck, 
   FileSignature, 
   CheckCircle2,
   Clock

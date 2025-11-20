@@ -130,14 +130,14 @@ export function InvitesManagementClient({
   };
 
   const copyInviteLink = async (token: string) => {
-    const inviteLink = `${window.location.origin}/signup?invite=${token}`;
+    const inviteLink = `${window.location.origin}/auth/accept-invite?token=${token}`;
     
     try {
       // Try modern clipboard API first
       await navigator.clipboard.writeText(inviteLink);
       setCopiedToken(token);
       setTimeout(() => setCopiedToken(null), 2000);
-    } catch (err) {
+    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
       // Fallback for older browsers or when clipboard permission is denied
       const textArea = document.createElement("textarea");
       textArea.value = inviteLink;

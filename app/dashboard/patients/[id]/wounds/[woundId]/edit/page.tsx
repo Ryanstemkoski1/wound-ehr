@@ -28,7 +28,7 @@ export default async function EditWoundPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Edit Wound</h1>
         <p className="text-muted-foreground">

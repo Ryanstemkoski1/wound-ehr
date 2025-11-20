@@ -2,6 +2,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getVisit } from "@/app/actions/visits";
 import VisitForm from "@/components/visits/visit-form";
+import {
+  getAllowedProcedures,
+  getRestrictedProcedures,
+} from "@/lib/procedures";
+import type { Credentials } from "@/lib/credentials";
 
 type PageProps = {
   params: Promise<{
@@ -27,8 +32,27 @@ export default async function EditVisitPage({ params }: PageProps) {
     redirect(`/dashboard/patients/${patientId}`);
   }
 
+  // Get user credentials for procedure restrictions using RPC to bypass RLS
+  const { data: userDataArray } = await supabase
+    .rpc("get_current_user_credentials");
+
+  const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+  const userCredentials = (userData?.credentials as Credentials) || null;
+
+  // Get allowed and restricted procedures for this user
+  const allowedProcedures = await getAllowedProcedures(userCredentials);
+  const restrictedProcedures = await getRestrictedProcedures(userCredentials);
+
+  // Extract CPT codes
+  const allowedCPTCodes = allowedProcedures.map((p) => p.procedure_code);
+  const restrictedCPTCodes = restrictedProcedures.map((p) => ({
+    code: p.procedure_code,
+    name: p.procedure_name,
+    requiredCredentials: p.required_credentials,
+  }));
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Edit Visit</h1>
         <p className="text-muted-foreground">
@@ -38,6 +62,9 @@ export default async function EditVisitPage({ params }: PageProps) {
       </div>
       <VisitForm
         patientId={patientId}
+        userCredentials={userCredentials}
+        allowedCPTCodes={allowedCPTCodes}
+        restrictedCPTCodes={restrictedCPTCodes}
         visit={{
           id: visit.id,
           visitDate: visit.visitDate,

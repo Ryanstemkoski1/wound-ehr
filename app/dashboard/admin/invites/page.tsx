@@ -21,7 +21,7 @@ export default async function AdminInvitesPage() {
 
   if (invitesResult.error) {
     return (
-      <div className="p-6">
+      <div>
         <DynamicBreadcrumbs
           customSegments={[
             { label: "Dashboard", href: "/dashboard" },
@@ -37,7 +37,7 @@ export default async function AdminInvitesPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <DynamicBreadcrumbs
         customSegments={[
           { label: "Dashboard", href: "/dashboard" },

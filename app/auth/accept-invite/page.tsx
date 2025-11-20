@@ -35,7 +35,7 @@ const signupSchema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Passwords don&apos;t match",
     path: ["confirmPassword"],
   });
 
@@ -110,12 +110,9 @@ function AcceptInviteContent() {
 
         // If user is already logged in with matching email, auto-accept the invite
         if (user && user.email === invite.email) {
-          console.log("Auto-accepting invite for logged-in user:", user.email);
           try {
             const { acceptInvite } = await import("@/app/actions/admin");
             const result = await acceptInvite(inviteToken);
-            
-            console.log("Accept invite result:", result);
             
             if (result.error) {
               console.error("Accept invite error:", result.error);
@@ -125,7 +122,6 @@ function AcceptInviteContent() {
             }
 
             // Success - keep validating state, show success, then redirect
-            console.log("Invite accepted successfully, redirecting...");
             setIsValidating(false);
             setSuccess(true);
             setTimeout(() => {
@@ -304,7 +300,7 @@ function AcceptInviteContent() {
                 <Mail className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                 <div className="flex-1 space-y-1">
                   <p className="text-sm font-medium text-teal-900 dark:text-teal-100">
-                    You've been invited as{" "}
+                    You&apos;ve been invited as{" "}
                     <strong>{getRoleLabel(inviteData.role)}</strong>
                   </p>
                   {inviteData.facilityName && (

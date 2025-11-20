@@ -33,7 +33,7 @@ type VisitSignatureWorkflowProps = {
 
 export function VisitSignatureWorkflow({
   visitId,
-  patientId,
+  patientId: _patientId, // eslint-disable-line @typescript-eslint/no-unused-vars
   patientName,
   currentStatus,
   requiresPatientSignature,
@@ -219,7 +219,7 @@ export function VisitSignatureWorkflow({
 
 function Badge({
   children,
-  variant,
+  variant: _variant, // eslint-disable-line @typescript-eslint/no-unused-vars
   className,
 }: {
   children: React.ReactNode;

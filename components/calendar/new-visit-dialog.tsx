@@ -30,13 +30,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
-  getFacilitiesForCalendar,
   getPatientsForCalendar,
   createVisitFromCalendar,
 } from "@/app/actions/calendar";
+import { getUserFacilities } from "@/app/actions/facilities";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
 
 const newVisitSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
@@ -97,15 +96,8 @@ export default function NewVisitDialog({
   // Load facilities
   useEffect(() => {
     async function loadFacilities() {
-      const result = await getFacilitiesForCalendar();
-      if (result.success && result.facilities) {
-        // Deduplicate facilities by name (keep first occurrence)
-        const uniqueFacilities = result.facilities.filter(
-          (facility, index, self) =>
-            index === self.findIndex((f) => f.name === facility.name)
-        );
-        setFacilities(uniqueFacilities);
-      }
+      const facilities = await getUserFacilities(true);
+      setFacilities(facilities);
     }
     loadFacilities();
   }, []);
@@ -124,7 +116,7 @@ export default function NewVisitDialog({
       }
     }
     loadPatients();
-  }, [form.watch("facilityId")]);
+  }, [form.watch("facilityId")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (data: NewVisitFormData) => {
     setIsSubmitting(true);

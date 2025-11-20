@@ -131,8 +131,8 @@ export default function Sidebar({
                 Admin
               </div>
               {adminNavigation.map((item) => {
-                // Facility admins only see "Invites", not "Users" or "Facilities"
-                if (showLimitedAdminNav && item.name !== "Invites") {
+                // Facility admins see "Users" and "Invites", but not "Facilities"
+                if (showLimitedAdminNav && item.name === "Facilities") {
                   return null;
                 }
 

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { hasAccessToFacility } from "@/lib/rbac";
 
 const woundNoteSchema = z.object({
   woundId: z.string().min(1),

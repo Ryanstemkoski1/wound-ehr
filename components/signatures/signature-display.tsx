@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getSignature } from "@/app/actions/signatures";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, FileSignature } from "lucide-react";
 import { format } from "date-fns";
@@ -93,6 +92,7 @@ export function SignatureDisplay({
       )}
 
       <div className={containerClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={signatureData}
           alt="Signature"

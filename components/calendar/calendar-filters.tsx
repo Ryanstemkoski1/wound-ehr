@@ -10,10 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
-import {
-  getPatientsForCalendar,
-  getFacilitiesForCalendar,
-} from "@/app/actions/calendar";
+import { getPatientsForCalendar } from "@/app/actions/calendar";
+import { getUserFacilities } from "@/app/actions/facilities";
 
 type CalendarFiltersProps = {
   onFilterChange: (filters: {
@@ -41,10 +39,8 @@ export default function CalendarFilters({
   // Load facilities on mount
   useEffect(() => {
     async function loadFacilities() {
-      const result = await getFacilitiesForCalendar();
-      if (result.success && result.facilities) {
-        setFacilities(result.facilities);
-      }
+      const facilities = await getUserFacilities(true);
+      setFacilities(facilities);
     }
     loadFacilities();
   }, []);

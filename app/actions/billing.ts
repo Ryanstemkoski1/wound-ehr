@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { validateBillingCodes } from "@/lib/procedures";
 
 // Validation schemas
 const billingSchema = z.object({
@@ -24,6 +25,37 @@ export async function createBilling(data: BillingInput) {
   try {
     const validated = billingSchema.parse(data);
     const supabase = await createClient();
+
+    // Get user credentials for procedure validation
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false as const,
+        error: "User not authenticated",
+      };
+    }
+
+    // Use RPC function to bypass RLS
+    const { data: userDataArray } = await supabase
+      .rpc("get_current_user_credentials");
+
+    const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+
+    // Validate CPT codes against user credentials
+    const validation = await validateBillingCodes(
+      userData?.credentials || null,
+      validated.cptCodes
+    );
+
+    if (!validation.valid) {
+      return {
+        success: false as const,
+        error: `Credential restriction: ${validation.errors.join(", ")}`,
+      };
+    }
 
     const { data: billing, error } = await supabase
       .from("billings")
@@ -66,6 +98,39 @@ export async function updateBilling(
 ) {
   try {
     const supabase = await createClient();
+
+    // Get user credentials for procedure validation
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false as const,
+        error: "User not authenticated",
+      };
+    }
+
+    // Use RPC function to bypass RLS
+    const { data: userDataArray } = await supabase
+      .rpc("get_current_user_credentials");
+
+    const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+
+    // Validate CPT codes against user credentials if they're being updated
+    if (data.cptCodes) {
+      const validation = await validateBillingCodes(
+        userData?.credentials || null,
+        data.cptCodes
+      );
+
+      if (!validation.valid) {
+        return {
+          success: false as const,
+          error: `Credential restriction: ${validation.errors.join(", ")}`,
+        };
+      }
+    }
 
     const updateData: Record<string, unknown> = {};
     if (data.cptCodes) updateData.cpt_codes = data.cptCodes;

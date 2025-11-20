@@ -62,7 +62,7 @@ export function PatientSignatureDialog({
       // Success
       onOpenChange(false);
       router.refresh();
-    } catch (err) {
+    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError("Failed to save patient signature");
       setIsSubmitting(false);
     }
@@ -145,7 +145,7 @@ export function PatientSignatureDialog({
               autoFocus
             />
             <p className="text-xs text-zinc-500">
-              Enter the patient's name or the name of their authorized representative
+              Enter the patient&apos;s name or the name of their authorized representative
             </p>
           </div>
 

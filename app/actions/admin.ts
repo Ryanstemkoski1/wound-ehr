@@ -45,6 +45,7 @@ export async function getTenantUsers() {
 
     const supabase = await createClient();
     const tenantId = await getUserTenantId();
+    const currentRole = await getUserRole();
 
     if (!tenantId) {
       return { error: "No tenant found" };
@@ -59,8 +60,16 @@ export async function getTenantUsers() {
       throw rolesError;
     }
 
+    // Filter users by facility if current user is facility_admin
+    let filteredRoles = userRoles as any[];
+    if (currentRole?.role === "facility_admin" && currentRole?.facility_id) {
+      filteredRoles = filteredRoles?.filter(
+        (ur: any) => ur.facility_id === currentRole.facility_id
+      );
+    }
+
     // Get facility info for roles that have facility_id
-    const facilityIds = (userRoles as any[])
+    const facilityIds = filteredRoles
       ?.filter((ur: any) => ur.facility_id)
       .map((ur: any) => ur.facility_id) || [];
     
@@ -75,7 +84,7 @@ export async function getTenantUsers() {
     }
 
     // Add facility info to user roles
-    const userRolesWithFacility = (userRoles as any[])?.map((role: any) => ({
+    const userRolesWithFacility = filteredRoles?.map((role: any) => ({
       ...role,
       facility: role.facility_id ? facilitiesMap.get(role.facility_id) : null,
     }));
@@ -86,7 +95,11 @@ export async function getTenantUsers() {
       return { data: [] };
     }
 
-    const { data: usersData, error: usersError } = await supabase
+    // Use service role to bypass RLS for admin queries
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const serviceClient = createServiceClient();
+
+    const { data: usersData, error: usersError } = await serviceClient
       .from("users")
       .select("id, email, name, credentials")
       .in("id", userIds);
@@ -274,8 +287,10 @@ export async function updateUserRole(formData: FormData) {
       };
     }
 
-    // Update user credentials in users table
-    const { error: updateUserError } = await supabase
+    // Update user credentials in users table using service role to bypass RLS
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const serviceClient = createServiceClient();
+    const { error: updateUserError } = await serviceClient
       .from("users")
       .update({ credentials })
       .eq("id", userId);
@@ -473,8 +488,10 @@ export async function acceptInvite(inviteToken: string) {
       return { error: "Invite email does not match user email" };
     }
 
-    // Update user credentials in users table
-    const { error: updateUserError } = await supabase
+    // Update user credentials in users table using service role to bypass RLS
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const serviceClient = createServiceClient();
+    const { error: updateUserError } = await serviceClient
       .from("users")
       .update({ credentials: invite.credentials })
       .eq("id", user.id);

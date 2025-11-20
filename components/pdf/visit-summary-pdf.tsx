@@ -439,6 +439,7 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
             {data.signatures.provider && (
               <View style={styles.signatureContainer}>
                 <Text style={styles.signatureLabel}>Provider Signature</Text>
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image
                   src={data.signatures.provider.signatureData}
                   style={styles.signatureImage}
@@ -457,6 +458,7 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
             {data.signatures.patient && (
               <View style={styles.signatureContainer}>
                 <Text style={styles.signatureLabel}>Patient Signature</Text>
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image
                   src={data.signatures.patient.signatureData}
                   style={styles.signatureImage}

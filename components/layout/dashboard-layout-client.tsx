@@ -39,7 +39,7 @@ export function DashboardLayoutClient({
         <Header user={user} onMobileMenuClick={() => setMobileMenuOpen(true)} />
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto bg-zinc-50 p-4 sm:p-6 dark:bg-zinc-950"
+          className="flex-1 overflow-y-auto bg-zinc-50 px-4 py-4 sm:px-6 sm:py-6 dark:bg-zinc-950"
           role="main"
         >
           {children}

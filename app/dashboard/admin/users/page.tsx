@@ -22,7 +22,7 @@ export default async function AdminUsersPage() {
 
   if (error || !users) {
     return (
-      <div className="p-6">
+      <div>
         <DynamicBreadcrumbs
           customSegments={[
             { label: "Dashboard", href: "/dashboard" },
@@ -38,7 +38,7 @@ export default async function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <DynamicBreadcrumbs
         customSegments={[
           { label: "Dashboard", href: "/dashboard" },

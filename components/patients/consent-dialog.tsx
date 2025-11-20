@@ -100,7 +100,7 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
 
       // Success - refresh to close dialog
       router.refresh();
-    } catch (err) {
+    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setError("Failed to save consent");
       setIsSubmitting(false);
     }
@@ -160,26 +160,27 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
         </div>
 
         <div className="mt-4 space-y-4">
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="agree"
-              checked={agreed}
-              onCheckedChange={(checked) => setAgreed(checked === true)}
-            />
-            <Label
-              htmlFor="agree"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              I have read and understand the consent form above, and I agree to receive wound care
-              treatment
-            </Label>
-          </div>
-
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <p className="text-sm text-amber-800 dark:text-amber-200">
+          <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4">
+            <p className="text-sm text-amber-900 dark:text-amber-100 font-semibold mb-3">
               <strong>Important:</strong> You must review and sign this consent form before
               accessing patient records or scheduling visits.
             </p>
+            
+            <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-md border-2 border-amber-300 dark:border-amber-700">
+              <Checkbox
+                id="agree"
+                checked={agreed}
+                onCheckedChange={(checked) => setAgreed(checked === true)}
+                className="mt-1 h-5 w-5 border-2"
+              />
+              <Label
+                htmlFor="agree"
+                className="text-base font-semibold leading-tight cursor-pointer text-gray-900 dark:text-gray-100"
+              >
+                I have read and understand the consent form above, and I agree to receive wound care
+                treatment
+              </Label>
+            </div>
           </div>
 
           <div className="flex justify-end">

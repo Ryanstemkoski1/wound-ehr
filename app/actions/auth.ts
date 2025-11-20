@@ -139,7 +139,10 @@ export async function login(formData: FormData) {
 
   // Check if user exists in our users table (in case auth user exists but was removed from tenant)
   if (data.user) {
-    const { data: userRecord } = await supabase
+    // Use service role to bypass RLS for user existence check
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const serviceClient = createServiceClient();
+    const { data: userRecord } = await serviceClient
       .from("users")
       .select("id")
       .eq("id", data.user.id)

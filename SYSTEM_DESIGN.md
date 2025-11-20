@@ -1,7 +1,7 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.1  
-> **Date**: November 19, 2025  
+> **Version**: 4.2  
+> **Date**: November 20, 2025  
 > **Status**: ✅ **Approved - Compliance & Workflow Enhancements**
 
 ---
@@ -1684,99 +1684,557 @@ lib/
 
 ---
 
-**9.3: Addendums & Procedure Restrictions (Week 16)** 🔴 **PENDING**
+**9.3: High-Priority Compliance & Client Requirements (Week 16-17)** 🔴 **IN PROGRESS**
 
-This phase addresses remaining compliance requirements:
+**Goal:** Address critical client requirements from November 19, 2025 feedback
 
-**9.3.1: Visit Addendums**
+**Client Requirements Source:** See `CLIENT_REQUIREMENTS_ANALYSIS.md` for detailed gap analysis
+
+---
+
+**9.3.1: Procedure Restrictions by Credential** ✅ **COMPLETED - November 20, 2025**
+
+**Client Need:** RN/LVN cannot perform or document sharp debridement (CPT 11042-11047)
+
+**Status:** Fully implemented and tested. Migration 00018 deployed. RN/LVN users blocked from CPT codes 11042-11047. MD/DO/PA/NP users have full access. Server-side validation enforced. All 9 RLS issues resolved. See `docs/PHASE_9.3.1_COMPLETION.md` for detailed report.
+
+- [x] Create `procedure_scopes` table migration (00018)
+  ```sql
+  CREATE TABLE procedure_scopes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    procedure_code TEXT NOT NULL UNIQUE,
+    procedure_name TEXT NOT NULL,
+    allowed_credentials TEXT[] NOT NULL,
+    category TEXT CHECK (category IN ('debridement', 'wound_care', 'diagnostic', 'preventive')),
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  ```
+- [x] Seed initial procedure scope data (13 procedures total)
+  - [x] Sharp debridement (11042, 11043, 11044, 11045, 11046, 11047): `['MD', 'DO', 'PA', 'NP']` ONLY
+  - [x] Selective debridement (97597, 97598): `['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']` ALL
+  - [x] NPWT (97605, 97606, 97607, 97608): `['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']` ALL
+  - [x] Wound care (97602): `['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']` ALL
+- [x] Create procedure utilities (`lib/procedures.ts`)
+  - [x] `getAllowedProcedures(credentials)` - returns filtered list
+  - [x] `getRestrictedProcedures(credentials)` - list of blocked procedures
+  - [x] `validateBillingCodes(credentials, codes)` - server validation with errors
+  - [x] `checkMultipleProcedures(credentials, codes)` - batch validation
+- [x] Update billing form (`components/billing/billing-form-with-credentials.tsx`)
+  - [x] Filter CPT code dropdown by current user credentials
+  - [x] Warning banner for restricted users
+  - [x] Restricted procedures section showing blocked codes
+  - [x] Visual indicators and color coding
+- [x] Update multi-wound assessment form
+  - [x] Integrated credential-aware billing form
+  - [x] Per-wound billing code selection with restrictions
+- [x] Add server-side validation in billing actions (`app/actions/billing.ts`)
+  - [x] Verify credentials before saving CPT codes
+  - [x] Query procedure_scopes table via RPC
+  - [x] Return error: "Credential restriction: [codes] require [credentials]"
+- [x] Fix all RLS issues (9 locations)
+  - [x] Use service role client for admin operations
+  - [x] Use RPC functions for credential lookups
+  - [x] Prevent Row Level Security errors
+- [x] Test with different credentials (7 test users created)
+  - [x] RN user: Cannot see/select sharp debridement CPT codes ✅
+  - [x] LVN user: Cannot see/select sharp debridement CPT codes ✅
+  - [x] MD user: Can see and select all procedures ✅
+  - [x] PA, DO, NP users: Full access verified ✅
+  - [x] Verify server rejects RN/LVN attempts to submit restricted codes ✅
+
+**Deliverable:** ✅ Credential-based procedure filtering preventing out-of-scope documentation
+
+**Actual Effort:** 5 days (November 15-20, 2025)
+
+---
+
+**9.3.2: Autosave - Client-Side & Server-Side** ⚠️ **HIGH PRIORITY - FIELD USABILITY**
+
+**Client Need:** Prevent data loss during field visits with poor internet connectivity
+
+- [ ] **Client-Side Autosave (localStorage)**
+  - [ ] Create `useAutosave` custom hook
+  - [ ] Auto-save form state to localStorage every 30 seconds
+  - [ ] Key format: `draft_visit_${visitId}_${timestamp}`
+  - [ ] Store: Form fields, wound assessments, photo thumbnails (base64)
+  - [ ] Build draft recovery modal component
+    - [ ] Detect unsaved drafts on page load
+    - [ ] Show "Unsaved Draft Found" modal with timestamp
+    - [ ] Options: "Restore", "Discard", "View Both" (side-by-side comparison)
+  - [ ] Clear localStorage after successful submission
+  - [ ] Add keyboard shortcut: Ctrl+S for manual save
+  
+- [ ] **Server-Side Autosave (Database)**
+  - [ ] Implement auto-submit to server every 2 minutes
+  - [ ] Use visit status='draft' for auto-saved visits
+  - [ ] Optimistic UI updates (instant feedback)
+  - [ ] Toast notification: "Draft saved at [time]"
+  - [ ] Debounce logic to prevent excessive saves
+  
+- [ ] **Save Status Indicator Component**
+  - [ ] Position: Top-right corner of forms
+  - [ ] States: 
+    - Saving (spinner + "Saving...")
+    - Saved (green checkmark + "Last saved: X minutes ago")
+    - Error (red X + "Save failed. Retry?")
+  - [ ] Manual save button next to indicator
+  
+- [ ] **Multi-Wound Assessment Autosave**
+  - [ ] Save current wound when switching to another wound
+  - [ ] Show save indicator per wound in switcher
+  - [ ] Auto-save assessment data on field blur
+  
+- [ ] **Testing**
+  - [ ] Test: Fill form → Refresh browser → Verify recovery modal
+  - [ ] Test: Fill form → Close tab → Reopen → Verify draft restored
+  - [ ] Test: Save draft → Wait 30 sec → Verify localStorage updated
+  - [ ] Test: Server autosave every 2 minutes with network throttling
+  - [ ] Test: Keyboard shortcut Ctrl+S triggers manual save
+
+**Deliverable:** Robust autosave preventing data loss in unreliable network conditions
+
+**Estimated Effort:** 3-4 days
+
+---
+
+**9.3.3: Photo Labeling with Wound Location** ⚠️ **QUICK WIN - PDF ENHANCEMENT**
+
+**Client Need:** Photos in printed visit notes should clearly show which wound they belong to
+
+**Current Implementation:**
+- Photos linked to `wound_id` (which has location field)
+- Photos have optional `caption` field
+- PDF shows wound location in assessment section (not directly on photos)
+
+- [ ] Update PDF visit summary component (`components/pdf/visit-summary-pdf.tsx`)
+  - [ ] Group photos by wound location
+  - [ ] Add wound location header above each photo group
+  - [ ] Format: "Wound Photos - [Location]" (e.g., "Wound Photos - Left Heel")
+  - [ ] Include wound type and onset date in header
+  - [ ] Display: "[Location] - [Type] (Onset: [Date])"
+  
+- [ ] Update photo display logic
+  - [ ] Query wound details when fetching photos
+  - [ ] Include wound.location, wound.wound_type, wound.onset_date
+  - [ ] Sort photos by wound location for consistent ordering
+  
+- [ ] Optional: Add location overlay on photos (future enhancement)
+  - [ ] Use image processing to add text overlay when generating PDF
+  - [ ] Store original (no overlay) + generated (with overlay)
+  
+- [ ] Test PDF exports
+  - [ ] Single wound with multiple photos
+  - [ ] Multiple wounds with photos each
+  - [ ] Verify wound location labels appear correctly
+
+**Deliverable:** Professional PDF reports with clear photo labeling
+
+**Estimated Effort:** 1 day
+
+---
+
+**9.3.4: Upload Scanned Paper Consents** 🔴 **MEDIUM PRIORITY**
+
+**Client Need:** Digitize pre-existing paper consent forms signed before electronic system deployed
+
+- [ ] Update `patient_consents` table migration (00019)
+  ```sql
+  ALTER TABLE patient_consents 
+  ADD COLUMN consent_document_url TEXT,
+  ADD COLUMN consent_document_name TEXT,
+  ADD COLUMN consent_document_size INTEGER;
+  ```
+  
+- [ ] Update `signatures` table to support uploaded documents
+  ```sql
+  ALTER TABLE signatures 
+  DROP CONSTRAINT IF EXISTS signatures_signature_method_check;
+  
+  ALTER TABLE signatures 
+  ADD CONSTRAINT signatures_signature_method_check 
+  CHECK (signature_method IN ('draw', 'type', 'upload'));
+  ```
+  
+- [ ] Update consent dialog component (`components/patients/consent-dialog.tsx`)
+  - [ ] Add tab: "Electronic Signature" vs "Upload Scanned Consent"
+  - [ ] Build file upload component for scanned consents
+  - [ ] Accept: PDF, JPG, PNG (max 10MB)
+  - [ ] Upload to Supabase Storage: `patient-consents/`
+  - [ ] Store file URL in patient_consents table
+  
+- [ ] Create consent document actions (`app/actions/signatures.ts`)
+  - [ ] `uploadScannedConsent(patientId, file, description)`
+  - [ ] Validate file type and size
+  - [ ] Upload to storage
+  - [ ] Create consent + signature records with method='upload'
+  
+- [ ] Update consent display
+  - [ ] Show "View Scanned Document" button if uploaded
+  - [ ] Open PDF viewer modal or download file
+  - [ ] Display upload date and uploader name
+  
+- [ ] Test scenarios
+  - [ ] Upload PDF consent → Verify stored correctly
+  - [ ] Upload image consent → Verify displayed in viewer
+  - [ ] Verify visit creation enabled after upload
+
+**Deliverable:** Support for digitizing legacy paper consent forms
+
+**Estimated Effort:** 1-2 days
+
+---
+
+**9.3.5: Visit Addendums** 🔴 **MEDIUM PRIORITY**
+
+**Client Need:** Add post-signature notes without modifying original visit
+
 - [ ] Build addendum creation UI
   - [ ] "Add Addendum" button on signed/submitted visits
-  - [ ] Addendum editor with timestamp and author
-  - [ ] Cannot modify original visit content
+  - [ ] Addendum editor modal with rich text
+  - [ ] Timestamp and author automatically captured
+  - [ ] Cannot modify original visit content (read-only)
+  
 - [ ] Create addendum storage
-  - [ ] Store as wound_notes with visit_id reference
-  - [ ] Track addendum count on visit record
-  - [ ] Display addendums chronologically
-- [ ] Update PDF exports to include addendums
+  - [ ] Use existing `wound_notes` table with visit_id reference
+  - [ ] Add `note_type` field: 'wound_note' vs 'addendum'
+  - [ ] Track addendum count on visit record (visits.addendum_count)
+  - [ ] Display addendums chronologically below visit
+  
+- [ ] Update visit actions (`app/actions/visits.ts`)
+  - [ ] `createAddendum(visitId, content)` server action
+  - [ ] Increment visits.addendum_count
+  - [ ] Create wound_note with type='addendum'
+  
+- [ ] Update PDF exports
+  - [ ] Include addendums section at end of visit summary
+  - [ ] Format: "Addendum [#] - [Date] by [Author]"
+  - [ ] Show full addendum content
+  
+- [ ] Test workflow
+  - [ ] Sign visit → Add addendum → Verify saved
+  - [ ] Submit visit → Add addendum → Verify allowed
+  - [ ] Verify original visit remains read-only
+  - [ ] Export PDF → Verify addendum included
 
-**9.3.2: Procedure Restrictions by Credential**
-- [ ] Create procedure_scopes table
-  - [ ] Map CPT codes to allowed credentials
-  - [ ] RN/LVN: Cannot document sharp debridement (CPT 11042-11044)
-  - [ ] MD/DO/PA/NP: Full access to all procedures
-- [ ] Update billing form to filter by credentials
-  - [ ] Query user credentials
-  - [ ] Filter CPT code list based on procedure_scopes
-  - [ ] Show "Restricted" label for unavailable codes
-- [ ] Server-side validation in billing actions
-  - [ ] Verify credentials before saving CPT codes
-  - [ ] Return error if restricted procedure attempted
+**Deliverable:** Post-signature addendum capability
 
-**9.3.3: Printing Enhancements**
-- [x] Add clinician signature to PDF components (COMPLETED)
-  - [x] Updated components/pdf/visit-summary-pdf.tsx
-  - [x] Updated components/pdf/wound-progress-pdf.tsx
-  - [x] Format: "Documented by: [Name], [Credentials]"
-  - [x] Signature images included in exports
-- [ ] Add user preference for photo printing
-  - [ ] Create user_preferences table or JSON field
-  - [ ] Add "Include wound photos" toggle in settings
-  - [ ] Build user settings page
-  - [ ] Respect preference in PDF generation
+**Estimated Effort:** 2-3 days
 
-**9.3.4: Signature Audit Logs**
+---
+
+**9.3.6: Signature Audit Logs** 🔴 **LOW PRIORITY**
+
 - [ ] Build signature audit trail UI
   - [ ] List all signatures for a visit
   - [ ] Display: signer, role, timestamp, IP address, method
   - [ ] Admin-only access
+  
 - [ ] Add signature history to visit detail page
   - [ ] Collapsible section "Signature History"
   - [ ] Show consent, patient, and provider signatures
+  - [ ] Timeline view with icons
 
-**Deliverable:** Addendums, procedure restrictions, audit logs, and print preferences
+**Deliverable:** Compliance audit trail for signatures
 
-**Deliverable:** Professional printed reports with clinician attribution
+**Estimated Effort:** 1 day
 
 ---
 
-**9.4: Procedure Scope Restrictions (Week 16, Days 4-5)**
+**Phase 9.3 Summary:**
+- **Total Estimated Effort:** 12-17 days (2.5-3.5 weeks)
+- **Critical Path:** Procedure restrictions (legal) → Autosave (usability) → Photo labeling (quick win)
+- **Nice-to-Have:** Upload consents, Addendums, Audit logs (can be deferred)
 
-- [ ] Create `procedure_scopes` table migration
-  - [ ] Fields: procedure_code, procedure_name, allowed_credentials[], category, description
-  - [ ] Seed with initial data (awaiting RN/LVN templates from Alvin's team)
-- [ ] Create procedure utilities (lib/procedures.ts)
-  - [ ] `getAllowedProcedures(credentials)` - returns filtered procedure list
-  - [ ] `canPerformProcedure(credentials, code)` - validation function
-  - [ ] `getProceduresByCategory(credentials, category)` - grouped procedures
-- [ ] Seed procedure scope data
-  - [ ] Sharp debridement (11042, 11043, 11044): ['MD', 'DO', 'PA', 'NP']
-  - [ ] Selective debridement (97597, 97598): ['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']
-  - [ ] NPWT (97605, 97606): ['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']
-  - [ ] Wound care (97602): ['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']
-- [ ] Update treatment form (components/treatments/treatment-form.tsx)
-  - [ ] Filter procedures by current user credentials
-  - [ ] Show restricted procedures as disabled with tooltip
-- [ ] Update billing form (components/billing/billing-form.tsx)
-  - [ ] Filter CPT codes by credentials
-  - [ ] Server-side validation on submission
-- [ ] Update assessment form (components/assessments/assessment-form.tsx)
-  - [ ] Hide sharp debridement options for RN/LVN
-  - [ ] Show only "Selective debridement" and "No debridement" for RN/LVN
-  - [ ] Show all debridement types for MD/DO/PA/NP
-- [ ] Add server-side validation in visit actions
-  - [ ] Reject if user tries to submit procedure outside scope
-  - [ ] Return clear error message
-- [ ] Build admin page for procedure scope management (app/dashboard/admin/procedures/page.tsx)
-  - [ ] Only accessible by tenant admins
-  - [ ] CRUD for procedure scopes
-  - [ ] Bulk import from RN/LVN templates
-- [ ] Test with different credentials
-  - [ ] RN user: Cannot see sharp debridement codes
-  - [ ] LVN user: Cannot see sharp debridement codes
-  - [ ] MD user: Can see all procedures
-  - [ ] Verify server-side validation rejects unauthorized procedures
+---
 
-**Deliverable:** Credential-based procedure filtering preventing out-of-scope documentation
+**9.4: Document Management & Advanced Features (Week 18-20)** 🔴 **FUTURE PHASE**
+
+**Goal:** Patient document repository and specialized assessment types
+
+---
+
+**9.4.1: Patient Document Attachments** 🔴 **HIGH VALUE**
+
+**Client Need:** Central document repository for consents, face sheets, labs, radiology reports
+
+- [ ] Create `patient_documents` table migration (00020)
+  ```sql
+  CREATE TABLE patient_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+    document_type TEXT NOT NULL CHECK (document_type IN (
+      'consent', 'face_sheet', 'lab_report', 'radiology', 
+      'insurance', 'prescription', 'other'
+    )),
+    file_name TEXT NOT NULL,
+    file_url TEXT NOT NULL,
+    file_size INTEGER,
+    mime_type TEXT,
+    thumbnail_url TEXT,
+    description TEXT,
+    uploaded_by UUID NOT NULL REFERENCES auth.users(id),
+    visit_id UUID REFERENCES visits(id),
+    uploaded_at TIMESTAMPTZ DEFAULT NOW(),
+    tags TEXT[],
+    is_archived BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  
+  CREATE INDEX idx_patient_documents_patient_id ON patient_documents(patient_id);
+  CREATE INDEX idx_patient_documents_type ON patient_documents(document_type);
+  CREATE INDEX idx_patient_documents_visit_id ON patient_documents(visit_id);
+  ```
+
+- [ ] Set up Supabase Storage bucket: `patient-documents/`
+  - [ ] Folder structure: `{patient_id}/{document_type}/`
+  - [ ] RLS policies for document access
+  - [ ] Max file size: 25MB per document
+
+- [ ] Create document actions (`app/actions/documents.ts`)
+  - [ ] `uploadDocument(patientId, file, documentType, description, visitId?)`
+  - [ ] `getPatientDocuments(patientId, documentType?)`
+  - [ ] `deleteDocument(documentId)`
+  - [ ] `archiveDocument(documentId)`
+  - [ ] `downloadDocument(documentId)` - generates signed URL
+
+- [ ] Build Documents tab component (`components/patients/documents-tab.tsx`)
+  - [ ] Tab on patient detail page: "Documents"
+  - [ ] Folder view: Group by document type
+  - [ ] Grid view with thumbnails (for images/PDFs)
+  - [ ] List view with file details (name, size, date, uploader)
+  - [ ] Upload button with drag-and-drop support
+  - [ ] Multi-file upload capability
+  - [ ] Search/filter by type, date, name
+  - [ ] Sort by: date uploaded, file name, file size
+
+- [ ] Build document viewer modal (`components/patients/document-viewer.tsx`)
+  - [ ] PDF viewer (embedded)
+  - [ ] Image viewer (lightbox)
+  - [ ] Download button
+  - [ ] Archive/delete actions
+  - [ ] Edit description/tags
+
+- [ ] Add document quick actions
+  - [ ] Upload from visit page (link document to visit)
+  - [ ] Bulk download (ZIP multiple documents)
+  - [ ] Share document (generate temporary link)
+
+- [ ] Test scenarios
+  - [ ] Upload PDF face sheet → Verify stored and viewable
+  - [ ] Upload multiple lab reports → Verify organized by type
+  - [ ] Search for radiology report → Verify filtering works
+  - [ ] Delete document → Verify removed from storage
+  - [ ] Download document → Verify signed URL works
+
+**Deliverable:** Full document management system for patient records
+
+**Estimated Effort:** 5-7 days
+
+---
+
+**9.4.2: RN/LVN Shorthand Note Template** 🔴 **AWAITING CLIENT INPUT**
+
+**Client Need:** Simplified assessment form for RN/LVN with fewer fields (template from Alana)
+
+**Prerequisites:** Waiting for Alana to send RN/LVN template document
+
+- [ ] Create `visit_templates` table migration (00021)
+  ```sql
+  CREATE TABLE visit_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    template_name TEXT NOT NULL UNIQUE,
+    template_type TEXT NOT NULL CHECK (template_type IN (
+      'wound_care', 'rn_shorthand', 'md_comprehensive', 
+      'grafting', 'skin_sweep', 'gtube'
+    )),
+    allowed_credentials TEXT[] NOT NULL,
+    form_fields JSONB NOT NULL, -- Dynamic field configuration
+    default_values JSONB,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  ```
+
+- [ ] Add `visit_template` field to visits table
+  ```sql
+  ALTER TABLE visits ADD COLUMN visit_template TEXT DEFAULT 'wound_care';
+  ```
+
+- [ ] Build dynamic form system
+  - [ ] Create form field renderer based on JSONB config
+  - [ ] Support field types: text, number, select, checkbox, radio, textarea
+  - [ ] Conditional field visibility based on previous answers
+  - [ ] Field validation rules from template config
+
+- [ ] Create template builder UI (`app/dashboard/admin/templates/page.tsx`)
+  - [ ] Admin-only access
+  - [ ] Visual form builder
+  - [ ] Drag-and-drop field ordering
+  - [ ] Field configuration panel
+  - [ ] Preview mode
+  - [ ] Import/export templates (JSON)
+
+- [ ] Build RN/LVN shorthand template (based on Alana's input)
+  - [ ] Simplified wound assessment
+  - [ ] Dressing change checklist
+  - [ ] G-tube care fields
+  - [ ] Quick treatment options
+  - [ ] Pre-filled common values
+
+- [ ] Update visit creation workflow
+  - [ ] Template selector based on user credentials
+  - [ ] RN/LVN: Show "Shorthand" and "Full Assessment" options
+  - [ ] MD/DO/PA/NP: Show "Comprehensive Assessment"
+  - [ ] Load appropriate form based on selection
+
+- [ ] Test with different templates
+  - [ ] RN user selects shorthand template → Form renders correctly
+  - [ ] MD user sees comprehensive template → All fields available
+  - [ ] Template switch mid-visit → Data preserved
+
+**Deliverable:** Credential-based dynamic assessment templates
+
+**Estimated Effort:** 5-7 days (after receiving template from Alana)
+
+---
+
+**9.4.3: Specialized Assessment Types** 🔴 **VERY COMPLEX - FUTURE**
+
+**Client Need:** Different assessment forms for Grafting, Skin Sweep, G-tube care
+
+- [ ] Create specialized assessment tables (migration 00022)
+  ```sql
+  -- Add assessment_type to assessments table
+  ALTER TABLE assessments 
+  ADD COLUMN assessment_type TEXT DEFAULT 'wound_care'
+  CHECK (assessment_type IN ('wound_care', 'grafting', 'skin_sweep', 'gtube'));
+  
+  -- Grafting assessments
+  CREATE TABLE grafting_assessments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assessment_id UUID NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
+    graft_type TEXT NOT NULL CHECK (graft_type IN (
+      'split_thickness', 'full_thickness', 'dermal_substitute', 
+      'skin_substitute', 'acellular_matrix'
+    )),
+    graft_location TEXT NOT NULL,
+    graft_size_length NUMERIC(5,2),
+    graft_size_width NUMERIC(5,2),
+    donor_site TEXT,
+    donor_site_condition TEXT,
+    fixation_method TEXT CHECK (fixation_method IN (
+      'sutures', 'staples', 'steri_strips', 'tissue_glue', 'bolster'
+    )),
+    graft_adherence_percent INTEGER CHECK (graft_adherence_percent BETWEEN 0 AND 100),
+    signs_of_rejection BOOLEAN DEFAULT false,
+    postop_day INTEGER,
+    dressing_type TEXT,
+    postop_instructions TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  
+  -- G-tube assessments
+  CREATE TABLE gtube_assessments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assessment_id UUID NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
+    tube_type TEXT NOT NULL CHECK (tube_type IN (
+      'PEG', 'PEJ', 'G-J', 'low_profile', 'long_tube'
+    )),
+    tube_size TEXT,
+    insertion_site_condition TEXT CHECK (insertion_site_condition IN (
+      'intact', 'erythema', 'drainage', 'granulation', 'infection'
+    )),
+    drainage_amount TEXT CHECK (drainage_amount IN ('none', 'scant', 'moderate', 'large')),
+    drainage_type TEXT,
+    signs_infection BOOLEAN DEFAULT false,
+    granulation_tissue BOOLEAN DEFAULT false,
+    tube_patency TEXT CHECK (tube_patency IN ('patent', 'partial_obstruction', 'obstructed')),
+    tube_migration BOOLEAN DEFAULT false,
+    flushing_performed BOOLEAN DEFAULT false,
+    flush_volume_ml INTEGER,
+    feeding_tolerance TEXT CHECK (feeding_tolerance IN (
+      'tolerating_well', 'nausea', 'vomiting', 'residual', 'diarrhea'
+    )),
+    residual_volume_ml INTEGER,
+    skin_care_performed BOOLEAN DEFAULT false,
+    education_provided TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  
+  -- Skin sweep assessments
+  CREATE TABLE skin_sweep_assessments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    visit_id UUID NOT NULL REFERENCES visits(id) ON DELETE CASCADE,
+    body_areas_inspected TEXT[] NOT NULL,
+    total_wounds_found INTEGER DEFAULT 0,
+    new_wounds_documented INTEGER DEFAULT 0,
+    at_risk_areas TEXT[],
+    skin_condition_overall TEXT CHECK (skin_condition_overall IN (
+      'intact', 'dry', 'fragile', 'edematous', 'compromised'
+    )),
+    prevention_measures JSONB,
+    equipment_recommendations JSONB,
+    education_topics TEXT[],
+    follow_up_needed BOOLEAN DEFAULT false,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  
+  CREATE INDEX idx_grafting_assessments_assessment_id ON grafting_assessments(assessment_id);
+  CREATE INDEX idx_gtube_assessments_assessment_id ON gtube_assessments(assessment_id);
+  CREATE INDEX idx_skin_sweep_assessments_visit_id ON skin_sweep_assessments(visit_id);
+  ```
+
+- [ ] Build assessment type selector
+  - [ ] At visit creation: Choose assessment type
+  - [ ] Options: Wound Care, Grafting, Skin Sweep, G-tube
+  - [ ] Credential-based filtering (if needed)
+
+- [ ] Build specialized forms
+  - [ ] Grafting assessment form (`components/assessments/grafting-assessment-form.tsx`)
+    - Graft details, donor site, fixation, adherence
+    - Photos: graft site + donor site
+    - Post-op care instructions
+  
+  - [ ] G-tube assessment form (`components/assessments/gtube-assessment-form.tsx`)
+    - Tube details, site condition, patency
+    - Feeding tolerance, residual checks
+    - Education provided
+  
+  - [ ] Skin sweep form (`components/assessments/skin-sweep-form.tsx`)
+    - Body area checklist (head, trunk, arms, legs)
+    - Quick wound documentation for multiple wounds
+    - Prevention recommendations
+    - At-risk area identification
+
+- [ ] Build specialized PDF templates
+  - [ ] Grafting note PDF
+  - [ ] G-tube care note PDF  
+  - [ ] Skin sweep summary PDF
+
+- [ ] Update visit workflow
+  - [ ] Assessment type determines form shown
+  - [ ] Can mix assessment types in one visit (wound care + g-tube)
+  - [ ] Signature workflow remains the same
+
+- [ ] Test each assessment type
+  - [ ] Create grafting assessment → Verify all fields saved
+  - [ ] Create g-tube assessment → Verify calculations correct
+  - [ ] Create skin sweep → Verify multiple wounds captured
+  - [ ] Export PDFs → Verify specialized formatting
+
+**Deliverable:** Complete specialized assessment system
+
+**Estimated Effort:** 10-14 days (very complex, multiple forms)
+
+---
+
+**Phase 9.4 Summary:**
+- **Total Estimated Effort:** 20-28 days (4-6 weeks)
+- **Prerequisites:** Alana's RN/LVN template (for 9.4.2)
+- **Complexity:** High - requires dynamic form system and specialized workflows
+- **Priority:** Lower than Phase 9.3 critical compliance features
 
 ---
 

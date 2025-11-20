@@ -36,6 +36,9 @@ export const COMMON_CPT_CODES = [
   { code: "11042", description: "Debridement, skin and subcutaneous tissue" },
   { code: "11043", description: "Debridement, muscle and/or fascia" },
   { code: "11044", description: "Debridement, bone" },
+  { code: "11045", description: "Debridement, subcutaneous tissue (each additional 20 sq cm)" },
+  { code: "11046", description: "Debridement, muscle/fascia (each additional 20 sq cm)" },
+  { code: "11047", description: "Debridement, bone (each additional 20 sq cm)" },
   { code: "97597", description: "Debridement, open wound, ≤20 sq cm" },
   {
     code: "97598",

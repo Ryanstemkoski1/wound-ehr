@@ -24,10 +24,8 @@ import {
   Clock,
   MapPin,
   User,
-  FileText,
   Edit,
   Trash2,
-  CheckCircle2,
   Building2,
 } from "lucide-react";
 import { CalendarEvent } from "@/app/actions/calendar";
