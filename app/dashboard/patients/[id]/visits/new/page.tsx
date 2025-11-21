@@ -81,6 +81,7 @@ export default async function NewVisitPage({ params }: PageProps) {
       </div>
       <VisitForm
         patientId={patientId}
+        userId={user.id}
         userCredentials={userCredentials}
         allowedCPTCodes={allowedCPTCodes}
         restrictedCPTCodes={restrictedCPTCodes}

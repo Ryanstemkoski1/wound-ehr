@@ -40,6 +40,9 @@ type WoundProgressData = {
     photos: Array<{
       url: string;
       caption: string | null;
+      woundNumber?: string;
+      woundLocation?: string;
+      woundType?: string;
     }>;
   }>;
 };
@@ -380,6 +383,34 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
                         .slice(0, 2)
                         .map((photo, photoIndex) => (
                           <View key={photoIndex} style={{ width: "48%" }}>
+                            {/* Wound Label */}
+                            {(photo.woundNumber || photo.woundLocation) && (
+                              <Text
+                                style={{
+                                  fontSize: 9,
+                                  fontWeight: "bold",
+                                  color: "#0d9488",
+                                  marginBottom: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {photo.woundNumber && `Wound #${photo.woundNumber}`}
+                                {photo.woundNumber && photo.woundLocation && " - "}
+                                {photo.woundLocation}
+                              </Text>
+                            )}
+                            {photo.woundType && (
+                              <Text
+                                style={{
+                                  fontSize: 8,
+                                  color: "#64748b",
+                                  marginBottom: 4,
+                                  textAlign: "center",
+                                }}
+                              >
+                                ({photo.woundType})
+                              </Text>
+                            )}
                             {/* eslint-disable-next-line jsx-a11y/alt-text */}
                             <Image src={photo.url} style={styles.photo} />
                             {photo.caption && (

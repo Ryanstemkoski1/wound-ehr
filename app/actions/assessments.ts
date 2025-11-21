@@ -192,37 +192,41 @@ export async function createAssessment(formData: FormData) {
       }
     }
 
-    // Create assessment
-    const { error: createError } = await supabase.from("assessments").insert({
-      visit_id: validated.visitId,
-      wound_id: validated.woundId,
-      wound_type: validated.woundType || null,
-      pressure_stage: validated.pressureStage || null,
-      healing_status: validated.healingStatus || null,
-      at_risk_reopening: validated.atRiskReopening || null,
-      length: validated.length ? parseFloat(validated.length) : null,
-      width: validated.width ? parseFloat(validated.width) : null,
-      depth: validated.depth ? parseFloat(validated.depth) : null,
-      area,
-      undermining: validated.undermining || null,
-      tunneling: validated.tunneling || null,
-      epithelial_percent: validated.epithelialPercent
-        ? parseInt(validated.epithelialPercent)
-        : null,
-      granulation_percent: validated.granulationPercent
-        ? parseInt(validated.granulationPercent)
-        : null,
-      slough_percent: validated.sloughPercent
-        ? parseInt(validated.sloughPercent)
-        : null,
-      exudate_amount: validated.exudateAmount || null,
-      exudate_type: validated.exudateType || null,
-      odor: validated.odor || null,
-      periwound_condition: validated.periwoundCondition || null,
-      pain_level: validated.painLevel ? parseInt(validated.painLevel) : null,
-      infection_signs: infectionSigns,
-      assessment_notes: validated.assessmentNotes || null,
-    });
+    // Create assessment and return ID
+    const { data: newAssessment, error: createError } = await supabase
+      .from("assessments")
+      .insert({
+        visit_id: validated.visitId,
+        wound_id: validated.woundId,
+        wound_type: validated.woundType || null,
+        pressure_stage: validated.pressureStage || null,
+        healing_status: validated.healingStatus || null,
+        at_risk_reopening: validated.atRiskReopening || null,
+        length: validated.length ? parseFloat(validated.length) : null,
+        width: validated.width ? parseFloat(validated.width) : null,
+        depth: validated.depth ? parseFloat(validated.depth) : null,
+        area,
+        undermining: validated.undermining || null,
+        tunneling: validated.tunneling || null,
+        epithelial_percent: validated.epithelialPercent
+          ? parseInt(validated.epithelialPercent)
+          : null,
+        granulation_percent: validated.granulationPercent
+          ? parseInt(validated.granulationPercent)
+          : null,
+        slough_percent: validated.sloughPercent
+          ? parseInt(validated.sloughPercent)
+          : null,
+        exudate_amount: validated.exudateAmount || null,
+        exudate_type: validated.exudateType || null,
+        odor: validated.odor || null,
+        periwound_condition: validated.periwoundCondition || null,
+        pain_level: validated.painLevel ? parseInt(validated.painLevel) : null,
+        infection_signs: infectionSigns,
+        assessment_notes: validated.assessmentNotes || null,
+      })
+      .select("id")
+      .single();
 
     if (createError) throw createError;
 
@@ -231,7 +235,7 @@ export async function createAssessment(formData: FormData) {
     revalidatePath(
       `/dashboard/patients/${visit.patient_id}/visits/${validated.visitId}`
     );
-    return { success: true };
+    return { success: true, assessmentId: newAssessment?.id };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { error: error.issues[0].message };
@@ -432,5 +436,86 @@ export async function deleteAssessment(assessmentId: string) {
   } catch (error) {
     console.error("Failed to delete assessment:", error);
     return { error: "Failed to delete assessment" };
+  }
+}
+
+// Server-side autosave for assessment drafts
+// Phase 9.3.2: Prevent data loss with automatic draft saving
+export async function autosaveAssessmentDraft(
+  assessmentId: string | null,
+  woundId: string,
+  visitId: string,
+  formData: Record<string, unknown>
+): Promise<{ success: boolean; assessmentId?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const assessmentData = {
+      wound_type: (formData.woundType as string) || null,
+      pressure_stage: (formData.pressureStage as string) || null,
+      healing_status: (formData.healingStatus as string) || null,
+      at_risk_reopening: (formData.atRiskReopening as boolean) || false,
+      length: formData.length ? parseFloat(formData.length as string) : null,
+      width: formData.width ? parseFloat(formData.width as string) : null,
+      depth: formData.depth ? parseFloat(formData.depth as string) : null,
+      undermining: (formData.undermining as string) || null,
+      tunneling: (formData.tunneling as string) || null,
+      epithelial_percent: formData.epithelialPercent
+        ? parseInt(formData.epithelialPercent as string)
+        : null,
+      granulation_percent: formData.granulationPercent
+        ? parseInt(formData.granulationPercent as string)
+        : null,
+      slough_percent: formData.sloughPercent
+        ? parseInt(formData.sloughPercent as string)
+        : null,
+      exudate_amount: (formData.exudateAmount as string) || null,
+      exudate_type: (formData.exudateType as string) || null,
+      odor: (formData.odor as string) || null,
+      periwound_condition: (formData.periwoundCondition as string) || null,
+      pain_level: formData.painLevel ? parseInt(formData.painLevel as string) : null,
+      infection_signs:
+        formData.infectionSigns && Array.isArray(formData.infectionSigns)
+          ? formData.infectionSigns
+          : [],
+      assessment_notes: (formData.assessmentNotes as string) || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    // If assessmentId exists, update the draft
+    if (assessmentId) {
+      const { error } = await supabase
+        .from("assessments")
+        .update(assessmentData)
+        .eq("id", assessmentId);
+
+      if (error) throw error;
+      return { success: true, assessmentId };
+    } else {
+      // Create a new draft assessment
+      const { data, error } = await supabase
+        .from("assessments")
+        .insert({
+          visit_id: visitId,
+          wound_id: woundId,
+          ...assessmentData,
+          created_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+      return { success: true, assessmentId: data.id };
+    }
+  } catch (error) {
+    console.error("Autosave assessment draft failed:", error);
+    return { success: false, error: "Autosave failed" };
   }
 }

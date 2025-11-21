@@ -64,18 +64,22 @@ export async function getPatientDataForPDF(patientId: string) {
           .order("created_at", { ascending: false })
           .limit(5);
 
-        // Get latest photo for each wound
-        const { data: photos } = await supabase
-          .from("photos")
-          .select("url, uploaded_at")
-          .eq("wound_id", wound.id)
-          .order("uploaded_at", { ascending: false })
-          .limit(1);
+        // Get latest photo from most recent assessment
+        let latestPhoto = null;
+        if (assessments && assessments.length > 0) {
+          const { data: photos } = await supabase
+            .from("photos")
+            .select("url, uploaded_at")
+            .eq("assessment_id", assessments[0].id)
+            .order("uploaded_at", { ascending: false })
+            .limit(1);
+          latestPhoto = photos && photos.length > 0 ? photos[0].url : null;
+        }
 
         return {
           ...wound,
           assessments: assessments || [],
-          latestPhoto: photos && photos.length > 0 ? photos[0].url : null,
+          latestPhoto,
         };
       })
     );
@@ -387,7 +391,8 @@ export async function getWoundDataForPDF(woundId: string) {
 
     if (assessmentsError) throw assessmentsError;
 
-    // Fetch photos for each assessment (limit 2 per assessment)
+    // Fetch photos for each assessment
+    // Photos are now uploaded during assessment creation and linked via assessment_id
     const assessmentsWithPhotos = await Promise.all(
       (assessments || []).map(async (assessment) => {
         const { data: photos } = await supabase
@@ -436,9 +441,15 @@ export async function getWoundDataForPDF(woundId: string) {
           healingStatus: assessment.healing_status,
           treatmentplan: assessment.assessment_notes,
           photos: assessment.photos.map(
-            (photo: { url: string; caption: string | null }) => ({
+            (photo: {
+              url: string;
+              caption: string | null;
+            }) => ({
               url: photo.url,
               caption: photo.caption,
+              woundNumber: wound.wound_number,
+              woundLocation: wound.location,
+              woundType: wound.wound_type,
             })
           ),
         })),

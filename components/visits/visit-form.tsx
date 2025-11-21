@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createVisit, updateVisit } from "@/app/actions/visits";
+import { createVisit, updateVisit, autosaveVisitDraft } from "@/app/actions/visits";
 import {
   createBilling,
   updateBilling,
@@ -25,9 +25,14 @@ import BillingFormWithCredentials, {
 } from "@/components/billing/billing-form-with-credentials";
 import type { Credentials } from "@/lib/credentials";
 import { toast } from "sonner";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import AutosaveIndicator from "@/components/ui/autosave-indicator";
+import AutosaveRecoveryModal from "@/components/ui/autosave-recovery-modal";
+import { hasRecentAutosave } from "@/lib/autosave";
 
 type VisitFormProps = {
   patientId: string;
+  userId: string; // Added for autosave
   userCredentials: Credentials | null;
   allowedCPTCodes: string[];
   restrictedCPTCodes: Array<{
@@ -50,8 +55,21 @@ type VisitFormProps = {
   onSuccess?: () => void;
 };
 
+type VisitFormData = {
+  visitDate: string;
+  visitType: string;
+  location: string;
+  followUpType: string;
+  followUpDate: string;
+  followUpNotes: string;
+  additionalNotes: string;
+  timeSpent: boolean;
+  billingData: BillingFormData;
+};
+
 export default function VisitForm({
   patientId,
+  userId,
   userCredentials,
   allowedCPTCodes,
   restrictedCPTCodes,
@@ -61,10 +79,23 @@ export default function VisitForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [visitDate, setVisitDate] = useState(
+    visit?.visitDate
+      ? new Date(visit.visitDate).toISOString().slice(0, 16)
+      : ""
+  );
   const [visitType, setVisitType] = useState(visit?.visitType || "");
+  const [location, setLocation] = useState(visit?.location || "");
   const [status, setStatus] = useState(visit?.status || "scheduled");
   const [timeSpent, setTimeSpent] = useState(visit?.timeSpent || false);
   const [followUpType, setFollowUpType] = useState(visit?.followUpType || "");
+  const [followUpDate, setFollowUpDate] = useState(
+    visit?.followUpDate
+      ? new Date(visit.followUpDate).toISOString().split("T")[0]
+      : ""
+  );
+  const [followUpNotes, setFollowUpNotes] = useState(visit?.followUpNotes || "");
+  const [additionalNotes, setAdditionalNotes] = useState(visit?.additionalNotes || "");
   const [billingData, setBillingData] = useState<BillingFormData>({
     cptCodes: [],
     icd10Codes: [],
@@ -75,6 +106,112 @@ export default function VisitForm({
   const [existingBillingId, setExistingBillingId] = useState<string | null>(
     null
   );
+
+  // Autosave state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<"saving" | "saved" | "error" | "idle">("idle");
+  const [lastSavedTime, setLastSavedTime] = useState<string>("");
+
+  // Prepare form data for autosave
+  const formData: VisitFormData = {
+    visitDate,
+    visitType,
+    location,
+    followUpType,
+    followUpDate,
+    followUpNotes,
+    additionalNotes,
+    timeSpent,
+    billingData,
+  };
+
+  // Client-side autosave hook (localStorage)
+  const { loadSavedData, clearSavedData } = useAutosave({
+    formType: "visit",
+    entityId: visit?.id || patientId,
+    userId,
+    data: formData,
+    interval: 30000, // 30 seconds
+    enabled: !visit || visit.status === "draft", // Only autosave for new visits or drafts
+    onSave: () => {
+      setAutosaveStatus("saved");
+      setLastSavedTime("just now");
+    },
+  });
+
+  // Check for autosaved data on mount
+  useEffect(() => {
+    const autosaveKey = `wound-ehr-autosave-visit-${visit?.id || patientId}-${userId}`;
+    if (hasRecentAutosave(autosaveKey) && !visit) {
+      const { data, timestamp } = loadSavedData();
+      if (data && timestamp) {
+        setShowRecoveryModal(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore autosaved data
+  const handleRestoreAutosave = () => {
+    const { data } = loadSavedData();
+    if (data) {
+      setVisitDate(data.visitDate || "");
+      setVisitType(data.visitType || "");
+      setLocation(data.location || "");
+      setFollowUpType(data.followUpType || "");
+      setFollowUpDate(data.followUpDate || "");
+      setFollowUpNotes(data.followUpNotes || "");
+      setAdditionalNotes(data.additionalNotes || "");
+      setTimeSpent(data.timeSpent || false);
+      setBillingData(data.billingData || {
+        cptCodes: [],
+        icd10Codes: [],
+        modifiers: [],
+        timeSpent: false,
+        notes: "",
+      });
+      toast.success("Restored unsaved data");
+    }
+    setShowRecoveryModal(false);
+  };
+
+  // Discard autosaved data
+  const handleDiscardAutosave = () => {
+    clearSavedData();
+    setShowRecoveryModal(false);
+    toast.info("Starting fresh");
+  };
+
+  // Server-side autosave (every 2 minutes for drafts)
+  useEffect(() => {
+    if (!visit || visit.status !== "draft") return;
+
+    const interval = setInterval(async () => {
+      if (!visitDate || !visitType) return; // Skip if required fields are empty
+
+      setAutosaveStatus("saving");
+      const result = await autosaveVisitDraft(visit.id, {
+        patientId,
+        visitDate,
+        visitType,
+        location,
+        followUpType,
+        followUpDate,
+        followUpNotes,
+        timeSpent,
+        additionalNotes,
+      });
+
+      if (result.success) {
+        setAutosaveStatus("saved");
+        setLastSavedTime("just now");
+      } else {
+        setAutosaveStatus("error");
+      }
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(interval);
+  }, [visit, visitDate, visitType, location, followUpType, followUpDate, followUpNotes, timeSpent, additionalNotes, patientId]);
 
   // Load existing billing data if editing a visit
   useEffect(() => {
@@ -108,26 +245,37 @@ export default function VisitForm({
     setError("");
 
     // Validate required fields
-    if (!visitType) {
-      setError("Please select a visit type");
+    if (!visitType || !visitDate) {
+      setError("Please fill in all required fields");
       setIsSubmitting(false);
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
-    formData.append("patientId", patientId);
-    formData.append("visitType", visitType);
-    formData.append("timeSpent", timeSpent.toString());
+    const submitFormData = new FormData();
+    submitFormData.append("patientId", patientId);
+    submitFormData.append("visitDate", visitDate);
+    submitFormData.append("visitType", visitType);
+    submitFormData.append("location", location);
+    submitFormData.append("timeSpent", timeSpent.toString());
     if (followUpType) {
-      formData.append("followUpType", followUpType);
+      submitFormData.append("followUpType", followUpType);
+    }
+    if (followUpDate) {
+      submitFormData.append("followUpDate", followUpDate);
+    }
+    if (followUpNotes) {
+      submitFormData.append("followUpNotes", followUpNotes);
+    }
+    if (additionalNotes) {
+      submitFormData.append("additionalNotes", additionalNotes);
     }
     if (visit) {
-      formData.append("status", status);
+      submitFormData.append("status", status);
     }
 
     const result = visit
-      ? await updateVisit(visit.id, formData)
-      : await createVisit(formData);
+      ? await updateVisit(visit.id, submitFormData)
+      : await createVisit(submitFormData);
 
     if (!result.success) {
       setError(result.error);
@@ -145,6 +293,9 @@ export default function VisitForm({
         });
 
     if (billingResult.success) {
+      // Clear autosaved data on successful submission
+      clearSavedData();
+      
       toast.success(
         visit ? "Visit updated successfully" : "Visit created successfully"
       );
@@ -162,52 +313,68 @@ export default function VisitForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </div>
-      )}
+    <>
+      {/* Recovery Modal */}
+      <AutosaveRecoveryModal
+        isOpen={showRecoveryModal}
+        onRestore={handleRestoreAutosave}
+        onDiscard={handleDiscardAutosave}
+        timestamp={loadSavedData().timestamp || ""}
+        formType="visit"
+      />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Autosave Indicator */}
+        {(!visit || visit.status === "draft") && (
+          <div className="flex justify-end">
+            <AutosaveIndicator
+              status={autosaveStatus}
+              lastSaved={lastSavedTime}
+            />
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="visitDate">Visit Date & Time</Label>
+            <Input
+              id="visitDate"
+              type="datetime-local"
+              value={visitDate}
+              onChange={(e) => setVisitDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="visitType">Visit Type</Label>
+            <Select value={visitType} onValueChange={setVisitType} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select visit type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="in_person">In-Person</SelectItem>
+                <SelectItem value="telemed">Telemedicine</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="space-y-2">
-          <Label htmlFor="visitDate">Visit Date & Time</Label>
+          <Label htmlFor="location">Location (Optional)</Label>
           <Input
-            id="visitDate"
-            name="visitDate"
-            type="datetime-local"
-            defaultValue={
-              visit?.visitDate
-                ? new Date(visit.visitDate).toISOString().slice(0, 16)
-                : ""
-            }
-            required
+            id="location"
+            placeholder="e.g., Facility Room 101, Patient Home, etc."
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
           />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="visitType">Visit Type</Label>
-          <Select value={visitType} onValueChange={setVisitType} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select visit type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="in_person">In-Person</SelectItem>
-              <SelectItem value="telemed">Telemedicine</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="location">Location (Optional)</Label>
-        <Input
-          id="location"
-          name="location"
-          placeholder="e.g., Facility Room 101, Patient Home, etc."
-          defaultValue={visit?.location || ""}
-        />
-      </div>
 
       {visit && (
         <div className="space-y-2">
@@ -252,13 +419,9 @@ export default function VisitForm({
               <Label htmlFor="followUpDate">Follow-Up Date</Label>
               <Input
                 id="followUpDate"
-                name="followUpDate"
                 type="date"
-                defaultValue={
-                  visit?.followUpDate
-                    ? new Date(visit.followUpDate).toISOString().split("T")[0]
-                    : ""
-                }
+                value={followUpDate}
+                onChange={(e) => setFollowUpDate(e.target.value)}
               />
             </div>
           )}
@@ -268,10 +431,10 @@ export default function VisitForm({
           <Label htmlFor="followUpNotes">Follow-Up Notes</Label>
           <Textarea
             id="followUpNotes"
-            name="followUpNotes"
             placeholder="Notes about follow-up plan..."
             rows={3}
-            defaultValue={visit?.followUpNotes || ""}
+            value={followUpNotes}
+            onChange={(e) => setFollowUpNotes(e.target.value)}
           />
         </div>
       </div>
@@ -280,10 +443,10 @@ export default function VisitForm({
         <Label htmlFor="additionalNotes">Additional Notes</Label>
         <Textarea
           id="additionalNotes"
-          name="additionalNotes"
           placeholder="Additional visit notes..."
           rows={4}
-          defaultValue={visit?.additionalNotes || ""}
+          value={additionalNotes}
+          onChange={(e) => setAdditionalNotes(e.target.value)}
         />
       </div>
 
@@ -320,18 +483,19 @@ export default function VisitForm({
       />
 
       <div className="flex gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : visit ? "Update Visit" : "Create Visit"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
-      </div>
-    </form>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : visit ? "Update Visit" : "Create Visit"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }

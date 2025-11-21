@@ -451,20 +451,23 @@ export async function getPatient(patientId: string) {
             .order("created_at", { ascending: false })
             .limit(5);
 
-          const recentVisits =
-            recentAssessments
-              ?.map((a: unknown) => {
-                const assessment = a as {
-                  visits: { id: string; visit_date: string };
-                  healing_status: string | null;
-                };
-                return {
-                  id: assessment.visits.id,
-                  visit_date: assessment.visits.visit_date,
-                  healing_status: assessment.healing_status,
-                };
-              })
-              .filter(Boolean) || [];
+          // Deduplicate visits by ID (multiple assessments can reference same visit)
+          const visitMap = new Map();
+          recentAssessments?.forEach((a: unknown) => {
+            const assessment = a as {
+              visits: { id: string; visit_date: string };
+              healing_status: string | null;
+            };
+            const visitId = assessment.visits.id;
+            if (!visitMap.has(visitId)) {
+              visitMap.set(visitId, {
+                id: visitId,
+                visit_date: assessment.visits.visit_date,
+                healing_status: assessment.healing_status,
+              });
+            }
+          });
+          const recentVisits = Array.from(visitMap.values());
 
           // Get wound notes
           const { data: notes } = await supabase

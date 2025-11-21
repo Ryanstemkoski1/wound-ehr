@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { createAssessment } from "@/app/actions/assessments";
+import { createAssessment, autosaveAssessmentDraft } from "@/app/actions/assessments";
+import { updatePhotoAssessmentId } from "@/app/actions/photos";
 import { WoundSwitcher } from "./wound-switcher";
 import { Check } from "lucide-react";
+import { PhotoUpload } from "@/components/photos/photo-upload";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import AutosaveIndicator from "@/components/ui/autosave-indicator";
+import AutosaveRecoveryModal from "@/components/ui/autosave-recovery-modal";
+import { hasRecentAutosave } from "@/lib/autosave";
+import { toast } from "sonner";
 
 type Wound = {
   id: string;
@@ -30,6 +37,7 @@ type Wound = {
 type MultiWoundAssessmentFormProps = {
   visitId: string;
   patientId: string;
+  userId: string; // Added for autosave
   wounds: Wound[];
 };
 
@@ -124,6 +132,7 @@ const INFECTION_SIGNS_OPTIONS = [
 export default function MultiWoundAssessmentForm({
   visitId,
   patientId,
+  userId,
   wounds,
 }: MultiWoundAssessmentFormProps) {
   const router = useRouter();
@@ -143,7 +152,107 @@ export default function MultiWoundAssessmentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Autosave state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<"saving" | "saved" | "error" | "idle">("idle");
+  const [lastSavedTime, setLastSavedTime] = useState<string>("");
+  const [assessmentIds, setAssessmentIds] = useState<Record<string, string>>({});
+
   const currentAssessment = assessments[activeWoundId] || EMPTY_ASSESSMENT;
+
+  // Client-side autosave hook (localStorage)
+  const { loadSavedData, clearSavedData } = useAutosave({
+    formType: "assessment",
+    entityId: visitId,
+    userId,
+    data: assessments,
+    interval: 30000, // 30 seconds
+    enabled: true,
+    onSave: () => {
+      setAutosaveStatus("saved");
+      setLastSavedTime("just now");
+    },
+  });
+
+  // Check for autosaved data on mount
+  useEffect(() => {
+    const autosaveKey = `wound-ehr-autosave-assessment-${visitId}-${userId}`;
+    if (hasRecentAutosave(autosaveKey)) {
+      const { data, timestamp } = loadSavedData();
+      if (data && timestamp) {
+        setShowRecoveryModal(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore autosaved data
+  const handleRestoreAutosave = () => {
+    const { data } = loadSavedData();
+    if (data) {
+      setAssessments(data as Record<string, WoundAssessmentData>);
+      toast.success("Restored unsaved assessment data");
+    }
+    setShowRecoveryModal(false);
+  };
+
+  // Discard autosaved data
+  const handleDiscardAutosave = () => {
+    clearSavedData();
+    setShowRecoveryModal(false);
+    toast.info("Starting fresh");
+  };
+
+  // Server-side autosave (every 2 minutes for current wound)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const current = assessments[activeWoundId];
+      
+      // Skip if no meaningful data entered
+      if (!current.woundType && !current.length) return;
+
+      setAutosaveStatus("saving");
+      const result = await autosaveAssessmentDraft(
+        assessmentIds[activeWoundId] || null,
+        activeWoundId,
+        visitId,
+        {
+          woundType: current.woundType,
+          pressureStage: current.pressureStage,
+          healingStatus: current.healingStatus,
+          atRiskReopening: current.atRiskReopening,
+          length: current.length,
+          width: current.width,
+          depth: current.depth,
+          undermining: current.undermining,
+          tunneling: current.tunneling,
+          epithelialPercent: current.epithelialPercent,
+          granulationPercent: current.granulationPercent,
+          sloughPercent: current.sloughPercent,
+          exudateAmount: current.exudateAmount,
+          exudateType: current.exudateType,
+          odor: current.odor,
+          periwoundCondition: current.periwoundCondition,
+          painLevel: current.painLevel,
+          infectionSigns: current.infectionSigns,
+          assessmentNotes: current.assessmentNotes,
+        }
+      );
+
+      if (result.success && result.assessmentId) {
+        setAssessmentIds(prev => ({
+          ...prev,
+          [activeWoundId]: result.assessmentId!
+        }));
+        setAutosaveStatus("saved");
+        setLastSavedTime("just now");
+      } else {
+        setAutosaveStatus("error");
+      }
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(interval);
+  }, [assessments, activeWoundId, visitId, assessmentIds]);
 
   // Auto-calculate area
   const calculatedArea = useMemo(() => {
@@ -198,6 +307,8 @@ export default function MultiWoundAssessmentForm({
         // Skip if no data entered
         if (!assessment.woundType && !assessment.length) continue;
 
+        const oldAssessmentId = assessmentIds[wound.id];
+
         const formData = new FormData();
         formData.append("visitId", visitId);
         formData.append("woundId", wound.id);
@@ -225,8 +336,16 @@ export default function MultiWoundAssessmentForm({
         if (result.error) {
           throw new Error(result.error);
         }
+
+        // Link photos to final assessment if needed
+        if (result.assessmentId && oldAssessmentId !== result.assessmentId) {
+          await updatePhotoAssessmentId(wound.id, oldAssessmentId, result.assessmentId);
+        }
       }
 
+      // Clear autosaved data on successful submission
+      clearSavedData();
+      
       router.push(`/dashboard/patients/${patientId}/visits/${visitId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save assessments");
@@ -243,15 +362,33 @@ export default function MultiWoundAssessmentForm({
   };
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </div>
-      )}
+    <>
+      {/* Recovery Modal */}
+      <AutosaveRecoveryModal
+        isOpen={showRecoveryModal}
+        onRestore={handleRestoreAutosave}
+        onDiscard={handleDiscardAutosave}
+        timestamp={loadSavedData().timestamp || ""}
+        formType="assessment"
+      />
 
-      {/* Wound Switcher */}
-      <WoundSwitcher
+      <div className="space-y-6">
+        {/* Autosave Indicator */}
+        <div className="flex justify-end">
+          <AutosaveIndicator
+            status={autosaveStatus}
+            lastSaved={lastSavedTime}
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        {/* Wound Switcher */}
+        <WoundSwitcher
         wounds={wounds}
         activeWoundId={activeWoundId}
         completedWoundIds={completedWoundIds}
@@ -625,6 +762,24 @@ export default function MultiWoundAssessmentForm({
             />
           </CardContent>
         </Card>
+
+        {/* Photo Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Wound Photos</CardTitle>
+            <CardDescription>
+              Upload photos of this wound (optional - photos will be linked to this assessment)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PhotoUpload
+              woundId={activeWoundId}
+              visitId={visitId}
+              assessmentId={assessmentIds[activeWoundId] || undefined}
+              className="max-w-2xl"
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Action Buttons */}
@@ -651,5 +806,6 @@ export default function MultiWoundAssessmentForm({
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -62,6 +62,7 @@ export default async function EditVisitPage({ params }: PageProps) {
       </div>
       <VisitForm
         patientId={patientId}
+        userId={user.id}
         userCredentials={userCredentials}
         allowedCPTCodes={allowedCPTCodes}
         restrictedCPTCodes={restrictedCPTCodes}

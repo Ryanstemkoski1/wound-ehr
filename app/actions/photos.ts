@@ -3,6 +3,51 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+// Update photo's assessment_id (used when finalizing drafts)
+export async function updatePhotoAssessmentId(
+  woundId: string,
+  oldAssessmentId: string | undefined,
+  newAssessmentId: string
+) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Unauthorized" };
+    }
+
+    // Update photos that match wound_id and old assessment_id (or null)
+    const query = supabase
+      .from("photos")
+      .update({ assessment_id: newAssessmentId })
+      .eq("wound_id", woundId);
+
+    // If oldAssessmentId exists, update only those photos
+    // If undefined, update photos with null assessment_id
+    if (oldAssessmentId) {
+      query.eq("assessment_id", oldAssessmentId);
+    } else {
+      query.is("assessment_id", null);
+    }
+
+    const { error: updateError } = await query;
+
+    if (updateError) {
+      console.error("Photo update error:", updateError);
+      return { error: `Failed to update photos: ${updateError.message}` };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Update photo assessment ID error:", err);
+    return { error: "Failed to update photo links" };
+  }
+}
+
 // Upload photo to Supabase Storage and save metadata to database
 export async function uploadPhoto(formData: FormData) {
   try {

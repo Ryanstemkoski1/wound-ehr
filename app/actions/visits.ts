@@ -439,3 +439,78 @@ export async function markVisitComplete(visitId: string) {
     return { error: "Failed to mark visit as completed" };
   }
 }
+
+// Server-side autosave for visit drafts
+// Phase 9.3.2: Prevent data loss with automatic draft saving
+export async function autosaveVisitDraft(
+  visitId: string | null,
+  formData: Record<string, unknown>
+): Promise<{ success: boolean; visitId?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    // If visitId exists, update the draft
+    if (visitId) {
+      const { data: existingVisit } = await supabase
+        .from("visits")
+        .select("status")
+        .eq("id", visitId)
+        .single();
+
+      // Only autosave if visit is still in draft status
+      if (existingVisit?.status !== "draft") {
+        return { success: false, error: "Cannot autosave non-draft visits" };
+      }
+
+      const { error } = await supabase
+        .from("visits")
+        .update({
+          visit_date: formData.visitDate as string,
+          visit_type: formData.visitType as string,
+          location: (formData.location as string) || null,
+          follow_up_type: (formData.followUpType as string) || null,
+          follow_up_date: (formData.followUpDate as string) || null,
+          follow_up_notes: (formData.followUpNotes as string) || null,
+          time_spent: formData.timeSpent as boolean,
+          additional_notes: (formData.additionalNotes as string) || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", visitId);
+
+      if (error) throw error;
+      return { success: true, visitId };
+    } else {
+      // Create a new draft visit
+      const { data, error } = await supabase
+        .from("visits")
+        .insert({
+          patient_id: formData.patientId as string,
+          visit_date: formData.visitDate as string,
+          visit_type: formData.visitType as string,
+          location: (formData.location as string) || null,
+          status: "draft",
+          follow_up_type: (formData.followUpType as string) || null,
+          follow_up_date: (formData.followUpDate as string) || null,
+          follow_up_notes: (formData.followUpNotes as string) || null,
+          time_spent: formData.timeSpent as boolean,
+          additional_notes: (formData.additionalNotes as string) || null,
+          created_by: user.id,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+      return { success: true, visitId: data.id };
+    }
+  } catch (error) {
+    console.error("Autosave visit draft failed:", error);
+    return { success: false, error: "Autosave failed" };
+  }
+}

@@ -1,7 +1,7 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.2  
-> **Date**: November 20, 2025  
+> **Version**: 4.3  
+> **Date**: November 21, 2025  
 > **Status**: ✅ **Approved - Compliance & Workflow Enhancements**
 
 ---
@@ -1135,14 +1135,16 @@ lib/
    - Use wound switcher (tabs/sidebar) to navigate between wounds
    - For each wound:
      - Record measurements (L×W×D)
-     - Take/upload photos with comparison viewer
+     - **Upload photos directly in assessment form** (linked to this assessment)
+     - View photo comparison with previous assessments
      - Document tissue composition (checkboxes + percentages)
      - Select wound characteristics (radio buttons)
      - Note healing status (radio buttons)
      - Check infection signs, risk factors (checkboxes)
      - Add per-wound notes (timestamped)
-   - Auto-save when switching wounds
+   - Auto-save when switching wounds (every 30s to localStorage, every 2min to server)
    - Completion indicator (✓) for each assessed wound
+   - Photos automatically linked via `assessment_id` for proper timeline tracking
 
 4. **Treatment Planning** (Multi-Wound)
    - Select treatment options from checklist (checkboxes)
@@ -1382,13 +1384,23 @@ lib/
 
 **Goal:** Photo upload and viewing
 
-- [ ] Photo upload component (react-dropzone)
-- [ ] Supabase Storage integration
-- [ ] Photo gallery per wound
-- [ ] Photo comparison view (side-by-side)
-- [ ] Secure photo URLs with RLS policies
+- [x] Photo upload component (react-dropzone)
+- [x] Supabase Storage integration
+- [x] Photo gallery per wound
+- [x] Photo comparison view (side-by-side)
+- [x] Secure photo URLs with RLS policies
+- [x] **Assessment-based photo upload** (November 21, 2025)
+  - Photos uploaded during assessment creation
+  - Automatic linking via `assessment_id`
+  - Each assessment has its own photos
+  - Wound page shows historical photos (view-only)
+- [x] **Photo labels in PDFs** (Phase 9.3.4)
+  - Format: "Wound #X - Location (Type)"
+  - Teal branding with professional styling
 
-**Deliverable:** Can upload and view wound photos
+**Deliverable:** Can upload and view wound photos, properly linked to assessments
+
+**Status:** ✅ **COMPLETED & ENHANCED** (November 21, 2025)
 
 ---
 
@@ -1798,43 +1810,41 @@ lib/
 
 ---
 
-**9.3.3: Photo Labeling with Wound Location** ⚠️ **QUICK WIN - PDF ENHANCEMENT**
+**9.3.3: Photo Labeling with Wound Location** ✅ **COMPLETED** (November 21, 2025)
 
 **Client Need:** Photos in printed visit notes should clearly show which wound they belong to
 
-**Current Implementation:**
-- Photos linked to `wound_id` (which has location field)
-- Photos have optional `caption` field
-- PDF shows wound location in assessment section (not directly on photos)
-
-- [ ] Update PDF visit summary component (`components/pdf/visit-summary-pdf.tsx`)
-  - [ ] Group photos by wound location
-  - [ ] Add wound location header above each photo group
-  - [ ] Format: "Wound Photos - [Location]" (e.g., "Wound Photos - Left Heel")
-  - [ ] Include wound type and onset date in header
-  - [ ] Display: "[Location] - [Type] (Onset: [Date])"
+**Implementation:**
+- [x] Update PDF wound progress component (`components/pdf/wound-progress-pdf.tsx`)
+  - [x] Add wound label above each photo
+  - [x] Format: "Wound #X - Location" (e.g., "Wound #2 - Left Heel")
+  - [x] Include wound type below: "(Pressure Injury)"
+  - [x] Teal color scheme matching app branding
   
-- [ ] Update photo display logic
-  - [ ] Query wound details when fetching photos
-  - [ ] Include wound.location, wound.wound_type, wound.onset_date
-  - [ ] Sort photos by wound location for consistent ordering
+- [x] Update photo query logic (`app/actions/pdf.ts`)
+  - [x] Include wound metadata (number, location, type)
+  - [x] Pass metadata to PDF component
+  - [x] TypeScript types updated
   
-- [ ] Optional: Add location overlay on photos (future enhancement)
-  - [ ] Use image processing to add text overlay when generating PDF
-  - [ ] Store original (no overlay) + generated (with overlay)
+- [x] **Photo Upload Workflow Refactored** (November 21, 2025)
+  - [x] Moved photo upload from wound page to assessment form
+  - [x] Photos now automatically linked to `assessment_id`
+  - [x] Each assessment has its own photos (no duplication)
+  - [x] Wound page shows historical photos (view-only)
+  - [x] PDF query simplified: filter by `assessment_id` only
   
-- [ ] Test PDF exports
-  - [ ] Single wound with multiple photos
-  - [ ] Multiple wounds with photos each
-  - [ ] Verify wound location labels appear correctly
+- [x] Test PDF exports
+  - [x] Single wound with multiple photos
+  - [x] Multiple wounds with photos each
+  - [x] Verify wound location labels appear correctly
 
-**Deliverable:** Professional PDF reports with clear photo labeling
+**Deliverable:** Professional PDF reports with clear photo labeling and assessment-based photo workflow
 
-**Estimated Effort:** 1 day
+**Actual Effort:** 1 day (as estimated)
 
 ---
 
-**9.3.4: Upload Scanned Paper Consents** 🔴 **MEDIUM PRIORITY**
+**9.3.4: Upload Scanned Paper Consents** 🔴 **MEDIUM PRIORITY** (Next Up)
 
 **Client Need:** Digitize pre-existing paper consent forms signed before electronic system deployed
 
@@ -1943,8 +1953,10 @@ lib/
 
 **Phase 9.3 Summary:**
 - **Total Estimated Effort:** 12-17 days (2.5-3.5 weeks)
-- **Critical Path:** Procedure restrictions (legal) → Autosave (usability) → Photo labeling (quick win)
-- **Nice-to-Have:** Upload consents, Addendums, Audit logs (can be deferred)
+- **Status:** 4 of 7 sub-phases complete (57%)
+- **Completed:** ✅ Procedure restrictions, Autosave (visits), Autosave (assessments), Photo labeling
+- **Remaining:** Upload consents, Visit addendums, Signature audit logs
+- **Critical Path:** Procedure restrictions (legal) → Autosave (usability) → Photo labeling (quick win) ✅ DONE
 
 ---
 

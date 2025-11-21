@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PhotoUpload } from "@/components/photos/photo-upload";
 import { PhotoGallery } from "@/components/photos/photo-gallery";
 import { PhotoComparison } from "@/components/photos/photo-comparison";
 import WoundPDFDownloadButton from "@/components/pdf/wound-pdf-download-button";
@@ -176,25 +175,20 @@ export default async function WoundDetailPage({
         <CardHeader>
           <CardTitle>Wound Photos</CardTitle>
           <CardDescription>
-            Upload, view, and compare wound photos to track healing progress
+            View and compare wound photos from assessments to track healing progress
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="gallery" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="gallery">
                 Gallery ({photos.length})
               </TabsTrigger>
-              <TabsTrigger value="upload">Upload</TabsTrigger>
               <TabsTrigger value="comparison">Comparison</TabsTrigger>
             </TabsList>
 
             <TabsContent value="gallery" className="mt-6">
               <PhotoGallery photos={photos} />
-            </TabsContent>
-
-            <TabsContent value="upload" className="mt-6">
-              <PhotoUpload woundId={woundId} className="mx-auto max-w-2xl" />
             </TabsContent>
 
             <TabsContent value="comparison" className="mt-6">

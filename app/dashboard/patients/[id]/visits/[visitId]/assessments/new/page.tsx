@@ -88,6 +88,7 @@ export default async function NewAssessmentPage({ params }: PageProps) {
       <MultiWoundAssessmentForm
         visitId={visitId}
         patientId={patientId}
+        userId={user.id}
         wounds={wounds}
       />
     </div>
