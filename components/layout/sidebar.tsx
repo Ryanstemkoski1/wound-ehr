@@ -12,6 +12,7 @@ import {
   Shield,
   X,
   Activity,
+  FileSignature,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const adminNavigation = [
   { name: "Users", href: "/dashboard/admin/users", icon: Users },
   { name: "Facilities", href: "/dashboard/admin/facilities", icon: Building2 },
   { name: "Invites", href: "/dashboard/admin/invites", icon: Shield },
+  { name: "Signatures", href: "/dashboard/admin/signatures", icon: FileSignature },
 ];
 
 type SidebarProps = {
