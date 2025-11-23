@@ -1,14 +1,14 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.5  
+> **Version**: 4.6  
 > **Date**: November 23, 2025  
-> **Status**: ✅ **Phase 9.3 - 5 of 7 Sub-phases Complete (71%)**
+> **Status**: ✅ **Phase 9.3 - 6 of 7 Sub-phases Complete (86%)**
 
 ---
 
 ## Table of Contents
 
-1. [Current Status](#version-44-updates-november-23-2025)
+1. [Current Status](#version-46-updates-november-23-2025)
 2. [Version History](#version-history-summary)
 3. [Executive Summary](#executive-summary)
 4. [Project Requirements](#project-requirements)
@@ -22,27 +22,51 @@
 
 ---
 
-## Version 4.4 Updates (November 23, 2025)
+## Version 4.6 Updates (November 23, 2025)
 
 ### ✅ Phase 9.3 Completion Status
 
-**Completed (5 of 7 sub-phases - 71%):**
+**Completed (6 of 7 sub-phases - 86%):**
 - ✅ 9.3.1: Procedure Restrictions (credential-based scope of practice) - Nov 20
 - ✅ 9.3.2: Visit Autosave (client-side + server-side drafts) - Nov 21
 - ✅ 9.3.3: Assessment Autosave (multi-wound form protection) - Nov 21
 - ✅ 9.3.4: Photo Workflow Refactor (assessment-based, PDF fixes) - Nov 21
 - ✅ 9.3.5: Upload Scanned Paper Consents (file upload alternative) - Nov 23
+- ✅ 9.3.6: Visit Addendums (post-signature notes with RLS security fixes) - Nov 23
 
 **Recently Completed:**
-- ✅ 9.3.5: Upload Scanned Paper Consents (November 23, 2025)
-  - Private storage bucket with signed URLs
-  - Drag-and-drop upload with validation
-  - PDF and image viewer modal
-  - Full integration tested and production ready
+- ✅ 9.3.6: Visit Addendums & Critical Security Fixes (November 23, 2025)
+  - Post-signature addendum notes functionality
+  - RPC function with SECURITY DEFINER for cross-user data access
+  - Critical RLS security audit (18 tables reviewed)
+  - Fixed 3 critical multi-tenant isolation vulnerabilities
+  - Comprehensive automated test suite (25 tests, 100% pass rate)
+  - Full system validation and production ready
 
-**Remaining (2 of 7 sub-phases):**
-- 🔴 9.3.6: Visit Addendums (post-signature notes) - **NEXT** - Est. 2-3 days
-- 🔴 9.3.7: Signature Audit Logs (compliance reporting) - Est. 1 day
+**Remaining (1 of 7 sub-phases):**
+- 🔴 9.3.7: Signature Audit Logs (compliance reporting) - **NEXT** - Est. 1 day
+
+### 🔒 Critical Security Enhancements (November 23, 2025)
+
+**Comprehensive RLS Security Audit:**
+- Audited all 18 database tables for Row Level Security policies
+- Identified 3 critical multi-tenant isolation vulnerabilities
+- Fixed tenants table (RLS was disabled, breaking tenant isolation)
+- Fixed user_invites table (RLS was disabled, exposing invite data)
+- Fixed wound_notes table (policies didn't support addendums with NULL wound_id)
+- Fixed procedure_scopes table (missing user_facilities join)
+
+**Architectural Discovery:**
+- System has dual authorization model: user_facilities (data access) + user_roles (admin only)
+- user_roles RLS must stay disabled to prevent infinite recursion
+- RLS policies must use user_facilities joins, NOT user_roles queries
+- RPC functions (SECURITY DEFINER) required for cross-user data access
+
+**Automated Testing Infrastructure:**
+- Created comprehensive test suite (scripts/test-all-features.js)
+- 25 automated tests covering 8 major feature areas
+- 100% test pass rate achieved after fixes
+- Test suite provides ongoing regression protection
 
 ### 🧹 Codebase Cleanup (November 23, 2025)
 

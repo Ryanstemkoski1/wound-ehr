@@ -60,6 +60,15 @@ type VisitSummaryData = {
       signedAt: Date;
     };
   };
+  addendums?: Array<{
+    id: string;
+    note: string;
+    createdAt: Date;
+    author: {
+      name: string;
+      credentials: string | null;
+    };
+  }>;
 };
 
 // PDF Styles
@@ -472,6 +481,27 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
                 </Text>
               </View>
             )}
+          </View>
+        )}
+
+        {/* Addendums */}
+        {data.addendums && data.addendums.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Addendums ({data.addendums.length})</Text>
+            {data.addendums.map((addendum, index) => (
+              <View key={addendum.id} style={{ marginBottom: 10, paddingLeft: 10, borderLeft: "2pt solid #3b82f6" }}>
+                <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 3 }}>
+                  Addendum #{index + 1}
+                </Text>
+                <Text style={{ fontSize: 9, color: "#64748b", marginBottom: 5 }}>
+                  {addendum.createdAt.toLocaleDateString()} at {addendum.createdAt.toLocaleTimeString()} by {addendum.author.name}
+                  {addendum.author.credentials && ` (${addendum.author.credentials})`}
+                </Text>
+                <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
+                  {addendum.note}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
 

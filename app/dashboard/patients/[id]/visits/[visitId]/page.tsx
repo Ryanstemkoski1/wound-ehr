@@ -19,6 +19,8 @@ import AssessmentCard from "@/components/assessments/assessment-card";
 import VisitPDFDownloadButton from "@/components/pdf/visit-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { VisitSignatureWorkflow } from "@/components/visits/visit-signature-workflow";
+import { AddAddendumDialog } from "@/components/visits/add-addendum-dialog";
+import { VisitAddendums } from "@/components/visits/visit-addendums";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -321,7 +323,10 @@ export default async function VisitDetailPage({ params }: PageProps) {
           {/* Signature Workflow */}
           <Card>
             <CardHeader>
-              <CardTitle>Visit Status & Signatures</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Visit Status & Signatures</CardTitle>
+                <AddAddendumDialog visitId={visitId} visitStatus={visit.status} />
+              </div>
             </CardHeader>
             <CardContent>
               <VisitSignatureWorkflow
@@ -337,6 +342,9 @@ export default async function VisitDetailPage({ params }: PageProps) {
               />
             </CardContent>
           </Card>
+
+          {/* Addendums (post-signature notes) */}
+          <VisitAddendums visitId={visitId} />
 
           {/* Assessments */}
           <Card>

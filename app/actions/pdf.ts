@@ -278,6 +278,48 @@ export async function getVisitDataForPDF(visitId: string) {
       };
     }
 
+    // Fetch addendums for signed/submitted visits
+    let addendums = undefined;
+    if (visit.status === "signed" || visit.status === "submitted") {
+      // Try RPC function first (bypasses RLS for user data)
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        "get_visit_addendums",
+        { p_visit_id: visitId }
+      );
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        addendums = rpcData.map((addendum: any) => ({
+          id: addendum.id,
+          note: addendum.note,
+          createdAt: new Date(addendum.created_at),
+          author: {
+            name: addendum.author_name || "Unknown",
+            credentials: addendum.author_credentials || null,
+          },
+        }));
+      } else {
+        // Fallback to direct query (won't have user data due to RLS)
+        const { data: addendumsData } = await supabase
+          .from("wound_notes")
+          .select("id, note, created_at")
+          .eq("visit_id", visitId)
+          .eq("note_type", "addendum")
+          .order("created_at", { ascending: true });
+
+        if (addendumsData && addendumsData.length > 0) {
+          addendums = addendumsData.map((addendum) => ({
+            id: addendum.id,
+            note: addendum.note,
+            createdAt: new Date(addendum.created_at),
+            author: {
+              name: "Unknown",
+              credentials: null,
+            },
+          }));
+        }
+      }
+    }
+
     // Transform data to match PDF component props
     return {
       success: true as const,
@@ -340,6 +382,7 @@ export async function getVisitDataForPDF(visitId: string) {
               }
             : null,
         signatures,
+        addendums,
       },
     };
   } catch (error) {

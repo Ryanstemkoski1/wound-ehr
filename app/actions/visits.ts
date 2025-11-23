@@ -514,3 +514,113 @@ export async function autosaveVisitDraft(
     return { success: false, error: "Autosave failed" };
   }
 }
+
+// =====================================================
+// VISIT ADDENDUMS (Phase 9.3.6)
+// =====================================================
+
+/**
+ * Get all addendums for a visit
+ */
+export async function getVisitAddendums(visitId: string) {
+  const supabase = await createClient();
+
+  // Use a raw query to join with users table, bypassing RLS issues
+  const { data, error } = await supabase
+    .rpc('get_visit_addendums', { p_visit_id: visitId });
+
+  if (error) {
+    console.error("Error fetching addendums:", error);
+    // Fallback to basic query without user info
+    const { data: basicData, error: basicError } = await supabase
+      .from("wound_notes")
+      .select("id, note, note_type, created_at, created_by")
+      .eq("visit_id", visitId)
+      .eq("note_type", "addendum")
+      .order("created_at", { ascending: true });
+    
+    if (basicError) {
+      return { error: basicError.message };
+    }
+    
+    // Return with empty user arrays
+    return { 
+      data: basicData?.map(item => ({
+        ...item,
+        users: [{ full_name: "Unknown", email: "", credentials: null }]
+      })) || []
+    };
+  }
+
+  return { data };
+}
+
+/**
+ * Create a new addendum for a signed/submitted visit
+ */
+export async function createAddendum(visitId: string, content: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  if (!content || content.trim().length === 0) {
+    return { error: "Addendum content is required" };
+  }
+
+  try {
+    // Verify visit exists and is signed/submitted
+    const { data: visit, error: visitError } = await supabase
+      .from("visits")
+      .select("id, status")
+      .eq("id", visitId)
+      .single();
+
+    if (visitError || !visit) {
+      return { error: "Visit not found" };
+    }
+
+    if (visit.status !== "signed" && visit.status !== "submitted") {
+      return { error: "Addendums can only be added to signed or submitted visits" };
+    }
+
+    // Create addendum (using wound_notes table with note_type='addendum')
+    const { data: addendum, error: addendumError } = await supabase
+      .from("wound_notes")
+      .insert({
+        visit_id: visitId,
+        wound_id: null, // No specific wound association for addendums
+        note: content,
+        note_type: "addendum",
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (addendumError) {
+      console.error("Error creating addendum:", addendumError);
+      return { error: `Failed to create addendum: ${addendumError.message}` };
+    }
+
+    // Increment addendum count on visit
+    const { error: updateError } = await supabase
+      .from("visits")
+      .update({ addendum_count: (visit as any).addendum_count ? (visit as any).addendum_count + 1 : 1 })
+      .eq("id", visitId);
+
+    if (updateError) {
+      console.error("Error updating addendum count:", updateError);
+      // Don't fail the request, addendum was created successfully
+    }
+
+    revalidatePath(`/dashboard/patients`);
+    revalidatePath(`/dashboard/calendar`);
+    
+    return { data: addendum };
+  } catch (error) {
+    console.error("Exception creating addendum:", error);
+    return { error: "Failed to create addendum" };
+  }
+}
