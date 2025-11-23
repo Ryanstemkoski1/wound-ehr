@@ -23,6 +23,7 @@ import PatientPDFDownloadButton from "@/components/pdf/patient-pdf-download-butt
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { WoundsListClient } from "@/components/wounds/wounds-list-client";
 import { ConsentDialog } from "@/components/patients/consent-dialog";
+import { ConsentStatusCard } from "@/components/patients/consent-status-card";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -136,6 +137,15 @@ export default async function PatientDetailPage({
           />
         </div>
       </div>
+
+      {/* Consent Status Card - Shows if consent exists */}
+      {hasConsent && (
+        <ConsentStatusCard 
+          hasConsent={hasConsent}
+          patientId={id}
+          consentData={consentResult.data}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Patient Info */}

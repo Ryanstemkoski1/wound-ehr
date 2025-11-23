@@ -9,12 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SignaturePad } from "@/components/signatures/signature-pad";
+import { ScannedConsentUpload } from "./scanned-consent-upload";
 import { createPatientConsent } from "@/app/actions/signatures";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, PenTool, Upload } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type ConsentDialogProps = {
@@ -70,6 +72,7 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
+  const [activeTab, setActiveTab] = useState<"electronic" | "upload">("electronic");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,56 +146,79 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Consent for Treatment Required</DialogTitle>
           <DialogDescription>
-            Please read and acknowledge this consent form before proceeding
+            Choose how to provide patient consent
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">
-          <ScrollArea className="h-[40vh] w-full rounded-md border p-4">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {DEFAULT_CONSENT_TEXT}
-            </div>
-          </ScrollArea>
-        </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "electronic" | "upload")} className="mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="electronic" className="flex items-center gap-2">
+              <PenTool className="h-4 w-4" />
+              Electronic Signature
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Upload Scanned Form
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="mt-4 space-y-4">
-          <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4">
-            <p className="text-sm text-amber-900 dark:text-amber-100 font-semibold mb-3">
-              <strong>Important:</strong> You must review and sign this consent form before
-              accessing patient records or scheduling visits.
-            </p>
-            
-            <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-md border-2 border-amber-300 dark:border-amber-700">
-              <Checkbox
-                id="agree"
-                checked={agreed}
-                onCheckedChange={(checked) => setAgreed(checked === true)}
-                className="mt-1 h-5 w-5 border-2"
-              />
-              <Label
-                htmlFor="agree"
-                className="text-base font-semibold leading-tight cursor-pointer text-gray-900 dark:text-gray-100"
-              >
-                I have read and understand the consent form above, and I agree to receive wound care
-                treatment
-              </Label>
+          <TabsContent value="electronic" className="space-y-4 mt-4">
+            <div className="mt-4">
+              <ScrollArea className="h-[35vh] w-full rounded-md border p-4">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {DEFAULT_CONSENT_TEXT}
+                </div>
+              </ScrollArea>
             </div>
-          </div>
 
-          <div className="flex justify-end">
-            <button
-              onClick={handleAgree}
-              disabled={!agreed || isSubmitting}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Continue to Signature
-            </button>
-          </div>
-        </div>
+            <div className="space-y-4">
+              <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4">
+                <p className="text-sm text-amber-900 dark:text-amber-100 font-semibold mb-3">
+                  <strong>Important:</strong> You must review and sign this consent form before
+                  accessing patient records or scheduling visits.
+                </p>
+                
+                <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-md border-2 border-amber-300 dark:border-amber-700">
+                  <Checkbox
+                    id="agree"
+                    checked={agreed}
+                    onCheckedChange={(checked) => setAgreed(checked === true)}
+                    className="mt-1 h-5 w-5 border-2"
+                  />
+                  <Label
+                    htmlFor="agree"
+                    className="text-base font-semibold leading-tight cursor-pointer text-gray-900 dark:text-gray-100"
+                  >
+                    I have read and understand the consent form above, and I agree to receive wound care
+                    treatment
+                  </Label>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAgree}
+                  disabled={!agreed || isSubmitting}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue to Signature
+                </button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="upload" className="mt-4">
+            <ScannedConsentUpload
+              patientId={patientId}
+              patientName={patientName}
+              onSuccess={() => router.refresh()}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

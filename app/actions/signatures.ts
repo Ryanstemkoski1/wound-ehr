@@ -524,3 +524,173 @@ export async function getClientIpAddress(): Promise<string | null> {
   // For now, return null and handle on client side
   return null;
 }
+
+// =====================================================
+// SCANNED CONSENT UPLOAD (Phase 9.3.5)
+// =====================================================
+
+export type UploadConsentData = {
+  patientId: string;
+  patientName: string;
+  file: File;
+  consentType?: string;
+  consentText?: string;
+};
+
+/**
+ * Upload a scanned consent document (PDF or image)
+ * Creates consent record with document reference instead of signature
+ */
+export async function uploadScannedConsent(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  try {
+    const patientId = formData.get("patientId") as string;
+    const patientName = formData.get("patientName") as string;
+    const consentType = formData.get("consentType") as string || "initial_treatment";
+    const consentText = formData.get("consentText") as string || "Scanned paper consent form";
+    const file = formData.get("file") as File;
+
+    if (!patientId || !file) {
+      return { error: "Missing required fields" };
+    }
+
+    // Validate file type
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      return { error: "Invalid file type. Please upload PDF, JPG, or PNG files only." };
+    }
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      return { error: "File too large. Maximum size is 10MB." };
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${patientId}/${timestamp}-consent.${fileExt}`;
+
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from("patient-consents")
+      .upload(fileName, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Error uploading file:", uploadError);
+      return { error: "Failed to upload file: " + uploadError.message };
+    }
+
+    // Store the file path (not URL) for private buckets
+    // We'll generate signed URLs when needed for viewing
+    const filePath = fileName;
+
+    // Create a signature record with method='upload'
+    const signatureResult = await createSignature({
+      signatureType: "consent",
+      patientId,
+      signerName: patientName,
+      signerRole: "Patient",
+      signatureData: filePath, // Store file path for private bucket
+      signatureMethod: "upload",
+      ipAddress: await getClientIpAddress() || undefined,
+    });
+
+    if (signatureResult.error || !signatureResult.data) {
+      // Clean up uploaded file if signature creation fails
+      await supabase.storage.from("patient-consents").remove([fileName]);
+      return { error: "Failed to create signature record" };
+    }
+
+    // Create consent record with document metadata
+    const { data: consent, error: consentError } = await supabase
+      .from("patient_consents")
+      .insert({
+        patient_id: patientId,
+        consent_type: consentType,
+        consent_text: consentText,
+        patient_signature_id: signatureResult.data.id,
+        consent_document_url: filePath, // Store file path, not URL
+        consent_document_name: file.name,
+        consent_document_size: file.size,
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (consentError) {
+      console.error("Error creating consent:", consentError);
+      // Clean up uploaded file and signature if consent creation fails
+      await supabase.storage.from("patient-consents").remove([fileName]);
+      return { error: consentError.message };
+    }
+
+    revalidatePath(`/dashboard/patients/${patientId}`);
+    return { data: consent };
+  } catch (error) {
+    console.error("Exception uploading consent:", error);
+    return { error: "Failed to upload consent" };
+  }
+}
+
+/**
+ * Get consent document with signed URL for viewing
+ * Generates a temporary signed URL for private storage buckets
+ */
+export async function getConsentDocumentUrl(patientId: string) {
+  const supabase = await createClient();
+
+  try {
+    const { data: consent, error } = await supabase
+      .from("patient_consents")
+      .select("consent_document_url, consent_document_name")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !consent) {
+      return { error: "Consent not found" };
+    }
+
+    // If no document URL (electronic signature), return as-is
+    if (!consent.consent_document_url) {
+      return { data: consent };
+    }
+
+    // Extract file path from URL if it's a full URL (legacy format)
+    let filePath = consent.consent_document_url;
+    if (filePath.includes('/storage/v1/object/public/patient-consents/')) {
+      filePath = filePath.split('/storage/v1/object/public/patient-consents/')[1];
+    }
+    
+    // Generate signed URL for private bucket (valid for 1 hour)
+    const { data: signedUrlData, error: signedError } = await supabase.storage
+      .from("patient-consents")
+      .createSignedUrl(filePath, 3600);
+
+    if (signedError || !signedUrlData) {
+      return { error: "Failed to generate document access URL" };
+    }
+
+    return { 
+      data: {
+        ...consent,
+        consent_document_url: signedUrlData.signedUrl,
+      }
+    };
+  } catch (error) {
+    return { error: "Failed to get consent document" };
+  }
+}

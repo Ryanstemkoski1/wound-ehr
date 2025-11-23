@@ -1,16 +1,16 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.3  
-> **Date**: November 21, 2025  
-> **Status**: ✅ **Approved - Compliance & Workflow Enhancements**
+> **Version**: 4.5  
+> **Date**: November 23, 2025  
+> **Status**: ✅ **Phase 9.3 - 5 of 7 Sub-phases Complete (71%)**
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary](#executive-summary)
-2. [Version 4.0 Key Changes](#version-40-key-changes)
-3. [Version 3.0 Key Changes](#version-30-key-changes)
+1. [Current Status](#version-44-updates-november-23-2025)
+2. [Version History](#version-history-summary)
+3. [Executive Summary](#executive-summary)
 4. [Project Requirements](#project-requirements)
 5. [System Architecture](#system-architecture)
 6. [Database Schema](#database-schema)
@@ -22,123 +22,54 @@
 
 ---
 
-## Version 4.0 Key Changes
+## Version 4.4 Updates (November 23, 2025)
 
-### 🎯 Compliance & Workflow Requirements (November 18, 2025)
+### ✅ Phase 9.3 Completion Status
 
-Based on feedback from Alvin's team, this version adds critical compliance features:
+**Completed (5 of 7 sub-phases - 71%):**
+- ✅ 9.3.1: Procedure Restrictions (credential-based scope of practice) - Nov 20
+- ✅ 9.3.2: Visit Autosave (client-side + server-side drafts) - Nov 21
+- ✅ 9.3.3: Assessment Autosave (multi-wound form protection) - Nov 21
+- ✅ 9.3.4: Photo Workflow Refactor (assessment-based, PDF fixes) - Nov 21
+- ✅ 9.3.5: Upload Scanned Paper Consents (file upload alternative) - Nov 23
 
-#### 1. **Credentials-Based Role System** 🔐
+**Recently Completed:**
+- ✅ 9.3.5: Upload Scanned Paper Consents (November 23, 2025)
+  - Private storage bucket with signed URLs
+  - Drag-and-drop upload with validation
+  - PDF and image viewer modal
+  - Full integration tested and production ready
 
-- **Administrative Roles** (unchanged): Tenant Admin, Facility Admin, User
-- **Clinical Credentials** (NEW): RN, LVN, MD, DO, PA, NP, CNA, Admin
-- **Required field**: All users must have credentials (one per user)
-- **Examples**: Facility Admin+RN, User+MD, User+LVN
-- **Enables**: Auto-determine signature requirements, filter procedures by scope, print credentials on reports
+**Remaining (2 of 7 sub-phases):**
+- 🔴 9.3.6: Visit Addendums (post-signature notes) - **NEXT** - Est. 2-3 days
+- 🔴 9.3.7: Signature Audit Logs (compliance reporting) - Est. 1 day
 
-#### 2. **Electronic Signatures** 📝 **CRITICAL**
+### 🧹 Codebase Cleanup (November 23, 2025)
 
-- **Initial Consent**: One-time consent-to-treat (blocks first visit until signed)
-- **Patient Signature**: Required for RN/LVN at end of every visit (not for MD/DO/PA/NP)
-- **Provider Signature**: New workflow - Save Draft → Ready → Sign → Submit to Office
-- **Audit Trail**: Timestamp, IP address, signature image stored for all signatures
-- **Visit Status**: draft, ready_for_signature, signed, submitted
-
-#### 3. **Procedure Restrictions** 🚫
-
-- **RN/LVN**: Cannot see/document sharp debridement (CPT 11042, 11043, 11044)
-- **MD/DO/PA/NP**: Full access to all procedures including sharp debridement
-- **Enforced via**: `procedure_scopes` table with credential allowlists
-- **UI Filtering**: Treatment/billing forms show only allowed procedures
-
-#### 4. **Printing Enhancements** 🖨️
-
-- Add `clinician_name` and `clinician_credentials` to visits table
-- PDF exports include: "Documented by: [Name], [Credentials] on [Date/Time]"
-- User preference: "Include wound photos in printed reports" (default: yes)
-
-#### 5. **Auto-Save & Offline** 💾
-
-- **Client-side**: localStorage auto-save every 30 seconds
-- **Server-side**: Draft auto-save every 2 minutes
-- **Offline Mode**: IndexedDB queue, auto-sync when online
-- **Recovery**: Modal to restore unsaved drafts on page load
-
-#### 6. **Mobile UI Polish** 📱 (Post-functionality)
-
-- Responsive layouts, touch targets (44×44px min)
-- Native camera, swipe gestures, bottom navigation
-- Signature pad optimized for touch
+- Removed 17+ temporary documentation files (old status reports, test plans)
+- Cleaned up 13 one-time debug/fix scripts
+- Streamlined scripts folder to 5 essential utilities
+- Updated documentation to reflect current state
 
 ---
 
-## Version 3.0 Key Changes
+### Version 4.0 (November 18, 2025) - Compliance & Signatures
+- ✅ Credentials system (RN, LVN, MD, DO, PA, NP, CNA, Admin)
+- ✅ Electronic signatures (consent-to-treat, provider, patient)
+- ✅ Visit workflow (draft → ready → signed → submitted)
+- ✅ Procedure restrictions (credential-based scope)
+- ✅ Autosave (client-side 30s, server-side 2min)
+- ✅ PDF enhancements (clinician credentials, signatures)
 
-### 🎯 Critical Client Requirements (November 4, 2025)
+---
 
-This version addressed major UX and access management requirements from the client:
+## Version History Summary
 
-#### 1. **Wound-Based Layout** (MOST IMPORTANT) 🔥
-
-**Problem:** Current visit-centric layout makes managing multiple wounds difficult.
-
-**Solution:**
-
-- **Patient Detail Page**: Redesigned with wound cards as primary content
-  - Each wound shows: location, type, status, measurements, latest photo, recent visits
-  - Per-wound notes with timestamps (can add notes anytime)
-  - Quick wound switcher for easy navigation
-  - Patient demographics moved to sidebar (secondary)
-- **Visit Assessment Form**: Easy multi-wound management
-  - Wound switcher (tabs for 2-5 wounds, sidebar for 6+)
-  - Auto-save when switching between wounds
-  - Progress indicator (wound X of Y, checkmarks)
-  - Per-wound notes section for multiple timestamped notes
-  - Checkboxes replace dropdowns for multi-select (tissue types, infection signs, etc.)
-  - Radio buttons replace dropdowns for single-select (wound type, healing status, etc.)
-
-**Why This Matters:** Clinicians think in terms of wounds, not visits. A patient with 5 wounds needs 5 separate assessments per visit. The wound-based layout makes this workflow natural and efficient.
-
-#### 2. **Multi-Tenant Access Management** (RBAC)
-
-**Problem:** Need SaaS-style multi-tenancy with proper access controls.
-
-**Solution:**
-
-- **Three roles**: Tenant Admin, Facility Admin, User
-- **Tenant Admin**: Full access, can invite other admins and facility admins, manage all facilities
-- **Facility Admin**: Can only view/manage assigned facility, can invite users within facility
-- **User**: Basic access to assigned facilities
-- Email-based invite system with role assignment
-- Complete tenant isolation (users cannot see other tenant data)
-
-**New Tables:** `tenants`, `user_roles`, `wound_notes`
-
-#### 3. **Enhanced Calendar** (Google Calendar-Style)
-
-**Problem:** 404 error when clicking calendar events, no easy way to create appointments.
-
-**Solution:**
-
-- **Modal opens on event click** (not page redirect) - fixes 404 error
-- Modal shows: patient, visit, time, quick links (View Patient, View Visit Details)
-- **Drag-select time range** to create new appointment
-- **Click empty slot** to create appointment
-- New appointment modal with patient search and wound selection
-
-**Why This Matters:** Faster appointment management without context switching.
-
-#### 4. **Per-Wound Notes System**
-
-**Problem:** Need to track notes per wound with timestamps, including post-visit addenda.
-
-**Solution:**
-
-- New `wound_notes` table for timestamped notes
-- Add notes anytime (during visit, after visit, standalone)
-- Multiple notes per wound per visit
-- Shows author, timestamp, content
-- Addendum tracking: Post-visit notes increment `visit.number_of_addenda`
+### Version 3.0 (November 4, 2025) - UX & Multi-Tenancy
+- ✅ Wound-based layout (wound cards as primary interface)
+- ✅ Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
+- ✅ Enhanced calendar (modal-based, drag-to-create)
+- ✅ Per-wound notes system with timestamps
 
 ---
 
@@ -1844,58 +1775,51 @@ lib/
 
 ---
 
-**9.3.4: Upload Scanned Paper Consents** 🔴 **MEDIUM PRIORITY** (Next Up)
+**9.3.5: Upload Scanned Paper Consents** ✅ **COMPLETED** (November 23, 2025)
 
 **Client Need:** Digitize pre-existing paper consent forms signed before electronic system deployed
 
-- [ ] Update `patient_consents` table migration (00019)
-  ```sql
-  ALTER TABLE patient_consents 
-  ADD COLUMN consent_document_url TEXT,
-  ADD COLUMN consent_document_name TEXT,
-  ADD COLUMN consent_document_size INTEGER;
-  ```
+- ✅ Database migration 00019 created
+  - Added `consent_document_url`, `consent_document_name`, `consent_document_size` to patient_consents
+  - Updated signatures constraint to include 'upload' method
   
-- [ ] Update `signatures` table to support uploaded documents
-  ```sql
-  ALTER TABLE signatures 
-  DROP CONSTRAINT IF EXISTS signatures_signature_method_check;
+- ✅ Supabase Storage integration
+  - Created private bucket: `patient-consents`
+  - Configured RLS policies for authenticated users
+  - Implemented signed URLs (1-hour expiry) for secure access
+  - Added Next.js Image remotePatterns for signed URLs
   
-  ALTER TABLE signatures 
-  ADD CONSTRAINT signatures_signature_method_check 
-  CHECK (signature_method IN ('draw', 'type', 'upload'));
-  ```
+- ✅ UI Components created
+  - `ScannedConsentUpload` - Drag-and-drop file upload with validation
+  - `ConsentDocumentViewer` - Modal viewer (PDF iframe + Next Image)
+  - `ConsentStatusCard` - Display uploaded document with "View Document" button
+  - Updated `ConsentDialog` with tabs (Electronic vs Upload)
+  - Added Progress component from Radix UI
   
-- [ ] Update consent dialog component (`components/patients/consent-dialog.tsx`)
-  - [ ] Add tab: "Electronic Signature" vs "Upload Scanned Consent"
-  - [ ] Build file upload component for scanned consents
-  - [ ] Accept: PDF, JPG, PNG (max 10MB)
-  - [ ] Upload to Supabase Storage: `patient-consents/`
-  - [ ] Store file URL in patient_consents table
+- ✅ Server Actions implemented (`app/actions/signatures.ts`)
+  - `uploadScannedConsent()` - File validation, storage upload, record creation
+  - `getConsentDocumentUrl()` - Fetch consent and generate signed URL
+  - File validation: PDF, JPG, PNG (max 10MB)
+  - Legacy URL format handling for backward compatibility
   
-- [ ] Create consent document actions (`app/actions/signatures.ts`)
-  - [ ] `uploadScannedConsent(patientId, file, description)`
-  - [ ] Validate file type and size
-  - [ ] Upload to storage
-  - [ ] Create consent + signature records with method='upload'
+- ✅ Integration complete
+  - Patient page displays consent status card when document exists
+  - View Document button fetches signed URL dynamically
+  - Both electronic and uploaded consents supported simultaneously
   
-- [ ] Update consent display
-  - [ ] Show "View Scanned Document" button if uploaded
-  - [ ] Open PDF viewer modal or download file
-  - [ ] Display upload date and uploader name
-  
-- [ ] Test scenarios
-  - [ ] Upload PDF consent → Verify stored correctly
-  - [ ] Upload image consent → Verify displayed in viewer
-  - [ ] Verify visit creation enabled after upload
+- ✅ Testing verified
+  - Upload and view working correctly
+  - Storage RLS policies tested
+  - Signed URL generation confirmed
+  - Next.js Image rendering working
 
-**Deliverable:** Support for digitizing legacy paper consent forms
+**Deliverable:** ✅ Production-ready scanned consent upload system
 
-**Estimated Effort:** 1-2 days
+**Actual Effort:** 1 day (as estimated)
 
 ---
 
-**9.3.5: Visit Addendums** 🔴 **MEDIUM PRIORITY**
+**9.3.6: Visit Addendums** 🔴 **MEDIUM PRIORITY** (Next Up)
 
 **Client Need:** Add post-signature notes without modifying original visit
 
