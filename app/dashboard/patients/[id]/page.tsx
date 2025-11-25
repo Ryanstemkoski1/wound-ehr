@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPatient } from "@/app/actions/patients";
 import { getPatientConsent } from "@/app/actions/signatures";
+import { getPatientDocuments } from "@/app/actions/documents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
   Activity,
   MapPin,
   Plus,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { PatientDeleteButton } from "@/components/patients/patient-delete-button";
@@ -24,6 +26,7 @@ import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { WoundsListClient } from "@/components/wounds/wounds-list-client";
 import { ConsentDialog } from "@/components/patients/consent-dialog";
 import { ConsentStatusCard } from "@/components/patients/consent-status-card";
+import { PatientDocumentsTab } from "@/components/patients/patient-documents-tab";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -56,6 +59,10 @@ export default async function PatientDetailPage({
   // Check if patient has consent-to-treat
   const consentResult = await getPatientConsent(id);
   const hasConsent = !consentResult.error && consentResult.data !== null;
+
+  // Get patient documents
+  const documentsResult = await getPatientDocuments(id);
+  const documents = documentsResult.documents || [];
 
   // Calculate age
   const calculateAge = (dob: Date) => {
@@ -151,7 +158,7 @@ export default async function PatientDetailPage({
         {/* Left Column - Patient Info */}
         <div className="space-y-6 lg:col-span-2">
           <Tabs defaultValue="demographics">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="demographics" className="text-xs sm:text-sm">
                 Demographics
               </TabsTrigger>
@@ -160,6 +167,10 @@ export default async function PatientDetailPage({
               </TabsTrigger>
               <TabsTrigger value="medical" className="text-xs sm:text-sm">
                 Medical Info
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="text-xs sm:text-sm">
+                <FileText className="mr-1 h-3 w-3" />
+                Documents ({documents.length})
               </TabsTrigger>
             </TabsList>
 
@@ -414,6 +425,11 @@ export default async function PatientDetailPage({
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Documents Tab */}
+            <TabsContent value="documents" className="space-y-6">
+              <PatientDocumentsTab patientId={id} initialDocuments={documents} />
             </TabsContent>
           </Tabs>
         </div>

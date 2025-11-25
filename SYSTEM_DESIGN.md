@@ -1,8 +1,8 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.7  
-> **Date**: November 23, 2025  
-> **Status**: ✅ **Phase 9.3 - 100% COMPLETE 🎉**
+> **Version**: 4.8  
+> **Date**: November 25, 2025  
+> **Status**: ✅ **Phase 9.4.1 - COMPLETE 🎉**
 
 ---
 
@@ -22,9 +22,25 @@
 
 ---
 
-## Version 4.7 Updates (November 23, 2025)
+## Version 4.8 Updates (November 25, 2025)
 
-### ✅ Phase 9.3 - 100% COMPLETE 🎉
+### ✅ Phase 9.4.1 - Patient Document Attachments - COMPLETE 🎉
+
+**Feature:** Comprehensive document management system for patient records
+- ✅ Database schema with 11 document types (migration 00022)
+- ✅ Supabase Storage bucket with RLS policies
+- ✅ Upload with drag-and-drop (FormData-based Server Action)
+- ✅ Document viewer (PDF/image preview in modal)
+- ✅ Organized display grouped by type
+- ✅ Archive and download capabilities
+- ✅ Full audit trail (uploader, timestamp, credentials)
+- ✅ Multi-tenant security enforced
+- **Lines Added:** ~1,500 lines (8 new files, 2 modified)
+- **Deployment:** November 25, 2025 - LIVE ✅
+
+---
+
+### ✅ Phase 9.3 - 100% COMPLETE (November 23, 2025)
 
 **All 7 sub-phases completed:**
 - ✅ 9.3.1: Procedure Restrictions (credential-based scope of practice) - Nov 20

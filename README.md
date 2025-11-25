@@ -71,7 +71,7 @@ Visit `http://localhost:3000`
 
 ## 🗄️ Database
 
-**12 core tables** with Row Level Security (RLS):
+**14 core tables** with Row Level Security (RLS):
 
 - `users` - User accounts with credentials (RN, LVN, MD, etc.)
 - `facilities` - Medical facilities/clinics
@@ -83,10 +83,12 @@ Visit `http://localhost:3000`
 - `photos` - Wound photo metadata (files in Supabase Storage)
 - `treatments` - Treatment plans and medical orders
 - `billings` - Billing codes (CPT, ICD-10) and claims
-- `signatures` - Electronic signatures with audit trail ✨ NEW
-- `patient_consents` - Initial consent-to-treat forms ✨ NEW
+- `signatures` - Electronic signatures with audit trail
+- `patient_consents` - Initial consent-to-treat forms
+- `procedure_scopes` - Credential-based procedure restrictions
+- `patient_documents` - Patient document attachments ✨ NEW
 
-**Schema:** See `supabase/migrations/` (17 migrations executed)
+**Schema:** See `supabase/migrations/` (22 migrations executed)
 
 ---
 
@@ -105,7 +107,7 @@ Visit `http://localhost:3000`
 - 🔐 Row Level Security for data isolation
 - 📋 Admin dashboard with user/facility/invite management
 
-### ✅ Phase 9.1-9.2: Compliance & Signatures (COMPLETE) ✨ NEW
+### ✅ Phase 9.1-9.3: Compliance & Signatures (COMPLETE)
 
 - 🏥 **Credentials-based roles** (RN, LVN, MD, DO, PA, NP, CNA, Admin)
 - ✍️ **Electronic signatures** with immutable audit trail
@@ -116,8 +118,28 @@ Visit `http://localhost:3000`
 - 🔒 **Read-only enforcement** for signed/submitted visits
 - 📄 **PDF signatures** included in visit exports
 - 📱 **Dual-mode signature pad** (draw with canvas OR type with keyboard)
+- 🔐 **Procedure restrictions** (credential-based scope of practice)
+- 💾 **Autosave** (client + server-side drafts)
+- 📋 **Visit addendums** (post-signature notes)
+- 📊 **Signature audit logs** (admin compliance reporting)
+
+### ✅ Phase 9.4.1: Document Management (COMPLETE) ✨ NEW
+
+- 📎 **Patient document attachments** (11 types: face sheets, labs, radiology, insurance, etc.)
+- 📤 **Drag-and-drop upload** with file validation (PDF, images, DOC, max 10MB)
+- 👁️ **Document viewer** (in-browser preview for PDFs and images)
+- 📥 **Download and archive** capabilities
+- 🏷️ **Metadata tracking** (type, category, date, notes)
+- 👤 **Full audit trail** (uploader info with credentials and timestamp)
+- 🔒 **Multi-tenant security** (RLS policies on database and storage)
+- 🗂️ **Organized display** (grouped by document type with count badges)
 
 ### 🚧 Next Phase
+
+**Phase 9.4.2+: Specialized Templates & Features**
+- RN/LVN shorthand note template (awaiting client input)
+- Specialized assessment types (Grafting, Skin Sweep, G-tube)
+- Document versioning and bulk uploads
 
 **Phase 7: Analytics & Polish**
 - Dashboard charts and wound healing metrics
