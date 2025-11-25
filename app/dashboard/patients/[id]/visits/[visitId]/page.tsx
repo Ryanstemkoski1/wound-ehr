@@ -10,7 +10,6 @@ import {
   Clock,
   MapPin,
   FileText,
-  Plus,
   Edit,
   DollarSign,
 } from "lucide-react";
@@ -56,11 +55,11 @@ export default async function VisitDetailPage({ params }: PageProps) {
   const billing = billingResult.success ? billingResult.billing : null;
 
   // Get current user's name and credentials for signing
-  const { data: userData } = await supabase
-    .rpc("get_current_user_credentials");
+  const { data: userData } = await supabase.rpc("get_current_user_credentials");
 
   const userName = userData && userData.length > 0 ? userData[0].name : "";
-  const userCredentials = userData && userData.length > 0 ? userData[0].credentials : "";
+  const userCredentials =
+    userData && userData.length > 0 ? userData[0].credentials : "";
 
   const statusVariant = visit.status === "complete" ? "secondary" : "default";
 
@@ -326,7 +325,10 @@ export default async function VisitDetailPage({ params }: PageProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Visit Status & Signatures</CardTitle>
-                <AddAddendumDialog visitId={visitId} visitStatus={visit.status} />
+                <AddAddendumDialog
+                  visitId={visitId}
+                  visitStatus={visit.status}
+                />
               </div>
             </CardHeader>
             <CardContent>
@@ -334,8 +336,16 @@ export default async function VisitDetailPage({ params }: PageProps) {
                 visitId={visitId}
                 patientId={patientId}
                 patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
-                currentStatus={(visit.status || "draft") as "draft" | "ready_for_signature" | "signed" | "submitted"}
-                requiresPatientSignature={visit.requiresPatientSignature || false}
+                currentStatus={
+                  (visit.status || "draft") as
+                    | "draft"
+                    | "ready_for_signature"
+                    | "signed"
+                    | "submitted"
+                }
+                requiresPatientSignature={
+                  visit.requiresPatientSignature || false
+                }
                 providerSignatureId={visit.providerSignatureId || null}
                 patientSignatureId={visit.patientSignatureId || null}
                 userName={userName}
@@ -395,12 +405,13 @@ export default async function VisitDetailPage({ params }: PageProps) {
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     No assessments recorded
                   </p>
-                  {visit.status !== "signed" && visit.status !== "submitted" && (
-                    <NewAssessmentButton
-                      patientId={patientId}
-                      visitId={visitId}
-                    />
-                  )}
+                  {visit.status !== "signed" &&
+                    visit.status !== "submitted" && (
+                      <NewAssessmentButton
+                        patientId={patientId}
+                        visitId={visitId}
+                      />
+                    )}
                 </div>
               )}
             </CardContent>

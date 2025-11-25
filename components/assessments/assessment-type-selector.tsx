@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +24,7 @@ export default function AssessmentTypeSelector({
   onOpenChange,
   onSelectType,
 }: AssessmentTypeSelectorProps) {
-  const [selectedType, setSelectedType] = useState<AssessmentType | null>(null);
-
   const handleSelect = (type: AssessmentType) => {
-    setSelectedType(type);
     onSelectType(type);
     onOpenChange(false);
   };
