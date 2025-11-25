@@ -154,365 +154,352 @@ export default async function PatientDetailPage({
         />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Patient Info */}
-        <div className="space-y-6 lg:col-span-2">
-          <Tabs defaultValue="demographics">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="demographics" className="text-xs sm:text-sm">
-                Demographics
-              </TabsTrigger>
-              <TabsTrigger value="insurance" className="text-xs sm:text-sm">
-                Insurance
-              </TabsTrigger>
-              <TabsTrigger value="medical" className="text-xs sm:text-sm">
-                Medical Info
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="text-xs sm:text-sm">
-                <FileText className="mr-1 h-3 w-3" />
-                Documents ({documents.length})
-              </TabsTrigger>
-            </TabsList>
+      {/* Full-Width Tabs */}
+      <Tabs defaultValue="wounds">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="wounds" className="text-xs sm:text-sm">
+            <Activity className="mr-1 h-3 w-3" />
+            Wounds ({patient.wounds.length})
+          </TabsTrigger>
+          <TabsTrigger value="visits" className="text-xs sm:text-sm">
+            <Calendar className="mr-1 h-3 w-3" />
+            Visits ({patient.visits.length})
+          </TabsTrigger>
+          <TabsTrigger value="demographics" className="text-xs sm:text-sm">
+            Demographics
+          </TabsTrigger>
+          <TabsTrigger value="insurance" className="text-xs sm:text-sm">
+            Insurance
+          </TabsTrigger>
+          <TabsTrigger value="medical" className="text-xs sm:text-sm">
+            Medical Info
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="text-xs sm:text-sm">
+            <FileText className="mr-1 h-3 w-3" />
+            Documents ({documents.length})
+          </TabsTrigger>
+        </TabsList>
 
-            {/* Demographics Tab */}
-            <TabsContent value="demographics" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Basic Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Date of Birth
-                      </p>
-                      <p className="font-medium">
-                        {new Date(patient.dob).toLocaleDateString()} ({age}{" "}
-                        years old)
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Gender
-                      </p>
-                      <p className="font-medium">
-                        {patient.gender || "Not specified"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    Contact Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Phone
-                      </p>
-                      <p className="font-medium">
-                        {patient.phone || "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Email
-                      </p>
-                      <p className="font-medium">
-                        {patient.email || "Not provided"}
-                      </p>
-                    </div>
-                  </div>
-                  {patient.address && (
-                    <div>
-                      <p className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-                        <MapPin className="h-3 w-3" />
-                        Address
-                      </p>
-                      <p className="font-medium">
-                        {patient.address}
-                        {patient.city && patient.state && (
-                          <>
-                            <br />
-                            {patient.city}, {patient.state} {patient.zip}
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {emergencyContact && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5" />
-                      Emergency Contact
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Name
-                        </p>
-                        <p className="font-medium">{emergencyContact.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Phone
-                        </p>
-                        <p className="font-medium">{emergencyContact.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Relationship
-                        </p>
-                        <p className="font-medium">
-                          {emergencyContact.relationship}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Insurance Tab */}
-            <TabsContent value="insurance" className="space-y-6">
-              {insuranceInfo?.primary && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Primary Insurance</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Provider
-                      </p>
-                      <p className="font-medium">
-                        {insuranceInfo.primary.provider}
-                      </p>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Policy Number
-                        </p>
-                        <p className="font-medium">
-                          {insuranceInfo.primary.policyNumber}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Group Number
-                        </p>
-                        <p className="font-medium">
-                          {insuranceInfo.primary.groupNumber}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {insuranceInfo?.secondary && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Secondary Insurance</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Provider
-                      </p>
-                      <p className="font-medium">
-                        {insuranceInfo.secondary.provider}
-                      </p>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Policy Number
-                        </p>
-                        <p className="font-medium">
-                          {insuranceInfo.secondary.policyNumber}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Group Number
-                        </p>
-                        <p className="font-medium">
-                          {insuranceInfo.secondary.groupNumber}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {!insuranceInfo?.primary && !insuranceInfo?.secondary && (
-                <Card>
-                  <CardContent className="py-12 text-center text-zinc-600 dark:text-zinc-400">
-                    No insurance information on file
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            {/* Medical Info Tab */}
-            <TabsContent value="medical" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
-                    Allergies
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {allergies.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {allergies.map((allergy, index) => (
-                        <Badge
-                          key={index}
-                          variant="destructive"
-                          className="text-sm"
-                        >
-                          {allergy}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-zinc-600 dark:text-zinc-400">
-                      No known allergies
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    Medical History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {medicalHistory.length > 0 ? (
-                    <ul className="space-y-2">
-                      {medicalHistory.map((condition, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                          <span>{condition}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-zinc-600 dark:text-zinc-400">
-                      No medical history recorded
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Documents Tab */}
-            <TabsContent value="documents" className="space-y-6">
-              <PatientDocumentsTab
-                patientId={id}
-                initialDocuments={documents}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Right Column - Activity */}
-        <div className="space-y-6 lg:sticky lg:top-6 lg:h-fit lg:max-h-[calc(100vh-8rem)]">
-          {/* Wounds Section */}
-          <Card className="flex flex-col overflow-hidden">
+        {/* Demographics Tab */}
+        <TabsContent value="demographics" className="space-y-6">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" aria-hidden="true" />
-                Wounds
+                <User className="h-5 w-5" />
+                Basic Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
-              <WoundsListClient
-                wounds={patient.wounds}
-                patientId={patient.id}
-              />
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Date of Birth
+                  </p>
+                  <p className="font-medium">
+                    {new Date(patient.dob).toLocaleDateString()} ({age} years
+                    old)
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Gender
+                  </p>
+                  <p className="font-medium">
+                    {patient.gender || "Not specified"}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Recent Visits */}
-          <Card className="flex flex-col overflow-hidden">
+          <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" aria-hidden="true" />
-                  Recent Visits
-                </CardTitle>
-                <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
-                  <Button
-                    size="sm"
-                    className="gap-1"
-                    aria-label="Schedule new visit"
-                  >
-                    <Plus className="h-4 w-4" aria-hidden="true" />
-                    Add
-                  </Button>
-                </Link>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                Contact Information
+              </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
-              {patient.visits.length > 0 ? (
-                <div className="space-y-3">
-                  {patient.visits.map(
-                    (visit: {
-                      id: string;
-                      visitDate: Date;
-                      visitType: string;
-                      location: string | null;
-                      status: string;
-                      followUpType: string | null;
-                      followUpDate: Date | null;
-                    }) => (
-                      <VisitCard
-                        key={visit.id}
-                        visit={visit}
-                        patientId={patient.id}
-                      />
-                    )
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3 text-center">
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    No visits recorded
+                    Phone
                   </p>
-                  <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Plus className="h-4 w-4" />
-                      Schedule First Visit
-                    </Button>
-                  </Link>
+                  <p className="font-medium">
+                    {patient.phone || "Not provided"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Email
+                  </p>
+                  <p className="font-medium">
+                    {patient.email || "Not provided"}
+                  </p>
+                </div>
+              </div>
+              {patient.address && (
+                <div>
+                  <p className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    <MapPin className="h-3 w-3" />
+                    Address
+                  </p>
+                  <p className="font-medium">
+                    {patient.address}
+                    {patient.city && patient.state && (
+                      <>
+                        <br />
+                        {patient.city}, {patient.state} {patient.zip}
+                      </>
+                    )}
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
+
+          {emergencyContact && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Emergency Contact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Name
+                    </p>
+                    <p className="font-medium">{emergencyContact.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Phone
+                    </p>
+                    <p className="font-medium">{emergencyContact.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Relationship
+                    </p>
+                    <p className="font-medium">
+                      {emergencyContact.relationship}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Insurance Tab */}
+        <TabsContent value="insurance" className="space-y-6">
+          {insuranceInfo?.primary && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Primary Insurance</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Provider
+                  </p>
+                  <p className="font-medium">
+                    {insuranceInfo.primary.provider}
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Policy Number
+                    </p>
+                    <p className="font-medium">
+                      {insuranceInfo.primary.policyNumber}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Group Number
+                    </p>
+                    <p className="font-medium">
+                      {insuranceInfo.primary.groupNumber}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {insuranceInfo?.secondary && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Secondary Insurance</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Provider
+                  </p>
+                  <p className="font-medium">
+                    {insuranceInfo.secondary.provider}
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Policy Number
+                    </p>
+                    <p className="font-medium">
+                      {insuranceInfo.secondary.policyNumber}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Group Number
+                    </p>
+                    <p className="font-medium">
+                      {insuranceInfo.secondary.groupNumber}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!insuranceInfo?.primary && !insuranceInfo?.secondary && (
+            <Card>
+              <CardContent className="py-12 text-center text-zinc-600 dark:text-zinc-400">
+                No insurance information on file
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Medical Info Tab */}
+        <TabsContent value="medical" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Allergies
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {allergies.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {allergies.map((allergy, index) => (
+                    <Badge
+                      key={index}
+                      variant="destructive"
+                      className="text-sm"
+                    >
+                      {allergy}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  No known allergies
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Medical History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {medicalHistory.length > 0 ? (
+                <ul className="space-y-2">
+                  {medicalHistory.map((condition, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                      <span>{condition}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  No medical history recorded
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Wounds Tab */}
+        <TabsContent value="wounds" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Wounds</h3>
+            <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
+              <Button size="sm" className="gap-1">
+                <Plus className="h-4 w-4" />
+                Add Wound
+              </Button>
+            </Link>
+          </div>
+          <WoundsListClient wounds={patient.wounds} patientId={patient.id} />
+        </TabsContent>
+
+        {/* Visits Tab */}
+        <TabsContent value="visits" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Recent Visits</h3>
+            <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
+              <Button size="sm" className="gap-1">
+                <Plus className="h-4 w-4" />
+                Schedule Visit
+              </Button>
+            </Link>
+          </div>
+          {patient.visits.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {patient.visits.map(
+                (visit: {
+                  id: string;
+                  visitDate: Date;
+                  visitType: string;
+                  location: string | null;
+                  status: string;
+                  followUpType: string | null;
+                  followUpDate: Date | null;
+                }) => (
+                  <VisitCard
+                    key={visit.id}
+                    visit={visit}
+                    patientId={patient.id}
+                  />
+                )
+              )}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="mb-4 text-zinc-600 dark:text-zinc-400">
+                  No visits recorded
+                </p>
+                <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
+                  <Button variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Schedule First Visit
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="space-y-6">
+          <PatientDocumentsTab patientId={id} initialDocuments={documents} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
