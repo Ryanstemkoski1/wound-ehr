@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import AutosaveIndicator from "@/components/ui/autosave-indicator";
+import AutosaveRecoveryModal from "@/components/ui/autosave-recovery-modal";
+import { hasRecentAutosave } from "@/lib/autosave";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +29,7 @@ type SkilledNursingAssessmentFormProps = {
   visitId: string;
   patientId: string;
   facilityId: string;
+  userId: string;
   onComplete?: () => void;
 };
 
@@ -32,10 +37,16 @@ export function SkilledNursingAssessmentForm({
   visitId,
   patientId,
   facilityId,
+  userId,
   onComplete,
 }: SkilledNursingAssessmentFormProps) {
   const [saving, setSaving] = useState(false);
   const [wounds, setWounds] = useState<SkilledNursingWoundData[]>([]);
+  
+  // Autosave state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<"saving" | "saved" | "error" | "idle">("idle");
+  const [lastSavedTime, setLastSavedTime] = useState<string>("");
   
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<SkilledNursingAssessmentData>({
     defaultValues: {
@@ -53,6 +64,54 @@ export function SkilledNursingAssessmentForm({
   const watchNebulizer = watch("onNebulizer");
   const watchTubeFeeding = watch("tubeFeeding");
 
+  // Get all form values for autosave
+  const formValues = watch();
+
+  // Client-side autosave hook (localStorage)
+  const { loadSavedData, clearSavedData } = useAutosave({
+    formType: "skilled-nursing-assessment",
+    entityId: visitId,
+    userId,
+    data: formValues,
+    interval: 30000, // 30 seconds
+    enabled: true,
+    onSave: () => {
+      setAutosaveStatus("saved");
+      setLastSavedTime("just now");
+    },
+  });
+
+  // Check for autosaved data on mount
+  useEffect(() => {
+    const autosaveKey = `wound-ehr-autosave-skilled-nursing-assessment-${visitId}-${userId}`;
+    if (hasRecentAutosave(autosaveKey)) {
+      const { data, timestamp } = loadSavedData();
+      if (data && timestamp) {
+        setShowRecoveryModal(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore autosaved data
+  const handleRestoreAutosave = () => {
+    const { data } = loadSavedData();
+    if (data) {
+      Object.keys(data).forEach((key) => {
+        const typedKey = key as keyof SkilledNursingAssessmentData;
+        setValue(typedKey, (data as Record<string, unknown>)[key] as never);
+      });
+      toast.success("Restored unsaved assessment data");
+    }
+    setShowRecoveryModal(false);
+  };
+
+  // Discard autosaved data
+  const handleDiscardAutosave = () => {
+    clearSavedData();
+    setShowRecoveryModal(false);
+  };
+
   const onSubmit = async (data: SkilledNursingAssessmentData, isDraft: boolean) => {
     setSaving(true);
     try {
@@ -62,6 +121,7 @@ export function SkilledNursingAssessmentForm({
       );
 
       if (result.success) {
+        clearSavedData(); // Clear autosave after successful submission
         toast.success(isDraft ? "Assessment saved as draft" : "Assessment submitted successfully");
         onComplete?.();
       } else {
@@ -77,10 +137,22 @@ export function SkilledNursingAssessmentForm({
   };
 
   return (
-    <form className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Skilled Nursing Visit Assessment</h2>
-        <div className="flex gap-2">
+    <>
+      <AutosaveRecoveryModal
+        isOpen={showRecoveryModal}
+        onRestore={handleRestoreAutosave}
+        onDiscard={handleDiscardAutosave}
+        timestamp={loadSavedData().timestamp ?? new Date().toISOString()}
+        formType="Skilled Nursing Assessment"
+      />
+
+      <form className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold">Skilled Nursing Visit Assessment</h2>
+            <AutosaveIndicator status={autosaveStatus} lastSaved={lastSavedTime} />
+          </div>
+          <div className="flex gap-2">
           <Button
             type="button"
             variant="outline"
@@ -1096,5 +1168,6 @@ export function SkilledNursingAssessmentForm({
         </TabsContent>
       </Tabs>
     </form>
+    </>
   );
 }

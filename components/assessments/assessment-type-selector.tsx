@@ -35,29 +35,29 @@ export default function AssessmentTypeSelector({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Select Assessment Type</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl">Select Assessment Type</DialogTitle>
+          <DialogDescription className="text-base">
             Choose the type of assessment you want to create for this visit
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 md:grid-cols-3 py-4">
+        <div className="grid gap-6 md:grid-cols-3 py-6">
           <Card
-            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary"
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary min-h-[280px] flex flex-col"
             onClick={() => handleSelect("standard")}
           >
             <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <FileText className="h-5 w-5 text-primary" />
+              <div className="flex flex-col items-center space-y-3 text-center">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <FileText className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="text-lg">Standard Assessment</CardTitle>
+                <CardTitle className="text-xl">Standard Assessment</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
-              <CardDescription>
+            <CardContent className="flex-1">
+              <CardDescription className="text-center text-base leading-relaxed">
                 Basic wound assessment including location, measurements, tissue type, drainage, and
                 treatment plan. Used for routine wound care visits.
               </CardDescription>
@@ -65,19 +65,19 @@ export default function AssessmentTypeSelector({
           </Card>
 
           <Card
-            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary"
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary min-h-[280px] flex flex-col"
             onClick={() => handleSelect("skilled-nursing")}
           >
             <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <Stethoscope className="h-5 w-5 text-primary" />
+              <div className="flex flex-col items-center space-y-3 text-center">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Stethoscope className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="text-lg">RN/LVN Assessment</CardTitle>
+                <CardTitle className="text-xl">RN/LVN Assessment</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
-              <CardDescription>
+            <CardContent className="flex-1">
+              <CardDescription className="text-center text-base leading-relaxed">
                 Comprehensive skilled nursing visit assessment covering all body systems: vitals,
                 cardiovascular, respiratory, neurological, GI/GU, nutrition, medications, and more.
               </CardDescription>
@@ -85,19 +85,19 @@ export default function AssessmentTypeSelector({
           </Card>
 
           <Card
-            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary"
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary min-h-[280px] flex flex-col"
             onClick={() => handleSelect("gtube-procedure")}
           >
             <CardHeader>
-              <div className="flex items-center space-x-2">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <Activity className="h-5 w-5 text-primary" />
+              <div className="flex flex-col items-center space-y-3 text-center">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Activity className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="text-lg">G-tube Procedure</CardTitle>
+                <CardTitle className="text-xl">G-tube Procedure</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
-              <CardDescription>
+            <CardContent className="flex-1">
+              <CardDescription className="text-center text-base leading-relaxed">
                 MEND G-tube documentation including comorbidities, procedure details, tube
                 assessment, peri-tube findings, replacement details, and verification methods.
               </CardDescription>

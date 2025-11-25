@@ -68,6 +68,7 @@ export default async function NewGTubeProcedurePage({ params }: PageProps) {
           <GTubeProcedureForm
             patientId={patientId}
             facilityId={patient.facilityId}
+            userId={user.id}
           />
         </CardContent>
       </Card>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +12,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useAutosave } from "@/lib/hooks/use-autosave";
+import AutosaveIndicator from "@/components/ui/autosave-indicator";
+import AutosaveRecoveryModal from "@/components/ui/autosave-recovery-modal";
+import { hasRecentAutosave } from "@/lib/autosave";
 import { createGTubeProcedure, type GTubeProcedureData } from "@/app/actions/specialized-assessments";
 
 type GTubeProcedureFormProps = {
   patientId: string;
   facilityId: string;
+  userId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
@@ -24,11 +29,17 @@ type GTubeProcedureFormProps = {
 export default function GTubeProcedureForm({
   patientId,
   facilityId,
+  userId,
   onSuccess,
   onCancel,
 }: GTubeProcedureFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Autosave state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<"saving" | "saved" | "error" | "idle">("idle");
+  const [lastSavedTime, setLastSavedTime] = useState<string>("");
   
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<GTubeProcedureData>({
     defaultValues: {
@@ -44,11 +55,60 @@ export default function GTubeProcedureForm({
   const watchReplacementPerformed = watch("replacementPerformed");
   const watchTubeType = watch("tubeType");
 
+  // Get all form values for autosave
+  const formValues = watch();
+
+  // Client-side autosave hook (localStorage)
+  const { loadSavedData, clearSavedData } = useAutosave({
+    formType: "gtube-procedure",
+    entityId: patientId,
+    userId,
+    data: formValues,
+    interval: 30000, // 30 seconds
+    enabled: true,
+    onSave: () => {
+      setAutosaveStatus("saved");
+      setLastSavedTime("just now");
+    },
+  });
+
+  // Check for autosaved data on mount
+  useEffect(() => {
+    const autosaveKey = `wound-ehr-autosave-gtube-procedure-${patientId}-${userId}`;
+    if (hasRecentAutosave(autosaveKey)) {
+      const { data, timestamp } = loadSavedData();
+      if (data && timestamp) {
+        setShowRecoveryModal(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore autosaved data
+  const handleRestoreAutosave = () => {
+    const { data } = loadSavedData();
+    if (data) {
+      Object.keys(data).forEach((key) => {
+        const typedKey = key as keyof GTubeProcedureData;
+        setValue(typedKey, (data as Record<string, unknown>)[key] as never);
+      });
+      toast.success("Restored unsaved procedure data");
+    }
+    setShowRecoveryModal(false);
+  };
+
+  // Discard autosaved data
+  const handleDiscardAutosave = () => {
+    clearSavedData();
+    setShowRecoveryModal(false);
+  };
+
   const onSubmit = async (data: GTubeProcedureData, isDraft: boolean) => {
     setIsSubmitting(true);
     try {
       data.isDraft = isDraft;
       await createGTubeProcedure(data);
+      clearSavedData(); // Clear autosave after successful submission
       toast.success(isDraft ? "Draft saved successfully" : "G-tube procedure submitted successfully");
       if (onSuccess) {
         onSuccess();
@@ -64,8 +124,21 @@ export default function GTubeProcedureForm({
   };
 
   return (
-    <form className="space-y-6">
-      <Tabs defaultValue="patient-info" className="w-full">
+    <>
+      <AutosaveRecoveryModal
+        isOpen={showRecoveryModal}
+        onRestore={handleRestoreAutosave}
+        onDiscard={handleDiscardAutosave}
+        timestamp={loadSavedData().timestamp ?? new Date().toISOString()}
+        formType="G-tube Procedure"
+      />
+
+      <div className="mb-4 flex items-center justify-between">
+        <AutosaveIndicator status={autosaveStatus} lastSaved={lastSavedTime} />
+      </div>
+
+      <form className="space-y-6">
+        <Tabs defaultValue="patient-info" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="patient-info">Patient Info</TabsTrigger>
           <TabsTrigger value="procedure">Procedure</TabsTrigger>
@@ -658,5 +731,6 @@ export default function GTubeProcedureForm({
         </Button>
       </div>
     </form>
+    </>
   );
 }

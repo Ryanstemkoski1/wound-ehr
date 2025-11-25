@@ -81,6 +81,7 @@ export default async function NewSkilledNursingAssessmentPage({
             visitId={visitId}
             patientId={patientId}
             facilityId={visit.facilityId}
+            userId={user.id}
           />
         </CardContent>
       </Card>
