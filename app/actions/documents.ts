@@ -84,7 +84,9 @@ export async function uploadPatientDocument(formData: FormData) {
       .single();
 
     if (!facilityAccess) {
-      throw new Error("Access denied: You don't have access to this patient's facility");
+      throw new Error(
+        "Access denied: You don't have access to this patient's facility"
+      );
     }
 
     // Generate unique filename
@@ -136,7 +138,8 @@ export async function uploadPatientDocument(formData: FormData) {
     console.error("Upload patient document error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to upload document",
+      error:
+        error instanceof Error ? error.message : "Failed to upload document",
     };
   }
 }
@@ -144,7 +147,10 @@ export async function uploadPatientDocument(formData: FormData) {
 /**
  * Get all documents for a patient
  */
-export async function getPatientDocuments(patientId: string, includeArchived = false) {
+export async function getPatientDocuments(
+  patientId: string,
+  includeArchived = false
+) {
   const supabase = await createClient();
 
   try {
@@ -175,7 +181,8 @@ export async function getPatientDocuments(patientId: string, includeArchived = f
     console.error("Get patient documents error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch documents",
+      error:
+        error instanceof Error ? error.message : "Failed to fetch documents",
       documents: [],
     };
   }
@@ -219,7 +226,8 @@ export async function getDocumentSignedUrl(documentId: string) {
     console.error("Get document signed URL error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to get document URL",
+      error:
+        error instanceof Error ? error.message : "Failed to get document URL",
     };
   }
 }
@@ -263,7 +271,8 @@ export async function archivePatientDocument(documentId: string) {
     console.error("Archive document error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to archive document",
+      error:
+        error instanceof Error ? error.message : "Failed to archive document",
     };
   }
 }
@@ -318,7 +327,8 @@ export async function deletePatientDocument(documentId: string) {
     console.error("Delete document error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to delete document",
+      error:
+        error instanceof Error ? error.message : "Failed to delete document",
     };
   }
 }
@@ -369,7 +379,8 @@ export async function updatePatientDocument(
     console.error("Update document error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update document",
+      error:
+        error instanceof Error ? error.message : "Failed to update document",
     };
   }
 }

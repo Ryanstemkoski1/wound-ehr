@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, CheckCircle, Eye, Loader2 } from "lucide-react";
 import { ConsentDocumentViewer } from "./consent-document-viewer";
@@ -19,7 +25,11 @@ type ConsentStatusCardProps = {
   } | null;
 };
 
-export function ConsentStatusCard({ hasConsent, patientId, consentData }: ConsentStatusCardProps) {
+export function ConsentStatusCard({
+  hasConsent,
+  patientId,
+  consentData,
+}: ConsentStatusCardProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,14 +38,15 @@ export function ConsentStatusCard({ hasConsent, patientId, consentData }: Consen
     return null; // Dialog will handle display when no consent
   }
 
-  const hasDocument = consentData?.consent_document_url && consentData?.consent_document_name;
-  const consentDate = consentData?.created_at 
-    ? new Date(consentData.created_at).toLocaleDateString() 
+  const hasDocument =
+    consentData?.consent_document_url && consentData?.consent_document_name;
+  const consentDate = consentData?.created_at
+    ? new Date(consentData.created_at).toLocaleDateString()
     : "Unknown";
 
   return (
     <>
-      <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20">
+      <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -44,8 +55,13 @@ export function ConsentStatusCard({ hasConsent, patientId, consentData }: Consen
                 Consent on File
               </CardTitle>
             </div>
-            <Badge variant="outline" className="border-green-600 text-green-700 dark:text-green-300">
-              {consentData?.consent_type === "initial_treatment" ? "Initial Treatment" : "Active"}
+            <Badge
+              variant="outline"
+              className="border-green-600 text-green-700 dark:text-green-300"
+            >
+              {consentData?.consent_type === "initial_treatment"
+                ? "Initial Treatment"
+                : "Active"}
             </Badge>
           </div>
           <CardDescription className="text-green-700 dark:text-green-300">
@@ -54,7 +70,7 @@ export function ConsentStatusCard({ hasConsent, patientId, consentData }: Consen
         </CardHeader>
         {hasDocument && (
           <CardContent>
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded-lg border">
+            <div className="flex items-center justify-between rounded-lg border bg-white p-3 dark:bg-gray-900">
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
@@ -66,12 +82,12 @@ export function ConsentStatusCard({ hasConsent, patientId, consentData }: Consen
                   </p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={async () => {
                   if (!patientId) return;
-                  
+
                   setIsLoading(true);
                   try {
                     const result = await getConsentDocumentUrl(patientId);

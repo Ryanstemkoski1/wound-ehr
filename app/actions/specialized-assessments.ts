@@ -12,7 +12,7 @@ export type SkilledNursingAssessmentData = {
   patientId: string;
   facilityId: string;
   assessmentDate: string;
-  
+
   // Pain
   hasPain?: boolean;
   painScale?: number;
@@ -20,7 +20,7 @@ export type SkilledNursingAssessmentData = {
   painQuality?: string;
   painManagement?: string;
   painAggravatingFactors?: string;
-  
+
   // Vitals
   temp?: number;
   heartRate?: number;
@@ -29,7 +29,7 @@ export type SkilledNursingAssessmentData = {
   respiratoryRate?: number;
   oxygenSaturation?: number;
   bloodSugar?: number;
-  
+
   // Cardiovascular
   cardiovascularWnl?: boolean;
   chestPain?: boolean;
@@ -43,7 +43,7 @@ export type SkilledNursingAssessmentData = {
   hasEdema?: boolean;
   edemaGrade?: string;
   neckVeinDistention?: boolean;
-  
+
   // Respiratory
   lungSoundsCta?: boolean;
   lungSoundsRales?: boolean;
@@ -62,7 +62,7 @@ export type SkilledNursingAssessmentData = {
   onNebulizer?: boolean;
   nebulizerType?: string;
   nebulizerTime?: string;
-  
+
   // Orientation / Neuro
   orientedPerson?: boolean;
   orientedPlace?: boolean;
@@ -72,7 +72,7 @@ export type SkilledNursingAssessmentData = {
   lethargic?: boolean;
   perrl?: boolean;
   hasSeizures?: boolean;
-  
+
   // Sensory
   sensoryWnl?: boolean;
   hearingImpairedLeft?: boolean;
@@ -88,7 +88,7 @@ export type SkilledNursingAssessmentData = {
   visionBlind?: boolean;
   visionMacularDegeneration?: boolean;
   decreasedSensation?: string;
-  
+
   // GU
   guWnl?: boolean;
   guIncontinence?: boolean;
@@ -110,7 +110,7 @@ export type SkilledNursingAssessmentData = {
   urineOther?: string;
   externalGenitaliaNormal?: boolean;
   externalGenitaliaNotes?: string;
-  
+
   // GI
   giWnl?: boolean;
   giNauseaVomiting?: boolean;
@@ -130,7 +130,7 @@ export type SkilledNursingAssessmentData = {
   ostomyStomaAppearance?: string;
   ostomyStoolAppearance?: string;
   ostomySurroundingSkin?: string;
-  
+
   // Nutrition
   nutritionWnl?: boolean;
   dysphagia?: boolean;
@@ -147,12 +147,12 @@ export type SkilledNursingAssessmentData = {
   tubeFeedingRateCcHr?: number;
   tubeFeedingMethod?: string;
   tubeFeedingPlacementChecked?: boolean;
-  
+
   // Medications
   medChangesSinceLastVisit?: boolean;
   medCompliant?: boolean;
   medicationNotes?: string;
-  
+
   // Psychosocial
   poorHomeEnvironment?: boolean;
   poorCopingSkills?: boolean;
@@ -162,7 +162,7 @@ export type SkilledNursingAssessmentData = {
   anxiety?: boolean;
   inappropriateBehavior?: boolean;
   irritability?: boolean;
-  
+
   // Musculoskeletal
   musculoskeletalWnl?: boolean;
   weakness?: boolean;
@@ -175,7 +175,7 @@ export type SkilledNursingAssessmentData = {
   chairbound?: boolean;
   contracture?: boolean;
   paralysis?: boolean;
-  
+
   // Integumentary
   integumentaryWnl?: boolean;
   skinDry?: boolean;
@@ -184,13 +184,13 @@ export type SkilledNursingAssessmentData = {
   skinCool?: boolean;
   skinPallor?: boolean;
   skinTurgor?: string;
-  
+
   // Notes
   mdNotification?: string;
   educationGiven?: string;
   educationSource?: string;
   problemsIssues?: string;
-  
+
   // Metadata
   isDraft?: boolean;
 };
@@ -223,7 +223,7 @@ export type GTubeProcedureData = {
   snfBedRoom?: string;
   provider?: string;
   clinicianName?: string;
-  
+
   // Comorbidities
   comorbidDm?: boolean;
   comorbidCad?: boolean;
@@ -238,18 +238,18 @@ export type GTubeProcedureData = {
   comorbidAlzheimers?: boolean;
   comorbidDementia?: boolean;
   comorbidOther?: string;
-  
+
   procedurePerformed?: boolean;
   procedureType?: string;
   procedureIndication?: string;
-  
+
   // Abdominal Exam
   abdomenSoft?: boolean;
   abdomenNonTender?: boolean;
   abdomenDistended?: boolean;
   abdomenTender?: boolean;
   bowelSounds?: string;
-  
+
   // Tube Type
   tubeType?: string;
   tubeFrenchSize?: number;
@@ -257,7 +257,7 @@ export type GTubeProcedureData = {
   balloonVolume?: number;
   balloonWater?: number;
   tubeManufacturer?: string;
-  
+
   // Peri-Tube Site Assessment
   peritubeSiteClean?: boolean;
   peritubeSiteDry?: boolean;
@@ -273,7 +273,7 @@ export type GTubeProcedureData = {
   peritubeOdor?: boolean;
   drainageDescription?: string;
   siteNotes?: string;
-  
+
   // Replacement Details
   replacementPerformed?: boolean;
   replacementReason?: string;
@@ -284,18 +284,18 @@ export type GTubeProcedureData = {
   replacementTechnique?: string;
   lubrication?: boolean;
   guidewireUsed?: boolean;
-  
+
   // Verification
   verificationAspiration?: boolean;
   verificationPhTest?: boolean;
   verificationAuscultation?: boolean;
   verificationXray?: boolean;
   verificationNotes?: string;
-  
+
   // Procedure Note
   procedureNote?: string;
   complications?: string;
-  
+
   // Instructions & Consent
   patientInstructions?: string;
   consentObtained?: boolean;
@@ -592,7 +592,7 @@ export async function createGTubeProcedure(data: GTubeProcedureData) {
       to_pmd: data.toPmd,
       snf_bed_room: data.snfBedRoom,
       provider: data.provider,
-      
+
       // Comorbidities
       comorbid_dm: data.comorbidDm,
       comorbid_cad: data.comorbidCad,
@@ -607,19 +607,19 @@ export async function createGTubeProcedure(data: GTubeProcedureData) {
       comorbid_alzheimers: data.comorbidAlzheimers,
       comorbid_dementia: data.comorbidDementia,
       comorbid_other: data.comorbidOther,
-      
+
       // Procedure
       procedure_performed: data.procedurePerformed,
       procedure_type: data.procedureType,
       procedure_indication: data.procedureIndication,
-      
+
       // Abdominal Exam
       abdomen_soft: data.abdomenSoft,
       abdomen_non_tender: data.abdomenNonTender,
       abdomen_distended: data.abdomenDistended,
       abdomen_tender: data.abdomenTender,
       bowel_sounds: data.bowelSounds,
-      
+
       // Tube Type
       tube_type: data.tubeType,
       tube_french_size: data.tubeFrenchSize,
@@ -627,7 +627,7 @@ export async function createGTubeProcedure(data: GTubeProcedureData) {
       balloon_volume: data.balloonVolume,
       balloon_water: data.balloonWater,
       tube_manufacturer: data.tubeManufacturer,
-      
+
       // Peri-tube Site Assessment
       peritube_site_clean: data.peritubeSiteClean,
       peritube_site_dry: data.peritubeSiteDry,
@@ -643,7 +643,7 @@ export async function createGTubeProcedure(data: GTubeProcedureData) {
       peritube_odor: data.peritubeOdor,
       drainage_description: data.drainageDescription,
       site_notes: data.siteNotes,
-      
+
       // Replacement Details
       replacement_performed: data.replacementPerformed,
       replacement_reason: data.replacementReason,
@@ -654,18 +654,18 @@ export async function createGTubeProcedure(data: GTubeProcedureData) {
       replacement_technique: data.replacementTechnique,
       lubrication: data.lubrication,
       guidewire_used: data.guidewireUsed,
-      
+
       // Verification
       verification_aspiration: data.verificationAspiration,
       verification_ph_test: data.verificationPhTest,
       verification_auscultation: data.verificationAuscultation,
       verification_xray: data.verificationXray,
       verification_notes: data.verificationNotes,
-      
+
       // Procedure Note
       procedure_note: data.procedureNote,
       complications: data.complications,
-      
+
       // Instructions & Consent
       patient_instructions: data.patientInstructions,
       consent_obtained: data.consentObtained,

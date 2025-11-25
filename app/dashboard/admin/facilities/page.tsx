@@ -118,9 +118,7 @@ export default async function AdminFacilitiesPage() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={
-                            facility.isActive ? "default" : "secondary"
-                          }
+                          variant={facility.isActive ? "default" : "secondary"}
                         >
                           {facility.isActive ? "Active" : "Inactive"}
                         </Badge>

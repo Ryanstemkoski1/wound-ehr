@@ -14,7 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createVisit, updateVisit, autosaveVisitDraft } from "@/app/actions/visits";
+import {
+  createVisit,
+  updateVisit,
+  autosaveVisitDraft,
+} from "@/app/actions/visits";
 import {
   createBilling,
   updateBilling,
@@ -80,9 +84,7 @@ export default function VisitForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [visitDate, setVisitDate] = useState(
-    visit?.visitDate
-      ? new Date(visit.visitDate).toISOString().slice(0, 16)
-      : ""
+    visit?.visitDate ? new Date(visit.visitDate).toISOString().slice(0, 16) : ""
   );
   const [visitType, setVisitType] = useState(visit?.visitType || "");
   const [location, setLocation] = useState(visit?.location || "");
@@ -94,8 +96,12 @@ export default function VisitForm({
       ? new Date(visit.followUpDate).toISOString().split("T")[0]
       : ""
   );
-  const [followUpNotes, setFollowUpNotes] = useState(visit?.followUpNotes || "");
-  const [additionalNotes, setAdditionalNotes] = useState(visit?.additionalNotes || "");
+  const [followUpNotes, setFollowUpNotes] = useState(
+    visit?.followUpNotes || ""
+  );
+  const [additionalNotes, setAdditionalNotes] = useState(
+    visit?.additionalNotes || ""
+  );
   const [billingData, setBillingData] = useState<BillingFormData>({
     cptCodes: [],
     icd10Codes: [],
@@ -109,7 +115,9 @@ export default function VisitForm({
 
   // Autosave state
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [autosaveStatus, setAutosaveStatus] = useState<"saving" | "saved" | "error" | "idle">("idle");
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    "saving" | "saved" | "error" | "idle"
+  >("idle");
   const [lastSavedTime, setLastSavedTime] = useState<string>("");
 
   // Prepare form data for autosave
@@ -163,13 +171,15 @@ export default function VisitForm({
       setFollowUpNotes(data.followUpNotes || "");
       setAdditionalNotes(data.additionalNotes || "");
       setTimeSpent(data.timeSpent || false);
-      setBillingData(data.billingData || {
-        cptCodes: [],
-        icd10Codes: [],
-        modifiers: [],
-        timeSpent: false,
-        notes: "",
-      });
+      setBillingData(
+        data.billingData || {
+          cptCodes: [],
+          icd10Codes: [],
+          modifiers: [],
+          timeSpent: false,
+          notes: "",
+        }
+      );
       toast.success("Restored unsaved data");
     }
     setShowRecoveryModal(false);
@@ -211,7 +221,18 @@ export default function VisitForm({
     }, 120000); // 2 minutes
 
     return () => clearInterval(interval);
-  }, [visit, visitDate, visitType, location, followUpType, followUpDate, followUpNotes, timeSpent, additionalNotes, patientId]);
+  }, [
+    visit,
+    visitDate,
+    visitType,
+    location,
+    followUpType,
+    followUpDate,
+    followUpNotes,
+    timeSpent,
+    additionalNotes,
+    patientId,
+  ]);
 
   // Load existing billing data if editing a visit
   useEffect(() => {
@@ -295,7 +316,7 @@ export default function VisitForm({
     if (billingResult.success) {
       // Clear autosaved data on successful submission
       clearSavedData();
-      
+
       toast.success(
         visit ? "Visit updated successfully" : "Visit created successfully"
       );
@@ -376,115 +397,120 @@ export default function VisitForm({
           />
         </div>
 
-      {visit && (
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="in-progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="no-show">No Show</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div className="space-y-4 rounded-lg border p-4">
-        <h3 className="font-semibold">Follow-Up</h3>
-
-        <div className="grid gap-6 md:grid-cols-2">
+        {visit && (
           <div className="space-y-2">
-            <Label htmlFor="followUpType">Follow-Up Type</Label>
-            <Select
-              value={followUpType}
-              onValueChange={setFollowUpType}
-            >
+            <Label htmlFor="status">Status</Label>
+            <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
-                <SelectValue placeholder="Select follow-up type" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="appointment">Appointment</SelectItem>
-                <SelectItem value="discharge">Discharge</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="no-show">No Show</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        )}
 
-          {followUpType === "appointment" && (
+        <div className="space-y-4 rounded-lg border p-4">
+          <h3 className="font-semibold">Follow-Up</h3>
+
+          <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="followUpDate">Follow-Up Date</Label>
-              <Input
-                id="followUpDate"
-                type="date"
-                value={followUpDate}
-                onChange={(e) => setFollowUpDate(e.target.value)}
-              />
+              <Label htmlFor="followUpType">Follow-Up Type</Label>
+              <Select value={followUpType} onValueChange={setFollowUpType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select follow-up type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="appointment">Appointment</SelectItem>
+                  <SelectItem value="discharge">Discharge</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            {followUpType === "appointment" && (
+              <div className="space-y-2">
+                <Label htmlFor="followUpDate">Follow-Up Date</Label>
+                <Input
+                  id="followUpDate"
+                  type="date"
+                  value={followUpDate}
+                  onChange={(e) => setFollowUpDate(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="followUpNotes">Follow-Up Notes</Label>
+            <Textarea
+              id="followUpNotes"
+              placeholder="Notes about follow-up plan..."
+              rows={3}
+              value={followUpNotes}
+              onChange={(e) => setFollowUpNotes(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="followUpNotes">Follow-Up Notes</Label>
+          <Label htmlFor="additionalNotes">Additional Notes</Label>
           <Textarea
-            id="followUpNotes"
-            placeholder="Notes about follow-up plan..."
-            rows={3}
-            value={followUpNotes}
-            onChange={(e) => setFollowUpNotes(e.target.value)}
+            id="additionalNotes"
+            placeholder="Additional visit notes..."
+            rows={4}
+            value={additionalNotes}
+            onChange={(e) => setAdditionalNotes(e.target.value)}
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="additionalNotes">Additional Notes</Label>
-        <Textarea
-          id="additionalNotes"
-          placeholder="Additional visit notes..."
-          rows={4}
-          value={additionalNotes}
-          onChange={(e) => setAdditionalNotes(e.target.value)}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="timeSpent"
+            checked={timeSpent}
+            onCheckedChange={(checked) => setTimeSpent(checked as boolean)}
+          />
+          <Label
+            htmlFor="timeSpent"
+            className="text-sm leading-none font-normal peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            45+ minutes spent on this visit
+          </Label>
+        </div>
+
+        {/* Billing Information */}
+        <BillingFormWithCredentials
+          visitId={visit?.id || ""}
+          patientId={patientId}
+          userCredentials={userCredentials}
+          allowedCPTCodes={allowedCPTCodes}
+          restrictedCPTCodes={restrictedCPTCodes}
+          existingBilling={
+            visit && existingBillingId
+              ? {
+                  id: existingBillingId,
+                  cptCodes: billingData.cptCodes,
+                  icd10Codes: billingData.icd10Codes,
+                  modifiers: billingData.modifiers,
+                  timeSpent: billingData.timeSpent,
+                  notes: billingData.notes,
+                }
+              : null
+          }
+          onChange={setBillingData}
         />
-      </div>
 
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="timeSpent"
-          checked={timeSpent}
-          onCheckedChange={(checked) => setTimeSpent(checked as boolean)}
-        />
-        <Label
-          htmlFor="timeSpent"
-          className="text-sm leading-none font-normal peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          45+ minutes spent on this visit
-        </Label>
-      </div>
-
-      {/* Billing Information */}
-      <BillingFormWithCredentials
-        visitId={visit?.id || ""}
-        patientId={patientId}
-        userCredentials={userCredentials}
-        allowedCPTCodes={allowedCPTCodes}
-        restrictedCPTCodes={restrictedCPTCodes}
-        existingBilling={visit && existingBillingId ? {
-          id: existingBillingId,
-          cptCodes: billingData.cptCodes,
-          icd10Codes: billingData.icd10Codes,
-          modifiers: billingData.modifiers,
-          timeSpent: billingData.timeSpent,
-          notes: billingData.notes,
-        } : null}
-        onChange={setBillingData}
-      />
-
-      <div className="flex gap-3">
+        <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : visit ? "Update Visit" : "Create Visit"}
+            {isSubmitting
+              ? "Saving..."
+              : visit
+                ? "Update Visit"
+                : "Create Visit"}
           </Button>
           <Button
             type="button"

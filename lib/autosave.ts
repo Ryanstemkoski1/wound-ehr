@@ -84,7 +84,11 @@ export function getUserAutosaveKeys(userId: string): string[] {
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(`wound-ehr-autosave-`) && key.includes(userId)) {
+      if (
+        key &&
+        key.startsWith(`wound-ehr-autosave-`) &&
+        key.includes(userId)
+      ) {
         keys.push(key);
       }
     }

@@ -1,7 +1,7 @@
 /**
  * Phase 9.4.2 - Specialized Assessment Types
  * Verification Script
- * 
+ *
  * Tests:
  * 1. Database tables and schema
  * 2. Server actions functionality
@@ -59,14 +59,14 @@ async function verifyPhase942() {
 
   // Test 3: Check column schemas
   console.log("\n📋 Test 3: Key Columns Check");
-  
+
   // Skilled Nursing Assessment - check key columns
   try {
     const { data, error } = await supabase
       .from("skilled_nursing_assessments")
       .select("visit_id, patient_id, facility_id, assessment_date, has_pain")
       .limit(0);
-    
+
     if (error) {
       console.log(`  ❌ skilled_nursing_assessments columns: ${error.message}`);
       allPassed = false;
@@ -84,7 +84,7 @@ async function verifyPhase942() {
       .from("gtube_procedures")
       .select("patient_id, facility_id, procedure_date, tube_type_peg")
       .limit(0);
-    
+
     if (error) {
       console.log(`  ❌ gtube_procedures columns: ${error.message}`);
       allPassed = false;
@@ -100,7 +100,7 @@ async function verifyPhase942() {
   console.log("\n📁 Test 4: Component Files");
   const fs = require("fs");
   const path = require("path");
-  
+
   const componentFiles = [
     "components/assessments/skilled-nursing-assessment-form.tsx",
     "components/assessments/gtube-procedure-form.tsx",
@@ -141,7 +141,7 @@ async function verifyPhase942() {
     process.cwd(),
     "app/actions/specialized-assessments.ts"
   );
-  
+
   if (fs.existsSync(actionsPath)) {
     const content = fs.readFileSync(actionsPath, "utf8");
     const requiredFunctions = [

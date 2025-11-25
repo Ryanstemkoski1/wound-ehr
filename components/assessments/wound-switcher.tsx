@@ -41,16 +41,17 @@ export function WoundSwitcher({
     return (
       <div className={cn("space-y-4", className)}>
         {/* Progress indicator */}
-        <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+        <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-3">
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="font-semibold">
               Wound {activeIndex + 1} of {wounds.length}
             </Badge>
-            <span className="text-sm text-muted-foreground">
-              {progress.completed} / {progress.total} completed ({progress.percentage}%)
+            <span className="text-muted-foreground text-sm">
+              {progress.completed} / {progress.total} completed (
+              {progress.percentage}%)
             </span>
           </div>
-          <div className="flex h-2 w-32 overflow-hidden rounded-full bg-secondary">
+          <div className="bg-secondary flex h-2 w-32 overflow-hidden rounded-full">
             <div
               className="bg-teal-600 transition-all"
               style={{ width: `${progress.percentage}%` }}
@@ -60,7 +61,10 @@ export function WoundSwitcher({
 
         {/* Tabs */}
         <Tabs value={activeWoundId} onValueChange={onWoundChange}>
-          <TabsList className="grid h-auto w-full" style={{ gridTemplateColumns: `repeat(${wounds.length}, 1fr)` }}>
+          <TabsList
+            className="grid h-auto w-full"
+            style={{ gridTemplateColumns: `repeat(${wounds.length}, 1fr)` }}
+          >
             {wounds.map((wound) => {
               const isCompleted = completedWoundIds.has(wound.id);
               return (
@@ -73,7 +77,9 @@ export function WoundSwitcher({
                     <Check className="h-4 w-4 text-teal-600 data-[state=active]:text-white" />
                   )}
                   <div className="flex flex-col items-start">
-                    <span className="font-semibold">Wound {wound.woundNumber}</span>
+                    <span className="font-semibold">
+                      Wound {wound.woundNumber}
+                    </span>
                     <span className="text-xs opacity-80">{wound.location}</span>
                   </div>
                 </TabsTrigger>
@@ -89,20 +95,20 @@ export function WoundSwitcher({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Progress indicator */}
-      <div className="rounded-lg border bg-muted/50 p-4">
+      <div className="bg-muted/50 rounded-lg border p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm font-semibold">Assessment Progress</span>
           <Badge variant="secondary">
             {progress.completed} / {progress.total}
           </Badge>
         </div>
-        <div className="flex h-2 overflow-hidden rounded-full bg-secondary">
+        <div className="bg-secondary flex h-2 overflow-hidden rounded-full">
           <div
             className="bg-teal-600 transition-all"
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-xs">
           {progress.percentage}% complete
         </p>
       </div>
@@ -130,7 +136,7 @@ export function WoundSwitcher({
                       <Check className="h-4 w-4" />
                     </div>
                   ) : (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 bg-background">
+                    <div className="bg-background flex h-6 w-6 items-center justify-center rounded-full border-2">
                       <span className="text-xs font-semibold">{index + 1}</span>
                     </div>
                   )}
@@ -139,7 +145,9 @@ export function WoundSwitcher({
                       Wound {wound.woundNumber}
                     </span>
                     <span className="text-xs opacity-80">{wound.location}</span>
-                    <span className="text-xs opacity-60">{wound.woundType}</span>
+                    <span className="text-xs opacity-60">
+                      {wound.woundType}
+                    </span>
                   </div>
                 </div>
                 {isActive && <ChevronRight className="ml-auto h-4 w-4" />}

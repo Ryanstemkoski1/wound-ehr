@@ -5,12 +5,14 @@ Utility scripts for managing the Wound EHR application.
 ## Core Scripts (Root Level)
 
 ### Type Generation
+
 - `generate-types.js` - Generate TypeScript types from Supabase database schema
   ```bash
   npm run db:types
   ```
 
 ### Database Migrations
+
 - `run-migration.ts` - Generic migration runner
 - `run-migration-00005.js` - Setup default tenant (one-time)
 - `run-migration-00006.js` - Update visit status enum (one-time)
@@ -25,6 +27,7 @@ Diagnostic and troubleshooting utilities:
 - `diagnose-login.js` - Diagnose login and authentication issues
 
 **Usage:**
+
 ```bash
 node scripts/debug/diagnose-login.js user@example.com
 node scripts/debug/debug-specific-patient.js <patient-id>
@@ -35,12 +38,14 @@ node scripts/debug/debug-specific-patient.js <patient-id>
 Administrative utilities for user and data management:
 
 ### User Management
+
 - `assign-role.js` - Assign role to a user
 - `update-user-role.ts` - Update user role
 - `delete-user.js` - Remove user from system (includes auth deletion)
 - `confirm-user.js` - Manually confirm user email
 
 ### Data Management
+
 - `check-duplicate-wounds.ts` - Check for duplicate wound records
 - `check-user-facilities.ts` - Verify user-facility associations
 - `sync-user-facilities.ts` - Synchronize user-facility relationships
@@ -48,6 +53,7 @@ Administrative utilities for user and data management:
 - `cleanup-invites.ts` - Clean up expired or invalid invitations
 
 **Usage:**
+
 ```bash
 node scripts/admin/delete-user.js user@example.com
 node scripts/admin/assign-role.js user@example.com tenant_admin
@@ -58,15 +64,18 @@ node scripts/admin/assign-role.js user@example.com tenant_admin
 ## Script Organization
 
 ### Root Level
+
 - Core utilities used regularly (type generation, migrations)
 - Scripts that are part of the build/dev workflow
 
 ### `debug/`
+
 - Temporary or one-off diagnostic scripts
 - Troubleshooting utilities
 - Can be removed or archived after issues are resolved
 
 ### `admin/`
+
 - Administrative tasks
 - User management
 - Data verification and cleanup

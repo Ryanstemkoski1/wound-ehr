@@ -55,7 +55,7 @@ async function checkDuplicateWounds() {
   for (const [patientId, patientWounds] of woundsByPatient.entries()) {
     console.log(`\nPatient: ${patientId}`);
     console.log(`Total wounds: ${patientWounds.length}`);
-    
+
     patientWounds.forEach((wound, idx) => {
       console.log(
         `  ${idx + 1}. Wound #${wound.wound_number} - ${wound.location} (ID: ${wound.id})`
@@ -69,7 +69,9 @@ async function checkDuplicateWounds() {
     );
 
     if (duplicateNumbers.length > 0) {
-      console.log(`  ⚠️ Duplicate wound numbers found: ${duplicateNumbers.join(", ")}`);
+      console.log(
+        `  ⚠️ Duplicate wound numbers found: ${duplicateNumbers.join(", ")}`
+      );
     }
   }
 }

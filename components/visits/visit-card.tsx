@@ -43,24 +43,25 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function VisitCard({ visit, patientId }: VisitCardProps) {
   const isCompleted = visit.status === "completed";
-  const isCancelled = visit.status === "cancelled" || visit.status === "no-show";
-  
+  const isCancelled =
+    visit.status === "cancelled" || visit.status === "no-show";
+
   const statusVariant = isCompleted ? "secondary" : "default";
-  const statusColor = isCompleted 
-    ? "border-l-green-500" 
-    : isCancelled 
-    ? "border-l-gray-400" 
-    : "border-l-blue-500";
+  const statusColor = isCompleted
+    ? "border-l-green-500"
+    : isCancelled
+      ? "border-l-gray-400"
+      : "border-l-blue-500";
   const iconBg = isCompleted
     ? "bg-linear-to-br from-green-500/10 to-emerald-500/10 ring-1 ring-green-500/20"
     : isCancelled
-    ? "bg-linear-to-br from-gray-500/10 to-zinc-500/10 ring-1 ring-gray-500/20"
-    : "bg-linear-to-br from-blue-500/10 to-cyan-500/10 ring-1 ring-blue-500/20";
+      ? "bg-linear-to-br from-gray-500/10 to-zinc-500/10 ring-1 ring-gray-500/20"
+      : "bg-linear-to-br from-blue-500/10 to-cyan-500/10 ring-1 ring-blue-500/20";
   const iconColor = isCompleted
     ? "text-green-600 dark:text-green-400"
     : isCancelled
-    ? "text-gray-600 dark:text-gray-400"
-    : "text-blue-600 dark:text-blue-400";
+      ? "text-gray-600 dark:text-gray-400"
+      : "text-blue-600 dark:text-blue-400";
 
   return (
     <Card

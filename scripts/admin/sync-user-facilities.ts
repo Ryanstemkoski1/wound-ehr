@@ -21,7 +21,9 @@ async function syncUserFacilities() {
 
     if (rolesError) throw rolesError;
 
-    console.log(`Found ${roles.length} users with facility assignments in user_roles\n`);
+    console.log(
+      `Found ${roles.length} users with facility assignments in user_roles\n`
+    );
 
     let synced = 0;
     let skipped = 0;

@@ -47,10 +47,7 @@ type WoundsListClientProps = {
   patientId: string;
 };
 
-export function WoundsListClient({
-  wounds,
-  patientId,
-}: WoundsListClientProps) {
+export function WoundsListClient({ wounds, patientId }: WoundsListClientProps) {
   const [sortBy, setSortBy] = useState<
     "recent" | "oldest" | "location" | "status"
   >("recent");

@@ -33,17 +33,15 @@ export function SignVisitDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSaveSignature = async (signatureData: string, method: "draw" | "type") => {
+  const handleSaveSignature = async (
+    signatureData: string,
+    method: "draw" | "type"
+  ) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const result = await signVisit(
-        visitId,
-        signatureData,
-        userName,
-        method
-      );
+      const result = await signVisit(visitId, signatureData, userName, method);
 
       if (result.error) {
         setError(result.error);
@@ -54,7 +52,8 @@ export function SignVisitDialog({
       // Success
       onOpenChange(false);
       router.refresh();
-    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       setError("Failed to sign visit");
       setIsSubmitting(false);
     }
@@ -68,14 +67,15 @@ export function SignVisitDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <FileCheck className="h-5 w-5 text-primary" />
+            <FileCheck className="text-primary h-5 w-5" />
             <DialogTitle>Sign Visit</DialogTitle>
           </div>
           <DialogDescription>
-            Sign this visit to certify that all documentation is accurate and complete
+            Sign this visit to certify that all documentation is accurate and
+            complete
           </DialogDescription>
         </DialogHeader>
 
@@ -86,7 +86,7 @@ export function SignVisitDialog({
           </Alert>
         )}
 
-        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
           <div className="space-y-2 text-sm">
             <p className="font-medium text-blue-900 dark:text-blue-100">
               Provider Certification

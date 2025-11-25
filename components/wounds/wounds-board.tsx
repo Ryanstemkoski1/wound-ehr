@@ -242,7 +242,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
           }}
         >
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Total Wounds
             </CardTitle>
           </CardHeader>
@@ -260,7 +260,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
           }}
         >
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Active
             </CardTitle>
           </CardHeader>
@@ -280,7 +280,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
           }}
         >
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Healing
             </CardTitle>
           </CardHeader>
@@ -300,7 +300,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
           }}
         >
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Critical
             </CardTitle>
           </CardHeader>
@@ -323,7 +323,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
                 placeholder="Search by patient, location, or wound type..."
                 value={searchQuery}
@@ -373,7 +373,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
             </Select>
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+          <div className="text-muted-foreground mt-3 flex items-center justify-between text-sm">
             <span>
               Showing {filteredWounds.length} of {wounds.length} wounds
             </span>
@@ -404,7 +404,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
           <Card className="col-span-full">
             <CardContent className="flex min-h-[200px] items-center justify-center">
               <div className="text-center">
-                <Activity className="mx-auto h-12 w-12 text-muted-foreground" />
+                <Activity className="text-muted-foreground mx-auto h-12 w-12" />
                 <h3 className="mt-4 text-lg font-semibold">No wounds found</h3>
                 <p className="text-muted-foreground mt-2">
                   {searchQuery || statusFilter !== "all"
@@ -426,7 +426,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
             return (
               <Card
                 key={wound.id}
-                className="group hover:border-teal-500 transition-colors"
+                className="group transition-colors hover:border-teal-500"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -450,11 +450,11 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
                   <div>
                     <Link
                       href={`/dashboard/patients/${patient.id}`}
-                      className="font-medium hover:text-teal-600 transition-colors"
+                      className="font-medium transition-colors hover:text-teal-600"
                     >
                       {patient.first_name} {patient.last_name}
                     </Link>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {facility.name}
                     </p>
                   </div>
@@ -467,9 +467,9 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
 
                   {/* Latest Assessment */}
                   {wound.latestAssessment ? (
-                    <div className="space-y-2 rounded-lg bg-muted/50 p-3">
+                    <div className="bg-muted/50 space-y-2 rounded-lg p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">
+                        <span className="text-muted-foreground text-xs font-medium">
                           Latest Assessment
                         </span>
                         {getHealingStatusBadge(
@@ -482,7 +482,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
                           {wound.latestAssessment.length} ×{" "}
                           {wound.latestAssessment.width} cm
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-muted-foreground text-xs">
                           {formatDistanceToNow(
                             new Date(wound.latestAssessment.created_at),
                             { addSuffix: true }
@@ -511,7 +511,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
                     </Button>
                   </div>
 
-                  <div className="pt-2 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground pt-2 text-xs">
                     Created {formatDistanceToNow(new Date(wound.created_at))}{" "}
                     ago
                   </div>

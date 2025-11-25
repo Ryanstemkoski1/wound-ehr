@@ -119,7 +119,7 @@ export async function getRestrictedProcedures(
   }
 
   // Map to required_credentials for consistency with RPC function
-  return (data || []).map(proc => ({
+  return (data || []).map((proc) => ({
     procedure_code: proc.procedure_code,
     procedure_name: proc.procedure_name,
     category: proc.category,
@@ -179,9 +179,7 @@ export async function filterAllowedCPTCodes(
   if (!credentials || cptCodes.length === 0) return [];
 
   const allowedProcedures = await getAllowedProcedures(credentials);
-  const allowedCodes = new Set(
-    allowedProcedures.map((p) => p.procedure_code)
-  );
+  const allowedCodes = new Set(allowedProcedures.map((p) => p.procedure_code));
 
   return cptCodes.filter((code) => allowedCodes.has(code));
 }

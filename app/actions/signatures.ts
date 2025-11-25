@@ -13,7 +13,13 @@ import type { Credentials } from "@/lib/credentials";
 
 export type SignatureType = "patient" | "provider" | "consent";
 export type SignatureMethod = "draw" | "type" | "upload";
-export type VisitStatus = "draft" | "ready_for_signature" | "signed" | "submitted" | "incomplete" | "complete";
+export type VisitStatus =
+  | "draft"
+  | "ready_for_signature"
+  | "signed"
+  | "submitted"
+  | "incomplete"
+  | "complete";
 
 export type SignatureData = {
   signatureType: SignatureType;
@@ -148,17 +154,22 @@ export async function getVisitSignatures(visitId: string) {
 /**
  * Check if patient has valid consent
  */
-export async function getPatientConsent(patientId: string, consentType = "initial_treatment") {
+export async function getPatientConsent(
+  patientId: string,
+  consentType = "initial_treatment"
+) {
   const supabase = await createClient();
 
   try {
     const { data, error } = await supabase
       .from("patient_consents")
-      .select(`
+      .select(
+        `
         *,
         patient_signature:signatures!patient_consents_patient_signature_id_fkey(*),
         witness_signature:signatures!patient_consents_witness_signature_id_fkey(*)
-      `)
+      `
+      )
       .eq("patient_id", patientId)
       .eq("consent_type", consentType)
       .maybeSingle();
@@ -266,10 +277,16 @@ export async function requiresPatientSignature(): Promise<boolean> {
 
   try {
     // Use RPC function to bypass RLS
-    const { data: userDataArray } = await supabase
-      .rpc("get_current_user_credentials");
+    const { data: userDataArray } = await supabase.rpc(
+      "get_current_user_credentials"
+    );
 
-    if (!userDataArray || userDataArray.length === 0 || !userDataArray[0]?.credentials) return false;
+    if (
+      !userDataArray ||
+      userDataArray.length === 0 ||
+      !userDataArray[0]?.credentials
+    )
+      return false;
 
     return requiresPatientSig(userDataArray[0].credentials as Credentials);
   } catch (error) {
@@ -340,8 +357,9 @@ export async function signVisit(
     }
 
     // Get user credentials using function to bypass RLS recursion
-    const { data: userDataArray, error: userError } = await supabase
-      .rpc("get_current_user_credentials");
+    const { data: userDataArray, error: userError } = await supabase.rpc(
+      "get_current_user_credentials"
+    );
 
     if (userError) {
       console.error("Database error fetching user credentials:", userError);
@@ -357,7 +375,10 @@ export async function signVisit(
 
     if (!userData.credentials) {
       console.error("User has no credentials set:", user.id);
-      return { error: "User credentials not set. Please contact admin to set your credentials." };
+      return {
+        error:
+          "User credentials not set. Please contact admin to set your credentials.",
+      };
     }
 
     // Create provider signature
@@ -377,7 +398,9 @@ export async function signVisit(
     }
 
     // Update visit with signature and status
-    const requiresPatient = requiresPatientSig(userData.credentials as Credentials);
+    const requiresPatient = requiresPatientSig(
+      userData.credentials as Credentials
+    );
     const newStatus = requiresPatient ? "signed" : "signed"; // Can submit immediately if no patient sig needed
 
     const { error: updateError } = await supabase
@@ -457,7 +480,10 @@ export async function addPatientSignature(
       .eq("id", visitId);
 
     if (updateError) {
-      console.error("Error updating visit with patient signature:", updateError);
+      console.error(
+        "Error updating visit with patient signature:",
+        updateError
+      );
       return { error: "Failed to update visit" };
     }
 
@@ -479,7 +505,9 @@ export async function submitVisit(visitId: string) {
     // Get visit details
     const { data: visit, error: visitError } = await supabase
       .from("visits")
-      .select("id, provider_signature_id, patient_signature_id, requires_patient_signature")
+      .select(
+        "id, provider_signature_id, patient_signature_id, requires_patient_signature"
+      )
       .eq("id", visitId)
       .single();
 
@@ -554,8 +582,10 @@ export async function uploadScannedConsent(formData: FormData) {
   try {
     const patientId = formData.get("patientId") as string;
     const patientName = formData.get("patientName") as string;
-    const consentType = formData.get("consentType") as string || "initial_treatment";
-    const consentText = formData.get("consentText") as string || "Scanned paper consent form";
+    const consentType =
+      (formData.get("consentType") as string) || "initial_treatment";
+    const consentText =
+      (formData.get("consentText") as string) || "Scanned paper consent form";
     const file = formData.get("file") as File;
 
     if (!patientId || !file) {
@@ -563,9 +593,16 @@ export async function uploadScannedConsent(formData: FormData) {
     }
 
     // Validate file type
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
     if (!allowedTypes.includes(file.type)) {
-      return { error: "Invalid file type. Please upload PDF, JPG, or PNG files only." };
+      return {
+        error: "Invalid file type. Please upload PDF, JPG, or PNG files only.",
+      };
     }
 
     // Validate file size (10MB max)
@@ -604,7 +641,7 @@ export async function uploadScannedConsent(formData: FormData) {
       signerRole: "Patient",
       signatureData: filePath, // Store file path for private bucket
       signatureMethod: "upload",
-      ipAddress: await getClientIpAddress() || undefined,
+      ipAddress: (await getClientIpAddress()) || undefined,
     });
 
     if (signatureResult.error || !signatureResult.data) {
@@ -671,10 +708,12 @@ export async function getConsentDocumentUrl(patientId: string) {
 
     // Extract file path from URL if it's a full URL (legacy format)
     let filePath = consent.consent_document_url;
-    if (filePath.includes('/storage/v1/object/public/patient-consents/')) {
-      filePath = filePath.split('/storage/v1/object/public/patient-consents/')[1];
+    if (filePath.includes("/storage/v1/object/public/patient-consents/")) {
+      filePath = filePath.split(
+        "/storage/v1/object/public/patient-consents/"
+      )[1];
     }
-    
+
     // Generate signed URL for private bucket (valid for 1 hour)
     const { data: signedUrlData, error: signedError } = await supabase.storage
       .from("patient-consents")
@@ -684,11 +723,11 @@ export async function getConsentDocumentUrl(patientId: string) {
       return { error: "Failed to generate document access URL" };
     }
 
-    return { 
+    return {
       data: {
         ...consent,
         consent_document_url: signedUrlData.signedUrl,
-      }
+      },
     };
   } catch (error) {
     return { error: "Failed to get consent document" };

@@ -110,7 +110,12 @@ export function InvitesManagementClient({
       alert(result.error);
     } else {
       setShowInviteDialog(false);
-      setInviteForm({ email: "", role: "user", credentials: "Admin", facilityId: "" });
+      setInviteForm({
+        email: "",
+        role: "user",
+        credentials: "Admin",
+        facilityId: "",
+      });
       router.refresh();
     }
 
@@ -131,13 +136,14 @@ export function InvitesManagementClient({
 
   const copyInviteLink = async (token: string) => {
     const inviteLink = `${window.location.origin}/auth/accept-invite?token=${token}`;
-    
+
     try {
       // Try modern clipboard API first
       await navigator.clipboard.writeText(inviteLink);
       setCopiedToken(token);
       setTimeout(() => setCopiedToken(null), 2000);
-    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       // Fallback for older browsers or when clipboard permission is denied
       const textArea = document.createElement("textarea");
       textArea.value = inviteLink;
@@ -199,10 +205,7 @@ export function InvitesManagementClient({
                 {invites.length} pending invite{invites.length !== 1 ? "s" : ""}
               </CardDescription>
             </div>
-            <Button
-              onClick={() => setShowInviteDialog(true)}
-              className="gap-2"
-            >
+            <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
               <UserPlus className="h-4 w-4" />
               Invite User
             </Button>
@@ -366,11 +369,13 @@ export function InvitesManagementClient({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CREDENTIALS_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
+                    {Object.entries(CREDENTIALS_LABELS).map(
+                      ([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-zinc-500">

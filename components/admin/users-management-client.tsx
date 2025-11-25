@@ -2,8 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, UserCog, Mail, Shield, Building2, User, Stethoscope } from "lucide-react";
-import { CREDENTIALS_SHORT_LABELS, CREDENTIALS_LABELS, type Credentials } from "@/lib/credentials";
+import {
+  Trash2,
+  UserCog,
+  Mail,
+  Shield,
+  Building2,
+  User,
+  Stethoscope,
+} from "lucide-react";
+import {
+  CREDENTIALS_SHORT_LABELS,
+  CREDENTIALS_LABELS,
+  type Credentials,
+} from "@/lib/credentials";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -232,7 +244,9 @@ export function UsersManagementClient({
                         {user.users?.name ? (
                           <span className="font-medium">{user.users.name}</span>
                         ) : (
-                          <span className="text-zinc-400 italic">No name set</span>
+                          <span className="text-zinc-400 italic">
+                            No name set
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -368,11 +382,13 @@ export function UsersManagementClient({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CREDENTIALS_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
+                    {Object.entries(CREDENTIALS_LABELS).map(
+                      ([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>

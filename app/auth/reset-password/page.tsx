@@ -86,9 +86,7 @@ export default function ResetPasswordPage() {
             <CardTitle className="text-center text-2xl">
               Invalid Reset Link
             </CardTitle>
-            <CardDescription className="text-center">
-              {error}
-            </CardDescription>
+            <CardDescription className="text-center">{error}</CardDescription>
           </CardHeader>
           <CardFooter className="flex flex-col space-y-4">
             <Link href="/auth/forgot-password" className="w-full">

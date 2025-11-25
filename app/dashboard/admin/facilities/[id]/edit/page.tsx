@@ -8,11 +8,7 @@ type Params = Promise<{ id: string }>;
 
 export const dynamic = "force-dynamic";
 
-export default async function EditFacilityPage({
-  params,
-}: {
-  params: Params;
-}) {
+export default async function EditFacilityPage({ params }: { params: Params }) {
   const hasAccess = await isAdmin();
 
   if (!hasAccess) {

@@ -33,10 +33,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 async function confirmUser() {
   console.log("\n🔧 Confirming email for:", email);
-  
+
   // Get user
-  const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
-  
+  const { data: authUsers, error: listError } =
+    await supabase.auth.admin.listUsers();
+
   if (listError) {
     console.error("❌ Error fetching users:", listError.message);
     return;

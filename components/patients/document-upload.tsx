@@ -15,7 +15,10 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, X, AlertCircle } from "lucide-react";
-import { uploadPatientDocument, type DocumentType } from "@/app/actions/documents";
+import {
+  uploadPatientDocument,
+  type DocumentType,
+} from "@/app/actions/documents";
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: "face_sheet", label: "Face Sheet" },
@@ -48,7 +51,10 @@ type DocumentUploadProps = {
   onUploadComplete?: () => void;
 };
 
-export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadProps) {
+export function DocumentUpload({
+  patientId,
+  onUploadComplete,
+}: DocumentUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>("other");
   const [documentCategory, setDocumentCategory] = useState("");
@@ -135,7 +141,8 @@ export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadPr
       formData.append("file", file);
       formData.append("patientId", patientId);
       formData.append("documentType", documentType);
-      if (documentCategory) formData.append("documentCategory", documentCategory);
+      if (documentCategory)
+        formData.append("documentCategory", documentCategory);
       if (documentDate) formData.append("documentDate", documentDate);
       if (notes) formData.append("notes", notes);
 
@@ -172,7 +179,7 @@ export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadPr
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   return (
@@ -190,17 +197,16 @@ export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadPr
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`
-          border-2 border-dashed rounded-lg p-6 text-center transition-colors
-          ${dragActive ? "border-primary bg-primary/5" : "border-border"}
-          ${file ? "bg-muted/50" : ""}
-        `}
+        className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${dragActive ? "border-primary bg-primary/5" : "border-border"} ${file ? "bg-muted/50" : ""} `}
       >
         {!file ? (
           <div className="space-y-2">
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+            <Upload className="text-muted-foreground mx-auto h-12 w-12" />
             <div>
-              <Label htmlFor="file-upload" className="cursor-pointer text-primary hover:underline">
+              <Label
+                htmlFor="file-upload"
+                className="text-primary cursor-pointer hover:underline"
+              >
                 Choose a file
               </Label>
               {" or drag and drop"}
@@ -213,17 +219,19 @@ export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadPr
                 disabled={uploading}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               PDF, JPG, PNG, DOC, or TXT (max 10MB)
             </p>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-primary" />
+              <FileText className="text-primary h-8 w-8" />
               <div className="text-left">
                 <p className="font-medium">{file.name}</p>
-                <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                <p className="text-muted-foreground text-sm">
+                  {formatFileSize(file.size)}
+                </p>
               </div>
             </div>
             {!uploading && (
@@ -256,7 +264,10 @@ export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadPr
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="document-type">Document Type *</Label>
-            <Select value={documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
+            <Select
+              value={documentType}
+              onValueChange={(value) => setDocumentType(value as DocumentType)}
+            >
               <SelectTrigger id="document-type">
                 <SelectValue />
               </SelectTrigger>
@@ -301,7 +312,11 @@ export function DocumentUpload({ patientId, onUploadComplete }: DocumentUploadPr
             />
           </div>
 
-          <Button onClick={handleUpload} className="w-full" disabled={uploading}>
+          <Button
+            onClick={handleUpload}
+            className="w-full"
+            disabled={uploading}
+          >
             <Upload className="mr-2 h-4 w-4" />
             Upload Document
           </Button>

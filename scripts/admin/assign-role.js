@@ -15,11 +15,15 @@ const facilityName = process.argv[4];
 
 if (!email || !role) {
   console.error("❌ Missing arguments");
-  console.log("Usage: node scripts/assign-role.js <email> <role> [facility-name]");
+  console.log(
+    "Usage: node scripts/assign-role.js <email> <role> [facility-name]"
+  );
   console.log("Roles: tenant_admin, facility_admin, user");
   console.log("\nExamples:");
   console.log("  node scripts/assign-role.js user@example.com tenant_admin");
-  console.log("  node scripts/assign-role.js user@example.com facility_admin 'Main Clinic'");
+  console.log(
+    "  node scripts/assign-role.js user@example.com facility_admin 'Main Clinic'"
+  );
   process.exit(1);
 }
 
@@ -52,8 +56,9 @@ async function assignRole() {
   if (facilityName) console.log("   Facility:", facilityName);
 
   // 1. Get user ID
-  const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
-  
+  const { data: authUsers, error: listError } =
+    await supabase.auth.admin.listUsers();
+
   if (listError) {
     console.error("❌ Error fetching users:", listError.message);
     return;
@@ -95,7 +100,9 @@ async function assignRole() {
     if (facilityError || !facility) {
       console.error(`❌ Facility '${facilityName}' not found`);
       console.log("   Available facilities:");
-      const { data: allFacilities } = await supabase.from("facilities").select("name");
+      const { data: allFacilities } = await supabase
+        .from("facilities")
+        .select("name");
       if (allFacilities) {
         allFacilities.forEach((f) => console.log(`      - ${f.name}`));
       }
@@ -116,7 +123,7 @@ async function assignRole() {
 
   if (existingRole) {
     console.log("\n⚠️  User already has a role. Updating...");
-    
+
     const { error: updateError } = await supabase
       .from("user_roles")
       .update({

@@ -22,9 +22,8 @@ async function setupStorage() {
 
     // Step 1: Create bucket
     console.log("1️⃣  Creating storage bucket...");
-    const { data: bucket, error: bucketError } = await supabase.storage.createBucket(
-      "patient-documents",
-      {
+    const { data: bucket, error: bucketError } =
+      await supabase.storage.createBucket("patient-documents", {
         public: false,
         fileSizeLimit: 10485760, // 10MB
         allowedMimeTypes: [
@@ -37,8 +36,7 @@ async function setupStorage() {
           "application/msword",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         ],
-      }
-    );
+      });
 
     if (bucketError) {
       if (bucketError.message.includes("already exists")) {
@@ -52,7 +50,7 @@ async function setupStorage() {
 
     // Step 2: Apply RLS policies
     console.log("\n2️⃣  Applying storage RLS policies...");
-    
+
     const storagePolicyPath = join(
       process.cwd(),
       "supabase",
@@ -69,7 +67,7 @@ async function setupStorage() {
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
       const preview = statement.substring(0, 80).replace(/\n/g, " ");
-      
+
       console.log(`   [${i + 1}/${statements.length}] ${preview}...`);
 
       try {
@@ -93,7 +91,9 @@ async function setupStorage() {
     console.log("\n🎯 Next steps:");
     console.log("   1. Generate TypeScript types: npm run db:types");
     console.log("   2. Verify deployment: Test document upload in UI");
-    console.log("   3. Run test script: node scripts/test-patient-documents.js\n");
+    console.log(
+      "   3. Run test script: node scripts/test-patient-documents.js\n"
+    );
   } catch (error) {
     console.error("❌ Storage setup failed:", error.message);
     process.exit(1);

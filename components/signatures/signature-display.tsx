@@ -25,9 +25,15 @@ export function SignatureDisplay({
   title = "Signature",
   showBorder = true,
 }: SignatureDisplayProps) {
-  const [signatureData, setSignatureData] = useState<string | null>(initialData || null);
-  const [signerName, setSignerName] = useState<string | null>(initialName || null);
-  const [signerRole, setSignerRole] = useState<string | null>(initialRole || null);
+  const [signatureData, setSignatureData] = useState<string | null>(
+    initialData || null
+  );
+  const [signerName, setSignerName] = useState<string | null>(
+    initialName || null
+  );
+  const [signerRole, setSignerRole] = useState<string | null>(
+    initialRole || null
+  );
   const [signedAt, setSignedAt] = useState<string | null>(initialDate || null);
   const [loading, setLoading] = useState(!initialData && !!signatureId);
   const [error, setError] = useState<string | null>(null);
@@ -96,12 +102,12 @@ export function SignatureDisplay({
         <img
           src={signatureData}
           alt="Signature"
-          className="w-full max-w-md h-auto"
+          className="h-auto w-full max-w-md"
         />
       </div>
 
       {(signerName || signerRole || signedAt) && (
-        <div className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
+        <div className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
           {signerName && (
             <p>
               <span className="font-medium">Signed by:</span> {signerName}
@@ -135,9 +141,9 @@ export function SignatureBadge({
   if (!signatureId && !signerName) return null;
 
   return (
-    <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+    <div className="inline-flex items-center gap-1.5 rounded-md border border-green-200 bg-green-50 px-2 py-1 dark:border-green-800 dark:bg-green-950/20">
       <CheckCircle2 className="h-3 w-3 text-green-600" />
-      <span className="text-xs text-green-700 dark:text-green-400 font-medium">
+      <span className="text-xs font-medium text-green-700 dark:text-green-400">
         Signed
         {signerName && ` by ${signerName}`}
         {signerRole && ` (${signerRole})`}

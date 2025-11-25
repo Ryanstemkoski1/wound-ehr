@@ -18,7 +18,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function runMigration() {
   try {
-    console.log("🚀 Running migration 00023: Specialized Assessment Types...\n");
+    console.log(
+      "🚀 Running migration 00023: Specialized Assessment Types...\n"
+    );
     console.log("📋 This migration creates:");
     console.log("   - skilled_nursing_assessments table (RN/LVN Cheat Sheet)");
     console.log("   - skilled_nursing_wounds table (Wound Care Worksheet)");
@@ -46,7 +48,7 @@ async function runMigration() {
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
       const preview = statement.substring(0, 100).replace(/\n/g, " ");
-      
+
       console.log(`[${i + 1}/${statements.length}] ${preview}...`);
 
       try {

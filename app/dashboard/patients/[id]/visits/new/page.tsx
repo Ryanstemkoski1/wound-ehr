@@ -53,10 +53,12 @@ export default async function NewVisitPage({ params }: PageProps) {
     : patient.facility;
 
   // Get user credentials for procedure restrictions using RPC to bypass RLS
-  const { data: userDataArray } = await supabase
-    .rpc("get_current_user_credentials");
+  const { data: userDataArray } = await supabase.rpc(
+    "get_current_user_credentials"
+  );
 
-  const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+  const userData =
+    userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
   const userCredentials = (userData?.credentials as Credentials) || null;
 
   // Get allowed and restricted procedures for this user

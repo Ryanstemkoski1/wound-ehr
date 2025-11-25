@@ -20,11 +20,17 @@ export default function NewAssessmentButton({
   const router = useRouter();
   const [showSelector, setShowSelector] = useState(false);
 
-  const handleSelectType = (type: "standard" | "skilled-nursing" | "gtube-procedure") => {
+  const handleSelectType = (
+    type: "standard" | "skilled-nursing" | "gtube-procedure"
+  ) => {
     if (type === "standard") {
-      router.push(`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`);
+      router.push(
+        `/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`
+      );
     } else if (type === "skilled-nursing") {
-      router.push(`/dashboard/patients/${patientId}/visits/${visitId}/skilled-nursing/new`);
+      router.push(
+        `/dashboard/patients/${patientId}/visits/${visitId}/skilled-nursing/new`
+      );
     } else if (type === "gtube-procedure") {
       router.push(`/dashboard/patients/${patientId}/gtube-procedure/new`);
     }

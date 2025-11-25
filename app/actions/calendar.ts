@@ -305,7 +305,9 @@ export async function updateVisitStatus(visitId: string, status: string) {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Failed to update visit status",
+        error instanceof Error
+          ? error.message
+          : "Failed to update visit status",
     };
   }
 }
@@ -317,10 +319,7 @@ export async function deleteVisit(visitId: string) {
   try {
     const supabase = await createClient();
 
-    const { error } = await supabase
-      .from("visits")
-      .delete()
-      .eq("id", visitId);
+    const { error } = await supabase.from("visits").delete().eq("id", visitId);
 
     if (error) {
       throw error;
@@ -334,8 +333,7 @@ export async function deleteVisit(visitId: string) {
     console.error("Failed to delete visit:", error);
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to delete visit",
+      error: error instanceof Error ? error.message : "Failed to delete visit",
     };
   }
 }
@@ -349,13 +347,16 @@ export async function searchPatientsForCalendar(
   facilityId: string,
   searchTerm: string
 ): Promise<
-  | { success: true; patients: Array<{
-      id: string;
-      first_name: string;
-      last_name: string;
-      mrn: string;
-      facility_id: string;
-    }> }
+  | {
+      success: true;
+      patients: Array<{
+        id: string;
+        first_name: string;
+        last_name: string;
+        mrn: string;
+        facility_id: string;
+      }>;
+    }
   | { success: false; error: string }
 > {
   try {
@@ -382,7 +383,8 @@ export async function searchPatientsForCalendar(
     console.error("Failed to search patients:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to search patients",
+      error:
+        error instanceof Error ? error.message : "Failed to search patients",
     };
   }
 }
@@ -391,16 +393,17 @@ export async function searchPatientsForCalendar(
  * Get active wounds for a patient (for visit creation)
  * @param patientId - Patient ID
  */
-export async function getPatientWoundsForVisit(
-  patientId: string
-): Promise<
-  | { success: true; wounds: Array<{
-      id: string;
-      location: string;
-      wound_type: string;
-      status: string;
-      last_assessment_date?: string;
-    }> }
+export async function getPatientWoundsForVisit(patientId: string): Promise<
+  | {
+      success: true;
+      wounds: Array<{
+        id: string;
+        location: string;
+        wound_type: string;
+        status: string;
+        last_assessment_date?: string;
+      }>;
+    }
   | { success: false; error: string }
 > {
   try {

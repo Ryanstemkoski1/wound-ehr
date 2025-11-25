@@ -480,7 +480,9 @@ export async function autosaveAssessmentDraft(
       exudate_type: (formData.exudateType as string) || null,
       odor: (formData.odor as string) || null,
       periwound_condition: (formData.periwoundCondition as string) || null,
-      pain_level: formData.painLevel ? parseInt(formData.painLevel as string) : null,
+      pain_level: formData.painLevel
+        ? parseInt(formData.painLevel as string)
+        : null,
       infection_signs:
         formData.infectionSigns && Array.isArray(formData.infectionSigns)
           ? formData.infectionSigns

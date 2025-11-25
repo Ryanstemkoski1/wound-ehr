@@ -29,7 +29,7 @@ function fail(testName, error) {
 
 async function runTests() {
   console.log("🧪 Testing Phase 9.3.7 - Signature Audit Logs\n");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
 
   // Test 1: Basic audit logs query
   console.log("\n📋 Test 1: Get audit logs (no filters)");
@@ -41,7 +41,9 @@ async function runTests() {
     if (!Array.isArray(data)) throw new Error("Expected array");
     console.log(`   Retrieved ${data.length} logs`);
     if (data.length > 0) {
-      console.log(`   Latest: ${data[0].signature_type} by ${data[0].signer_name}`);
+      console.log(
+        `   Latest: ${data[0].signature_type} by ${data[0].signer_name}`
+      );
     }
     pass("Get audit logs without filters");
   } catch (error) {
@@ -176,9 +178,7 @@ async function runTests() {
       "created_at",
     ];
 
-    const missingFields = requiredFields.filter(
-      (field) => !(field in log)
-    );
+    const missingFields = requiredFields.filter((field) => !(field in log));
     if (missingFields.length > 0) {
       throw new Error(`Missing fields: ${missingFields.join(", ")}`);
     }
@@ -205,9 +205,7 @@ async function runTests() {
         const current = new Date(data[i].signed_at);
         const next = new Date(data[i + 1].signed_at);
         if (current < next) {
-          throw new Error(
-            "Records not sorted correctly (expected DESC order)"
-          );
+          throw new Error("Records not sorted correctly (expected DESC order)");
         }
       }
       console.log(`   ✓ All ${data.length} records in correct order`);
@@ -250,9 +248,7 @@ async function runTests() {
   if (testsFailed === 0) {
     console.log("\n🎉 All tests passed! Phase 9.3.7 is production ready!");
   } else {
-    console.log(
-      `\n⚠️  ${testsFailed} test(s) failed. Review errors above.`
-    );
+    console.log(`\n⚠️  ${testsFailed} test(s) failed. Review errors above.`);
     process.exit(1);
   }
 }

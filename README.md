@@ -51,21 +51,21 @@ Visit `http://localhost:3000`
 
 ## 🛠️ Tech Stack
 
-| Category | Technology |
-|----------|-----------|
-| Framework | Next.js 16.0.1 (App Router) |
-| React | 19.2.0 with Server Components |
-| TypeScript | Strict mode enabled |
-| Styling | Tailwind CSS v4 (OKLCH colors) |
-| UI Components | shadcn/ui (new-york variant) |
-| Database | Supabase PostgreSQL |
-| Auth | Supabase Auth (email/password) |
-| Storage | Supabase Storage (wound photos) |
-| Forms | react-hook-form + zod |
-| PDF | @react-pdf/renderer |
-| Calendar | React Big Calendar |
-| Icons | Lucide React |
-| Code Quality | ESLint + Prettier |
+| Category      | Technology                      |
+| ------------- | ------------------------------- |
+| Framework     | Next.js 16.0.1 (App Router)     |
+| React         | 19.2.0 with Server Components   |
+| TypeScript    | Strict mode enabled             |
+| Styling       | Tailwind CSS v4 (OKLCH colors)  |
+| UI Components | shadcn/ui (new-york variant)    |
+| Database      | Supabase PostgreSQL             |
+| Auth          | Supabase Auth (email/password)  |
+| Storage       | Supabase Storage (wound photos) |
+| Forms         | react-hook-form + zod           |
+| PDF           | @react-pdf/renderer             |
+| Calendar      | React Big Calendar              |
+| Icons         | Lucide React                    |
+| Code Quality  | ESLint + Prettier               |
 
 ---
 
@@ -137,11 +137,13 @@ Visit `http://localhost:3000`
 ### 🚧 Next Phase
 
 **Phase 9.4.2+: Specialized Templates & Features**
+
 - RN/LVN shorthand note template (awaiting client input)
 - Specialized assessment types (Grafting, Skin Sweep, G-tube)
 - Document versioning and bulk uploads
 
 **Phase 7: Analytics & Polish**
+
 - Dashboard charts and wound healing metrics
 - Performance optimization
 - Accessibility improvements (WCAG 2.1 AA)
@@ -249,6 +251,7 @@ npm run seed:reset       # Reset and re-seed database
 ### Clinical Credentials (NEW - Phase 9.1)
 
 All users must have ONE credential:
+
 - **RN** (Registered Nurse) - Requires patient signatures
 - **LVN** (Licensed Vocational Nurse) - Requires patient signatures
 - **MD** (Medical Doctor) - No patient signatures required

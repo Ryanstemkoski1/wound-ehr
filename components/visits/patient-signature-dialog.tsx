@@ -41,7 +41,10 @@ export function PatientSignatureDialog({
     }
   };
 
-  const handleSaveSignature = async (signatureData: string, method: "draw" | "type") => {
+  const handleSaveSignature = async (
+    signatureData: string,
+    method: "draw" | "type"
+  ) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -62,7 +65,8 @@ export function PatientSignatureDialog({
       // Success
       onOpenChange(false);
       router.refresh();
-    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       setError("Failed to save patient signature");
       setIsSubmitting(false);
     }
@@ -81,10 +85,10 @@ export function PatientSignatureDialog({
   if (showSignaturePad) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-primary" />
+              <UserCheck className="text-primary h-5 w-5" />
               <DialogTitle>Patient Signature</DialogTitle>
             </div>
             <DialogDescription>
@@ -117,7 +121,7 @@ export function PatientSignatureDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-primary" />
+            <UserCheck className="text-primary h-5 w-5" />
             <DialogTitle>Patient Signature Required</DialogTitle>
           </div>
           <DialogDescription>
@@ -126,11 +130,12 @@ export function PatientSignatureDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Note:</strong> Patient signature is required for visits documented by RN or
-              LVN credentials. The patient or their authorized representative must sign to
-              acknowledge the care provided.
+              <strong>Note:</strong> Patient signature is required for visits
+              documented by RN or LVN credentials. The patient or their
+              authorized representative must sign to acknowledge the care
+              provided.
             </p>
           </div>
 
@@ -145,7 +150,8 @@ export function PatientSignatureDialog({
               autoFocus
             />
             <p className="text-xs text-zinc-500">
-              Enter the patient&apos;s name or the name of their authorized representative
+              Enter the patient&apos;s name or the name of their authorized
+              representative
             </p>
           </div>
 
@@ -161,7 +167,7 @@ export function PatientSignatureDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50"
+              className="rounded-md border border-zinc-300 px-4 py-2 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               Cancel
             </button>
@@ -169,7 +175,7 @@ export function PatientSignatureDialog({
               type="button"
               onClick={handleContinue}
               disabled={signerName.trim().length === 0 || isSubmitting}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Continue to Signature
             </button>

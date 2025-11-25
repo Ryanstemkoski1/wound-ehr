@@ -1,21 +1,21 @@
 /**
  * BillingFormWithCredentials - Credential-Aware Billing Form
- * 
+ *
  * This component replaces the original billing-form.tsx with credential-based
  * procedure restrictions. It filters CPT codes based on user credentials to
  * prevent RN/LVN from documenting procedures outside their scope (e.g., sharp debridement).
- * 
+ *
  * Key Features:
  * - Filters CPT code dropdown to show only allowed procedures
  * - Visual indicators (red badges, AlertCircle icons) for restricted codes
  * - Alert banners warn when restricted procedures are selected
  * - Tooltips explain required credentials for restricted procedures
  * - Prevents adding restricted codes with validation dialogs
- * 
+ *
  * Integration:
  * - Use BillingFormServerWrapper (server component) to fetch credentials and procedures
  * - Server-side validation in app/actions/billing.ts prevents bypassing UI restrictions
- * 
+ *
  * @see lib/procedures.ts - Validation utilities
  * @see app/actions/billing.ts - Server-side validation
  * @see components/billing/billing-form-server-wrapper.tsx - Server component wrapper
@@ -48,7 +48,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { X, DollarSign, ChevronsUpDown, Check, AlertCircle } from "lucide-react";
+import {
+  X,
+  DollarSign,
+  ChevronsUpDown,
+  Check,
+  AlertCircle,
+} from "lucide-react";
 import {
   COMMON_CPT_CODES,
   COMMON_ICD10_CODES,
@@ -111,7 +117,9 @@ export default function BillingFormWithCredentials({
   const [modifiers, setModifiers] = useState<string[]>(
     existingBilling?.modifiers || []
   );
-  const [timeSpent, setTimeSpent] = useState(existingBilling?.timeSpent || false);
+  const [timeSpent, setTimeSpent] = useState(
+    existingBilling?.timeSpent || false
+  );
   const [notes, setNotes] = useState(existingBilling?.notes || "");
 
   const [cptInput, setCptInput] = useState("");
@@ -152,7 +160,7 @@ export default function BillingFormWithCredentials({
 
   const addCptCode = (code?: string) => {
     const codeToAdd = code || cptInput.trim();
-    
+
     // Check if code is restricted
     if (restrictedCodesMap.has(codeToAdd)) {
       alert(
@@ -236,7 +244,7 @@ export default function BillingFormWithCredentials({
           Enter CPT codes, ICD-10 diagnosis codes, and billing modifiers for
           this visit
           {userCredentials && (
-            <span className="ml-2 text-muted-foreground text-xs">
+            <span className="text-muted-foreground ml-2 text-xs">
               (Your credentials: {userCredentials})
             </span>
           )}
@@ -308,37 +316,39 @@ export default function BillingFormWithCredentials({
                         </div>
                       </CommandEmpty>
                       <CommandGroup heading="Allowed CPT Codes">
-                        {filteredCPTCodes.filter(
-                          (item) =>
-                            !cptCodes.includes(item.code) &&
-                            (item.code
-                              .toLowerCase()
-                              .includes(cptInput.toLowerCase()) ||
-                              item.description
+                        {filteredCPTCodes
+                          .filter(
+                            (item) =>
+                              !cptCodes.includes(item.code) &&
+                              (item.code
                                 .toLowerCase()
-                                .includes(cptInput.toLowerCase()))
-                        ).map((item) => (
-                          <CommandItem
-                            key={item.code}
-                            value={item.code}
-                            onSelect={() => addCptCode(item.code)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                cptCodes.includes(item.code)
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            <div>
-                              <div className="font-medium">{item.code}</div>
-                              <div className="text-muted-foreground text-sm">
-                                {item.description}
+                                .includes(cptInput.toLowerCase()) ||
+                                item.description
+                                  .toLowerCase()
+                                  .includes(cptInput.toLowerCase()))
+                          )
+                          .map((item) => (
+                            <CommandItem
+                              key={item.code}
+                              value={item.code}
+                              onSelect={() => addCptCode(item.code)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  cptCodes.includes(item.code)
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              <div>
+                                <div className="font-medium">{item.code}</div>
+                                <div className="text-muted-foreground text-sm">
+                                  {item.description}
+                                </div>
                               </div>
-                            </div>
-                          </CommandItem>
-                        ))}
+                            </CommandItem>
+                          ))}
                       </CommandGroup>
                     </CommandList>
                   </Command>
@@ -350,7 +360,7 @@ export default function BillingFormWithCredentials({
                 {cptCodes.map((code) => {
                   const isRestricted = restrictedCodesMap.has(code);
                   const details = getCPTCodeDetails(code);
-                  
+
                   return (
                     <TooltipProvider key={code}>
                       <Tooltip>
@@ -373,10 +383,10 @@ export default function BillingFormWithCredentials({
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="text-sm max-w-xs">
+                          <p className="max-w-xs text-sm">
                             {details?.description || code}
                             {isRestricted && (
-                              <span className="block mt-1 text-destructive font-semibold">
+                              <span className="text-destructive mt-1 block font-semibold">
                                 ⚠️ Restricted - Requires{" "}
                                 {restrictedCodesMap
                                   .get(code)

@@ -82,18 +82,25 @@ function SignupContent() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <div className="mb-4 flex justify-center">
-              <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
-            </div>
-            <CardTitle className="text-center text-2xl">Loading...</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+          <Card className="w-full max-w-md">
+            <CardHeader className="space-y-1">
+              <div className="mb-4 flex justify-center">
+                <Image
+                  src="/logo.svg"
+                  alt="Wound EHR"
+                  width={200}
+                  height={60}
+                />
+              </div>
+              <CardTitle className="text-center text-2xl">Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+      }
+    >
       <SignupContent />
     </Suspense>
   );

@@ -103,21 +103,23 @@ export async function login(formData: FormData) {
         .select("id")
         .eq("email", email)
         .single();
-      
+
       if (invite) {
         // User was invited, so we should auto-confirm their email
         return {
           error:
-            "Your email needs to be confirmed. Please contact your administrator or run: UPDATE auth.users SET email_confirmed_at = NOW() WHERE email = '" + email + "';",
+            "Your email needs to be confirmed. Please contact your administrator or run: UPDATE auth.users SET email_confirmed_at = NOW() WHERE email = '" +
+            email +
+            "';",
         };
       }
-      
+
       return {
         error:
           "Please confirm your email address before signing in. Check your inbox for a confirmation link.",
       };
     }
-    
+
     if (error.message.includes("Invalid login credentials")) {
       return {
         error:

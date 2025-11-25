@@ -1,14 +1,15 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { 
-  FileEdit, 
-  FileSignature, 
-  CheckCircle2,
-  Clock
-} from "lucide-react";
+import { FileEdit, FileSignature, CheckCircle2, Clock } from "lucide-react";
 
-type VisitStatus = "draft" | "ready_for_signature" | "signed" | "submitted" | "incomplete" | "complete";
+type VisitStatus =
+  | "draft"
+  | "ready_for_signature"
+  | "signed"
+  | "submitted"
+  | "incomplete"
+  | "complete";
 
 type VisitStatusBadgeProps = {
   status: VisitStatus;
@@ -26,35 +27,43 @@ const STATUS_CONFIG = {
     label: "Ready to Sign",
     icon: Clock,
     variant: "default" as const,
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 border-amber-300 dark:border-amber-700",
+    className:
+      "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 border-amber-300 dark:border-amber-700",
   },
   signed: {
     label: "Signed",
     icon: FileSignature,
     variant: "default" as const,
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 border-blue-300 dark:border-blue-700",
+    className:
+      "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 border-blue-300 dark:border-blue-700",
   },
   submitted: {
     label: "Submitted",
     icon: CheckCircle2,
     variant: "default" as const,
-    className: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-300 dark:border-green-700",
+    className:
+      "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-300 dark:border-green-700",
   },
   incomplete: {
     label: "Incomplete",
     icon: FileEdit,
     variant: "destructive" as const,
-    className: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400 border-red-300 dark:border-red-700",
+    className:
+      "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400 border-red-300 dark:border-red-700",
   },
   complete: {
     label: "Complete",
     icon: CheckCircle2,
     variant: "default" as const,
-    className: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-300 dark:border-green-700",
+    className:
+      "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-300 dark:border-green-700",
   },
 };
 
-export function VisitStatusBadge({ status, size = "md" }: VisitStatusBadgeProps) {
+export function VisitStatusBadge({
+  status,
+  size = "md",
+}: VisitStatusBadgeProps) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
   const Icon = config.icon;
 
@@ -73,7 +82,7 @@ export function VisitStatusBadge({ status, size = "md" }: VisitStatusBadgeProps)
   return (
     <Badge
       variant={config.variant}
-      className={`${config.className} ${sizeClasses[size]} inline-flex items-center gap-1.5 font-medium border`}
+      className={`${config.className} ${sizeClasses[size]} inline-flex items-center gap-1.5 border font-medium`}
     >
       <Icon className={iconSizes[size]} />
       {config.label}
@@ -87,9 +96,12 @@ export function VisitStatusBadge({ status, size = "md" }: VisitStatusBadgeProps)
 export function VisitStatusDetail({ status }: { status: VisitStatus }) {
   const descriptions: Record<VisitStatus, string> = {
     draft: "Visit is being documented. Save your progress anytime.",
-    ready_for_signature: "All assessments complete. Ready for provider signature.",
-    signed: "Provider has signed. Ready for patient signature (if required) or submission.",
-    submitted: "Visit has been submitted to the office. This visit is now read-only.",
+    ready_for_signature:
+      "All assessments complete. Ready for provider signature.",
+    signed:
+      "Provider has signed. Ready for patient signature (if required) or submission.",
+    submitted:
+      "Visit has been submitted to the office. This visit is now read-only.",
     incomplete: "Visit is missing required information.",
     complete: "Visit is complete and finalized.",
   };
@@ -97,7 +109,7 @@ export function VisitStatusDetail({ status }: { status: VisitStatus }) {
   return (
     <div className="flex items-start gap-3">
       <VisitStatusBadge status={status} />
-      <p className="text-sm text-zinc-600 dark:text-zinc-400 flex-1">
+      <p className="flex-1 text-sm text-zinc-600 dark:text-zinc-400">
         {descriptions[status]}
       </p>
     </div>

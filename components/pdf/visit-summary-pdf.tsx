@@ -1,5 +1,12 @@
 import React from "react";
-import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Image,
+} from "@react-pdf/renderer";
 
 // Define types for the visit data
 type VisitSummaryData = {
@@ -440,62 +447,82 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
         )}
 
         {/* Signatures */}
-        {data.signatures && (data.signatures.provider || data.signatures.patient) && (
-          <View style={styles.signatureSection}>
-            <Text style={styles.sectionTitle}>Electronic Signatures</Text>
+        {data.signatures &&
+          (data.signatures.provider || data.signatures.patient) && (
+            <View style={styles.signatureSection}>
+              <Text style={styles.sectionTitle}>Electronic Signatures</Text>
 
-            {/* Provider Signature */}
-            {data.signatures.provider && (
-              <View style={styles.signatureContainer}>
-                <Text style={styles.signatureLabel}>Provider Signature</Text>
-                {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                <Image
-                  src={data.signatures.provider.signatureData}
-                  style={styles.signatureImage}
-                />
-                <Text style={styles.signatureInfo}>
-                  Signed by: {data.signatures.provider.signerName} ({data.signatures.provider.signerRole})
-                </Text>
-                <Text style={styles.signatureInfo}>
-                  Date: {data.signatures.provider.signedAt.toLocaleDateString()}{" "}
-                  {data.signatures.provider.signedAt.toLocaleTimeString()}
-                </Text>
-              </View>
-            )}
+              {/* Provider Signature */}
+              {data.signatures.provider && (
+                <View style={styles.signatureContainer}>
+                  <Text style={styles.signatureLabel}>Provider Signature</Text>
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                  <Image
+                    src={data.signatures.provider.signatureData}
+                    style={styles.signatureImage}
+                  />
+                  <Text style={styles.signatureInfo}>
+                    Signed by: {data.signatures.provider.signerName} (
+                    {data.signatures.provider.signerRole})
+                  </Text>
+                  <Text style={styles.signatureInfo}>
+                    Date:{" "}
+                    {data.signatures.provider.signedAt.toLocaleDateString()}{" "}
+                    {data.signatures.provider.signedAt.toLocaleTimeString()}
+                  </Text>
+                </View>
+              )}
 
-            {/* Patient Signature */}
-            {data.signatures.patient && (
-              <View style={styles.signatureContainer}>
-                <Text style={styles.signatureLabel}>Patient Signature</Text>
-                {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                <Image
-                  src={data.signatures.patient.signatureData}
-                  style={styles.signatureImage}
-                />
-                <Text style={styles.signatureInfo}>
-                  Signed by: {data.signatures.patient.signerName}
-                </Text>
-                <Text style={styles.signatureInfo}>
-                  Date: {data.signatures.patient.signedAt.toLocaleDateString()}{" "}
-                  {data.signatures.patient.signedAt.toLocaleTimeString()}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
+              {/* Patient Signature */}
+              {data.signatures.patient && (
+                <View style={styles.signatureContainer}>
+                  <Text style={styles.signatureLabel}>Patient Signature</Text>
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                  <Image
+                    src={data.signatures.patient.signatureData}
+                    style={styles.signatureImage}
+                  />
+                  <Text style={styles.signatureInfo}>
+                    Signed by: {data.signatures.patient.signerName}
+                  </Text>
+                  <Text style={styles.signatureInfo}>
+                    Date:{" "}
+                    {data.signatures.patient.signedAt.toLocaleDateString()}{" "}
+                    {data.signatures.patient.signedAt.toLocaleTimeString()}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
         {/* Addendums */}
         {data.addendums && data.addendums.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Addendums ({data.addendums.length})</Text>
+            <Text style={styles.sectionTitle}>
+              Addendums ({data.addendums.length})
+            </Text>
             {data.addendums.map((addendum, index) => (
-              <View key={addendum.id} style={{ marginBottom: 10, paddingLeft: 10, borderLeft: "2pt solid #3b82f6" }}>
-                <Text style={{ fontSize: 10, fontWeight: "bold", marginBottom: 3 }}>
+              <View
+                key={addendum.id}
+                style={{
+                  marginBottom: 10,
+                  paddingLeft: 10,
+                  borderLeft: "2pt solid #3b82f6",
+                }}
+              >
+                <Text
+                  style={{ fontSize: 10, fontWeight: "bold", marginBottom: 3 }}
+                >
                   Addendum #{index + 1}
                 </Text>
-                <Text style={{ fontSize: 9, color: "#64748b", marginBottom: 5 }}>
-                  {addendum.createdAt.toLocaleDateString()} at {addendum.createdAt.toLocaleTimeString()} by {addendum.author.name}
-                  {addendum.author.credentials && ` (${addendum.author.credentials})`}
+                <Text
+                  style={{ fontSize: 9, color: "#64748b", marginBottom: 5 }}
+                >
+                  {addendum.createdAt.toLocaleDateString()} at{" "}
+                  {addendum.createdAt.toLocaleTimeString()} by{" "}
+                  {addendum.author.name}
+                  {addendum.author.credentials &&
+                    ` (${addendum.author.credentials})`}
                 </Text>
                 <Text style={{ fontSize: 9, lineHeight: 1.4 }}>
                   {addendum.note}

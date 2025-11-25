@@ -14,15 +14,17 @@ async function auditSchema() {
 
   // Check facilities table columns
   console.log("📊 FACILITIES TABLE COLUMNS:");
-  const { data: facilityColumns, error: fcError } = await supabase
-    .rpc('exec_sql', { 
+  const { data: facilityColumns, error: fcError } = await supabase.rpc(
+    "exec_sql",
+    {
       sql: `
         SELECT column_name, data_type, is_nullable
         FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'facilities'
         ORDER BY ordinal_position;
-      `
-    });
+      `,
+    }
+  );
 
   if (fcError) {
     // Try alternative method
@@ -30,7 +32,7 @@ async function auditSchema() {
       .from("facilities")
       .select("*")
       .limit(1);
-    
+
     if (facilities && facilities.length > 0) {
       console.log("Columns:", Object.keys(facilities[0]).join(", "));
     }
@@ -38,12 +40,12 @@ async function auditSchema() {
 
   // Check RLS policies on facilities
   console.log("\n🔒 FACILITIES RLS POLICIES:");
-  const { data: policies } = await supabase.rpc('exec_sql', {
+  const { data: policies } = await supabase.rpc("exec_sql", {
     sql: `
       SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual
       FROM pg_policies
       WHERE tablename = 'facilities';
-    `
+    `,
   });
 
   // Check if facilities has tenant_id column
@@ -55,24 +57,26 @@ async function auditSchema() {
     .single();
 
   if (testFacility) {
-    const hasTenantId = 'tenant_id' in testFacility;
+    const hasTenantId = "tenant_id" in testFacility;
     console.log(`   tenant_id column exists: ${hasTenantId}`);
-    console.log(`   Available columns: ${Object.keys(testFacility).join(", ")}`);
+    console.log(
+      `   Available columns: ${Object.keys(testFacility).join(", ")}`
+    );
   }
 
   // Check user_facilities table
   console.log("\n📊 USER_FACILITIES TABLE:");
   const { data: ufCount } = await supabase
     .from("user_facilities")
-    .select("*", { count: 'exact', head: true });
+    .select("*", { count: "exact", head: true });
 
   console.log(`   Total associations: ${ufCount}`);
 
   // Check for broken policies
   console.log("\n⚠️  CHECKING FOR BROKEN POLICIES:");
-  
+
   const tables = ["facilities", "patients", "wounds", "visits", "assessments"];
-  
+
   for (const table of tables) {
     const { data: sampleData, error } = await supabase
       .from(table)
@@ -82,7 +86,9 @@ async function auditSchema() {
     if (error) {
       console.log(`   ❌ ${table}: Query failed - ${error.message}`);
     } else {
-      console.log(`   ✅ ${table}: ${sampleData?.length || 0} record(s) accessible`);
+      console.log(
+        `   ✅ ${table}: ${sampleData?.length || 0} record(s) accessible`
+      );
     }
   }
 }

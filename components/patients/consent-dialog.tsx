@@ -68,11 +68,17 @@ By signing below, I acknowledge that:
 This consent remains in effect for all wound care treatment provided at this facility unless I revoke it in writing.
 `.trim();
 
-export function ConsentDialog({ patientId, patientName, open = true }: ConsentDialogProps) {
+export function ConsentDialog({
+  patientId,
+  patientName,
+  open = true,
+}: ConsentDialogProps) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
-  const [activeTab, setActiveTab] = useState<"electronic" | "upload">("electronic");
+  const [activeTab, setActiveTab] = useState<"electronic" | "upload">(
+    "electronic"
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +88,10 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
     }
   };
 
-  const handleSaveSignature = async (signatureData: string, method: "draw" | "type") => {
+  const handleSaveSignature = async (
+    signatureData: string,
+    method: "draw" | "type"
+  ) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -103,7 +112,8 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
 
       // Success - refresh to close dialog
       router.refresh();
-    } catch (_err) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      // eslint-disable-line @typescript-eslint/no-unused-vars
       setError("Failed to save consent");
       setIsSubmitting(false);
     }
@@ -116,7 +126,7 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
   if (showSignature) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Sign Consent Form</DialogTitle>
             <DialogDescription>
@@ -146,7 +156,7 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden">
         <DialogHeader>
           <DialogTitle>Consent for Treatment Required</DialogTitle>
           <DialogDescription>
@@ -154,7 +164,11 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "electronic" | "upload")} className="mt-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "electronic" | "upload")}
+          className="mt-4"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="electronic" className="flex items-center gap-2">
               <PenTool className="h-4 w-4" />
@@ -166,23 +180,24 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="electronic" className="space-y-4 mt-4">
+          <TabsContent value="electronic" className="mt-4 space-y-4">
             <div className="mt-4">
               <ScrollArea className="h-[35vh] w-full rounded-md border p-4">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
                   {DEFAULT_CONSENT_TEXT}
                 </div>
               </ScrollArea>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4">
-                <p className="text-sm text-amber-900 dark:text-amber-100 font-semibold mb-3">
-                  <strong>Important:</strong> You must review and sign this consent form before
-                  accessing patient records or scheduling visits.
+              <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/20">
+                <p className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-100">
+                  <strong>Important:</strong> You must review and sign this
+                  consent form before accessing patient records or scheduling
+                  visits.
                 </p>
-                
-                <div className="flex items-start space-x-3 bg-white dark:bg-gray-900 p-4 rounded-md border-2 border-amber-300 dark:border-amber-700">
+
+                <div className="flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-white p-4 dark:border-amber-700 dark:bg-gray-900">
                   <Checkbox
                     id="agree"
                     checked={agreed}
@@ -191,10 +206,10 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
                   />
                   <Label
                     htmlFor="agree"
-                    className="text-base font-semibold leading-tight cursor-pointer text-gray-900 dark:text-gray-100"
+                    className="cursor-pointer text-base leading-tight font-semibold text-gray-900 dark:text-gray-100"
                   >
-                    I have read and understand the consent form above, and I agree to receive wound care
-                    treatment
+                    I have read and understand the consent form above, and I
+                    agree to receive wound care treatment
                   </Label>
                 </div>
               </div>
@@ -203,7 +218,7 @@ export function ConsentDialog({ patientId, patientName, open = true }: ConsentDi
                 <button
                   onClick={handleAgree}
                   disabled={!agreed || isSubmitting}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue to Signature
                 </button>

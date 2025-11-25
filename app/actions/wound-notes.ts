@@ -22,7 +22,9 @@ export async function getWoundNotes(woundId: string) {
 
 export async function createWoundNote(formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
   const validated = woundNoteSchema.safeParse({
@@ -52,7 +54,9 @@ export async function createWoundNote(formData: FormData) {
 
 export async function updateWoundNote(noteId: string, note: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
   const { error } = await supabase
@@ -69,7 +73,9 @@ export async function updateWoundNote(noteId: string, note: string) {
 
 export async function deleteWoundNote(noteId: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
   const { error } = await supabase

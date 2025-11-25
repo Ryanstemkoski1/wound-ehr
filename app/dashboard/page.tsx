@@ -7,7 +7,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Activity, Users, FileText, Calendar, AlertCircle, Building2, Shield, UserPlus } from "lucide-react";
+import {
+  Activity,
+  Users,
+  FileText,
+  Calendar,
+  AlertCircle,
+  Building2,
+  Shield,
+  UserPlus,
+} from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { LazyDashboardCharts } from "@/components/dashboard/lazy-dashboard-charts";

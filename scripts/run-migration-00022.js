@@ -18,7 +18,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function runMigration() {
   try {
-    console.log("🚀 Running migration 00022: Patient Document Attachments...\n");
+    console.log(
+      "🚀 Running migration 00022: Patient Document Attachments...\n"
+    );
     console.log("📋 This migration creates:");
     console.log("   - patient_documents table");
     console.log("   - 11 document types support");
@@ -46,7 +48,7 @@ async function runMigration() {
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
       const preview = statement.substring(0, 100).replace(/\n/g, " ");
-      
+
       console.log(`[${i + 1}/${statements.length}] ${preview}...`);
 
       try {
@@ -69,7 +71,9 @@ async function runMigration() {
     console.log("   1. Create storage bucket: patient-documents");
     console.log("   2. Apply storage RLS policies");
     console.log("   3. Generate TypeScript types: npm run db:types");
-    console.log("   4. Run test script: node scripts/test-patient-documents.js\n");
+    console.log(
+      "   4. Run test script: node scripts/test-patient-documents.js\n"
+    );
   } catch (error) {
     console.error("❌ Migration failed:", error.message);
     process.exit(1);

@@ -27,6 +27,7 @@
 ### ✅ Phase 9.4.1 - Patient Document Attachments - COMPLETE 🎉
 
 **Feature:** Comprehensive document management system for patient records
+
 - ✅ Database schema with 11 document types (migration 00022)
 - ✅ Supabase Storage bucket with RLS policies
 - ✅ Upload with drag-and-drop (FormData-based Server Action)
@@ -43,6 +44,7 @@
 ### ✅ Phase 9.3 - 100% COMPLETE (November 23, 2025)
 
 **All 7 sub-phases completed:**
+
 - ✅ 9.3.1: Procedure Restrictions (credential-based scope of practice) - Nov 20
 - ✅ 9.3.2: Visit Autosave (client-side + server-side drafts) - Nov 21
 - ✅ 9.3.3: Assessment Autosave (multi-wound form protection) - Nov 21
@@ -52,6 +54,7 @@
 - ✅ 9.3.7: Signature Audit Logs (admin compliance reporting) - Nov 23
 
 **Final Feature (9.3.7) - Signature Audit Logs (Completed Nov 23, 2025):**
+
 - ✅ Admin-only compliance reporting interface (tenant_admin + facility_admin)
 - ✅ Comprehensive audit trail with advanced filtering (type, date, user, facility, search)
 - ✅ Statistics dashboard with 4 metric cards (14 total signatures tracked)
@@ -80,6 +83,7 @@
 **Security Fixes:** 4 critical RLS vulnerabilities resolved
 
 **Key Achievements:**
+
 1. Procedure restrictions prevent scope-of-practice violations
 2. Dual-layer autosave prevents data loss (client + server)
 3. Assessment form protected with per-wound autosave
@@ -89,6 +93,7 @@
 7. Complete signature audit trail for compliance reporting
 
 **Production Readiness:**
+
 - All features fully tested and verified
 - No TypeScript errors or build issues
 - Comprehensive documentation created
@@ -98,6 +103,7 @@
 ### 🔒 Critical Security Enhancements (November 23, 2025)
 
 **Comprehensive RLS Security Audit:**
+
 - Audited all 18 database tables for Row Level Security policies
 - Identified 3 critical multi-tenant isolation vulnerabilities
 - Fixed tenants table (RLS was disabled, breaking tenant isolation)
@@ -106,12 +112,14 @@
 - Fixed procedure_scopes table (missing user_facilities join)
 
 **Architectural Discovery:**
+
 - System has dual authorization model: user_facilities (data access) + user_roles (admin only)
 - user_roles RLS must stay disabled to prevent infinite recursion
 - RLS policies must use user_facilities joins, NOT user_roles queries
 - RPC functions (SECURITY DEFINER) required for cross-user data access
 
 **Automated Testing Infrastructure:**
+
 - Created comprehensive test suite (scripts/test-all-features.js)
 - 25 automated tests covering 8 major feature areas
 - 100% test pass rate achieved after fixes
@@ -127,6 +135,7 @@
 ---
 
 ### Version 4.0 (November 18, 2025) - Compliance & Signatures
+
 - ✅ Credentials system (RN, LVN, MD, DO, PA, NP, CNA, Admin)
 - ✅ Electronic signatures (consent-to-treat, provider, patient)
 - ✅ Visit workflow (draft → ready → signed → submitted)
@@ -139,6 +148,7 @@
 ## Version History Summary
 
 ### Version 3.0 (November 4, 2025) - UX & Multi-Tenancy
+
 - ✅ Wound-based layout (wound cards as primary interface)
 - ✅ Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
 - ✅ Enhanced calendar (modal-based, drag-to-create)
@@ -746,15 +756,15 @@ ALTER TABLE users ADD COLUMN credentials TEXT NOT NULL CHECK (credentials IN ('R
 3. **Credentials System (v4.0)**: Required field on all users, determines clinical scope and signature requirements
 4. **Signatures (v4.0)**: Three types - patient consent (one-time), patient acknowledgment (per visit for RN/LVN), provider certification (all visits)
 5. **Visit Status Flow (v4.0)**: draft → ready_for_signature → signed → submitted (allows save progress + sign later)
-3. **Multi-Facility Support**: Users can belong to multiple facilities via `UserFacilities` junction table, patients belong to one facility
-4. **Patients & Wounds**: One patient can have multiple wounds (1:N) - **Wound-centric UI design**
-5. **Visits**: Each visit is linked to a patient and can assess multiple wounds
-6. **WoundAssessments**: Links a specific wound to a visit with all measurements (checkboxes/radio buttons for most fields)
-7. **Wound Notes**: Per-wound timestamped notes with ability to add multiple notes during and after visits
-8. **Flexible Fields**: Use JSONB for arrays (infection_signs, risk_factors) to avoid rigid schema
-9. **Billing**: CPT/ICD-10 codes tracked per visit for time-based and procedure-based billing
-10. **Audit Trail**: All tables include `created_at`, `updated_at`, and `created_by` for tracking
-11. **Soft Deletes**: Use `status` and `is_active` fields instead of hard deletes for compliance
+6. **Multi-Facility Support**: Users can belong to multiple facilities via `UserFacilities` junction table, patients belong to one facility
+7. **Patients & Wounds**: One patient can have multiple wounds (1:N) - **Wound-centric UI design**
+8. **Visits**: Each visit is linked to a patient and can assess multiple wounds
+9. **WoundAssessments**: Links a specific wound to a visit with all measurements (checkboxes/radio buttons for most fields)
+10. **Wound Notes**: Per-wound timestamped notes with ability to add multiple notes during and after visits
+11. **Flexible Fields**: Use JSONB for arrays (infection_signs, risk_factors) to avoid rigid schema
+12. **Billing**: CPT/ICD-10 codes tracked per visit for time-based and procedure-based billing
+13. **Audit Trail**: All tables include `created_at`, `updated_at`, and `created_by` for tracking
+14. **Soft Deletes**: Use `status` and `is_active` fields instead of hard deletes for compliance
 
 ---
 
@@ -1780,27 +1790,23 @@ lib/
     - [ ] Options: "Restore", "Discard", "View Both" (side-by-side comparison)
   - [ ] Clear localStorage after successful submission
   - [ ] Add keyboard shortcut: Ctrl+S for manual save
-  
 - [ ] **Server-Side Autosave (Database)**
   - [ ] Implement auto-submit to server every 2 minutes
   - [ ] Use visit status='draft' for auto-saved visits
   - [ ] Optimistic UI updates (instant feedback)
   - [ ] Toast notification: "Draft saved at [time]"
   - [ ] Debounce logic to prevent excessive saves
-  
 - [ ] **Save Status Indicator Component**
   - [ ] Position: Top-right corner of forms
-  - [ ] States: 
+  - [ ] States:
     - Saving (spinner + "Saving...")
     - Saved (green checkmark + "Last saved: X minutes ago")
     - Error (red X + "Save failed. Retry?")
   - [ ] Manual save button next to indicator
-  
 - [ ] **Multi-Wound Assessment Autosave**
   - [ ] Save current wound when switching to another wound
   - [ ] Show save indicator per wound in switcher
   - [ ] Auto-save assessment data on field blur
-  
 - [ ] **Testing**
   - [ ] Test: Fill form → Refresh browser → Verify recovery modal
   - [ ] Test: Fill form → Close tab → Reopen → Verify draft restored
@@ -1819,24 +1825,22 @@ lib/
 **Client Need:** Photos in printed visit notes should clearly show which wound they belong to
 
 **Implementation:**
+
 - [x] Update PDF wound progress component (`components/pdf/wound-progress-pdf.tsx`)
   - [x] Add wound label above each photo
   - [x] Format: "Wound #X - Location" (e.g., "Wound #2 - Left Heel")
   - [x] Include wound type below: "(Pressure Injury)"
   - [x] Teal color scheme matching app branding
-  
 - [x] Update photo query logic (`app/actions/pdf.ts`)
   - [x] Include wound metadata (number, location, type)
   - [x] Pass metadata to PDF component
   - [x] TypeScript types updated
-  
 - [x] **Photo Upload Workflow Refactored** (November 21, 2025)
   - [x] Moved photo upload from wound page to assessment form
   - [x] Photos now automatically linked to `assessment_id`
   - [x] Each assessment has its own photos (no duplication)
   - [x] Wound page shows historical photos (view-only)
   - [x] PDF query simplified: filter by `assessment_id` only
-  
 - [x] Test PDF exports
   - [x] Single wound with multiple photos
   - [x] Multiple wounds with photos each
@@ -1855,31 +1859,26 @@ lib/
 - ✅ Database migration 00019 created
   - Added `consent_document_url`, `consent_document_name`, `consent_document_size` to patient_consents
   - Updated signatures constraint to include 'upload' method
-  
 - ✅ Supabase Storage integration
   - Created private bucket: `patient-consents`
   - Configured RLS policies for authenticated users
   - Implemented signed URLs (1-hour expiry) for secure access
   - Added Next.js Image remotePatterns for signed URLs
-  
 - ✅ UI Components created
   - `ScannedConsentUpload` - Drag-and-drop file upload with validation
   - `ConsentDocumentViewer` - Modal viewer (PDF iframe + Next Image)
   - `ConsentStatusCard` - Display uploaded document with "View Document" button
   - Updated `ConsentDialog` with tabs (Electronic vs Upload)
   - Added Progress component from Radix UI
-  
 - ✅ Server Actions implemented (`app/actions/signatures.ts`)
   - `uploadScannedConsent()` - File validation, storage upload, record creation
   - `getConsentDocumentUrl()` - Fetch consent and generate signed URL
   - File validation: PDF, JPG, PNG (max 10MB)
   - Legacy URL format handling for backward compatibility
-  
 - ✅ Integration complete
   - Patient page displays consent status card when document exists
   - View Document button fetches signed URL dynamically
   - Both electronic and uploaded consents supported simultaneously
-  
 - ✅ Testing verified
   - Upload and view working correctly
   - Storage RLS policies tested
@@ -1901,23 +1900,19 @@ lib/
   - [ ] Addendum editor modal with rich text
   - [ ] Timestamp and author automatically captured
   - [ ] Cannot modify original visit content (read-only)
-  
 - [ ] Create addendum storage
   - [ ] Use existing `wound_notes` table with visit_id reference
   - [ ] Add `note_type` field: 'wound_note' vs 'addendum'
   - [ ] Track addendum count on visit record (visits.addendum_count)
   - [ ] Display addendums chronologically below visit
-  
 - [ ] Update visit actions (`app/actions/visits.ts`)
   - [ ] `createAddendum(visitId, content)` server action
   - [ ] Increment visits.addendum_count
   - [ ] Create wound_note with type='addendum'
-  
 - [ ] Update PDF exports
   - [ ] Include addendums section at end of visit summary
   - [ ] Format: "Addendum [#] - [Date] by [Author]"
   - [ ] Show full addendum content
-  
 - [ ] Test workflow
   - [ ] Sign visit → Add addendum → Verify saved
   - [ ] Submit visit → Add addendum → Verify allowed
@@ -1936,7 +1931,6 @@ lib/
   - [ ] List all signatures for a visit
   - [ ] Display: signer, role, timestamp, IP address, method
   - [ ] Admin-only access
-  
 - [ ] Add signature history to visit detail page
   - [ ] Collapsible section "Signature History"
   - [ ] Show consent, patient, and provider signatures
@@ -1949,6 +1943,7 @@ lib/
 ---
 
 **Phase 9.3 Summary:**
+
 - **Total Estimated Effort:** 12-17 days (2.5-3.5 weeks)
 - **Status:** 4 of 7 sub-phases complete (57%)
 - **Completed:** ✅ Procedure restrictions, Autosave (visits), Autosave (assessments), Photo labeling
@@ -1968,12 +1963,13 @@ lib/
 **Client Need:** Central document repository for consents, face sheets, labs, radiology reports
 
 - [ ] Create `patient_documents` table migration (00020)
+
   ```sql
   CREATE TABLE patient_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
     document_type TEXT NOT NULL CHECK (document_type IN (
-      'consent', 'face_sheet', 'lab_report', 'radiology', 
+      'consent', 'face_sheet', 'lab_report', 'radiology',
       'insurance', 'prescription', 'other'
     )),
     file_name TEXT NOT NULL,
@@ -1989,7 +1985,7 @@ lib/
     is_archived BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
-  
+
   CREATE INDEX idx_patient_documents_patient_id ON patient_documents(patient_id);
   CREATE INDEX idx_patient_documents_type ON patient_documents(document_type);
   CREATE INDEX idx_patient_documents_visit_id ON patient_documents(visit_id);
@@ -2049,12 +2045,13 @@ lib/
 **Prerequisites:** Waiting for Alana to send RN/LVN template document
 
 - [ ] Create `visit_templates` table migration (00021)
+
   ```sql
   CREATE TABLE visit_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     template_name TEXT NOT NULL UNIQUE,
     template_type TEXT NOT NULL CHECK (template_type IN (
-      'wound_care', 'rn_shorthand', 'md_comprehensive', 
+      'wound_care', 'rn_shorthand', 'md_comprehensive',
       'grafting', 'skin_sweep', 'gtube'
     )),
     allowed_credentials TEXT[] NOT NULL,
@@ -2066,6 +2063,7 @@ lib/
   ```
 
 - [ ] Add `visit_template` field to visits table
+
   ```sql
   ALTER TABLE visits ADD COLUMN visit_template TEXT DEFAULT 'wound_care';
   ```
@@ -2113,18 +2111,19 @@ lib/
 **Client Need:** Different assessment forms for Grafting, Skin Sweep, G-tube care
 
 - [ ] Create specialized assessment tables (migration 00022)
+
   ```sql
   -- Add assessment_type to assessments table
-  ALTER TABLE assessments 
+  ALTER TABLE assessments
   ADD COLUMN assessment_type TEXT DEFAULT 'wound_care'
   CHECK (assessment_type IN ('wound_care', 'grafting', 'skin_sweep', 'gtube'));
-  
+
   -- Grafting assessments
   CREATE TABLE grafting_assessments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     assessment_id UUID NOT NULL REFERENCES assessments(id) ON DELETE CASCADE,
     graft_type TEXT NOT NULL CHECK (graft_type IN (
-      'split_thickness', 'full_thickness', 'dermal_substitute', 
+      'split_thickness', 'full_thickness', 'dermal_substitute',
       'skin_substitute', 'acellular_matrix'
     )),
     graft_location TEXT NOT NULL,
@@ -2142,7 +2141,7 @@ lib/
     postop_instructions TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
-  
+
   -- G-tube assessments
   CREATE TABLE gtube_assessments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2170,7 +2169,7 @@ lib/
     education_provided TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
-  
+
   -- Skin sweep assessments
   CREATE TABLE skin_sweep_assessments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2189,7 +2188,7 @@ lib/
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
-  
+
   CREATE INDEX idx_grafting_assessments_assessment_id ON grafting_assessments(assessment_id);
   CREATE INDEX idx_gtube_assessments_assessment_id ON gtube_assessments(assessment_id);
   CREATE INDEX idx_skin_sweep_assessments_visit_id ON skin_sweep_assessments(visit_id);
@@ -2205,12 +2204,10 @@ lib/
     - Graft details, donor site, fixation, adherence
     - Photos: graft site + donor site
     - Post-op care instructions
-  
   - [ ] G-tube assessment form (`components/assessments/gtube-assessment-form.tsx`)
     - Tube details, site condition, patency
     - Feeding tolerance, residual checks
     - Education provided
-  
   - [ ] Skin sweep form (`components/assessments/skin-sweep-form.tsx`)
     - Body area checklist (head, trunk, arms, legs)
     - Quick wound documentation for multiple wounds
@@ -2219,7 +2216,7 @@ lib/
 
 - [ ] Build specialized PDF templates
   - [ ] Grafting note PDF
-  - [ ] G-tube care note PDF  
+  - [ ] G-tube care note PDF
   - [ ] Skin sweep summary PDF
 
 - [ ] Update visit workflow
@@ -2240,6 +2237,7 @@ lib/
 ---
 
 **Phase 9.4 Summary:**
+
 - **Total Estimated Effort:** 20-28 days (4-6 weeks)
 - **Prerequisites:** Alana's RN/LVN template (for 9.4.2)
 - **Complexity:** High - requires dynamic form system and specialized workflows
@@ -2352,7 +2350,7 @@ This section documents all approved design decisions based on client requirement
 
 **Version 3.0 Update:** Complete overhaul from simple auth to role-based access control (RBAC).
 
-- **Rationale:** 
+- **Rationale:**
   - Client requires tenant admin and facility admin roles for proper access management in multi-tenant SaaS environment.
   - Compliance requirements mandate tracking clinical credentials to enforce scope of practice and signature requirements.
   - Need to distinguish between administrative access and clinical capabilities.
@@ -2360,12 +2358,10 @@ This section documents all approved design decisions based on client requirement
 - **Implementation:**
   - **Supabase Auth** with email/password
   - **Tenant isolation**: Each signup creates new tenant (organization)
-  
   - **Administrative Roles** (determines data access):
     1. **Tenant Admin**: Full access to all facilities, can invite other admins and facility admins
     2. **Facility Admin**: Access only to assigned facility, can invite users within their facility
     3. **User**: Basic access to assigned facilities, no admin privileges
-  
   - **Clinical Credentials** (determines clinical scope) - **REQUIRED for all users**:
     - **RN** (Registered Nurse): Limited procedures, requires patient signature at every visit
     - **LVN** (Licensed Vocational Nurse): Limited procedures, requires patient signature at every visit
@@ -2375,13 +2371,11 @@ This section documents all approved design decisions based on client requirement
     - **NP** (Nurse Practitioner): Full procedure access, no patient signature required
     - **CNA** (Certified Nursing Assistant): View-only access, no documentation
     - **Admin** (Non-clinical): Administrative staff, no clinical access
-  
   - **Examples:**
     - Facility Admin + RN = Can manage facility AND perform clinical work with RN scope
     - User + MD = Clinician with full procedure access
     - User + LVN = Clinician with limited scope, must collect patient signatures
     - Tenant Admin + Admin = Owner/manager, no clinical access
-  
   - **Enforcement:**
     - `user_roles` table links users to administrative roles and facilities
     - `users.credentials` field (required) determines clinical capabilities
@@ -2389,6 +2383,7 @@ This section documents all approved design decisions based on client requirement
     - Middleware enforces both role-based AND credential-based access control
     - Server actions validate credentials before allowing procedure documentation
   - Row-Level Security (RLS) policies filter data by tenant and facility access
+
 - **UI:**
   - Tenant admin: Full admin panel at `/admin/*`
   - Facility admin: Limited admin panel (user invites only)
@@ -2434,21 +2429,20 @@ This section documents all approved design decisions based on client requirement
 
 **Decision:** Three-tier signature system with full audit trail.
 
-- **Rationale:** 
+- **Rationale:**
   - Legal compliance requirement for wound care documentation
   - RN/LVN require patient acknowledgment at every visit
   - All clinicians must certify accuracy of documentation
   - Initial consent-to-treat must be captured before any treatment
-  
 - **Implementation:**
-  
+
   **1. Initial Consent (One-Time, Required Before First Visit):**
   - `patient_consents` table stores full consent text + signatures
   - Modal blocks visit creation if no consent exists for patient
   - Digital signature pad for patient (required) + witness (optional)
   - Captures: timestamp, IP address, consent text shown, signature images
   - Cannot be modified after signing (audit compliance)
-  
+
   **2. Patient Signature (Per Visit, RN/LVN Only):**
   - Auto-determined by `visits.requires_patient_signature` flag (set based on clinician credentials)
   - Collected at END of visit, ideally before clinician leaves bedside
@@ -2456,7 +2450,7 @@ This section documents all approved design decisions based on client requirement
   - Text: "I acknowledge receipt of the treatments described above"
   - Signature stored in `signatures` table with type='patient'
   - Visit cannot be marked complete without patient signature if required
-  
+
   **3. Provider Signature (Per Visit, All Clinicians):**
   - New visit status flow: `draft` → `ready_for_signature` → `signed` → `submitted`
   - **Save Draft**: Allows saving incomplete work, can return later
@@ -2466,17 +2460,17 @@ This section documents all approved design decisions based on client requirement
   - Signature stored in `signatures` table with type='provider'
   - Records exact timestamp of signature (signed_at field)
   - **Submit to Office**: Final action, marks visit as submitted, generates timestamp
-  
+
   **Signature Methods:**
   - **Draw**: Canvas-based signature pad (preferred for mobile/tablet)
   - **Type**: Typed name with "I agree" checkbox (fallback)
   - Both methods are legally binding with timestamp + IP address
-  
+
   **Audit Trail:**
   - All signatures include: signer_name, signer_role, signature_data (base64 image or typed name), signature_method, ip_address, signed_at
   - Cannot delete signatures (only soft delete with audit log)
   - Signature display component shows all details for compliance review
-  
+
 - **Status:** 🔴 **PHASE 9 - IN PLANNING**
 
 ### 5. Procedure Scope Enforcement (Version 4.0)
@@ -2487,7 +2481,6 @@ This section documents all approved design decisions based on client requirement
   - Legal requirement: Clinicians cannot document procedures outside their scope of practice
   - RN/LVN cannot perform or document sharp debridement (surgical procedures)
   - Need flexible system to add/modify scope rules as regulations change
-  
 - **Implementation:**
   - `procedure_scopes` table maps procedure codes to array of allowed credentials
   - Seeded with wound care procedures and credential restrictions
@@ -2495,22 +2488,19 @@ This section documents all approved design decisions based on client requirement
     - Sharp debridement (CPT 11042-11047): `['MD', 'DO', 'PA', 'NP']` only
     - Selective debridement (CPT 97597-97598): `['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']` all
     - NPWT (CPT 97605-97607): `['MD', 'DO', 'PA', 'NP', 'RN', 'LVN']` all
-  
   - **UI Filtering:**
     - Treatment form: Only show procedures user's credentials allow
     - Billing form: Filter CPT codes by credentials
     - Assessment form: Conditional rendering (hide sharp debridement options for RN/LVN)
-  
   - **Server Validation:**
     - Server Actions validate credentials before saving procedures
     - `canPerformProcedure(credentials, procedureCode)` returns boolean
     - Reject with error if credential not in allowed array
-  
   - **Admin Management:**
     - Tenant admins can view/edit procedure scopes
     - Future: Import RN/LVN templates from Alvin's team
     - Allows customization per state regulations (CA vs TX vs FL)
-  
+
 - **Status:** 🔴 **PHASE 9.3 - IN PLANNING**
 
 ### 6. Auto-Save & Offline Support (Version 4.0)
@@ -2521,9 +2511,8 @@ This section documents all approved design decisions based on client requirement
   - Field clinicians work in facilities with poor/unstable WiFi
   - Cannot risk losing 30+ minutes of wound documentation
   - Must support offline work and sync when connection restored
-  
 - **Implementation:**
-  
+
   **Client-Side (localStorage):**
   - Auto-save every 30 seconds to browser localStorage
   - Key format: `draft_visit_${visitId}_${timestamp}`
@@ -2531,13 +2520,13 @@ This section documents all approved design decisions based on client requirement
   - On page load: Check for unsaved drafts, show recovery modal
   - Recovery options: Restore, Discard, View Both (side-by-side comparison)
   - Cleared automatically after successful submission
-  
+
   **Server-Side (Database Drafts):**
   - Auto-submit to server every 2 minutes with status='draft'
   - Uses optimistic UI updates (instant feedback)
   - Toast notification: "Draft saved at [time]"
   - Works even with slow connection (retries with exponential backoff)
-  
+
   **Offline Mode:**
   - Detect: `navigator.onLine` event listener
   - UI: Yellow banner "⚠️ No internet connection. Changes saved locally."
@@ -2545,13 +2534,13 @@ This section documents all approved design decisions based on client requirement
   - Sync: On connection restored, process queue sequentially
   - Indicator: "Last synced: X minutes ago" with manual "Sync Now" button
   - Conflict resolution: Server timestamp wins (with user notification)
-  
+
   **Save Status Indicator:**
   - Top right corner of forms
   - States: Saving (spinner), Saved (green check), Offline (yellow warning), Error (red)
   - Last saved timestamp
   - Keyboard shortcut: Ctrl+S for manual save
-  
+
 - **Status:** 🔴 **PHASE 10 - IN PLANNING**
 
 ### 7. Library Selections
@@ -2727,6 +2716,7 @@ This section documents all approved design decisions based on client requirement
 ### ✅ Completed Actions
 
 **Phases 1-8:** Complete application infrastructure (Weeks 1-12)
+
 1. **Supabase Setup** ✅ - Database, RLS, Storage, Authentication
 2. **SQL Schema Migration** ✅ - 17 migrations executed
 3. **Authentication Implementation** ✅ - Login/logout, protected routes
@@ -2737,6 +2727,7 @@ This section documents all approved design decisions based on client requirement
 8. **Calendar Integration** ✅ - Modal-based event management
 
 **Phase 9.1: Credentials System** ✅ DEPLOYED (Week 13)
+
 - Migration 00008: Added credentials field to users table
 - Credentials validation: RN, LVN, MD, DO, PA, NP, CNA, Admin
 - User management UI displays credentials
@@ -2744,6 +2735,7 @@ This section documents all approved design decisions based on client requirement
 - Patient signature logic based on credentials
 
 **Phase 9.2: Electronic Signatures** ✅ TESTED (Weeks 14-15)
+
 - Migration 00014: signatures and patient_consents tables
 - Migration 00015: Visit status constraint (draft → ready → signed → submitted)
 - Migration 00017: Fixed user_roles RLS infinite recursion
@@ -2756,12 +2748,14 @@ This section documents all approved design decisions based on client requirement
 - Tested: MD workflow (no patient sig), RN workflow (requires patient sig)
 
 **Admin Dashboard Enhancement** ✅ WORKING (November 19, 2025)
+
 - Admin panel section on main dashboard
 - Shows user count, facility count, pending invite count
 - Quick links to user management, facilities, invites
 - Visible to tenant admins only
 
 **Database & Security** ✅ OPTIMIZED
+
 - RLS disabled on user_roles table (eliminated infinite recursion)
 - RPC functions: get_user_role_info(), get_tenant_user_roles()
 - Application-level security via middleware and server actions

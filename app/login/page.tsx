@@ -20,7 +20,7 @@ import {
 function LoginForm() {
   const searchParams = useSearchParams();
   const successMessage = searchParams.get("message");
-  
+
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -52,7 +52,8 @@ function LoginForm() {
           <CardContent className="space-y-4">
             {successMessage === "password_updated" && (
               <div className="rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200">
-                ✓ Password updated successfully! You can now login with your new password.
+                ✓ Password updated successfully! You can now login with your new
+                password.
               </div>
             )}
             {error && (
@@ -118,18 +119,25 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <div className="mb-4 flex justify-center">
-              <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
-            </div>
-            <CardTitle className="text-center text-2xl">Loading...</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+          <Card className="w-full max-w-md">
+            <CardHeader className="space-y-1">
+              <div className="mb-4 flex justify-center">
+                <Image
+                  src="/logo.svg"
+                  alt="Wound EHR"
+                  width={200}
+                  height={60}
+                />
+              </div>
+              <CardTitle className="text-center text-2xl">Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

@@ -80,7 +80,9 @@ function AcceptInviteContent() {
         const supabase = createClient();
 
         // Check if user is already logged in
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         // Get invite details
         const { data: invite, error: inviteError } = await supabase
@@ -113,7 +115,7 @@ function AcceptInviteContent() {
           try {
             const { acceptInvite } = await import("@/app/actions/admin");
             const result = await acceptInvite(inviteToken);
-            
+
             if (result.error) {
               console.error("Accept invite error:", result.error);
               setError(result.error);
@@ -394,11 +396,7 @@ function AcceptInviteContent() {
                 )}
               />
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

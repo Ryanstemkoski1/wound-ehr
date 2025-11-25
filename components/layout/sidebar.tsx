@@ -30,7 +30,11 @@ const adminNavigation = [
   { name: "Users", href: "/dashboard/admin/users", icon: Users },
   { name: "Facilities", href: "/dashboard/admin/facilities", icon: Building2 },
   { name: "Invites", href: "/dashboard/admin/invites", icon: Shield },
-  { name: "Signatures", href: "/dashboard/admin/signatures", icon: FileSignature },
+  {
+    name: "Signatures",
+    href: "/dashboard/admin/signatures",
+    icon: FileSignature,
+  },
 ];
 
 type SidebarProps = {
@@ -45,7 +49,7 @@ export default function Sidebar({
   onMobileClose,
 }: SidebarProps) {
   const pathname = usePathname();
-  
+
   // Show admin navigation based on role
   const showFullAdminNav = userRole === "tenant_admin";
   const showLimitedAdminNav = userRole === "facility_admin";
@@ -129,7 +133,7 @@ export default function Sidebar({
           {/* Admin Navigation - Full for tenant_admin, limited for facility_admin */}
           {(showFullAdminNav || showLimitedAdminNav) && (
             <div className="pt-4">
-              <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <div className="mb-2 px-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
                 Admin
               </div>
               {adminNavigation.map((item) => {

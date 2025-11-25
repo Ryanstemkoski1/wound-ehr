@@ -1,6 +1,11 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import Image from "next/image";
@@ -35,38 +40,38 @@ export function DocumentViewer({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+      <DialogContent className="flex h-[90vh] max-w-5xl flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="truncate pr-8">{documentName}</DialogTitle>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
                 Download
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 border rounded-lg overflow-hidden bg-muted/30">
+        <div className="bg-muted/30 min-h-0 flex-1 overflow-hidden rounded-lg border">
           {isPdf && (
             <iframe
               src={url}
-              className="w-full h-full"
+              className="h-full w-full"
               title={documentName}
               style={{ border: "none" }}
             />
           )}
 
           {isImage && (
-            <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
-              <div className="relative max-w-full max-h-full">
+            <div className="flex h-full w-full items-center justify-center overflow-auto p-4">
+              <div className="relative max-h-full max-w-full">
                 <Image
                   src={url}
                   alt={documentName}
                   width={1200}
                   height={1600}
-                  className="object-contain w-auto h-auto max-w-full max-h-full"
+                  className="h-auto max-h-full w-auto max-w-full object-contain"
                   unoptimized
                 />
               </div>
@@ -74,12 +79,12 @@ export function DocumentViewer({
           )}
 
           {!isPdf && !isImage && (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
+            <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
               <p className="text-muted-foreground mb-4">
                 This file type cannot be previewed in the browser.
               </p>
               <Button onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
                 Download to View
               </Button>
             </div>

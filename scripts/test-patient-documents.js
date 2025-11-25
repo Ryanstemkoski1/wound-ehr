@@ -1,12 +1,12 @@
 /**
  * Test Script for Patient Document System (Phase 9.4.1)
  * Tests: Migration, RPC functions, storage setup, and document operations
- * 
+ *
  * Prerequisites:
  * 1. Run migration 00022 via Supabase Dashboard
  * 2. Create patient-documents storage bucket
  * 3. Apply storage RLS policies
- * 
+ *
  * Usage: node scripts/test-patient-documents.js
  */
 
@@ -25,7 +25,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function runTests() {
   console.log("🧪 Patient Document System Test Suite\n");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
 
   let testsPassed = 0;
   let testsFailed = 0;
@@ -72,7 +72,9 @@ async function runTests() {
     }
   } catch (err) {
     console.log("⚠️  SKIPPED: exec_sql function not available");
-    console.log("   Manual check: Run SELECT * FROM pg_tables WHERE tablename = 'patient_documents'");
+    console.log(
+      "   Manual check: Run SELECT * FROM pg_tables WHERE tablename = 'patient_documents'"
+    );
   }
 
   // Test 3: Check RPC function exists
@@ -125,7 +127,9 @@ async function runTests() {
         testsPassed++;
       } else {
         console.error("❌ FAILED: Bucket does not exist");
-        console.error("   Action: Create 'patient-documents' bucket in Supabase Dashboard");
+        console.error(
+          "   Action: Create 'patient-documents' bucket in Supabase Dashboard"
+        );
         testsFailed++;
       }
     }
@@ -144,22 +148,22 @@ async function runTests() {
 
     if (patients && patients.length > 0) {
       // Try to insert invalid document type
-      const { error } = await supabase
-        .from("patient_documents")
-        .insert({
-          patient_id: patients[0].id,
-          document_name: "test.pdf",
-          document_type: "invalid_type",
-          storage_path: "test/path.pdf",
-          file_size: 1000,
-          mime_type: "application/pdf",
-        });
+      const { error } = await supabase.from("patient_documents").insert({
+        patient_id: patients[0].id,
+        document_name: "test.pdf",
+        document_type: "invalid_type",
+        storage_path: "test/path.pdf",
+        file_size: 1000,
+        mime_type: "application/pdf",
+      });
 
       if (error && error.code === "23514") {
         console.log("✅ PASSED: Constraint working (rejected invalid type)");
         testsPassed++;
       } else if (!error) {
-        console.error("❌ FAILED: Constraint not working (accepted invalid type)");
+        console.error(
+          "❌ FAILED: Constraint not working (accepted invalid type)"
+        );
         // Cleanup
         await supabase
           .from("patient_documents")
@@ -201,7 +205,8 @@ async function runTests() {
 
       const actualIndexes = data.map((row) => row.indexname);
       const missingIndexes = expectedIndexes.filter(
-        (idx) => !actualIndexes.some((actual) => actual.includes(idx.split("_").pop()))
+        (idx) =>
+          !actualIndexes.some((actual) => actual.includes(idx.split("_").pop()))
       );
 
       if (missingIndexes.length === 0 || actualIndexes.length >= 4) {
@@ -213,7 +218,9 @@ async function runTests() {
         testsFailed++;
       }
     } else {
-      console.log("⚠️  SKIPPED: Cannot verify indexes (exec_sql not available)");
+      console.log(
+        "⚠️  SKIPPED: Cannot verify indexes (exec_sql not available)"
+      );
     }
   } catch (err) {
     console.log("⚠️  SKIPPED: Cannot verify indexes");
@@ -239,7 +246,9 @@ async function runTests() {
       ];
 
       const foundTriggers = expectedTriggers.filter((t) =>
-        triggers.some((actual) => actual.includes(t.split("_").slice(-2).join("_")))
+        triggers.some((actual) =>
+          actual.includes(t.split("_").slice(-2).join("_"))
+        )
       );
 
       if (foundTriggers.length >= 1 || triggers.length >= 2) {
@@ -251,7 +260,9 @@ async function runTests() {
         testsFailed++;
       }
     } else {
-      console.log("⚠️  SKIPPED: Cannot verify triggers (exec_sql not available)");
+      console.log(
+        "⚠️  SKIPPED: Cannot verify triggers (exec_sql not available)"
+      );
     }
   } catch (err) {
     console.log("⚠️  SKIPPED: Cannot verify triggers");
@@ -262,7 +273,9 @@ async function runTests() {
   console.log("📊 Test Results Summary\n");
   console.log(`✅ Passed: ${testsPassed}`);
   console.log(`❌ Failed: ${testsFailed}`);
-  console.log(`📈 Success Rate: ${Math.round((testsPassed / (testsPassed + testsFailed)) * 100)}%`);
+  console.log(
+    `📈 Success Rate: ${Math.round((testsPassed / (testsPassed + testsFailed)) * 100)}%`
+  );
 
   if (testsFailed === 0) {
     console.log("\n🎉 All tests passed! Patient document system is ready.");

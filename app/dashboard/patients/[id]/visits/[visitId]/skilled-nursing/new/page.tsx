@@ -71,7 +71,7 @@ export default async function NewSkilledNursingAssessmentPage({
       <Card>
         <CardHeader>
           <CardTitle>RN/LVN Skilled Nursing Visit Assessment</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {visit.patient.firstName} {visit.patient.lastName} •{" "}
             {new Date(visit.visitDate).toLocaleDateString()}
           </p>

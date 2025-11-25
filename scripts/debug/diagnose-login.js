@@ -38,7 +38,8 @@ async function diagnose() {
 
   // Check 1: Does user exist in auth.users?
   console.log("1️⃣  Checking if user exists in auth.users...");
-  const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+  const { data: authUsers, error: authError } =
+    await supabase.auth.admin.listUsers();
 
   if (authError) {
     console.error("   ❌ Error fetching users:", authError.message);
@@ -51,13 +52,18 @@ async function diagnose() {
     console.log("   ❌ User NOT found in auth.users");
     console.log("\n📋 Solution:");
     console.log("   1. Sign up at: http://localhost:3000/signup");
-    console.log("   2. Or create user via Supabase Dashboard → Authentication → Users");
+    console.log(
+      "   2. Or create user via Supabase Dashboard → Authentication → Users"
+    );
     return;
   }
 
   console.log("   ✅ User exists in auth.users");
   console.log("      User ID:", authUser.id);
-  console.log("      Email confirmed:", authUser.email_confirmed_at ? "Yes ✓" : "No ✗");
+  console.log(
+    "      Email confirmed:",
+    authUser.email_confirmed_at ? "Yes ✓" : "No ✗"
+  );
   console.log("      Last sign in:", authUser.last_sign_in_at || "Never");
 
   // Check 2: Email confirmation status
@@ -87,7 +93,9 @@ async function diagnose() {
     if (userError.code === "PGRST116") {
       console.log("   ❌ User NOT found in users table");
       console.log("\n📋 Solution: User should be auto-created by trigger");
-      console.log("   → Check if trigger 'on_auth_user_created' exists in database");
+      console.log(
+        "   → Check if trigger 'on_auth_user_created' exists in database"
+      );
     } else {
       console.log("   ❌ Error:", userError.message);
     }
@@ -113,7 +121,9 @@ async function diagnose() {
   } else {
     console.log("   ✅ User has role(s):");
     roles.forEach((role) => {
-      console.log(`      - ${role.role} in tenant: ${role.tenants?.name || role.tenant_id}`);
+      console.log(
+        `      - ${role.role} in tenant: ${role.tenants?.name || role.tenant_id}`
+      );
     });
   }
 
@@ -141,7 +151,7 @@ async function diagnose() {
   console.log("\n📊 Summary");
   console.log("─────────────────────────────────────────");
   const issues = [];
-  
+
   if (!authUser.email_confirmed_at) {
     issues.push("Email not confirmed");
   }

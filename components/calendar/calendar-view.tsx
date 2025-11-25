@@ -91,9 +91,10 @@ export default function CalendarView({
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // New appointment creation state
-  const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
+  const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] =
+    useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     start: Date;
     end: Date;
@@ -153,21 +154,30 @@ export default function CalendarView({
   }, []);
 
   // Handle slot selection (clicking/dragging on empty calendar space)
-  const handleSelectSlot = useCallback((slotInfo: {
-    start: string | Date;
-    end: string | Date;
-    slots: Date[] | string[];
-    action: "select" | "click" | "doubleClick";
-  }) => {
-    const startDate = typeof slotInfo.start === "string" ? new Date(slotInfo.start) : slotInfo.start;
-    const endDate = typeof slotInfo.end === "string" ? new Date(slotInfo.end) : slotInfo.end;
-    
-    setSelectedSlot({
-      start: startDate,
-      end: endDate,
-    });
-    setIsNewAppointmentModalOpen(true);
-  }, []);
+  const handleSelectSlot = useCallback(
+    (slotInfo: {
+      start: string | Date;
+      end: string | Date;
+      slots: Date[] | string[];
+      action: "select" | "click" | "doubleClick";
+    }) => {
+      const startDate =
+        typeof slotInfo.start === "string"
+          ? new Date(slotInfo.start)
+          : slotInfo.start;
+      const endDate =
+        typeof slotInfo.end === "string"
+          ? new Date(slotInfo.end)
+          : slotInfo.end;
+
+      setSelectedSlot({
+        start: startDate,
+        end: endDate,
+      });
+      setIsNewAppointmentModalOpen(true);
+    },
+    []
+  );
 
   // Handle drag-and-drop rescheduling
   const handleEventDrop = useCallback(
@@ -263,7 +273,10 @@ export default function CalendarView({
     toast.success("Appointment created successfully");
   };
 
-  const handleStatusChange = async (event: CalendarEvent, newStatus: string) => {
+  const handleStatusChange = async (
+    event: CalendarEvent,
+    newStatus: string
+  ) => {
     if (!event.resource?.visitId) return;
 
     const result = await updateVisitStatus(event.resource.visitId, newStatus);
@@ -279,7 +292,7 @@ export default function CalendarView({
 
   const handleEdit = (event: CalendarEvent) => {
     if (!event.resource?.visitId || !event.resource?.patientId) return;
-    
+
     // Navigate to visit edit page
     window.location.href = `/dashboard/patients/${event.resource.patientId}/visits/${event.resource.visitId}/edit`;
   };
@@ -287,7 +300,11 @@ export default function CalendarView({
   const handleDelete = async (event: CalendarEvent) => {
     if (!event.resource?.visitId) return;
 
-    if (!confirm("Are you sure you want to delete this visit? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this visit? This action cannot be undone."
+      )
+    ) {
       return;
     }
 

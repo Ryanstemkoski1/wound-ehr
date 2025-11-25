@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Eraser, Pen, Type } from "lucide-react";
 
 type SignaturePadProps = {
@@ -51,17 +57,17 @@ export function SignaturePad({
         canvas.width = 400;
         canvas.height = 150;
         const ctx = canvas.getContext("2d");
-        
+
         if (ctx) {
           ctx.fillStyle = "white";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
+
           ctx.font = "48px 'Brush Script MT', cursive";
           ctx.fillStyle = "black";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(typedName, canvas.width / 2, canvas.height / 2);
-          
+
           const signatureData = canvas.toDataURL("image/png");
           onSave(signatureData, "type");
         }
@@ -79,13 +85,16 @@ export function SignaturePad({
     activeTab === "draw" ? isEmpty : typedName.trim().length === 0;
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "draw" | "type")}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "draw" | "type")}
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="draw" className="gap-2">
               <Pen className="h-4 w-4" />
@@ -98,7 +107,7 @@ export function SignaturePad({
           </TabsList>
 
           <TabsContent value="draw" className="space-y-4">
-            <div className="border-2 border-zinc-300 rounded-lg bg-white dark:bg-zinc-950">
+            <div className="rounded-lg border-2 border-zinc-300 bg-white dark:bg-zinc-950">
               <SignatureCanvas
                 ref={signatureRef}
                 canvasProps={{
@@ -114,7 +123,7 @@ export function SignaturePad({
               />
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <Button
                 type="button"
                 variant="outline"
@@ -145,9 +154,9 @@ export function SignaturePad({
             </div>
 
             {typedName.trim().length > 0 && (
-              <div className="border-2 border-zinc-300 rounded-lg bg-white dark:bg-zinc-950 p-8 min-h-[200px] flex items-center justify-center">
+              <div className="flex min-h-[200px] items-center justify-center rounded-lg border-2 border-zinc-300 bg-white p-8 dark:bg-zinc-950">
                 <p
-                  className="text-5xl text-center"
+                  className="text-center text-5xl"
                   style={{ fontFamily: "'Brush Script MT', cursive" }}
                 >
                   {typedName}
@@ -162,7 +171,7 @@ export function SignaturePad({
         </Tabs>
 
         {certificationText && (
-          <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               {certificationText}
             </p>
@@ -173,11 +182,7 @@ export function SignaturePad({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaveDisabled}
-          >
+          <Button type="button" onClick={handleSave} disabled={isSaveDisabled}>
             Save Signature
           </Button>
         </div>

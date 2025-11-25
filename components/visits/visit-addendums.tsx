@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollText } from "lucide-react";
 import { getVisitAddendums } from "@/app/actions/visits";
@@ -10,11 +16,13 @@ type Addendum = {
   id: string;
   note: string;
   created_at: string;
-  users: {
-    full_name: string;
-    email: string;
-    credentials: string | null;
-  }[] | null;
+  users:
+    | {
+        full_name: string;
+        email: string;
+        credentials: string | null;
+      }[]
+    | null;
 };
 
 type VisitAddendumsProps = {
@@ -54,14 +62,17 @@ export function VisitAddendums({ visitId }: VisitAddendumsProps) {
         <h3 className="text-lg font-semibold">Addendums</h3>
         <Badge variant="secondary">{addendums.length}</Badge>
       </div>
-      
+
       <div className="space-y-3">
         {addendums.map((addendum, index) => {
           const date = new Date(addendum.created_at);
-          const author = addendum.users && addendum.users.length > 0 ? addendum.users[0] : null;
+          const author =
+            addendum.users && addendum.users.length > 0
+              ? addendum.users[0]
+              : null;
           const authorName = author?.full_name || author?.email || "Unknown";
           const credentials = author?.credentials;
-          
+
           return (
             <Card key={addendum.id} className="border-l-4 border-l-blue-500">
               <CardHeader className="pb-3">
@@ -71,7 +82,8 @@ export function VisitAddendums({ visitId }: VisitAddendumsProps) {
                       Addendum #{index + 1}
                     </CardTitle>
                     <CardDescription className="text-sm">
-                      {date.toLocaleDateString()} at {date.toLocaleTimeString()} by {authorName}
+                      {date.toLocaleDateString()} at {date.toLocaleTimeString()}{" "}
+                      by {authorName}
                       {credentials && (
                         <Badge variant="outline" className="ml-2">
                           {credentials}

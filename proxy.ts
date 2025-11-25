@@ -32,8 +32,10 @@ export async function proxy(request: NextRequest) {
     }
 
     // Get user role using RPC to avoid RLS recursion
-    const { data: userRoleData, error: roleError } = await supabase
-      .rpc("get_user_role_info", { user_uuid: user.id });
+    const { data: userRoleData, error: roleError } = await supabase.rpc(
+      "get_user_role_info",
+      { user_uuid: user.id }
+    );
 
     if (roleError || !userRoleData || userRoleData.length === 0) {
       // No role assigned, redirect to dashboard with error

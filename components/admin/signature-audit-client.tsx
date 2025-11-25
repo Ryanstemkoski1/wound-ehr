@@ -129,7 +129,10 @@ export function SignatureAuditClient() {
     setExporting(false);
   }
 
-  function handleFilterChange(key: keyof SignatureAuditFilters, value: string | number | undefined) {
+  function handleFilterChange(
+    key: keyof SignatureAuditFilters,
+    value: string | number | undefined
+  ) {
     setFilters((prev) => ({
       ...prev,
       [key]: value === "" || !value ? undefined : value,
@@ -164,11 +167,11 @@ export function SignatureAuditClient() {
               <CardTitle className="text-sm font-medium">
                 Total Signatures
               </CardTitle>
-              <FileSignature className="h-4 w-4 text-muted-foreground" />
+              <FileSignature className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total_signatures}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 {stats.consent_signatures} consent, {stats.patient_signatures}{" "}
                 patient, {stats.provider_signatures} provider
               </p>
@@ -180,13 +183,13 @@ export function SignatureAuditClient() {
               <CardTitle className="text-sm font-medium">
                 Visits Signed
               </CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {stats.total_visits_signed}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Complete visit documentation
               </p>
             </CardContent>
@@ -197,11 +200,11 @@ export function SignatureAuditClient() {
               <CardTitle className="text-sm font-medium">
                 Unique Signers
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.unique_signers}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Active clinical staff
               </p>
             </CardContent>
@@ -212,11 +215,11 @@ export function SignatureAuditClient() {
               <CardTitle className="text-sm font-medium">
                 Signature Methods
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="text-muted-foreground h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.drawn_signatures}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 {stats.typed_signatures} typed, {stats.uploaded_signatures}{" "}
                 uploaded
               </p>
@@ -264,9 +267,14 @@ export function SignatureAuditClient() {
               <label className="text-sm font-medium">Start Date</label>
               <Input
                 type="date"
-                value={filters.startDate?.split('T')[0] || ""}
+                value={filters.startDate?.split("T")[0] || ""}
                 onChange={(e) =>
-                  handleFilterChange("startDate", e.target.value ? `${e.target.value}T00:00:00.000Z` : undefined)
+                  handleFilterChange(
+                    "startDate",
+                    e.target.value
+                      ? `${e.target.value}T00:00:00.000Z`
+                      : undefined
+                  )
                 }
               />
             </div>
@@ -276,9 +284,14 @@ export function SignatureAuditClient() {
               <label className="text-sm font-medium">End Date</label>
               <Input
                 type="date"
-                value={filters.endDate?.split('T')[0] || ""}
+                value={filters.endDate?.split("T")[0] || ""}
                 onChange={(e) =>
-                  handleFilterChange("endDate", e.target.value ? `${e.target.value}T23:59:59.999Z` : undefined)
+                  handleFilterChange(
+                    "endDate",
+                    e.target.value
+                      ? `${e.target.value}T23:59:59.999Z`
+                      : undefined
+                  )
                 }
               />
             </div>
@@ -287,7 +300,7 @@ export function SignatureAuditClient() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Search</label>
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
                 <Input
                   placeholder="Patient, MRN, signer..."
                   value={searchTerm}
@@ -298,7 +311,7 @@ export function SignatureAuditClient() {
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4">
+          <div className="mt-4 flex gap-2">
             <Button variant="outline" size="sm" onClick={clearFilters}>
               Clear Filters
             </Button>
@@ -311,7 +324,7 @@ export function SignatureAuditClient() {
               onClick={handleExport}
               disabled={exporting}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="mr-2 h-4 w-4" />
               {exporting ? "Exporting..." : "Export CSV"}
             </Button>
           </div>
@@ -324,16 +337,16 @@ export function SignatureAuditClient() {
           <CardTitle className="flex items-center justify-between">
             <span>Audit Logs ({filteredLogs.length})</span>
             {loading && (
-              <span className="text-sm text-muted-foreground">Loading...</span>
+              <span className="text-muted-foreground text-sm">Loading...</span>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {filteredLogs.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="text-muted-foreground py-12 text-center">
+              <FileText className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p>No signature logs found</p>
-              <p className="text-sm mt-2">Try adjusting your filters</p>
+              <p className="mt-2 text-sm">Try adjusting your filters</p>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -355,12 +368,12 @@ export function SignatureAuditClient() {
                     <TableRow key={log.signature_id}>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <Calendar className="text-muted-foreground h-4 w-4" />
                           <div>
                             <div className="font-medium">
                               {format(new Date(log.signed_at), "MMM d, yyyy")}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-muted-foreground text-sm">
                               {format(new Date(log.signed_at), "h:mm a")}
                             </div>
                           </div>
@@ -382,7 +395,7 @@ export function SignatureAuditClient() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{log.patient_name}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-muted-foreground text-sm">
                             MRN: {log.patient_mrn}
                           </div>
                         </div>
@@ -391,7 +404,7 @@ export function SignatureAuditClient() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{log.signer_name}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-muted-foreground text-sm">
                             {log.signer_credentials || log.signer_role || "N/A"}
                           </div>
                         </div>
@@ -405,7 +418,7 @@ export function SignatureAuditClient() {
                             <div className="text-sm">
                               {format(new Date(log.visit_date), "MMM d")}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-muted-foreground text-xs">
                               {log.visit_type}
                             </div>
                           </div>
@@ -415,7 +428,7 @@ export function SignatureAuditClient() {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground font-mono">
+                      <TableCell className="text-muted-foreground font-mono text-sm">
                         {log.ip_address || "N/A"}
                       </TableCell>
                     </TableRow>
@@ -427,8 +440,8 @@ export function SignatureAuditClient() {
 
           {/* Pagination */}
           {filteredLogs.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-muted-foreground text-sm">
                 Showing {filters.offset! + 1} to{" "}
                 {Math.min(filters.offset! + filters.limit!, logs.length)} of{" "}
                 {logs.length} results

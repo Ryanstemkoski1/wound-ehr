@@ -484,10 +484,7 @@ export async function getWoundDataForPDF(woundId: string) {
           healingStatus: assessment.healing_status,
           treatmentplan: assessment.assessment_notes,
           photos: assessment.photos.map(
-            (photo: {
-              url: string;
-              caption: string | null;
-            }) => ({
+            (photo: { url: string; caption: string | null }) => ({
               url: photo.url,
               caption: photo.caption,
               woundNumber: wound.wound_number,

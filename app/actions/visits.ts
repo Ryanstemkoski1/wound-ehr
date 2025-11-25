@@ -10,13 +10,47 @@ const visitSchema = z.object({
   patientId: z.string().uuid(),
   visitDate: z.string().min(1, "Visit date is required"),
   visitType: z.enum(["in_person", "telemed"]),
-  location: z.string().optional().nullable().transform(val => val || undefined),
-  status: z.enum(["draft", "ready_for_signature", "signed", "submitted", "scheduled", "in-progress", "completed", "cancelled", "no-show", "incomplete", "complete"]).default("draft"),
-  followUpType: z.enum(["appointment", "discharge"]).optional().nullable().transform(val => val || undefined),
-  followUpDate: z.string().optional().nullable().transform(val => val || undefined),
-  followUpNotes: z.string().optional().nullable().transform(val => val || undefined),
+  location: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
+  status: z
+    .enum([
+      "draft",
+      "ready_for_signature",
+      "signed",
+      "submitted",
+      "scheduled",
+      "in-progress",
+      "completed",
+      "cancelled",
+      "no-show",
+      "incomplete",
+      "complete",
+    ])
+    .default("draft"),
+  followUpType: z
+    .enum(["appointment", "discharge"])
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
+  followUpDate: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
+  followUpNotes: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
   timeSpent: z.boolean().default(false),
-  additionalNotes: z.string().optional().nullable().transform(val => val || undefined),
+  additionalNotes: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
 });
 
 // Get all visits for a patient
@@ -211,10 +245,12 @@ export async function createVisit(formData: FormData) {
     }
 
     // Get user's credentials for signature requirements
-    const { data: userDataArray } = await supabase
-      .rpc("get_current_user_credentials");
+    const { data: userDataArray } = await supabase.rpc(
+      "get_current_user_credentials"
+    );
 
-    const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+    const userData =
+      userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
     const clinicianName = userData?.name || "";
     const clinicianCredentials = userData?.credentials || "";
 
@@ -244,7 +280,10 @@ export async function createVisit(formData: FormData) {
 
     if (createError) {
       console.error("Database error creating visit:", createError);
-      return { success: false as const, error: createError.message || "Failed to create visit" };
+      return {
+        success: false as const,
+        error: createError.message || "Failed to create visit",
+      };
     }
 
     revalidatePath("/dashboard/patients");
@@ -253,10 +292,14 @@ export async function createVisit(formData: FormData) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error("Validation error:", error.issues);
-      return { success: false as const, error: `${error.issues[0].path}: ${error.issues[0].message}` };
+      return {
+        success: false as const,
+        error: `${error.issues[0].path}: ${error.issues[0].message}`,
+      };
     }
     console.error("Failed to create visit:", error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to create visit";
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to create visit";
     return { success: false as const, error: errorMessage };
   }
 }
@@ -526,8 +569,9 @@ export async function getVisitAddendums(visitId: string) {
   const supabase = await createClient();
 
   // Use a raw query to join with users table, bypassing RLS issues
-  const { data, error } = await supabase
-    .rpc('get_visit_addendums', { p_visit_id: visitId });
+  const { data, error } = await supabase.rpc("get_visit_addendums", {
+    p_visit_id: visitId,
+  });
 
   if (error) {
     console.error("Error fetching addendums:", error);
@@ -538,17 +582,18 @@ export async function getVisitAddendums(visitId: string) {
       .eq("visit_id", visitId)
       .eq("note_type", "addendum")
       .order("created_at", { ascending: true });
-    
+
     if (basicError) {
       return { error: basicError.message };
     }
-    
+
     // Return with empty user arrays
-    return { 
-      data: basicData?.map(item => ({
-        ...item,
-        users: [{ full_name: "Unknown", email: "", credentials: null }]
-      })) || []
+    return {
+      data:
+        basicData?.map((item) => ({
+          ...item,
+          users: [{ full_name: "Unknown", email: "", credentials: null }],
+        })) || [],
     };
   }
 
@@ -560,7 +605,9 @@ export async function getVisitAddendums(visitId: string) {
  */
 export async function createAddendum(visitId: string, content: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -583,7 +630,9 @@ export async function createAddendum(visitId: string, content: string) {
     }
 
     if (visit.status !== "signed" && visit.status !== "submitted") {
-      return { error: "Addendums can only be added to signed or submitted visits" };
+      return {
+        error: "Addendums can only be added to signed or submitted visits",
+      };
     }
 
     // Create addendum (using wound_notes table with note_type='addendum')
@@ -607,7 +656,11 @@ export async function createAddendum(visitId: string, content: string) {
     // Increment addendum count on visit
     const { error: updateError } = await supabase
       .from("visits")
-      .update({ addendum_count: (visit as any).addendum_count ? (visit as any).addendum_count + 1 : 1 })
+      .update({
+        addendum_count: (visit as any).addendum_count
+          ? (visit as any).addendum_count + 1
+          : 1,
+      })
       .eq("id", visitId);
 
     if (updateError) {
@@ -617,7 +670,7 @@ export async function createAddendum(visitId: string, content: string) {
 
     revalidatePath(`/dashboard/patients`);
     revalidatePath(`/dashboard/calendar`);
-    
+
     return { data: addendum };
   } catch (error) {
     console.error("Exception creating addendum:", error);

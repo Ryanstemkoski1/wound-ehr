@@ -20,7 +20,7 @@ export function WoundNoteForm({ woundId, visitId }: WoundNoteFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!note.trim()) {
       setError("Note cannot be empty");
       return;

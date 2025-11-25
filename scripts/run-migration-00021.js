@@ -17,10 +17,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function testMigration() {
   console.log("🚀 Testing Migration 00021: Signature Audit Logs\n");
-  console.log("⚠️  NOTE: Apply migration SQL manually via Supabase dashboard first\n");
+  console.log(
+    "⚠️  NOTE: Apply migration SQL manually via Supabase dashboard first\n"
+  );
 
   try {
-
     // Test RPC functions
     console.log("🧪 Testing RPC functions...\n");
 

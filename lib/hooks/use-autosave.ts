@@ -28,7 +28,7 @@ export type AutosaveOptions<T> = {
 
 /**
  * Hook for automatic form data persistence to localStorage
- * 
+ *
  * @example
  * ```tsx
  * const { loadSavedData, clearSavedData } = useAutosave({
@@ -65,7 +65,7 @@ export function useAutosave<T>({
     // Set up autosave interval
     intervalRef.current = setInterval(() => {
       const currentData = JSON.stringify(data);
-      
+
       // Only save if data has changed
       if (currentData !== lastSavedRef.current) {
         saveToLocalStorage(autosaveKey, data);

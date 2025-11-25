@@ -57,16 +57,16 @@ export default function AutosaveRecoveryModal({
         </AlertDialogHeader>
 
         <div className="space-y-4 py-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             We found unsaved {formType} data from a previous session. You can
             restore this data to continue where you left off, or start fresh.
           </p>
 
-          <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <div className="bg-muted/50 flex items-center gap-2 rounded-lg border p-3">
+            <Clock className="text-muted-foreground h-4 w-4" />
             <div className="flex-1">
               <p className="text-xs font-medium">Last saved</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {formatAutosaveTime(timestamp)}
               </p>
             </div>

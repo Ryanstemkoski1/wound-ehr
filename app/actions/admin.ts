@@ -52,8 +52,10 @@ export async function getTenantUsers() {
     }
 
     // Get all user roles in tenant using RPC to avoid RLS recursion
-    const { data: userRoles, error: rolesError } = await supabase
-      .rpc("get_tenant_user_roles", { tenant_uuid: tenantId });
+    const { data: userRoles, error: rolesError } = await supabase.rpc(
+      "get_tenant_user_roles",
+      { tenant_uuid: tenantId }
+    );
 
     if (rolesError) {
       console.error("Error fetching user roles:", rolesError);
@@ -69,17 +71,18 @@ export async function getTenantUsers() {
     }
 
     // Get facility info for roles that have facility_id
-    const facilityIds = filteredRoles
-      ?.filter((ur: any) => ur.facility_id)
-      .map((ur: any) => ur.facility_id) || [];
-    
+    const facilityIds =
+      filteredRoles
+        ?.filter((ur: any) => ur.facility_id)
+        .map((ur: any) => ur.facility_id) || [];
+
     let facilitiesMap = new Map();
     if (facilityIds.length > 0) {
       const { data: facilities } = await supabase
         .from("facilities")
         .select("id, name")
         .in("id", facilityIds);
-      
+
       facilitiesMap = new Map(facilities?.map((f) => [f.id, f]) || []);
     }
 
@@ -358,9 +361,8 @@ export async function removeUserFromTenant(userId: string) {
     // If user has no other tenant roles, delete the user account completely
     if (!otherRoles || otherRoles.length === 0) {
       // First, delete from auth.users using admin API (requires service role)
-      const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(
-        userId
-      );
+      const { error: deleteAuthError } =
+        await adminClient.auth.admin.deleteUser(userId);
 
       if (deleteAuthError) {
         console.error("Error deleting auth user:", deleteAuthError);

@@ -21,14 +21,18 @@ type AddAddendumDialogProps = {
   visitStatus: string;
 };
 
-export function AddAddendumDialog({ visitId, visitStatus }: AddAddendumDialogProps) {
+export function AddAddendumDialog({
+  visitId,
+  visitStatus,
+}: AddAddendumDialogProps) {
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   // Only allow addendums on signed/submitted visits
-  const canAddAddendum = visitStatus === "signed" || visitStatus === "submitted";
+  const canAddAddendum =
+    visitStatus === "signed" || visitStatus === "submitted";
 
   const handleSubmit = async () => {
     if (!content.trim()) {
@@ -39,7 +43,7 @@ export function AddAddendumDialog({ visitId, visitStatus }: AddAddendumDialogPro
     setIsSubmitting(true);
     try {
       const result = await createAddendum(visitId, content);
-      
+
       if (result.error) {
         alert("Failed to create addendum: " + result.error);
       } else {
@@ -70,11 +74,11 @@ export function AddAddendumDialog({ visitId, visitStatus }: AddAddendumDialogPro
         <DialogHeader>
           <DialogTitle>Add Visit Addendum</DialogTitle>
           <DialogDescription>
-            Add a post-signature note to this visit. The original visit content will remain unchanged.
-            Addendums are included in PDF exports.
+            Add a post-signature note to this visit. The original visit content
+            will remain unchanged. Addendums are included in PDF exports.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <Textarea
             placeholder="Enter addendum notes..."
@@ -84,19 +88,20 @@ export function AddAddendumDialog({ visitId, visitStatus }: AddAddendumDialogPro
             className="resize-none"
           />
           <p className="text-sm text-gray-500">
-            Your name, credentials, and timestamp will be automatically recorded.
+            Your name, credentials, and timestamp will be automatically
+            recorded.
           </p>
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setOpen(false)}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !content.trim()}
           >

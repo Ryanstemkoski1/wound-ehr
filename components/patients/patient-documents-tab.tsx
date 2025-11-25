@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload as UploadIcon } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { DocumentList } from "./document-list";
-import { getPatientDocuments, type PatientDocument } from "@/app/actions/documents";
+import {
+  getPatientDocuments,
+  type PatientDocument,
+} from "@/app/actions/documents";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +34,8 @@ export function PatientDocumentsTab({
   patientId,
   initialDocuments,
 }: PatientDocumentsTabProps) {
-  const [documents, setDocuments] = useState<PatientDocument[]>(initialDocuments);
+  const [documents, setDocuments] =
+    useState<PatientDocument[]>(initialDocuments);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const handleRefreshDocuments = async () => {
@@ -53,7 +63,8 @@ export function PatientDocumentsTab({
             <div>
               <CardTitle>Patient Documents</CardTitle>
               <CardDescription>
-                Upload and manage patient documents (face sheets, labs, radiology, etc.)
+                Upload and manage patient documents (face sheets, labs,
+                radiology, etc.)
               </CardDescription>
             </div>
             <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -67,8 +78,8 @@ export function PatientDocumentsTab({
                 <DialogHeader>
                   <DialogTitle>Upload Patient Document</DialogTitle>
                   <DialogDescription>
-                    Upload a new document for this patient. Supported formats: PDF, images,
-                    Word documents (max 10MB).
+                    Upload a new document for this patient. Supported formats:
+                    PDF, images, Word documents (max 10MB).
                   </DialogDescription>
                 </DialogHeader>
                 <DocumentUpload
@@ -81,11 +92,11 @@ export function PatientDocumentsTab({
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-dashed p-8 text-center">
-            <UploadIcon className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-            <p className="mt-2 text-sm text-muted-foreground">
+            <UploadIcon className="text-muted-foreground mx-auto h-12 w-12 opacity-50" />
+            <p className="text-muted-foreground mt-2 text-sm">
               Click &quot;Upload Document&quot; above to add files
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               Supported: PDF, JPG, PNG, DOC, TXT (max 10MB)
             </p>
           </div>
@@ -93,7 +104,10 @@ export function PatientDocumentsTab({
       </Card>
 
       {/* Documents List */}
-      <DocumentList documents={documents} onDocumentChange={handleRefreshDocuments} />
+      <DocumentList
+        documents={documents}
+        onDocumentChange={handleRefreshDocuments}
+      />
     </div>
   );
 }

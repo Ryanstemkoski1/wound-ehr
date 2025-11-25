@@ -98,7 +98,9 @@ async function fixUserRoles() {
         .single();
 
       if (existingRole) {
-        console.log(`   ⏭️  ${user.email} already has role: ${existingRole.role}`);
+        console.log(
+          `   ⏭️  ${user.email} already has role: ${existingRole.role}`
+        );
         continue;
       }
 
@@ -111,7 +113,10 @@ async function fixUserRoles() {
       });
 
       if (roleError) {
-        console.error(`   ❌ Failed to assign role to ${user.email}:`, roleError);
+        console.error(
+          `   ❌ Failed to assign role to ${user.email}:`,
+          roleError
+        );
       } else {
         console.log(`   ✅ Assigned 'user' role to ${user.email}`);
       }

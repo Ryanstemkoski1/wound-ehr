@@ -142,9 +142,7 @@ export function EventDetailsModal({
             <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
               <Calendar className="h-4 w-4 text-zinc-500" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Date
-                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Date</p>
                 <p className="text-sm font-medium">
                   {format(event.start, "MMM dd, yyyy")}
                 </p>
@@ -153,9 +151,7 @@ export function EventDetailsModal({
             <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
               <Clock className="h-4 w-4 text-zinc-500" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Time
-                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Time</p>
                 <p className="text-sm font-medium">
                   {format(event.start, "h:mm a")}
                 </p>
@@ -224,11 +220,7 @@ export function EventDetailsModal({
         <DialogFooter className="flex gap-2 sm:justify-between">
           <div className="flex gap-2">
             {onEdit && (
-              <Button
-                variant="outline"
-                onClick={handleEdit}
-                className="gap-2"
-              >
+              <Button variant="outline" onClick={handleEdit} className="gap-2">
                 <Edit className="h-4 w-4" />
                 Edit
               </Button>

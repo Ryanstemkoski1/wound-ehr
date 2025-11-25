@@ -119,11 +119,14 @@ export function VisitSignatureWorkflow({
         <AlertDescription>
           {status === "draft" &&
             "Complete all assessments and mark ready when finished."}
-          {status === "ready_for_signature" && !providerSignatureId &&
+          {status === "ready_for_signature" &&
+            !providerSignatureId &&
             "Visit is ready for provider signature."}
-          {status === "signed" && needsPatientSig &&
+          {status === "signed" &&
+            needsPatientSig &&
             "Provider has signed. Patient signature is required before submission."}
-          {status === "signed" && canSubmit &&
+          {status === "signed" &&
+            canSubmit &&
             "All required signatures collected. Ready to submit to office."}
           {status === "submitted" &&
             "Visit has been submitted to the office and is now read-only."}

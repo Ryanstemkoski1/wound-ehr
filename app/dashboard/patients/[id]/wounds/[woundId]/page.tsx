@@ -175,7 +175,8 @@ export default async function WoundDetailPage({
         <CardHeader>
           <CardTitle>Wound Photos</CardTitle>
           <CardDescription>
-            View and compare wound photos from assessments to track healing progress
+            View and compare wound photos from assessments to track healing
+            progress
           </CardDescription>
         </CardHeader>
         <CardContent>

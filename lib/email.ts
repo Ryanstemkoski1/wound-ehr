@@ -7,10 +7,8 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-const FROM_EMAIL =
-  process.env.FROM_EMAIL || "noreply@wound-ehr.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@wound-ehr.com";
 
 type SendInviteEmailParams = {
   to: string;
@@ -31,16 +29,16 @@ export async function sendInviteEmail({
   facilityName,
 }: SendInviteEmailParams) {
   const inviteUrl = `${APP_URL}/signup?invite=${inviteToken}`;
-  
+
   const roleLabel =
     role === "tenant_admin"
       ? "Tenant Administrator"
       : role === "facility_admin"
-      ? "Facility Administrator"
-      : "User";
+        ? "Facility Administrator"
+        : "User";
 
   const subject = `You've been invited to Wound EHR`;
-  
+
   const htmlBody = `
     <!DOCTYPE html>
     <html>
@@ -138,9 +136,11 @@ Subject: ${subject}
 ${textBody}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       `);
-      console.log(`⚠️ Email not sent (Resend not configured). Link: ${inviteUrl}`);
+      console.log(
+        `⚠️ Email not sent (Resend not configured). Link: ${inviteUrl}`
+      );
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error("❌ Error sending invite email:", error);

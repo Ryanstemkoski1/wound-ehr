@@ -20,7 +20,9 @@ async function updateUserRole() {
   }
 
   if (!["tenant_admin", "facility_admin", "user"].includes(newRole)) {
-    console.error("Invalid role. Must be: tenant_admin, facility_admin, or user");
+    console.error(
+      "Invalid role. Must be: tenant_admin, facility_admin, or user"
+    );
     process.exit(1);
   }
 

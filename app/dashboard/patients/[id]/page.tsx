@@ -147,7 +147,7 @@ export default async function PatientDetailPage({
 
       {/* Consent Status Card - Shows if consent exists */}
       {hasConsent && (
-        <ConsentStatusCard 
+        <ConsentStatusCard
           hasConsent={hasConsent}
           patientId={id}
           consentData={consentResult.data}
@@ -429,7 +429,10 @@ export default async function PatientDetailPage({
 
             {/* Documents Tab */}
             <TabsContent value="documents" className="space-y-6">
-              <PatientDocumentsTab patientId={id} initialDocuments={documents} />
+              <PatientDocumentsTab
+                patientId={id}
+                initialDocuments={documents}
+              />
             </TabsContent>
           </Tabs>
         </div>

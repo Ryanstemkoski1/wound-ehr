@@ -37,8 +37,8 @@ export async function BillingFormServerWrapper({
 
   if (!user) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-        <p className="text-sm text-destructive">
+      <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
+        <p className="text-destructive text-sm">
           Please log in to access the billing form.
         </p>
       </div>
@@ -46,10 +46,12 @@ export async function BillingFormServerWrapper({
   }
 
   // Get user credentials using RPC to bypass RLS
-  const { data: userDataArray } = await supabase
-    .rpc("get_current_user_credentials");
+  const { data: userDataArray } = await supabase.rpc(
+    "get_current_user_credentials"
+  );
 
-  const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+  const userData =
+    userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
   const userCredentials = (userData?.credentials as Credentials) || null;
 
   // Get allowed and restricted procedures for this user

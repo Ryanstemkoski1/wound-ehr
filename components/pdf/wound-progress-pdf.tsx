@@ -394,8 +394,11 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
                                   textAlign: "center",
                                 }}
                               >
-                                {photo.woundNumber && `Wound #${photo.woundNumber}`}
-                                {photo.woundNumber && photo.woundLocation && " - "}
+                                {photo.woundNumber &&
+                                  `Wound #${photo.woundNumber}`}
+                                {photo.woundNumber &&
+                                  photo.woundLocation &&
+                                  " - "}
                                 {photo.woundLocation}
                               </Text>
                             )}

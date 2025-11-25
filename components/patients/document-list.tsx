@@ -62,14 +62,19 @@ type DocumentListProps = {
   onDocumentChange?: () => void;
 };
 
-export function DocumentList({ documents, onDocumentChange }: DocumentListProps) {
+export function DocumentList({
+  documents,
+  onDocumentChange,
+}: DocumentListProps) {
   const [viewingDocument, setViewingDocument] = useState<{
     url: string;
     name: string;
     mimeType: string;
   } | null>(null);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [documentToArchive, setDocumentToArchive] = useState<string | null>(null);
+  const [documentToArchive, setDocumentToArchive] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState<string | null>(null);
 
   const getFileIcon = (mimeType: string) => {
@@ -166,10 +171,10 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="mx-auto h-12 w-12 mb-3 opacity-50" />
+          <div className="text-muted-foreground py-8 text-center">
+            <FileText className="mx-auto mb-3 h-12 w-12 opacity-50" />
             <p>No documents uploaded yet</p>
-            <p className="text-sm mt-1">Upload a document to get started</p>
+            <p className="mt-1 text-sm">Upload a document to get started</p>
           </div>
         </CardContent>
       </Card>
@@ -177,12 +182,15 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
   }
 
   // Group documents by type
-  const groupedDocuments = documents.reduce((acc, doc) => {
-    const type = doc.document_type;
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(doc);
-    return acc;
-  }, {} as Record<string, PatientDocument[]>);
+  const groupedDocuments = documents.reduce(
+    (acc, doc) => {
+      const type = doc.document_type;
+      if (!acc[type]) acc[type] = [];
+      acc[type].push(doc);
+      return acc;
+    },
+    {} as Record<string, PatientDocument[]>
+  );
 
   return (
     <>
@@ -202,13 +210,15 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
                   return (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                      className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <FileIcon className="h-8 w-8 text-primary shrink-0" />
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <FileIcon className="text-primary h-8 w-8 shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{doc.document_name}</p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                          <p className="truncate font-medium">
+                            {doc.document_name}
+                          </p>
+                          <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
                             <span>{formatFileSize(doc.file_size)}</span>
                             {doc.document_category && (
                               <>
@@ -220,14 +230,18 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
                               <>
                                 <span>•</span>
                                 <span>
-                                  {format(new Date(doc.document_date), "MMM d, yyyy")}
+                                  {format(
+                                    new Date(doc.document_date),
+                                    "MMM d, yyyy"
+                                  )}
                                 </span>
                               </>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
                             <span>
-                              Uploaded {format(new Date(doc.uploaded_at), "MMM d, yyyy")}
+                              Uploaded{" "}
+                              {format(new Date(doc.uploaded_at), "MMM d, yyyy")}
                             </span>
                             {doc.uploader?.name && (
                               <>
@@ -241,33 +255,39 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
                             )}
                           </div>
                           {doc.notes && (
-                            <p className="text-sm text-muted-foreground mt-1 italic">
+                            <p className="text-muted-foreground mt-1 text-sm italic">
                               {doc.notes}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex shrink-0 items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleView(doc.id)}
                           disabled={loading === doc.id}
                         >
-                          <Eye className="h-4 w-4 mr-1" />
+                          <Eye className="mr-1 h-4 w-4" />
                           View
                         </Button>
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleDownload(doc.id, doc.document_name)}
+                              onClick={() =>
+                                handleDownload(doc.id, doc.document_name)
+                              }
                               disabled={loading === doc.id}
                             >
                               <Download className="mr-2 h-4 w-4" />
@@ -313,13 +333,15 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
           <AlertDialogHeader>
             <AlertDialogTitle>Archive Document</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to archive this document? It will be hidden from the
-              list but can be restored later by an administrator.
+              Are you sure you want to archive this document? It will be hidden
+              from the list but can be restored later by an administrator.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
+            <AlertDialogAction onClick={handleArchive}>
+              Archive
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

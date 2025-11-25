@@ -69,7 +69,11 @@ async function requireAdmin() {
   }
 
   const userRoleData = await getUserRole();
-  if (!userRoleData || (userRoleData.role !== "tenant_admin" && userRoleData.role !== "facility_admin")) {
+  if (
+    !userRoleData ||
+    (userRoleData.role !== "tenant_admin" &&
+      userRoleData.role !== "facility_admin")
+  ) {
     throw new Error("Admin access required");
   }
 

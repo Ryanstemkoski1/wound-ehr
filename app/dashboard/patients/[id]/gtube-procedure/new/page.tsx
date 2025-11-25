@@ -59,7 +59,7 @@ export default async function NewGTubeProcedurePage({ params }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle>MEND G-tube Procedure Documentation</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {patient.firstName} {patient.lastName}
             {patient.facility && ` • ${patient.facility.name}`}
           </p>

@@ -39,10 +39,12 @@ export async function createBilling(data: BillingInput) {
     }
 
     // Use RPC function to bypass RLS
-    const { data: userDataArray } = await supabase
-      .rpc("get_current_user_credentials");
+    const { data: userDataArray } = await supabase.rpc(
+      "get_current_user_credentials"
+    );
 
-    const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+    const userData =
+      userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
 
     // Validate CPT codes against user credentials
     const validation = await validateBillingCodes(
@@ -112,10 +114,12 @@ export async function updateBilling(
     }
 
     // Use RPC function to bypass RLS
-    const { data: userDataArray } = await supabase
-      .rpc("get_current_user_credentials");
+    const { data: userDataArray } = await supabase.rpc(
+      "get_current_user_credentials"
+    );
 
-    const userData = userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+    const userData =
+      userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
 
     // Validate CPT codes against user credentials if they're being updated
     if (data.cptCodes) {

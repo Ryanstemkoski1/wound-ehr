@@ -37,7 +37,12 @@ export function ScannedConsentUpload({
     setSuccess(false);
 
     // Validate file type
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
     if (!allowedTypes.includes(file.type)) {
       setError("Invalid file type. Please upload PDF, JPG, or PNG files only.");
       return;
@@ -117,10 +122,10 @@ export function ScannedConsentUpload({
 
   return (
     <div className="space-y-4">
-      <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8">
+      <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 dark:border-gray-700">
         {!selectedFile ? (
           <div className="text-center">
-            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
             <div className="space-y-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Upload a scanned consent form (PDF, JPG, or PNG)
@@ -151,11 +156,13 @@ export function ScannedConsentUpload({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-              <div className="flex items-start space-x-3 flex-1">
-                <FileText className="h-6 w-6 text-primary mt-1" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+            <div className="flex items-start justify-between rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+              <div className="flex flex-1 items-start space-x-3">
+                <FileText className="text-primary mt-1 h-6 w-6" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {selectedFile.name}
+                  </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {formatFileSize(selectedFile.size)}
                   </p>
@@ -174,15 +181,19 @@ export function ScannedConsentUpload({
             {isUploading && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Uploading...</span>
-                  <span className="text-gray-600 dark:text-gray-400">{uploadProgress}%</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Uploading...
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {uploadProgress}%
+                  </span>
                 </div>
                 <Progress value={uploadProgress} className="h-2" />
               </div>
             )}
 
             {success && (
-              <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <AlertDescription className="text-green-800 dark:text-green-200">
                   Consent uploaded successfully!
@@ -200,10 +211,11 @@ export function ScannedConsentUpload({
         </Alert>
       )}
 
-      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
         <p className="text-sm text-blue-900 dark:text-blue-100">
-          <strong>Note:</strong> Upload a scanned copy of a previously signed paper consent form.
-          This is typically used when digitizing existing paper records.
+          <strong>Note:</strong> Upload a scanned copy of a previously signed
+          paper consent form. This is typically used when digitizing existing
+          paper records.
         </p>
       </div>
 
@@ -223,7 +235,11 @@ export function ScannedConsentUpload({
           onClick={handleUpload}
           disabled={!selectedFile || isUploading || success}
         >
-          {isUploading ? "Uploading..." : success ? "Uploaded" : "Upload Consent"}
+          {isUploading
+            ? "Uploading..."
+            : success
+              ? "Uploaded"
+              : "Upload Consent"}
         </Button>
       </div>
     </div>
