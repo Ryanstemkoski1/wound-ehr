@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import AssessmentCard from "@/components/assessments/assessment-card";
+import NewAssessmentButton from "@/components/assessments/new-assessment-button";
 import VisitPDFDownloadButton from "@/components/pdf/visit-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { VisitSignatureWorkflow } from "@/components/visits/visit-signature-workflow";
@@ -350,16 +351,12 @@ export default async function VisitDetailPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Wound Assessments</CardTitle>
+                <CardTitle>Assessments</CardTitle>
                 {visit.status !== "signed" && visit.status !== "submitted" && (
-                  <Link
-                    href={`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`}
-                  >
-                    <Button size="sm" className="gap-1">
-                      <Plus className="h-4 w-4" />
-                      Add
-                    </Button>
-                  </Link>
+                  <NewAssessmentButton
+                    patientId={patientId}
+                    visitId={visitId}
+                  />
                 )}
               </div>
             </CardHeader>
@@ -399,14 +396,10 @@ export default async function VisitDetailPage({ params }: PageProps) {
                     No assessments recorded
                   </p>
                   {visit.status !== "signed" && visit.status !== "submitted" && (
-                    <Link
-                      href={`/dashboard/patients/${patientId}/visits/${visitId}/assessments/new`}
-                    >
-                      <Button variant="outline" size="sm" className="gap-1">
-                        <Plus className="h-4 w-4" />
-                        Add First Assessment
-                      </Button>
-                    </Link>
+                    <NewAssessmentButton
+                      patientId={patientId}
+                      visitId={visitId}
+                    />
                   )}
                 </div>
               )}
