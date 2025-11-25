@@ -27,10 +27,8 @@ export function PatientDocumentsTab({
 }: PatientDocumentsTabProps) {
   const [documents, setDocuments] = useState<PatientDocument[]>(initialDocuments);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefreshDocuments = async () => {
-    setIsRefreshing(true);
     try {
       const result = await getPatientDocuments(patientId);
       if (result.success) {
@@ -38,8 +36,6 @@ export function PatientDocumentsTab({
       }
     } catch (error) {
       console.error("Failed to refresh documents:", error);
-    } finally {
-      setIsRefreshing(false);
     }
   };
 

@@ -93,7 +93,7 @@ export async function uploadPatientDocument(formData: FormData) {
     const storagePath = `${patientId}/${timestamp}-${sanitizedFileName}`;
 
     // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("patient-documents")
       .upload(storagePath, file, {
         contentType: file.type,

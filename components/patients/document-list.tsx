@@ -10,10 +10,8 @@ import {
   MoreVertical,
   File,
   FileImage,
-  FileType,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -103,7 +101,7 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
           description: result.error || "Please try again",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load document", {
         description: "Please try again",
       });
@@ -130,7 +128,7 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
           description: result.error || "Please try again",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to download document", {
         description: "Please try again",
       });
@@ -153,7 +151,7 @@ export function DocumentList({ documents, onDocumentChange }: DocumentListProps)
           description: result.error || "Please try again",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to archive document", {
         description: "Please try again",
       });
