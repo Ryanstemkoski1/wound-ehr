@@ -97,7 +97,47 @@ export async function getAssessment(assessmentId: string) {
       throw error;
     }
 
-    return assessment;
+    if (!assessment) {
+      return null;
+    }
+
+    // Transform to camelCase
+    return {
+      id: assessment.id,
+      visitId: assessment.visit_id,
+      woundId: assessment.wound_id,
+      woundType: assessment.wound_type,
+      pressureStage: assessment.pressure_stage,
+      healingStatus: assessment.healing_status,
+      atRiskReopening: assessment.at_risk_reopening,
+      length: assessment.length,
+      width: assessment.width,
+      depth: assessment.depth,
+      undermining: assessment.undermining,
+      tunneling: assessment.tunneling,
+      epithelialPercent: assessment.epithelial_percent,
+      granulationPercent: assessment.granulation_percent,
+      sloughPercent: assessment.slough_percent,
+      exudateAmount: assessment.exudate_amount,
+      exudateType: assessment.exudate_type,
+      odor: assessment.odor,
+      periwoundCondition: assessment.periwound_condition,
+      painLevel: assessment.pain_level,
+      infectionSigns: assessment.infection_signs,
+      assessmentNotes: assessment.assessment_notes,
+      createdAt: assessment.created_at,
+      updatedAt: assessment.updated_at,
+      visit: {
+        id: assessment.visit.id,
+        visitDate: assessment.visit.visit_date,
+        patient: {
+          id: assessment.visit.patient.id,
+          firstName: assessment.visit.patient.first_name,
+          lastName: assessment.visit.patient.last_name,
+        },
+      },
+      wound: assessment.wound,
+    };
   } catch (error) {
     console.error("Failed to fetch assessment:", error);
     return null;

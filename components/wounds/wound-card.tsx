@@ -204,8 +204,13 @@ export default function WoundCard({
 
         {latestMeasurements && (
           <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-              Latest Measurements
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                Latest Measurements
+              </div>
+              <Badge variant="outline" className="text-xs">
+                From Most Recent Visit
+              </Badge>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center justify-between">
@@ -273,16 +278,22 @@ export default function WoundCard({
 
         {recentVisits && recentVisits.length > 0 && (
           <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-              Recent Visits
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                Recent Visits
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Click to View
+              </Badge>
             </div>
             <div className="space-y-1.5">
               {recentVisits.slice(0, 3).map((visit) => (
-                <div
+                <Link
                   key={visit.id}
-                  className="flex items-center justify-between text-sm"
+                  href={`/dashboard/patients/${patientId}/visits/${visit.id}`}
+                  className="group/visit flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
-                  <span className="text-zinc-600 dark:text-zinc-400">
+                  <span className="font-medium text-primary group-hover/visit:underline">
                     {new Date(visit.visit_date).toLocaleDateString()}
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -311,7 +322,7 @@ export default function WoundCard({
                       </>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

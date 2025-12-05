@@ -346,3 +346,143 @@ export async function markWoundHealed(woundId: string) {
     return { error: "Failed to mark wound as healed" };
   }
 }
+
+// Get all assessments for a wound with visit details
+export async function getWoundAssessments(woundId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  try {
+    const { data: assessments, error } = await supabase
+      .from("assessments")
+      .select(
+        `
+        *,
+        visit:visits!inner(
+          id,
+          visit_date,
+          visit_type,
+          patient:patients!inner(
+            id,
+            first_name,
+            last_name
+          )
+        ),
+        wound:wounds!inner(
+          id,
+          wound_number,
+          location
+        )
+      `
+      )
+      .eq("wound_id", woundId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    // Fetch photos for all assessments
+    const assessmentIds = assessments?.map((a) => a.id) || [];
+    let photosMap: Record<string, any[]> = {};
+
+    if (assessmentIds.length > 0) {
+      const { data: allPhotos } = await supabase
+        .from("photos")
+        .select("*")
+        .in("assessment_id", assessmentIds);
+
+      // Group photos by assessment_id
+      photosMap =
+        allPhotos?.reduce((acc: Record<string, any[]>, photo) => {
+          const assessmentId = photo.assessment_id;
+          if (!acc[assessmentId]) {
+            acc[assessmentId] = [];
+          }
+          acc[assessmentId].push(photo);
+          return acc;
+        }, {}) || {};
+    }
+
+    // Transform to camelCase with null safety
+    return (
+      assessments?.map((assessment) => ({
+        id: assessment.id,
+        visitId: assessment.visit_id,
+        woundId: assessment.wound_id,
+        assessmentType: assessment.assessment_type,
+        length: assessment.length,
+        width: assessment.width,
+        depth: assessment.depth,
+        area: assessment.area,
+        woundBed: assessment.wound_bed,
+        exudateAmount: assessment.exudate_amount,
+        exudateType: assessment.exudate_type,
+        odor: assessment.odor,
+        edges: assessment.edges,
+        periwoundSkin: assessment.periwound_skin,
+        pain: assessment.pain,
+        healingStatus: assessment.healing_status,
+        notes: assessment.notes,
+        createdAt: assessment.created_at,
+        updatedAt: assessment.updated_at,
+        visit: assessment.visit
+          ? {
+              id: assessment.visit.id,
+              visitDate: new Date(assessment.visit.visit_date),
+              visitType: assessment.visit.visit_type,
+              patient: assessment.visit.patient
+                ? {
+                    id: assessment.visit.patient.id,
+                    firstName: assessment.visit.patient.first_name,
+                    lastName: assessment.visit.patient.last_name,
+                  }
+                : {
+                    id: "",
+                    firstName: "Unknown",
+                    lastName: "Patient",
+                  },
+            }
+          : {
+              id: "",
+              visitDate: new Date(),
+              visitType: "regular",
+              patient: {
+                id: "",
+                firstName: "Unknown",
+                lastName: "Patient",
+              },
+            },
+        wound: assessment.wound
+          ? {
+              id: assessment.wound.id,
+              woundNumber: assessment.wound.wound_number,
+              location: assessment.wound.location,
+            }
+          : {
+              id: "",
+              woundNumber: "",
+              location: "",
+            },
+        photos:
+          photosMap[assessment.id]?.map((photo: any) => ({
+            id: photo.id,
+            url: photo.url,
+            filename: photo.file_name,
+            caption: photo.caption,
+            uploadedAt: new Date(photo.uploaded_at),
+          })) || [],
+      })) || []
+    );
+  } catch (error) {
+    console.error("Failed to fetch wound assessments:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    return [];
+  }
+}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAssessment } from "@/app/actions/assessments";
 import AssessmentForm from "@/components/assessments/assessment-form";
+import { Badge } from "@/components/ui/badge";
 
 type PageProps = {
   params: Promise<{
@@ -46,12 +47,18 @@ export default async function EditAssessmentPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Edit Wound Assessment</h1>
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">Edit Wound Assessment</h1>
+          <Badge variant="secondary">Editing Mode</Badge>
+        </div>
         <p className="text-muted-foreground">
           Patient: {assessment.visit.patient.firstName}{" "}
           {assessment.visit.patient.lastName} • Visit:{" "}
           {new Date(assessment.visit.visitDate).toLocaleDateString()}
+        </p>
+        <p className="text-sm text-blue-600 dark:text-blue-400">
+          💡 Modify any field below and click "Update Assessment" to save changes
         </p>
       </div>
       <AssessmentForm

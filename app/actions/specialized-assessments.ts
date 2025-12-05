@@ -763,3 +763,375 @@ export async function getPatientGTubeProcedureCount(patientId: string) {
     };
   }
 }
+
+// ============================================================================
+// GRAFTING ASSESSMENT ACTIONS
+// ============================================================================
+
+export type GraftingAssessmentData = {
+  visitId: string;
+  patientId: string;
+  facilityId: string;
+  procedureDate: string;
+  postopDay?: number;
+  procedureType?: string;
+  graftType?: string;
+  graftLocation?: string;
+  graftSizeLength?: number;
+  graftSizeWidth?: number;
+  graftSizeArea?: number;
+  meshRatio?: string;
+  graftAdherencePercent?: number;
+  graftAdherenceNotes?: string;
+  graftViable?: boolean;
+  graftColor?: string;
+  graftTexture?: string;
+  signsOfRejection?: boolean;
+  signsOfInfection?: boolean;
+  infectionSigns?: string[];
+  hasHematoma?: boolean;
+  hasSeroma?: boolean;
+  hasBlistering?: boolean;
+  graftSeparation?: boolean;
+  graftNecrosis?: boolean;
+  necrosisPercent?: number;
+  donorSite?: string;
+  donorSizeLength?: number;
+  donorSizeWidth?: number;
+  donorSiteCondition?: string;
+  donorSiteDressing?: string;
+  donorSiteNotes?: string;
+  fixationMethod?: string;
+  fixationDetails?: string;
+  suturesRemoved?: boolean;
+  suturesRemovalDate?: string;
+  graftDressingType?: string;
+  dressingIntact?: boolean;
+  dressingChangeFrequency?: string;
+  topicalTreatment?: string;
+  moistureManagement?: string;
+  activityRestrictions?: string;
+  elevationInstructions?: string;
+  weightBearingStatus?: string;
+  bathingInstructions?: string;
+  postopInstructions?: string;
+  patientEducationProvided?: string;
+  followUpPlan?: string;
+  nextDressingChangeDate?: string;
+  complications?: string;
+  interventionsPerformed?: string;
+  providerNotes?: string;
+  overallAssessment?: string;
+  isDraft?: boolean;
+};
+
+export async function createGraftingAssessment(data: GraftingAssessmentData) {
+  const supabase = await createClient();
+
+  try {
+    const { data: result, error } = await supabase
+      .from("grafting_assessments")
+      .insert({
+        visit_id: data.visitId,
+        patient_id: data.patientId,
+        facility_id: data.facilityId,
+        created_by: (await supabase.auth.getUser()).data.user?.id,
+        procedure_date: data.procedureDate,
+        postop_day: data.postopDay,
+        procedure_type: data.procedureType,
+        graft_type: data.graftType,
+        graft_location: data.graftLocation,
+        graft_size_length: data.graftSizeLength,
+        graft_size_width: data.graftSizeWidth,
+        graft_size_area: data.graftSizeArea,
+        mesh_ratio: data.meshRatio,
+        graft_adherence_percent: data.graftAdherencePercent,
+        graft_adherence_notes: data.graftAdherenceNotes,
+        graft_viable: data.graftViable,
+        graft_color: data.graftColor,
+        graft_texture: data.graftTexture,
+        signs_of_rejection: data.signsOfRejection,
+        signs_of_infection: data.signsOfInfection,
+        infection_signs: data.infectionSigns,
+        has_hematoma: data.hasHematoma,
+        has_seroma: data.hasSeroma,
+        has_blistering: data.hasBlistering,
+        graft_separation: data.graftSeparation,
+        graft_necrosis: data.graftNecrosis,
+        necrosis_percent: data.necrosisPercent,
+        donor_site: data.donorSite,
+        donor_site_size_length: data.donorSizeLength,
+        donor_site_size_width: data.donorSizeWidth,
+        donor_site_condition: data.donorSiteCondition,
+        donor_site_dressing: data.donorSiteDressing,
+        donor_site_notes: data.donorSiteNotes,
+        fixation_method: data.fixationMethod,
+        fixation_details: data.fixationDetails,
+        sutures_removed: data.suturesRemoved,
+        sutures_removal_date: data.suturesRemovalDate,
+        graft_dressing_type: data.graftDressingType,
+        graft_dressing_intact: data.dressingIntact,
+        dressing_change_frequency: data.dressingChangeFrequency,
+        topical_treatment: data.topicalTreatment,
+        moisture_management: data.moistureManagement,
+        activity_restrictions: data.activityRestrictions,
+        elevation_instructions: data.elevationInstructions,
+        weight_bearing_status: data.weightBearingStatus,
+        bathing_instructions: data.bathingInstructions,
+        postop_instructions: data.postopInstructions,
+        patient_education_provided: data.patientEducationProvided,
+        follow_up_plan: data.followUpPlan,
+        next_dressing_change_date: data.nextDressingChangeDate,
+        complications: data.complications,
+        interventions_performed: data.interventionsPerformed,
+        provider_notes: data.providerNotes,
+        overall_assessment: data.overallAssessment,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    revalidatePath(`/dashboard/patients/${data.patientId}`);
+    revalidatePath(`/dashboard/patients/${data.patientId}/visits/${data.visitId}`);
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error creating grafting assessment:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getGraftingAssessment(assessmentId: string) {
+  const supabase = await createClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("grafting_assessments")
+      .select("*")
+      .eq("id", assessmentId)
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error fetching grafting assessment:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getVisitGraftingAssessments(visitId: string) {
+  const supabase = await createClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("grafting_assessments")
+      .select("*")
+      .eq("visit_id", visitId)
+      .order("procedure_date", { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error fetching visit grafting assessments:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
+// SKIN SWEEP ASSESSMENT ACTIONS
+// ============================================================================
+
+export type SkinSweepAssessmentData = {
+  visitId: string;
+  patientId: string;
+  facilityId: string;
+  assessmentDate: string;
+  assessmentType?: string;
+  areasInspected?: string[];
+  skinConditionOverall?: string;
+  skinTemperature?: string;
+  skinColor?: string;
+  skinTurgor?: string;
+  totalWoundsFound?: number;
+  newWoundsDocumented?: number;
+  woundsUnchanged?: number;
+  woundsImproved?: number;
+  woundsWorsened?: number;
+  atRiskAreas?: string[];
+  atRiskNotes?: string;
+  headNeckFindings?: string;
+  headNeckHasWounds?: boolean;
+  trunkFindings?: string;
+  trunkHasWounds?: boolean;
+  upperExtremitiesFindings?: string;
+  upperExtremitiesHasWounds?: boolean;
+  lowerExtremitiesFindings?: string;
+  lowerExtremitiesHasWounds?: boolean;
+  sacralFindings?: string;
+  sacralHasWounds?: boolean;
+  perinealFindings?: string;
+  perinealHasWounds?: boolean;
+  devicesIdentified?: string[];
+  deviceRelatedInjuries?: boolean;
+  deviceInjuryDetails?: string;
+  hasIncontinence?: boolean;
+  incontinenceType?: string;
+  moistureAssociatedDermatitis?: boolean;
+  skinBreakdownFromMoisture?: boolean;
+  riskFactors?: string[];
+  bradenScaleScore?: number;
+  riskLevel?: string;
+  currentPreventionMeasures?: Record<string, unknown>;
+  recommendedPreventionMeasures?: Record<string, unknown>;
+  equipmentRecommendations?: string[];
+  equipmentCurrentlyInUse?: string[];
+  equipmentOrdered?: string[];
+  educationProvided?: boolean;
+  educationTopics?: string[];
+  educationMethod?: string;
+  patientUnderstanding?: string;
+  caregiverEducationProvided?: boolean;
+  followUpNeeded?: boolean;
+  followUpFrequency?: string;
+  referralsMade?: string[];
+  significantFindings?: string;
+  interventionsImplemented?: string;
+  providerAssessment?: string;
+  notes?: string;
+  isDraft?: boolean;
+};
+
+export async function createSkinSweepAssessment(data: SkinSweepAssessmentData) {
+  const supabase = await createClient();
+
+  try {
+    const { data: result, error } = await supabase
+      .from("skin_sweep_assessments")
+      .insert({
+        visit_id: data.visitId,
+        patient_id: data.patientId,
+        facility_id: data.facilityId,
+        created_by: (await supabase.auth.getUser()).data.user?.id,
+        assessment_date: data.assessmentDate,
+        assessment_type: data.assessmentType,
+        areas_inspected: data.areasInspected,
+        skin_condition_overall: data.skinConditionOverall,
+        skin_temperature: data.skinTemperature,
+        skin_color: data.skinColor,
+        skin_turgor: data.skinTurgor,
+        total_wounds_found: data.totalWoundsFound,
+        new_wounds_documented: data.newWoundsDocumented,
+        wounds_unchanged: data.woundsUnchanged,
+        wounds_improved: data.woundsImproved,
+        wounds_worsened: data.woundsWorsened,
+        at_risk_areas: data.atRiskAreas,
+        at_risk_notes: data.atRiskNotes,
+        head_neck_findings: data.headNeckFindings,
+        head_neck_has_wounds: data.headNeckHasWounds,
+        trunk_findings: data.trunkFindings,
+        trunk_has_wounds: data.trunkHasWounds,
+        upper_extremities_findings: data.upperExtremitiesFindings,
+        upper_extremities_has_wounds: data.upperExtremitiesHasWounds,
+        lower_extremities_findings: data.lowerExtremitiesFindings,
+        lower_extremities_has_wounds: data.lowerExtremitiesHasWounds,
+        sacral_findings: data.sacralFindings,
+        sacral_has_wounds: data.sacralHasWounds,
+        perineal_findings: data.perinealFindings,
+        perineal_has_wounds: data.perinealHasWounds,
+        devices_identified: data.devicesIdentified,
+        device_related_injuries: data.deviceRelatedInjuries,
+        device_injury_details: data.deviceInjuryDetails,
+        has_incontinence: data.hasIncontinence,
+        incontinence_type: data.incontinenceType,
+        moisture_associated_dermatitis: data.moistureAssociatedDermatitis,
+        skin_breakdown_from_moisture: data.skinBreakdownFromMoisture,
+        risk_factors: data.riskFactors,
+        braden_scale_score: data.bradenScaleScore,
+        risk_level: data.riskLevel,
+        current_prevention_measures: data.currentPreventionMeasures,
+        recommended_prevention_measures: data.recommendedPreventionMeasures,
+        equipment_recommendations: data.equipmentRecommendations,
+        equipment_currently_in_use: data.equipmentCurrentlyInUse,
+        equipment_ordered: data.equipmentOrdered,
+        education_provided: data.educationProvided,
+        education_topics: data.educationTopics,
+        education_method: data.educationMethod,
+        patient_understanding: data.patientUnderstanding,
+        caregiver_education_provided: data.caregiverEducationProvided,
+        follow_up_needed: data.followUpNeeded,
+        follow_up_frequency: data.followUpFrequency,
+        referrals_made: data.referralsMade,
+        significant_findings: data.significantFindings,
+        interventions_implemented: data.interventionsImplemented,
+        provider_assessment: data.providerAssessment,
+        notes: data.notes,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    revalidatePath(`/dashboard/patients/${data.patientId}`);
+    revalidatePath(`/dashboard/patients/${data.patientId}/visits/${data.visitId}`);
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Error creating skin sweep assessment:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getSkinSweepAssessment(assessmentId: string) {
+  const supabase = await createClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("skin_sweep_assessments")
+      .select("*")
+      .eq("id", assessmentId)
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error fetching skin sweep assessment:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function getVisitSkinSweepAssessments(visitId: string) {
+  const supabase = await createClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("skin_sweep_assessments")
+      .select("*")
+      .eq("visit_id", visitId)
+      .order("assessment_date", { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error fetching visit skin sweep assessments:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

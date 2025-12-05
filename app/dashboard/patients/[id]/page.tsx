@@ -435,28 +435,38 @@ export default async function PatientDetailPage({
 
         {/* Wounds Tab */}
         <TabsContent value="wounds" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Wounds</h3>
-            <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
-              <Button size="sm" className="gap-1">
-                <Plus className="h-4 w-4" />
-                Add Wound
-              </Button>
-            </Link>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Wounds</h3>
+              <Link href={`/dashboard/patients/${patient.id}/wounds/new`}>
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  Add Wound
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              View all wound records and track healing progress over time. Click a wound to see its complete assessment history across all visits.
+            </p>
           </div>
           <WoundsListClient wounds={patient.wounds} patientId={patient.id} />
         </TabsContent>
 
         {/* Visits Tab */}
         <TabsContent value="visits" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Recent Visits</h3>
-            <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
-              <Button size="sm" className="gap-1">
-                <Plus className="h-4 w-4" />
-                Schedule Visit
-              </Button>
-            </Link>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Recent Visits</h3>
+              <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  Schedule Visit
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              View documentation by visit date. Click a visit to see what was assessed and documented during that appointment.
+            </p>
           </div>
           {patient.visits.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

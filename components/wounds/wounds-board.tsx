@@ -500,13 +500,24 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
                   <div className="flex gap-2 pt-2">
                     <Button
                       asChild
+                      variant="default"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <Link href={`/dashboard/patients/${patient.id}/wounds/${wound.id}`}>
+                        <Activity className="mr-1 h-3 w-3" />
+                        View Wound
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
                       variant="outline"
                       size="sm"
                       className="flex-1"
                     >
                       <Link href={`/dashboard/patients/${patient.id}`}>
                         <ExternalLink className="mr-1 h-3 w-3" />
-                        View Patient
+                        Patient
                       </Link>
                     </Button>
                   </div>

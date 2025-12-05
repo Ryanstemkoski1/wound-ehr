@@ -134,7 +134,7 @@ export async function getVisit(visitId: string) {
 
     if (visit) {
       // Fetch related assessments
-      const { data: assessments } = await supabase
+      const { data: assessmentsData } = await supabase
         .from("assessments")
         .select(
           `
@@ -144,6 +144,39 @@ export async function getVisit(visitId: string) {
         )
         .eq("visit_id", visitId)
         .order("created_at", { ascending: false });
+
+      // Transform assessments to camelCase
+      const assessments = assessmentsData?.map((assessment) => ({
+        id: assessment.id,
+        visitId: assessment.visit_id,
+        woundId: assessment.wound_id,
+        wound: {
+          woundNumber: assessment.wound?.wound_number || "",
+          location: assessment.wound?.location || "",
+        },
+        woundType: assessment.wound_type,
+        pressureStage: assessment.pressure_stage,
+        healingStatus: assessment.healing_status,
+        atRiskReopening: assessment.at_risk_reopening,
+        length: assessment.length,
+        width: assessment.width,
+        depth: assessment.depth,
+        area: assessment.area,
+        undermining: assessment.undermining,
+        tunneling: assessment.tunneling,
+        epithelialPercent: assessment.epithelial_percent,
+        granulationPercent: assessment.granulation_percent,
+        sloughPercent: assessment.slough_percent,
+        exudateAmount: assessment.exudate_amount,
+        exudateType: assessment.exudate_type,
+        odor: assessment.odor,
+        periwoundCondition: assessment.periwound_condition,
+        painLevel: assessment.pain_level,
+        infectionSigns: assessment.infection_signs,
+        assessmentNotes: assessment.assessment_notes,
+        createdAt: assessment.created_at,
+        updatedAt: assessment.updated_at,
+      })) || [];
 
       // Fetch related treatments
       const { data: treatments } = await supabase
@@ -675,5 +708,59 @@ export async function createAddendum(visitId: string, content: string) {
   } catch (error) {
     console.error("Exception creating addendum:", error);
     return { error: "Failed to create addendum" };
+  }
+}
+
+// Get visits with assessment counts for quick assessment dialog
+export async function getVisitsForQuickAssessment(patientId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  try {
+    // Get visits
+    const { data: visits, error } = await supabase
+      .from("visits")
+      .select("id, visit_date, visit_type")
+      .eq("patient_id", patientId)
+      .order("visit_date", { ascending: false })
+      .limit(20); // Show last 20 visits
+
+    if (error) {
+      throw error;
+    }
+
+    if (!visits || visits.length === 0) {
+      return [];
+    }
+
+    // Get assessment counts for each visit
+    const visitIds = visits.map((v) => v.id);
+    const { data: assessmentCounts } = await supabase
+      .from("assessments")
+      .select("visit_id")
+      .in("visit_id", visitIds);
+
+    // Count assessments per visit
+    const countsMap = (assessmentCounts || []).reduce((acc, curr) => {
+      acc[curr.visit_id] = (acc[curr.visit_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Transform to camelCase with counts
+    return visits.map((visit) => ({
+      id: visit.id,
+      visitDate: new Date(visit.visit_date),
+      visitType: visit.visit_type,
+      assessmentCount: countsMap[visit.id] || 0,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch visits for quick assessment:", error);
+    return [];
   }
 }

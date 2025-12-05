@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Edit, Calendar, MapPin } from "lucide-react";
-import { getWound } from "@/app/actions/wounds";
+import { Edit, Calendar, MapPin, Plus } from "lucide-react";
+import { getWound, getWoundAssessments } from "@/app/actions/wounds";
 import { getPhotos, getPhotosForComparison } from "@/app/actions/photos";
+import { getVisitsForQuickAssessment } from "@/app/actions/visits";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +18,9 @@ import { PhotoGallery } from "@/components/photos/photo-gallery";
 import { PhotoComparison } from "@/components/photos/photo-comparison";
 import WoundPDFDownloadButton from "@/components/pdf/wound-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
+import { WoundAssessmentHistory } from "@/components/wounds/wound-assessment-history";
+import { WoundQuickStats } from "@/components/wounds/wound-quick-stats";
+import { QuickAssessmentDialog } from "@/components/wounds/quick-assessment-dialog";
 import { format } from "date-fns";
 
 // Force dynamic rendering (requires auth)
@@ -77,11 +81,38 @@ export default async function WoundDetailPage({
     notFound();
   }
 
+  // Fetch all assessments for this wound
+  const assessments = await getWoundAssessments(woundId);
+
+  // Fetch visits for quick assessment dialog
+  const visits = await getVisitsForQuickAssessment(patientId);
+
+  // Get photos
   const photosResult = await getPhotos(woundId);
   const comparisonResult = await getPhotosForComparison(woundId);
 
   const photos = (photosResult.photos || []).map(mapPhoto);
   const comparisonPhotos = (comparisonResult.photos || []).map(mapPhoto);
+
+  // Calculate stats from assessments
+  const latestAssessment = assessments[0];
+  const previousAssessment = assessments[1];
+
+  const latestMeasurements = latestAssessment
+    ? {
+        length: latestAssessment.length,
+        width: latestAssessment.width,
+        area: latestAssessment.area,
+      }
+    : null;
+
+  const previousMeasurements = previousAssessment
+    ? {
+        length: previousAssessment.length,
+        width: previousAssessment.width,
+        area: previousAssessment.area,
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -170,34 +201,106 @@ export default async function WoundDetailPage({
         </CardContent>
       </Card>
 
-      {/* Photos Section */}
+      {/* Quick Stats */}
+      {assessments.length > 0 && (
+        <WoundQuickStats
+          onsetDate={wound.onsetDate}
+          assessmentCount={assessments.length}
+          latestMeasurements={latestMeasurements}
+          previousMeasurements={previousMeasurements}
+          latestHealingStatus={latestAssessment?.healingStatus || null}
+        />
+      )}
+
+      {/* Assessment History */}
       <Card>
         <CardHeader>
-          <CardTitle>Wound Photos</CardTitle>
-          <CardDescription>
-            View and compare wound photos from assessments to track healing
-            progress
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Assessment History</CardTitle>
+              <CardDescription className="mt-1.5">
+                Complete record of all assessments for this wound across all visits
+              </CardDescription>
+            </div>
+            <QuickAssessmentDialog
+              patientId={patientId}
+              woundId={woundId}
+              woundNumber={wound.woundNumber}
+              visits={visits}
+            >
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Assessment
+              </Button>
+            </QuickAssessmentDialog>
+          </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="gallery" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="gallery">
-                Gallery ({photos.length})
-              </TabsTrigger>
-              <TabsTrigger value="comparison">Comparison</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="gallery" className="mt-6">
-              <PhotoGallery photos={photos} />
-            </TabsContent>
-
-            <TabsContent value="comparison" className="mt-6">
-              <PhotoComparison photos={comparisonPhotos} />
-            </TabsContent>
-          </Tabs>
+          {assessments.length > 0 ? (
+            <>
+              <p className="text-sm text-blue-600 dark:text-blue-400 mb-6">
+                💡 <strong>Quick Tip:</strong> Click any assessment card to view full details and edit. Click "Add Assessment" above to document this wound at a specific visit.
+              </p>
+              <WoundAssessmentHistory
+                patientId={patientId}
+                woundId={woundId}
+                assessments={assessments}
+              />
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4">
+                <Plus className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Ready to Document?</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Start tracking this wound's progress by creating your first assessment during a patient visit.
+              </p>
+              <QuickAssessmentDialog
+                patientId={patientId}
+                woundId={woundId}
+                woundNumber={wound.woundNumber}
+                visits={visits}
+              >
+                <Button size="lg">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add First Assessment
+                </Button>
+              </QuickAssessmentDialog>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Photos Section */}
+      {photos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>All Photos ({photos.length})</CardTitle>
+            <CardDescription>
+              View and compare all wound photos from assessments to track healing progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="gallery" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="gallery">
+                  Gallery ({photos.length})
+                </TabsTrigger>
+                <TabsTrigger value="comparison">Comparison</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="gallery" className="mt-6">
+                <PhotoGallery photos={photos} />
+              </TabsContent>
+
+              <TabsContent value="comparison" className="mt-6">
+                <PhotoComparison photos={comparisonPhotos} />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

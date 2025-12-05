@@ -123,10 +123,13 @@ export default async function WoundsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold">Wound Management</h1>
         <p className="text-muted-foreground mt-1">
           Monitor and manage all active wounds across your patients
+        </p>
+        <p className="text-sm text-blue-600 dark:text-blue-400">
+          💡 <strong>Quick Tip:</strong> Click "View Wound" to see full history and add assessments, or click "Patient" to access patient records
         </p>
       </div>
 

@@ -42,10 +42,6 @@ next-env.d.ts
 
 /supabase/.temp
 
-# Documentation (local only - not pushed to git)
-# Keep only README.md and SYSTEM_DESIGN.md
-*.md
-!README.md
-!SYSTEM_DESIGN.md
-docs/
+# Documentation - Include all project documentation
+# Only exclude temporary/local working files if needed
 
