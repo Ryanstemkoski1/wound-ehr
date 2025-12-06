@@ -47,7 +47,7 @@
     "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.548.0",
-    "next": "16.0.1",
+    "next": "^16.0.7",
     "react": "19.2.0",
     "react-big-calendar": "^1.19.4",
     "react-day-picker": "^9.11.1",
