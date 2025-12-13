@@ -1,24 +1,28 @@
 # Wound EHR - System Design Document
 
-> **Version**: 4.8  
-> **Date**: November 25, 2025  
-> **Status**: ✅ **Phase 9.4.1 - COMPLETE 🎉**
+> **Version**: 5.0  
+> **Date**: December 13, 2025  
+> **Status**: ✅ **Phase 9.4 - COMPLETE 🎉 | Production Ready 🚀**
+
+> **📚 Documentation Structure:**
+> - **README.md** - Quick start guide, installation, and tech stack overview
+> - **This file** - Complete system architecture, database schema, and technical design decisions
+> - **PROJECT_STATUS.md** - Current project status, completed features, and next phase planning
 
 ---
 
 ## Table of Contents
 
-1. [Current Status](#version-47-updates-november-23-2025)
-2. [Version History](#version-history-summary)
-3. [Executive Summary](#executive-summary)
-4. [Project Requirements](#project-requirements)
-5. [System Architecture](#system-architecture)
-6. [Database Schema](#database-schema)
-7. [Frontend Architecture](#frontend-architecture)
-8. [Key Features & Workflows](#key-features--workflows)
-9. [Technology Stack](#technology-stack)
-10. [Implementation Phases](#implementation-phases)
-11. [Design Decisions](#design-decisions)
+1. [Executive Summary](#executive-summary)
+2. [System Architecture](#system-architecture)
+3. [Database Schema](#database-schema)
+4. [Frontend Architecture](#frontend-architecture)
+5. [Key Features & Workflows](#key-features--workflows)
+6. [Technology Stack](#technology-stack)
+7. [Implementation Phases](#implementation-phases)
+8. [Design Decisions](#design-decisions)
+9. [Security & Compliance](#security--compliance)
+10. [Performance Considerations](#performance-considerations)
 
 ---
 
@@ -134,29 +138,9 @@
 
 ---
 
-### Version 4.0 (November 18, 2025) - Compliance & Signatures
-
-- ✅ Credentials system (RN, LVN, MD, DO, PA, NP, CNA, Admin)
-- ✅ Electronic signatures (consent-to-treat, provider, patient)
-- ✅ Visit workflow (draft → ready → signed → submitted)
-- ✅ Procedure restrictions (credential-based scope)
-- ✅ Autosave (client-side 30s, server-side 2min)
-- ✅ PDF enhancements (clinician credentials, signatures)
-
----
-
-## Version History Summary
-
-### Version 3.0 (November 4, 2025) - UX & Multi-Tenancy
-
-- ✅ Wound-based layout (wound cards as primary interface)
-- ✅ Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
-- ✅ Enhanced calendar (modal-based, drag-to-create)
-- ✅ Per-wound notes system with timestamps
-
----
-
 ## Executive Summary
+
+> **For current project status, completed features, and implementation timeline, see [PROJECT_STATUS.md](./PROJECT_STATUS.md)**
 
 ### Project Goal
 
@@ -168,6 +152,8 @@ Build a custom EHR (Electronic Health Record) system specifically designed for w
 - Document treatment plans and orders
 - Generate visit summaries and reports
 - Support photo documentation
+- Electronic signatures with full audit trail
+- Credential-based role system and procedure restrictions
 
 ### Core Problem Statement
 
@@ -176,6 +162,7 @@ Current EHR systems (Aprima, Practice Fusion, PointClickCare) either:
 - Lack API support for writing clinical data
 - Have inefficient data entry workflows for wound care
 - Cannot be customized for wound-specific documentation
+- Missing specialized assessment forms for wound care providers
 
 ### Solution Approach
 
@@ -183,9 +170,12 @@ A fully custom, web-based EHR platform with:
 
 - Adaptive forms optimized for wound documentation
 - Real-time wound tracking and comparison
-- Built-in billing and reporting
-- Photo upload and management
+- Built-in billing and reporting with procedure restrictions
+- Photo upload and management with assessment linking
 - Mobile-responsive design (tablet, phone, desktop)
+- Electronic signatures and compliance features
+- Specialized assessment forms (standard, RN/LVN, grafting, skin sweep)
+- Multi-tenant architecture with facility-based access control
 
 ---
 

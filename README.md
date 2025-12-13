@@ -2,7 +2,19 @@
 
 Modern Electronic Health Record (EHR) system designed for wound care management and treatment tracking.
 
-**All development follows the comprehensive system design in [`SYSTEM_DESIGN.md`](./SYSTEM_DESIGN.md).**
+---
+
+## 📚 Documentation
+
+**Start here:**
+- **[README.md](./README.md)** (this file) - Quick start guide and tech stack overview
+- **[SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)** - Complete system architecture, database schema, and technical decisions
+- **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - Current status, completed features, and next phase planning
+
+**Additional resources:**
+- **[docs/ENV_SETUP_GUIDE.md](./docs/ENV_SETUP_GUIDE.md)** - Detailed environment setup instructions
+- **[docs/archive/](./docs/archive/)** - Historical phase completion reports (reference only)
+- **[.github/copilot-instructions.md](./.github/copilot-instructions.md)** - Development guidelines and patterns
 
 ---
 
@@ -12,19 +24,21 @@ Modern Electronic Health Record (EHR) system designed for wound care management 
 
 - Node.js 18+
 - Supabase account ([supabase.com](https://supabase.com))
+- Git
 
 ### Installation
 
 ```bash
+# Clone repository
+git clone <repo-url>
+cd wound-ehr
+
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env.local
 # Edit .env.local with your Supabase credentials
-
-# Run database migrations in Supabase SQL Editor
-# (Copy content from supabase/migrations/00001_initial_schema.sql)
 
 # Generate TypeScript types from database
 npm run db:types
@@ -38,14 +52,13 @@ npm run dev
 
 Visit `http://localhost:3000`
 
----
+### Database Setup
 
-## 📚 Documentation
-
-- **[SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)** - ⚠️ **READ FIRST** - Complete system architecture, database schema, implementation roadmap (v4.1)
-- **[PHASE_9_COMPREHENSIVE_REVIEW.md](./PHASE_9_COMPREHENSIVE_REVIEW.md)** - Phase 9 implementation review and production readiness assessment
-- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Production deployment steps and testing procedures
-- **[docs/PHASE_9.2_COMPLETION.md](./docs/PHASE_9.2_COMPLETION.md)** - Electronic signatures implementation details
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Go to SQL Editor in your Supabase dashboard
+3. Run migrations in order from `supabase/migrations/` (24 files)
+4. Verify tables created in Database → Tables view
+5. Optional: Seed test data with `npm run seed`
 
 ---
 
@@ -71,70 +84,72 @@ Visit `http://localhost:3000`
 
 ## 🗄️ Database
 
-**14 core tables** with Row Level Security (RLS):
+**17 core tables** with Row Level Security (RLS):
 
-- `users` - User accounts with credentials (RN, LVN, MD, etc.)
+- `users` - User accounts with credentials (RN, LVN, MD, DO, PA, NP, CNA, Admin)
 - `facilities` - Medical facilities/clinics
 - `user_facilities` - User-facility associations (many-to-many)
 - `patients` - Patient demographics and medical info
-- `wounds` - Wound records with location and type
+- `wounds` - Wound records with location, type, and status
 - `visits` - Patient visit records with signature workflow
-- `assessments` - Detailed wound assessments
+- `assessments` - Standard wound assessments with measurements
 - `photos` - Wound photo metadata (files in Supabase Storage)
 - `treatments` - Treatment plans and medical orders
 - `billings` - Billing codes (CPT, ICD-10) and claims
 - `signatures` - Electronic signatures with audit trail
 - `patient_consents` - Initial consent-to-treat forms
 - `procedure_scopes` - Credential-based procedure restrictions
-- `patient_documents` - Patient document attachments ✨ NEW
+- `patient_documents` - Patient document attachments (11 types)
+- `skilled_nursing_assessments` - RN/LVN comprehensive assessment forms
+- `grafting_assessments` - Skin graft procedure documentation
+- `skin_sweep_assessments` - Full-body skin inspection forms
 
-**Schema:** See `supabase/migrations/` (22 migrations executed)
+**Schema:** See `supabase/migrations/` (24 migrations)  
+**For detailed schema documentation, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)**
 
 ---
 
 ## 🎯 Key Features
 
-### ✅ Phase 1-8: Core Application (COMPLETE)
+> **For complete feature list and implementation status, see [PROJECT_STATUS.md](./PROJECT_STATUS.md)**
 
-- 👥 Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
-- 🏥 Patient & wound management with CRUD operations
-- 📅 Calendar with drag-and-drop scheduling
-- 📝 Multi-wound visit assessments with wound-centric UI
-- 📸 Photo upload/management with comparison view
-- 📄 PDF export (visit summaries, wound progress reports)
-- 💰 Billing system (CPT/ICD-10 codes, reports, CSV export)
-- 📧 Email-based user invites with role assignment
-- 🔐 Row Level Security for data isolation
-- 📋 Admin dashboard with user/facility/invite management
+### Core Application (Phases 1-8) ✅
 
-### ✅ Phase 9.1-9.3: Compliance & Signatures (COMPLETE)
+- Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
+- Patient & wound management with CRUD operations
+- Calendar with drag-and-drop scheduling
+- Multi-wound visit assessments with wound-centric UI
+- Photo upload/management with comparison view
+- PDF export (visit summaries, wound progress reports)
+- Billing system (CPT/ICD-10 codes, reports, CSV export)
+- Row Level Security for data isolation
 
-- 🏥 **Credentials-based roles** (RN, LVN, MD, DO, PA, NP, CNA, Admin)
-- ✍️ **Electronic signatures** with immutable audit trail
-- 📝 **Initial consent** workflow (blocks first visit until signed)
-- 👤 **Patient signatures** (required for RN/LVN visits only)
-- 👨‍⚕️ **Provider signatures** (all clinical staff)
-- 🔄 **Visit status workflow**: draft → ready → signed → submitted
-- 🔒 **Read-only enforcement** for signed/submitted visits
-- 📄 **PDF signatures** included in visit exports
-- 📱 **Dual-mode signature pad** (draw with canvas OR type with keyboard)
-- 🔐 **Procedure restrictions** (credential-based scope of practice)
-- 💾 **Autosave** (client + server-side drafts)
-- 📋 **Visit addendums** (post-signature notes)
-- 📊 **Signature audit logs** (admin compliance reporting)
+### Compliance & Signatures (Phase 9.1-9.3) ✅
 
-### ✅ Phase 9.4.1: Document Management (COMPLETE) ✨ NEW
+- Credentials-based roles (RN, LVN, MD, DO, PA, NP, CNA, Admin)
+- Electronic signatures with immutable audit trail
+- Initial consent workflow + Patient/Provider signatures
+- Visit status workflow: draft → ready → signed → submitted
+- Procedure restrictions (credential-based scope of practice)
+- Autosave protection (client + server-side drafts)
+- Visit addendums (post-signature notes)
+- Signature audit logs (compliance reporting)
 
-- 📎 **Patient document attachments** (11 types: face sheets, labs, radiology, insurance, etc.)
-- 📤 **Drag-and-drop upload** with file validation (PDF, images, DOC, max 10MB)
-- 👁️ **Document viewer** (in-browser preview for PDFs and images)
-- 📥 **Download and archive** capabilities
-- 🏷️ **Metadata tracking** (type, category, date, notes)
-- 👤 **Full audit trail** (uploader info with credentials and timestamp)
-- 🔒 **Multi-tenant security** (RLS policies on database and storage)
-- 🗂️ **Organized display** (grouped by document type with count badges)
+### Advanced Features (Phase 9.4) ✅
 
-### 🚧 Next Phase
+- Patient document attachments (11 types with viewer)
+- RN/LVN skilled nursing assessment (17 clinical sections)
+- Grafting assessment (skin graft procedure documentation)
+- Skin sweep assessment (full-body skin inspection)
+- Patient page redesign (tab-based layout)
+
+### Next Phase (Phase 10) 🔄
+
+- Production deployment preparation
+- Bulk photo uploads
+- Document versioning
+- Performance optimization
+- Enhanced mobile experience
 
 **Phase 9.4.2+: Specialized Templates & Features**
 
@@ -152,44 +167,47 @@ Visit `http://localhost:3000`
 
 ---
 
+---
+
 ## 📁 Project Structure
 
 ```
 wound-ehr/
 ├── app/                      # Next.js App Router
-│   ├── actions/              # Server Actions (database operations)
-│   ├── dashboard/            # Main application pages
-│   │   ├── admin/            # Admin management (users, facilities)
-│   │   ├── billing/          # Billing reports
-│   │   ├── calendar/         # Calendar view
-│   │   ├── patients/         # Patient management
-│   │   └── wounds/           # Wound tracking
+│   ├── actions/              # Server Actions (16 files for DB operations)
+│   ├── dashboard/            # Protected application pages
 │   ├── auth/                 # Authentication pages
-│   ├── login/                # Login page
-│   ├── signup/               # Signup (disabled, invite-only)
 │   ├── layout.tsx            # Root layout
 │   └── globals.css           # Tailwind CSS v4 config
-├── components/               # React components
+├── components/               # React components (110+ files)
+│   ├── ui/                   # shadcn/ui components (40+ files)
 │   ├── layout/               # Header, sidebar, navigation
-│   ├── ui/                   # shadcn/ui components
-│   ├── patients/             # Patient-specific components
-│   ├── wounds/               # Wound assessment components
-│   ├── visits/               # Visit management components
-│   ├── assessments/          # Multi-wound assessment forms
-│   ├── calendar/             # Calendar components
-│   ├── billing/              # Billing components
+│   ├── patients/             # Patient management
+│   ├── wounds/               # Wound tracking
+│   ├── visits/               # Visit management
+│   ├── assessments/          # Assessment forms (standard, RN/LVN, grafting, skin sweep)
+│   ├── signatures/           # Electronic signature components
+│   ├── photos/               # Photo upload and management
 │   └── pdf/                  # PDF generation components
 ├── lib/                      # Utilities and helpers
-│   ├── supabase/             # Supabase client setup
-│   ├── database.types.ts     # Generated TypeScript types
+│   ├── supabase/             # Supabase client configurations (server, client, middleware)
+│   ├── database.types.ts     # Auto-generated TypeScript types
 │   ├── rbac.ts               # Role-based access control
+│   ├── credentials.ts        # Credential-based authorization
+│   ├── procedures.ts         # Procedure restriction logic
+│   ├── autosave.ts           # Autosave utilities
 │   ├── billing-codes.ts      # CPT/ICD-10 code database
 │   └── utils.ts              # Helper functions (cn, etc.)
-├── supabase/                 # Database schema and migrations
-│   ├── migrations/           # SQL migration files
+├── supabase/                 # Database schema
+│   ├── migrations/           # 24 SQL migration files
 │   └── seed.ts               # Seed script for test data
+├── docs/                     # Documentation
+│   ├── ENV_SETUP_GUIDE.md    # Detailed setup instructions
+│   └── archive/              # Historical phase reports (reference)
 ├── public/                   # Static assets (logos, icons)
-└── SYSTEM_DESIGN.md          # Complete technical specification
+├── README.md                 # This file - Quick start
+├── SYSTEM_DESIGN.md          # Complete architecture
+└── PROJECT_STATUS.md         # Current status and roadmap
 ```
 
 ---
@@ -204,125 +222,65 @@ npm run start            # Start production server
 
 # Code Quality
 npm run lint             # Run ESLint
-npm run lint:fix         # Run ESLint and auto-fix issues
-npm run format           # Format all files with Prettier
-npm run format:check     # Check formatting without writing changes
+npm run lint:fix         # Auto-fix ESLint issues
+npm run format           # Format with Prettier
+npm run format:check     # Check formatting
 
 # Database
 npm run db:types         # Generate TypeScript types from Supabase
-npm run seed             # Seed database with test data
+npm run seed             # Seed test data
 npm run seed:reset       # Reset and re-seed database
 ```
-
----
-
-## 🎨 Design System
-
-### Colors (OKLCH)
-
-- **Primary (Teal)**: `oklch(0.52 0.12 192)` light, `oklch(0.65 0.14 192)` dark
-- **Secondary (Amber)**: `oklch(0.92 0.08 85)` light, `oklch(0.35 0.06 85)` dark
-- **Accent (Red)**: `oklch(0.58 0.22 25)` light, `oklch(0.62 0.20 25)` dark
-- **Base**: Zinc for backgrounds and borders
-
-### Typography
-
-- **Sans**: Geist Sans
-- **Mono**: Geist Mono
-- **Base Radius**: 0.625rem (10px)
-
-### Branding Assets
-
-- `logo.svg` - Horizontal logo (400×120)
-- `logo-horizontal.svg` - Extended logo with tagline (800×200)
-- `icon.svg` - Square app icon (512×512)
-- Design: Medical cross with wound healing waves, teal primary color
 
 ---
 
 ## 🔐 Authentication & Roles
 
 ### Administrative Roles
+- **Tenant Admin** - Full system access, manage all facilities
+- **Facility Admin** - Manage assigned facility, invite users
+- **User** - Basic access for patient care
 
-1. **Tenant Admin** - Full access to all facilities, manage users, facilities, and invites
-2. **Facility Admin** - Access to assigned facility, can invite users to their facility
-3. **User** - Basic access to assigned facilities for patient care
-
-### Clinical Credentials (NEW - Phase 9.1)
-
-All users must have ONE credential:
-
+### Clinical Credentials
+All users have ONE credential:
 - **RN** (Registered Nurse) - Requires patient signatures
-- **LVN** (Licensed Vocational Nurse) - Requires patient signatures
+- **LVN** (Licensed Vocational Nurse) - Requires patient signatures  
 - **MD** (Medical Doctor) - No patient signatures required
 - **DO** (Doctor of Osteopathy) - No patient signatures required
 - **PA** (Physician Assistant) - No patient signatures required
 - **NP** (Nurse Practitioner) - No patient signatures required
 - **CNA** (Certified Nursing Assistant)
-- **Admin** (Non-clinical administrative staff)
+- **Admin** (Non-clinical staff)
 
-**Example:** A user can be "Facility Admin (RN)" - both an administrative role AND clinical credential.
-
-### Invite System
-
-- Email-based invites with role + credentials assignment
-- Auto-assigns to tenant during signup via invite token
-- Facility assignment for facility admins and users
-- Credentials captured during invite and stored on user record
+Users can have both a role AND credential (e.g., "Facility Admin (RN)")
 
 ---
 
-## 🚨 Important Notes
+## 🚨 Important Development Notes
 
-1. **Always consult `SYSTEM_DESIGN.md` before development** - Authoritative source for all architectural decisions
-2. **Use Supabase JS, NOT Prisma** - All DB operations use `@supabase/supabase-js`
+1. **Always consult `SYSTEM_DESIGN.md` before development** - Authoritative source
+2. **Use Supabase JS, NOT Prisma** - All DB operations via `@supabase/supabase-js`
 3. **Server Components by default** - Use `"use client"` only when needed
-4. **Tailwind v4 specifics** - Uses `@theme` directive in `globals.css`, not `tailwind.config.js`
-5. **Column naming** - `snake_case` in database (e.g., `first_name`, `visit_date`)
-
----
-
-## 📝 Code Conventions
-
-### TypeScript
-
-- Strict mode enabled
-- Use `type` over `interface`
-- Handle all type safety
-
-### React Patterns
-
-- Prefer Server Components (RSC enabled)
-- Async Server Components for data fetching
-- Server Actions for mutations (`"use server"` directive)
-
-### File Naming
-
-- Components: PascalCase (`Button.tsx`)
-- Utilities: camelCase (`utils.ts`)
-- Routes: lowercase (`page.tsx`, `layout.tsx`)
-
-### Styling
-
-- Use `cn()` utility for conditional classes
-- Tailwind CSS with design system tokens
-- Import aliases with `@/` prefix (e.g., `@/lib/utils`)
+4. **Tailwind v4** - Uses `@theme` directive in `globals.css`, not `tailwind.config.js`
+5. **Database naming** - `snake_case` columns (e.g., `first_name`, `visit_date`)
+6. **Import aliases** - Use `@/` prefix (e.g., `@/lib/utils`, `@/components/ui/button`)
 
 ---
 
 ## 🤝 Contributing
 
-1. Review `SYSTEM_DESIGN.md` for context
-2. Follow code conventions in `.github/copilot-instructions.md`
-3. Test thoroughly before committing
-4. Run `npm run format` and `npm run lint:fix` before pushing
+1. Review `SYSTEM_DESIGN.md` for architecture and patterns
+2. Check `PROJECT_STATUS.md` for current features and roadmap
+3. Follow conventions in `.github/copilot-instructions.md`
+4. Run `npm run format` and `npm run lint:fix` before committing
 
 ---
 
-## 📄 License
+## 📞 Support & Resources
 
-Proprietary - All rights reserved
-
----
+- **System Architecture:** See `SYSTEM_DESIGN.md`
+- **Current Status:** See `PROJECT_STATUS.md`
+- **Setup Help:** See `docs/ENV_SETUP_GUIDE.md`
+- **Phase History:** See `docs/archive/`
 
 **Built with ❤️ for wound care specialists**

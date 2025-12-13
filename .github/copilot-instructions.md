@@ -4,16 +4,23 @@
 
 This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind CSS v4** for building an Electronic Health Record (EHR) system for wound care. The project uses the modern Next.js App Router architecture with shadcn/ui components.
 
-**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `SYSTEM_DESIGN.md` (v2.2 - Approved). This includes:**
+**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `SYSTEM_DESIGN.md` (v5.0). This includes:**
 
-- Database schema (10+ tables with Supabase PostgreSQL)
+- Database schema (17 tables with Supabase PostgreSQL)
 - Frontend architecture (app router structure, components)
 - Backend patterns (Server Components + Server Actions)
-- UI/UX workflows (assessment forms, photo management, calendar)
-- Implementation phases (10-week roadmap)
-- Design decisions (auth, multi-facility, billing, libraries)
+- UI/UX workflows (assessment forms, photo management, calendar, signatures)
+- Implementation phases (Phase 9.4 complete, Phase 10 planning)
+- Design decisions (auth, multi-facility, billing, compliance, libraries)
 
-**Before implementing ANY feature, review the relevant section in `SYSTEM_DESIGN.md` first.**
+**📚 Documentation Structure:**
+- **README.md** - Quick start guide, installation, tech stack overview
+- **SYSTEM_DESIGN.md** - Complete system architecture, database schema, technical decisions
+- **PROJECT_STATUS.md** - Current status, completed features, next phase planning
+- **docs/ENV_SETUP_GUIDE.md** - Detailed environment setup
+- **docs/archive/** - Historical phase completion reports (reference only)
+
+**Before implementing ANY feature, review the relevant section in `SYSTEM_DESIGN.md` and check `PROJECT_STATUS.md` for current status.**
 
 ## Tech Stack & Configuration
 
