@@ -21,7 +21,7 @@ export function DashboardLayoutClient({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex">
       {/* Skip to main content link for keyboard navigation */}
       <a
         href="#main-content"
@@ -35,11 +35,11 @@ export function DashboardLayoutClient({
         mobileOpen={mobileMenuOpen}
         onMobileClose={() => setMobileMenuOpen(false)}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col">
         <Header user={user} onMobileMenuClick={() => setMobileMenuOpen(true)} />
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto bg-zinc-50 px-4 py-4 sm:px-6 sm:py-6 dark:bg-zinc-950"
+          className="bg-zinc-50 px-4 py-4 sm:px-6 sm:py-6 dark:bg-zinc-950"
           role="main"
         >
           {children}
