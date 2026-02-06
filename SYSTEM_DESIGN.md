@@ -1,13 +1,16 @@
 # Wound EHR - System Design Document
 
-> **Version**: 5.0  
-> **Date**: December 13, 2025  
-> **Status**: ✅ **Phase 9.4 - COMPLETE 🎉 | Production Ready 🚀**
+> **Version**: 5.1  
+> **Date**: February 6, 2026  
+> **Status**: ✅ **Phase 9.4 - COMPLETE 🎉 | Phase 10 - IN PROGRESS 🚧**
 
 > **📚 Documentation Structure:**
+>
 > - **README.md** - Quick start guide, installation, and tech stack overview
 > - **This file** - Complete system architecture, database schema, and technical design decisions
 > - **PROJECT_STATUS.md** - Current project status, completed features, and next phase planning
+> - **PHASE_10_IMPLEMENTATION_PLAN.md** - Detailed implementation guide for production deployment
+> - **PHASE_10_TESTING_CHECKLIST.md** - Complete testing checklist with 42 test cases
 
 ---
 
@@ -2235,42 +2238,344 @@ lib/
 
 ---
 
-### Phase 10: Auto-Save & Field Reliability (Weeks 16-17)
+### Phase 10: Production Deployment (Client Feedback) 🔴 **IN PROGRESS**
 
-**Goal:** Prevent data loss during field visits with unstable internet
+> **Timeline:** 6 weeks (February 6 - March 20, 2026)  
+> **Source:** Client meeting transcripts (January 31 & February 5, 2026)  
+> **Priority:** CRITICAL - Blocking production launch  
+> **Status:** Planning complete, implementation starting
 
-**10.1: Client-Side Auto-Save (Week 16)**
+**Goal:** Address 6 critical pain points identified by client before production deployment
 
-- [ ] Implement localStorage auto-save hook (every 30 seconds)
-- [ ] Store form state with timestamp key
-- [ ] Build draft recovery modal on page load
-- [ ] Add "Restore Draft" / "Discard Draft" actions
-- [ ] Implement draft comparison view (side-by-side)
-- [ ] Build save status indicator component
-- [ ] Show "Last saved: X minutes ago" with spinning icon during save
-- [ ] Add keyboard shortcut (Ctrl+S) to manual save
-- [ ] Clear localStorage after successful submission
-- [ ] Test with intentional page refresh during form filling
+**📋 Complete Implementation Plan:** See `PHASE_10_IMPLEMENTATION_PLAN.md` for full details
 
-**Deliverable:** Client-side auto-save prevents data loss on refresh
+**Client Requirements Summary:**
 
-**10.2: Server Draft Saves & Offline Mode (Week 17)**
+1. **Note Approval Workflow** - Quality control before notes reach facilities
+2. **Clinical Summary PDFs** - Abbreviated output (no billing codes, limited clinical detail)
+3. **Calendar Clinician Filtering** - Hide other clinicians' schedules
+4. **Reporting System** - Visit logs by clinician/date/facility with CSV export
+5. **Access Control** - Prevent clinicians from editing insurance/demographics
+6. **Enhanced Data Validation** - Block invalid treatments and force 100% tissue composition
 
-- [ ] Implement server draft auto-save (every 2 minutes)
-- [ ] Add optimistic UI updates during save
-- [ ] Show toast notification: "Draft saved at [time]"
-- [ ] Implement network status detection (navigator.onLine)
-- [ ] Build offline mode banner component
-- [ ] Set up IndexedDB for offline mutation queue
-- [ ] Queue create/update operations when offline
-- [ ] Implement sync logic when connection restored
-- [ ] Show "Last synced: [time]" indicator
-- [ ] Add manual "Sync Now" button
-- [ ] Handle sync conflicts (local vs server changes)
-- [ ] Test offline scenario: disconnect WiFi, fill form, reconnect, verify sync
-- [ ] Test partial connectivity: slow 3G simulation
+---
 
-**Deliverable:** Offline-capable form with auto-sync
+**10.1: Note Approval Workflow & Clinical Summary PDFs (Weeks 1-2)** 🔴 **HIGHEST PRIORITY**
+
+**Blocking Issue:** No quality control between clinician documentation and facility delivery
+
+**10.1.1: Office Inbox Approval System**
+
+- [ ] Create migration 00025: Add note approval fields
+
+  ```sql
+  ALTER TABLE visits
+  ADD COLUMN approval_status TEXT DEFAULT 'draft'
+    CHECK (approval_status IN ('draft', 'sent_to_office', 'needs_correction', 'being_corrected', 'approved', 'voided')),
+  ADD COLUMN sent_to_office_at TIMESTAMPTZ,
+  ADD COLUMN approved_at TIMESTAMPTZ,
+  ADD COLUMN approved_by UUID REFERENCES auth.users(id),
+  ADD COLUMN correction_notes TEXT,
+  ADD COLUMN voided_at TIMESTAMPTZ,
+  ADD COLUMN void_reason TEXT;
+
+  CREATE INDEX idx_visits_approval_status ON visits(approval_status);
+  CREATE INDEX idx_visits_sent_to_office_at ON visits(sent_to_office_at);
+  ```
+
+- [ ] Build office inbox page (`app/dashboard/admin/office-inbox/page.tsx`)
+  - [ ] Admin-only access (tenant_admin + facility_admin)
+  - [ ] Table of pending notes (status='sent_to_office')
+  - [ ] Sortable columns: patient name, clinician, date, facility
+  - [ ] Filter by date range, clinician, facility
+  - [ ] Quick actions: Approve, Request Correction, Void
+  - [ ] Badge indicators: "New", "Corrected", "Addendum Added"
+
+- [ ] Update visit actions (`app/actions/visits.ts`)
+  - [ ] `sendToOffice(visitId)` - Change status to 'sent_to_office'
+  - [ ] `requestCorrection(visitId, notes)` - Change status to 'needs_correction'
+  - [ ] `markCorrected(visitId)` - Change status to 'being_corrected' → 'sent_to_office'
+  - [ ] `approveNote(visitId, adminId)` - Change status to 'approved', lock visit
+  - [ ] `voidNote(visitId, reason)` - Change status to 'voided'
+
+- [ ] Add approval workflow UI to visit pages
+  - [ ] Clinician visit detail: "Send to Office" button (when complete)
+  - [ ] Clinician banner: "Correction Requested: [notes]" (when needs_correction)
+  - [ ] Clinician action: "Mark as Corrected" button (after edits)
+  - [ ] Admin office inbox: Approve/Void/Request Correction buttons
+  - [ ] Lock editing after approval (read-only form)
+
+- [ ] Implement approval notifications
+  - [ ] Toast: "Note sent to office for review"
+  - [ ] Email: Office receives notification of pending note
+  - [ ] Toast: "Correction requested on visit [date]"
+  - [ ] Badge count: "X pending corrections" on clinician dashboard
+
+- [ ] Test approval workflow
+  - [ ] Clinician completes visit → Send to office → Status changes ✅
+  - [ ] Admin requests correction → Clinician sees banner ✅
+  - [ ] Clinician edits → Marks corrected → Back in office inbox ✅
+  - [ ] Admin approves → Visit locked → No further edits allowed ✅
+  - [ ] Verify addendums still work on approved notes ✅
+
+**Deliverable:** Complete note approval workflow preventing premature facility delivery
+
+**10.1.2: Clinical Summary PDF (Abbreviated Output)**
+
+**Requirement:** Generate abbreviated clinical summary without billing codes or detailed medical-legal notes
+
+- [ ] Create clinical summary PDF component (`components/pdf/clinical-summary.tsx`)
+  - [ ] Patient demographics (name, DOB, MRN)
+  - [ ] Visit date and clinician name
+  - [ ] Wound information (location, type, measurements)
+  - [ ] Procedure performed (YES/NO only - no depth/duration/bleeding details)
+  - [ ] Treatment orders (full list)
+  - [ ] EXCLUDE: Billing codes, tissue percentages, infection sign details, pain levels, detailed assessment notes
+
+- [ ] Request clinical summary templates from Erin
+  - [ ] Email: "Please send G-tube clinical summary format"
+  - [ ] Email: "Please send wound care clinical summary format"
+  - [ ] Wait for response before implementing formatting
+
+- [ ] Add PDF download options to visit detail page
+  - [ ] Button: "Download Clinical Summary" (always available)
+  - [ ] Button: "Download Complete Visit Note" (disabled until approved)
+  - [ ] Tooltip: "Complete notes require office approval"
+
+- [ ] Update PDF actions (`app/actions/pdf.ts`)
+  - [ ] `generateClinicalSummary(visitId)` - Abbreviated PDF
+  - [ ] `generateCompleteNote(visitId)` - Full PDF (approval required)
+  - [ ] Validate approval status before allowing complete note download
+
+- [ ] Test clinical summary PDFs
+  - [ ] Generate for unapproved visit → Works ✅
+  - [ ] Verify no billing codes in output ✅
+  - [ ] Verify no detailed notes in output ✅
+  - [ ] Attempt complete note download (unapproved) → Blocked ✅
+  - [ ] Approve note → Download complete note → Works ✅
+
+**Deliverable:** Two-tier PDF system (abbreviated vs. complete)
+
+**Estimated Effort:** 2 weeks (10 working days)
+
+---
+
+**10.2: Calendar Filtering & Reporting System (Weeks 3-4)**
+
+**Blocking Issue:** Calendar shows all schedules (confusing for clinicians), no reporting tools
+
+**10.2.1: Clinician Assignment & Calendar Filtering**
+
+- [ ] Create migration 00026: Patient-clinician assignments
+
+  ```sql
+  CREATE TABLE patient_clinicians (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+    clinician_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    assignment_role TEXT NOT NULL CHECK (assignment_role IN ('primary', 'supervisor', 'consulting')),
+    assigned_at TIMESTAMPTZ DEFAULT NOW(),
+    assigned_by UUID REFERENCES auth.users(id),
+    UNIQUE(patient_id, clinician_id)
+  );
+
+  CREATE INDEX idx_patient_clinicians_patient_id ON patient_clinicians(patient_id);
+  CREATE INDEX idx_patient_clinicians_clinician_id ON patient_clinicians(clinician_id);
+  ```
+
+- [ ] Add `primary_clinician_id` to visits table (auto-populated from patient assignment)
+
+  ```sql
+  ALTER TABLE visits ADD COLUMN primary_clinician_id UUID REFERENCES auth.users(id);
+  CREATE INDEX idx_visits_primary_clinician_id ON visits(primary_clinician_id);
+  ```
+
+- [ ] Build patient-clinician assignment UI
+  - [ ] Patient detail page: "Assign Clinician" button
+  - [ ] Modal: Select clinician (dropdown), role (primary/supervisor/consulting)
+  - [ ] Display assigned clinicians list with role badges
+  - [ ] Allow multiple clinicians per patient
+
+- [ ] Update calendar view (`components/calendar/calendar-view.tsx`)
+  - [ ] Add filter dropdown: "My Patients", "All Patients", "Specific Clinician"
+  - [ ] Default view: "My Patients" (clinicians see only assigned patients)
+  - [ ] Admin view: "All Patients" (office sees everything)
+  - [ ] Event display: Show clinician name on appointment
+
+- [ ] Update visit creation to auto-assign primary clinician
+  - [ ] When creating visit, set `primary_clinician_id` from patient assignment
+  - [ ] Show clinician dropdown (default to primary, allow override to supervisor)
+
+- [ ] Test calendar filtering
+  - [ ] Login as Dr. Smith → See only assigned patients ✅
+  - [ ] Login as Nurse Jones (supervisor) → See supervised patients ✅
+  - [ ] Login as PA Brown (no assignments) → Empty calendar ✅
+  - [ ] Login as admin → See all patients ✅
+  - [ ] Filter: "Dr. Smith's Patients" → Shows correct subset ✅
+
+**Deliverable:** Clinician-specific calendar views reducing confusion
+
+**10.2.2: Visit Logs & Reporting System**
+
+- [ ] Build reports page (`app/dashboard/reports/page.tsx`)
+  - [ ] Tabbed interface: "Visit Logs", "Clinician Activity", "Facility Summary"
+
+- [ ] Visit Logs Report
+  - [ ] Filters: Date range, clinician, facility, patient, approval status
+  - [ ] Table columns: Date, Patient, Clinician, Facility, Status, # Wounds, Actions
+  - [ ] Sortable by any column
+  - [ ] Pagination (50 per page)
+  - [ ] Export to CSV button
+  - [ ] Total visit count summary
+
+- [ ] Clinician Activity Report
+  - [ ] Select clinician + date range
+  - [ ] Metrics: Total visits, total patients, visits per facility
+  - [ ] Chart: Visits per week (line chart)
+  - [ ] Chart: Facility breakdown (pie chart)
+  - [ ] Export to CSV button
+
+- [ ] Facility Summary Report
+  - [ ] Select facility + date range
+  - [ ] Metrics: Total patients, total visits, average wounds per visit
+  - [ ] Table: Clinician breakdown (visits per clinician)
+  - [ ] Export to CSV button
+
+- [ ] Medical Records Request
+  - [ ] Select patient + date range
+  - [ ] Shows all visits for patient in chronological order
+  - [ ] Download individual PDFs OR download all as ZIP
+  - [ ] Include approval status filter
+
+- [ ] Create report actions (`app/actions/reports.ts`)
+  - [ ] `getVisitLogs(filters)` - Query with complex filtering
+  - [ ] `getClinicianActivity(clinicianId, dateRange)` - Stats + chart data
+  - [ ] `getFacilitySummary(facilityId, dateRange)` - Stats + breakdown
+  - [ ] `getMedicalRecords(patientId, dateRange)` - Patient visit history
+  - [ ] `exportVisitLogsCSV(filters)` - Generate CSV file
+
+- [ ] Test reporting system
+  - [ ] Filter visit logs by date range → Correct results ✅
+  - [ ] Filter by clinician → Shows only that clinician's visits ✅
+  - [ ] Export to CSV → Valid format, opens in Excel ✅
+  - [ ] Clinician activity report → Accurate statistics ✅
+  - [ ] Download medical records ZIP → All PDFs included ✅
+
+**Deliverable:** Complete reporting system for administrators
+
+**Estimated Effort:** 2 weeks (10 working days)
+
+---
+
+**10.3: Access Control & Data Validation (Weeks 5-6)**
+
+**Blocking Issue:** Clinicians can edit insurance/demographics, invalid data slips through
+
+**10.3.1: Role-Based Field Access Control**
+
+- [ ] Create access control utilities (`lib/field-access-control.ts`)
+  - [ ] `canEditField(userRole, fieldName)` - Boolean check
+  - [ ] `getReadOnlyFields(userRole)` - Array of restricted fields
+  - [ ] Admin-only fields: insurance info, demographics (name, DOB, MRN)
+  - [ ] Clinician-editable: medical history, allergies, clinical notes
+
+- [ ] Update patient form component
+  - [ ] Check user role on page load
+  - [ ] Apply `disabled` attribute to admin-only fields for clinicians
+  - [ ] Show lock icon next to read-only fields
+  - [ ] Tooltip: "Contact administrator to update this field"
+
+- [ ] Update visit actions server-side validation
+  - [ ] Verify user role before allowing patient demographic edits
+  - [ ] Return error: "Insufficient permissions to edit this field"
+  - [ ] Log attempted unauthorized edits
+
+- [ ] Add visual indicators
+  - [ ] Gray background for read-only fields
+  - [ ] Lock icon badge on restricted sections
+  - [ ] Permission banner at top of form
+
+- [ ] Test access control
+  - [ ] Login as clinician → Try edit insurance → Blocked ✅
+  - [ ] Login as clinician → Try edit name → Blocked ✅
+  - [ ] Login as admin → Edit insurance → Works ✅
+  - [ ] Login as admin → Edit demographics → Works ✅
+  - [ ] Verify server-side validation rejects clinician edits ✅
+
+**Deliverable:** Proper role-based field access control
+
+**10.3.2: Enhanced Data Validation Rules**
+
+- [ ] Implement treatment compatibility validation
+  - [ ] Alginate requires exudate amount ≥ "Moderate"
+  - [ ] If exudate = "None" → Disable alginate checkbox
+  - [ ] Tooltip: "Alginate requires moderate to large exudate"
+
+- [ ] Implement tissue composition validation
+  - [ ] Force total = 100% (epithelial + granulation + necrotic + slough)
+  - [ ] Real-time calculation below sliders
+  - [ ] Error: "Total must equal 100% (currently: X%)"
+  - [ ] Disable save button until 100%
+
+- [ ] Add measurement sanity checks
+  - [ ] Warning (not error) if depth > width
+  - [ ] Warning if measurements change >50% from last visit
+  - [ ] Prompt: "Measurements significantly different. Verify accuracy."
+
+- [ ] Implement conditional field requirements
+  - [ ] If wound type = "Pressure Injury" → Pressure stage REQUIRED
+  - [ ] If wound type = "Diabetic Ulcer" → HbA1c recommended
+  - [ ] Show red asterisk on required fields
+
+- [ ] Add first-time location confirmation
+  - [ ] For new wound: Checkbox "I confirm this wound is on [location]"
+  - [ ] Cannot save without checking
+  - [ ] Prevents documentation errors
+
+- [ ] Update assessment validation (`components/assessments/assessment-form.tsx`)
+  - [ ] Implement all validation rules client-side (immediate feedback)
+  - [ ] Add server-side validation in `app/actions/assessments.ts`
+  - [ ] Return specific error messages
+
+- [ ] Test validation rules
+  - [ ] Set exudate "None" → Try alginate → Blocked ✅
+  - [ ] Tissue total = 90% → Save disabled ✅
+  - [ ] Adjust to 100% → Save enabled ✅
+  - [ ] Wound type "Pressure Injury" without stage → Error ✅
+  - [ ] First wound entry without location confirmation → Error ✅
+
+**Deliverable:** Comprehensive data validation preventing errors
+
+**Estimated Effort:** 2 weeks (10 working days)
+
+---
+
+**Phase 10 Summary:**
+
+- **Total Estimated Effort:** 6 weeks (30 working days)
+- **Priority:** CRITICAL - Blocking production deployment
+- **Dependencies:** Clinical summary templates from Erin (Phase 10.1.2)
+- **Database Migrations:** 2 new migrations (00025, 00026)
+- **Total Test Cases:** 42 test cases across 6 test suites
+- **Deployment Target:** March 20, 2026
+
+**Key Features:**
+
+1. ✅ Note approval workflow with office inbox
+2. ✅ Abbreviated clinical summary PDFs (facilities)
+3. ✅ Complete visit note PDFs (post-approval only)
+4. ✅ Patient-clinician assignments
+5. ✅ Calendar filtering by clinician
+6. ✅ Visit logs with CSV export
+7. ✅ Clinician activity reports
+8. ✅ Facility summary reports
+9. ✅ Medical records request tool
+10. ✅ Role-based field access control
+11. ✅ Treatment compatibility validation
+12. ✅ Tissue composition enforcement
+13. ✅ Measurement sanity checks
+
+**Testing:** See `PHASE_10_TESTING_CHECKLIST.md` for complete test plan (42 test cases)
 
 ---
 
@@ -2697,6 +3002,146 @@ This section documents all approved design decisions based on client requirement
   - Manual import into Practice Fusion/PointClickCare as needed
 - **Future:** Live read-only integration with PointClickCare and Practice Fusion APIs moved to post-MVP enhancements.
 
+### 15. Note Approval Workflow & Dual PDF System (Phase 10)
+
+**Decision:** Implement office inbox approval system with abbreviated clinical summaries for facilities.
+
+- **Rationale:** Client meeting (January 31, 2026) revealed critical gap - no quality control between clinician documentation and facility delivery.
+- **Problem Statement:**
+  - Clinicians complete visits and immediately send notes to facilities
+  - No office review/approval step prevents quality issues
+  - Facilities receive full medical-legal notes with billing codes (over-disclosure)
+  - Office needs centralized inbox to track pending/approved notes
+- **Implementation:**
+  - **Visit Approval States:** `draft` → `sent_to_office` → `needs_correction`/`being_corrected` → `approved` → `voided`
+  - **Office Inbox Page:** Admin-only, shows pending notes requiring review
+  - **Correction Workflow:** Admin can request corrections with notes, clinician receives banner notification
+  - **Note Locking:** Approved notes become read-only, only addendums allowed
+  - **Void Capability:** Admin can void incorrect notes with reason (audit trail)
+  - **Dual PDF System:**
+    - **Clinical Summary (Abbreviated):** Always available, no billing codes, limited clinical detail, suitable for facilities
+    - **Complete Visit Note (Full):** Only downloadable after approval, contains billing codes and detailed assessments
+  - **Template Dependency:** Awaiting Erin's clinical summary templates (G-tube and wound care formats)
+- **Benefits:**
+  - Quality control gate before facility delivery
+  - Reduced liability exposure (facilities only see needed info)
+  - Centralized note tracking for office staff
+  - Correction loop without email/phone tag
+- **Status:** 🔴 IN PROGRESS (Phase 10.1)
+
+### 16. Clinician Assignment & Calendar Filtering (Phase 10)
+
+**Decision:** Implement patient-clinician assignments with calendar filtering to reduce schedule confusion.
+
+- **Rationale:** Client feedback (February 5, 2026) - "Calendar shows everyone's schedules, very confusing for clinicians who only need to see their own patients."
+- **Problem Statement:**
+  - All clinicians see entire practice schedule on calendar
+  - No way to filter by "my patients" vs "all patients"
+  - Difficult to determine which clinician is responsible for which patient
+  - No primary/supervisor clinician tracking
+- **Implementation:**
+  - **Patient-Clinician Assignments:** New `patient_clinicians` table with roles (primary, supervisor, consulting)
+  - **Visit Attribution:** Auto-populate `visits.primary_clinician_id` from patient assignment
+  - **Calendar Views:**
+    - Default: "My Patients" (clinicians see only assigned patients)
+    - Admin: "All Patients" (office sees everything)
+    - Filter: "Specific Clinician's Patients" (dropdown selection)
+  - **Assignment UI:** Patient detail page with "Assign Clinician" button, supports multiple clinicians per patient
+- **Benefits:**
+  - Reduced cognitive load for clinicians
+  - Clear responsibility tracking
+  - Easier schedule management
+  - Supports coverage/supervisor relationships
+- **Status:** 🔴 IN PROGRESS (Phase 10.2.1)
+
+### 17. Visit Logs & Reporting System (Phase 10)
+
+**Decision:** Build comprehensive reporting system with CSV exports for administrative oversight.
+
+- **Rationale:** Client requirement - "Cannot generate reports by clinician, date range, or facility. Need medical records request tool."
+- **Problem Statement:**
+  - No way to answer: "How many visits did Dr. Smith complete last month?"
+  - Medical records requests require manual PDF collection
+  - Cannot audit clinician productivity or facility coverage
+  - No export capability for external reporting
+- **Implementation:**
+  - **Visit Logs Report:** Filterable table (date range, clinician, facility, patient, approval status) with CSV export
+  - **Clinician Activity Report:** Stats + charts (total visits, visits per week, facility breakdown)
+  - **Facility Summary Report:** Metrics (total patients, total visits, average wounds) with clinician breakdown
+  - **Medical Records Tool:** Select patient + date range → download individual PDFs or bulk ZIP
+  - **Reports Page:** `/dashboard/reports` with tabbed interface
+  - **Export Format:** CSV with proper formatting for Excel compatibility
+- **Benefits:**
+  - Administrative oversight of practice activity
+  - Productivity tracking per clinician
+  - Simplified medical records requests
+  - Data portability for external systems
+- **Status:** 🔴 IN PROGRESS (Phase 10.2.2)
+
+### 18. Role-Based Field Access Control (Phase 10)
+
+**Decision:** Implement field-level access control preventing clinicians from editing insurance/demographics.
+
+- **Rationale:** Client concern - "Clinicians have been changing patient insurance info and demographics, causing billing issues."
+- **Problem Statement:**
+  - All users can edit all patient fields
+  - Clinicians accidentally modify insurance details
+  - Demographic changes create audit trail confusion
+  - Office staff spend time correcting errors
+- **Implementation:**
+  - **Admin-Only Fields:** Insurance info, demographics (name, DOB, MRN), facility assignment
+  - **Clinician-Editable Fields:** Medical history, allergies, clinical notes
+  - **UI Enforcement:**
+    - Disabled form fields with gray background
+    - Lock icons on restricted sections
+    - Tooltip: "Contact administrator to update this field"
+  - **Server-Side Validation:** Actions verify role before allowing edits, return error if unauthorized
+  - **Access Control Library:** `lib/field-access-control.ts` with `canEditField()` utility
+- **Benefits:**
+  - Prevents accidental data corruption
+  - Reduces administrative cleanup work
+  - Clear separation of responsibilities
+  - Audit trail clarity (only admins edit billing-critical info)
+- **Status:** 🔴 IN PROGRESS (Phase 10.3.1)
+
+### 19. Enhanced Data Validation (Phase 10)
+
+**Decision:** Implement strict validation rules to prevent invalid clinical documentation.
+
+- **Rationale:** Client examples - "Clinicians select alginate for dry wounds, tissue percentages don't add to 100%, wrong treatments documented."
+- **Problem Statement:**
+  - No treatment compatibility checking (alginate on dry wounds)
+  - Tissue composition can be <100% or >100% (mathematically invalid)
+  - Missing sanity checks on measurements (depth > width warnings)
+  - No confirmation prompts for critical fields (wound location)
+- **Implementation:**
+  - **Treatment Compatibility:**
+    - Alginate requires exudate ≥ "Moderate" (checkbox disabled if "None" or "Scant")
+    - Tooltip explanations for restrictions
+  - **Tissue Composition Enforcement:**
+    - Real-time total calculation: epithelial + granulation + necrotic + slough = 100%
+    - Error message: "Total must equal 100% (currently: X%)"
+    - Save button disabled until 100% total
+  - **Measurement Sanity Checks:**
+    - Warning (not error) if depth > width
+    - Warning if measurements change >50% from previous visit
+    - Prompt: "Measurements significantly different. Verify accuracy."
+  - **Conditional Requirements:**
+    - Pressure injury wound type → Pressure stage required (red asterisk)
+    - Diabetic ulcer → HbA1c recommended
+  - **First-Time Location Confirmation:**
+    - New wound: Checkbox "I confirm this wound is on [location]"
+    - Cannot save without checking (prevents documentation on wrong patient)
+  - **Validation Layers:**
+    - Client-side: Immediate feedback, instant error messages
+    - Server-side: `app/actions/assessments.ts` validates before database write
+- **Benefits:**
+  - Prevents clinically nonsensical data
+  - Forces accuracy in tissue composition
+  - Reduces documentation errors
+  - Improves data quality for reporting
+- **Status:** 🔴 IN PROGRESS (Phase 10.3.2)
+
 ---
 
 ## Next Steps
@@ -2753,7 +3198,7 @@ This section documents all approved design decisions based on client requirement
 
 ---
 
-**Document Version:** 4.1 (Updated)  
-**Last Updated:** November 19, 2025  
-**Current Phase:** Phase 9.3 - Addendums & Restrictions (Week 16) - PENDING
-**Production Status:** Phase 9.1-9.2 ready for deployment
+**Document Version:** 5.1  
+**Last Updated:** February 6, 2026  
+**Current Phase:** Phase 10 - Production Deployment (Client Feedback) - IN PROGRESS  
+**Production Status:** Phases 1-9.4 production-ready | Phase 10 implementation starting (6-week timeline)
