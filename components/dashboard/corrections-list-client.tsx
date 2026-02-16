@@ -14,28 +14,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { markAsCorrected } from "@/app/actions/approval-workflow";
+import {
+  markAsCorrected,
+  type CorrectionVisit,
+} from "@/app/actions/approval-workflow";
 import { toast } from "sonner";
 
-type Visit = {
-  id: string;
-  visit_date: string;
-  status: string;
-  correction_notes: Array<{
-    note: string;
-    requested_at: string;
-    requested_by: string;
-  }>;
-  patient: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    mrn: string;
-  };
-};
-
 type CorrectionsListClientProps = {
-  corrections: Visit[];
+  corrections: CorrectionVisit[];
 };
 
 export function CorrectionsListClient({

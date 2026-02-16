@@ -21,6 +21,19 @@ type CorrectionNote = {
   requested_at: string;
 };
 
+export type CorrectionVisit = {
+  id: string;
+  visit_date: string;
+  status: string | null;
+  correction_notes: CorrectionNote[] | null;
+  patient: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    mrn: string;
+  };
+};
+
 // =====================================================
 // SEND NOTE TO OFFICE
 // =====================================================
@@ -365,19 +378,14 @@ export async function getCorrectionsForClinician(userId: string) {
 
     if (error) throw error;
 
-    // Remove duplicate visits (if a visit has multiple notes from the same user)
-    type VisitWithNotes = (typeof data)[number];
-    const uniqueVisits = data?.reduce<Omit<VisitWithNotes, "wound_notes">[]>(
-      (acc, visit) => {
-        if (!acc.find((v) => v.id === visit.id)) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { wound_notes, ...visitData } = visit;
-          acc.push(visitData);
-        }
-        return acc;
-      },
-      []
-    );
+    const uniqueVisits = data?.reduce<CorrectionVisit[]>((acc, visit) => {
+      if (!acc.find((v) => v.id === visit.id)) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { wound_notes, ...visitData } = visit;
+        acc.push(visitData as CorrectionVisit);
+      }
+      return acc;
+    }, []);
 
     return { success: true, data: uniqueVisits || [] };
   } catch (error) {
