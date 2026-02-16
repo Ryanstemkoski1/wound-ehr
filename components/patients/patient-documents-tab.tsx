@@ -24,15 +24,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { Credentials } from "@/lib/credentials";
+import type { UserRole } from "@/lib/rbac";
 
 type PatientDocumentsTabProps = {
   patientId: string;
   initialDocuments: PatientDocument[];
+  userCredentials: Credentials | null;
+  userRole: UserRole | null;
 };
 
 export function PatientDocumentsTab({
   patientId,
   initialDocuments,
+  userCredentials,
+  userRole,
 }: PatientDocumentsTabProps) {
   const [documents, setDocuments] =
     useState<PatientDocument[]>(initialDocuments);
@@ -84,6 +90,8 @@ export function PatientDocumentsTab({
                 </DialogHeader>
                 <DocumentUpload
                   patientId={patientId}
+                  userCredentials={userCredentials}
+                  userRole={userRole}
                   onUploadComplete={handleUploadComplete}
                 />
               </DialogContent>

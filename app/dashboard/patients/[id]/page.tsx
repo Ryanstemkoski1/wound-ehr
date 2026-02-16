@@ -3,6 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getPatient } from "@/app/actions/patients";
 import { getPatientConsent } from "@/app/actions/signatures";
 import { getPatientDocuments } from "@/app/actions/documents";
+import {
+  getPatientClinicians,
+  getAvailableClinicians,
+} from "@/app/actions/patient-clinicians";
+import { getUserRole, getUserCredentials } from "@/lib/rbac";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +32,7 @@ import { WoundsListClient } from "@/components/wounds/wounds-list-client";
 import { ConsentDialog } from "@/components/patients/consent-dialog";
 import { ConsentStatusCard } from "@/components/patients/consent-status-card";
 import { PatientDocumentsTab } from "@/components/patients/patient-documents-tab";
+import { ClinicianAssignment } from "@/components/patients/clinician-assignment";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -63,6 +69,20 @@ export default async function PatientDetailPage({
   // Get patient documents
   const documentsResult = await getPatientDocuments(id);
   const documents = documentsResult.documents || [];
+
+  // Get clinician assignments
+  const cliniciansResult = await getPatientClinicians(id);
+  const clinicians = cliniciansResult.data || [];
+
+  // Get available clinicians for assignment (admins only)
+  const userRole = await getUserRole();
+  const userCredentials = await getUserCredentials();
+  const isAdmin =
+    userRole?.role === "tenant_admin" || userRole?.role === "facility_admin";
+  const availableCliniciansResult = isAdmin
+    ? await getAvailableClinicians(patient.facilityId)
+    : { data: [] };
+  const availableClinicians = availableCliniciansResult.data || [];
 
   // Calculate age
   const calculateAge = (dob: Date) => {
@@ -153,6 +173,14 @@ export default async function PatientDetailPage({
           consentData={consentResult.data}
         />
       )}
+
+      {/* Clinician Assignment */}
+      <ClinicianAssignment
+        patientId={id}
+        clinicians={clinicians}
+        availableClinicians={availableClinicians}
+        isAdmin={isAdmin}
+      />
 
       {/* Full-Width Tabs */}
       <Tabs defaultValue="wounds">
@@ -446,7 +474,8 @@ export default async function PatientDetailPage({
               </Link>
             </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              View all wound records and track healing progress over time. Click a wound to see its complete assessment history across all visits.
+              View all wound records and track healing progress over time. Click
+              a wound to see its complete assessment history across all visits.
             </p>
           </div>
           <WoundsListClient wounds={patient.wounds} patientId={patient.id} />
@@ -465,7 +494,8 @@ export default async function PatientDetailPage({
               </Link>
             </div>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              View documentation by visit date. Click a visit to see what was assessed and documented during that appointment.
+              View documentation by visit date. Click a visit to see what was
+              assessed and documented during that appointment.
             </p>
           </div>
           {patient.visits.length > 0 ? (
@@ -507,7 +537,12 @@ export default async function PatientDetailPage({
 
         {/* Documents Tab */}
         <TabsContent value="documents" className="space-y-6">
-          <PatientDocumentsTab patientId={id} initialDocuments={documents} />
+          <PatientDocumentsTab
+            patientId={id}
+            initialDocuments={documents}
+            userCredentials={userCredentials}
+            userRole={userRole?.role || null}
+          />
         </TabsContent>
       </Tabs>
     </div>

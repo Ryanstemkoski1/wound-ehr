@@ -21,6 +21,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { LazyDashboardCharts } from "@/components/dashboard/lazy-dashboard-charts";
 import { getUserRole } from "@/lib/rbac";
+import { getCorrectionsForClinician } from "@/app/actions/approval-workflow";
+import { CorrectionBanner } from "@/components/dashboard/correction-banner";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -276,6 +278,15 @@ export default async function DashboardPage() {
     ];
   }
 
+  // Get corrections count for banner (clinician-facing)
+  let correctionsCount = 0;
+  try {
+    const { data: corrections } = await getCorrectionsForClinician(user.id);
+    correctionsCount = corrections?.length || 0;
+  } catch (error) {
+    console.error("Corrections count fetch error:", error);
+  }
+
   // Prepare chart data
   const woundStatusData = woundsByStatus.map(
     (item: { status: string; count: number }) => ({
@@ -335,6 +346,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
+      {/* Correction Banner */}
+      <CorrectionBanner count={correctionsCount} />
+
       {/* Header with gradient */}
       <div className="from-primary/10 via-background to-accent/5 shadow-soft relative overflow-hidden rounded-xl bg-linear-to-br p-8">
         <div className="relative z-10">

@@ -6,6 +6,7 @@ import {
   getAllowedProcedures,
   getRestrictedProcedures,
 } from "@/lib/procedures";
+import { getUserRole } from "@/lib/rbac";
 import type { Credentials } from "@/lib/credentials";
 
 type PageProps = {
@@ -41,6 +42,9 @@ export default async function EditVisitPage({ params }: PageProps) {
     userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
   const userCredentials = (userData?.credentials as Credentials) || null;
 
+  // Get user role for permission checks
+  const role = await getUserRole();
+
   // Get allowed and restricted procedures for this user
   const allowedProcedures = await getAllowedProcedures(userCredentials);
   const restrictedProcedures = await getRestrictedProcedures(userCredentials);
@@ -66,10 +70,12 @@ export default async function EditVisitPage({ params }: PageProps) {
         patientId={patientId}
         userId={user.id}
         userCredentials={userCredentials}
+        userRole={role?.role || null}
         allowedCPTCodes={allowedCPTCodes}
         restrictedCPTCodes={restrictedCPTCodes}
         visit={{
           id: visit.id,
+          clinicianId: visit.clinicianId,
           visitDate: visit.visitDate,
           visitType: visit.visitType,
           location: visit.location,

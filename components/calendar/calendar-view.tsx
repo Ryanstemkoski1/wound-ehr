@@ -49,6 +49,7 @@ type CalendarViewProps = {
   initialEvents?: CalendarEvent[];
   facilityId?: string;
   patientId?: string;
+  clinicianId?: string;
 };
 
 // Color mapping for visit statuses
@@ -82,6 +83,7 @@ export default function CalendarView({
   initialEvents = [],
   facilityId,
   patientId,
+  clinicianId,
 }: CalendarViewProps) {
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
   const [view, setView] = useState<View>("month");
@@ -122,7 +124,13 @@ export default function CalendarView({
         end = dfEndOfWeek(monthEnd, { locale: enUS });
       }
 
-      const result = await getCalendarEvents(start, end, facilityId, patientId);
+      const result = await getCalendarEvents(
+        start,
+        end,
+        facilityId,
+        patientId,
+        clinicianId
+      );
 
       if (result.success) {
         // Server Actions serialize Dates as strings; coerce back to Date objects

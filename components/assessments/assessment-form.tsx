@@ -23,6 +23,14 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createAssessment, updateAssessment } from "@/app/actions/assessments";
+import {
+  validateTissueComposition,
+  validateMeasurements,
+  shouldShowPressureStage,
+  validateLocationConfirmation,
+  calculateTissueTotal,
+} from "@/lib/validations/assessment";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 type Wound = {
   id: string;
@@ -131,6 +139,29 @@ export default function AssessmentForm({
   // Auto-calculate area
   const [length, setLength] = useState(assessment?.length?.toString() || "");
   const [width, setWidth] = useState(assessment?.width?.toString() || "");
+  const [depth, setDepth] = useState(assessment?.depth?.toString() || "");
+
+  // Validation state - controlled fields for real-time validation
+  const [woundType, setWoundType] = useState(assessment?.woundType || "");
+  const [exudateAmount, setExudateAmount] = useState(
+    assessment?.exudateAmount || ""
+  );
+  const [epithelialPercent, setEpithelialPercent] = useState(
+    assessment?.epithelialPercent?.toString() || "0"
+  );
+  const [granulationPercent, setGranulationPercent] = useState(
+    assessment?.granulationPercent?.toString() || "0"
+  );
+  const [sloughPercent, setSloughPercent] = useState(
+    assessment?.sloughPercent?.toString() || "0"
+  );
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+
+  // Get the current wound to display location in confirmation
+  const currentWound = wounds.find((w) => w.id === selectedWound);
+
+  // Check if this is the first assessment (!assessment means creating new)
+  const isFirstAssessment = !assessment;
 
   const calculatedArea = useMemo(() => {
     if (length && width) {
@@ -142,6 +173,51 @@ export default function AssessmentForm({
     }
     return "";
   }, [length, width]);
+
+  // Validation logic
+  // 1. Tissue composition validation (must equal 100%)
+  const tissueTotal = useMemo(() => {
+    const epithelial = parseFloat(epithelialPercent) || 0;
+    const granulation = parseFloat(granulationPercent) || 0;
+    const slough = parseFloat(sloughPercent) || 0;
+    return calculateTissueTotal({ epithelial, granulation, slough });
+  }, [epithelialPercent, granulationPercent, sloughPercent]);
+
+  const tissueValidation = useMemo(() => {
+    const epithelial = parseFloat(epithelialPercent) || 0;
+    const granulation = parseFloat(granulationPercent) || 0;
+    const slough = parseFloat(sloughPercent) || 0;
+    return validateTissueComposition({ epithelial, granulation, slough });
+  }, [epithelialPercent, granulationPercent, sloughPercent]);
+
+  // 2. Measurement validation (depth warning)
+  const measurementValidation = useMemo(() => {
+    const l = parseFloat(length);
+    const w = parseFloat(width);
+    const d = parseFloat(depth);
+    if (!isNaN(l) && !isNaN(w) && !isNaN(d) && l > 0 && w > 0 && d > 0) {
+      return validateMeasurements({ length: l, width: w, depth: d });
+    }
+    return { valid: true };
+  }, [length, width, depth]);
+
+  // 3. Pressure stage validation
+  const showPressureStage = useMemo(() => {
+    return shouldShowPressureStage(woundType);
+  }, [woundType]);
+
+  // 4. Location confirmation validation
+  const locationValidation = useMemo(() => {
+    return validateLocationConfirmation(isFirstAssessment, locationConfirmed);
+  }, [isFirstAssessment, locationConfirmed]);
+
+  // Determine if form can be submitted
+  const canSubmit = useMemo(() => {
+    // Don't allow submit if validation errors exist
+    if (tissueTotal > 0 && tissueTotal !== 100) return false;
+    if (!locationValidation.valid) return false;
+    return true;
+  }, [tissueTotal, locationValidation]);
 
   const handleInfectionSignToggle = (sign: string) => {
     setInfectionSigns((prev) =>
@@ -160,11 +236,28 @@ export default function AssessmentForm({
       return;
     }
 
+    // Validate before submission
+    if (!canSubmit) {
+      setError("Please fix all validation errors before submitting");
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     formData.append("visitId", visitId);
     formData.append("woundId", selectedWound);
     formData.append("atRiskReopening", atRiskReopening.toString());
     formData.append("infectionSigns", JSON.stringify(infectionSigns));
+
+    // Add controlled fields that aren't in the form
+    formData.set("woundType", woundType);
+    formData.set("exudateAmount", exudateAmount);
+    formData.set("epithelialPercent", epithelialPercent);
+    formData.set("granulationPercent", granulationPercent);
+    formData.set("sloughPercent", sloughPercent);
+    formData.set("length", length);
+    formData.set("width", width);
+    formData.set("depth", depth);
 
     const result = assessment
       ? await updateAssessment(assessment.id, formData)
@@ -229,7 +322,8 @@ export default function AssessmentForm({
               <Label htmlFor="woundType">Wound Type</Label>
               <Select
                 name="woundType"
-                defaultValue={assessment?.woundType || ""}
+                value={woundType}
+                onValueChange={setWoundType}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
@@ -244,26 +338,29 @@ export default function AssessmentForm({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="pressureStage">
-                Pressure Stage (if applicable)
-              </Label>
-              <Select
-                name="pressureStage"
-                defaultValue={assessment?.pressureStage || ""}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRESSURE_STAGES.map((stage) => (
-                    <SelectItem key={stage} value={stage}>
-                      {stage}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {showPressureStage && (
+              <div className="space-y-2">
+                <Label htmlFor="pressureStage">
+                  Pressure Stage <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  name="pressureStage"
+                  defaultValue={assessment?.pressureStage || ""}
+                  required={showPressureStage}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRESSURE_STAGES.map((stage) => (
+                      <SelectItem key={stage} value={stage}>
+                        {stage}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -346,7 +443,8 @@ export default function AssessmentForm({
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                defaultValue={assessment?.depth || ""}
+                value={depth}
+                onChange={(e) => setDepth(e.target.value)}
               />
             </div>
 
@@ -383,6 +481,14 @@ export default function AssessmentForm({
               />
             </div>
           </div>
+
+          {/* Measurement validation warning */}
+          {measurementValidation.warning && (
+            <div className="mt-4 flex items-start gap-2 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{measurementValidation.warning}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -390,11 +496,9 @@ export default function AssessmentForm({
       <Card>
         <CardHeader>
           <CardTitle>Tissue Composition (%)</CardTitle>
-          <CardDescription>
-            Percentages should add up to 100% when all present
-          </CardDescription>
+          <CardDescription>Percentages must add up to 100%</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="epithelialPercent">Epithelial</Label>
@@ -405,7 +509,13 @@ export default function AssessmentForm({
                 min="0"
                 max="100"
                 placeholder="0"
-                defaultValue={assessment?.epithelialPercent || ""}
+                value={epithelialPercent}
+                onChange={(e) => setEpithelialPercent(e.target.value)}
+                className={
+                  tissueTotal > 0 && tissueTotal !== 100
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }
               />
             </div>
 
@@ -418,7 +528,13 @@ export default function AssessmentForm({
                 min="0"
                 max="100"
                 placeholder="0"
-                defaultValue={assessment?.granulationPercent || ""}
+                value={granulationPercent}
+                onChange={(e) => setGranulationPercent(e.target.value)}
+                className={
+                  tissueTotal > 0 && tissueTotal !== 100
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }
               />
             </div>
 
@@ -431,10 +547,44 @@ export default function AssessmentForm({
                 min="0"
                 max="100"
                 placeholder="0"
-                defaultValue={assessment?.sloughPercent || ""}
+                value={sloughPercent}
+                onChange={(e) => setSloughPercent(e.target.value)}
+                className={
+                  tissueTotal > 0 && tissueTotal !== 100
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : ""
+                }
               />
             </div>
           </div>
+
+          {/* Tissue composition validation */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Total:</span>
+              <span
+                className={`text-sm font-bold ${
+                  tissueTotal === 0
+                    ? "text-muted-foreground"
+                    : tissueTotal === 100
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {tissueTotal}%
+              </span>
+              {tissueTotal === 100 && (
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              )}
+            </div>
+          </div>
+
+          {tissueValidation.error && tissueTotal > 0 && (
+            <div className="flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{tissueValidation.error}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -449,7 +599,8 @@ export default function AssessmentForm({
               <Label htmlFor="exudateAmount">Exudate Amount</Label>
               <Select
                 name="exudateAmount"
-                defaultValue={assessment?.exudateAmount || ""}
+                value={exudateAmount}
+                onValueChange={setExudateAmount}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select amount" />
@@ -555,6 +706,43 @@ export default function AssessmentForm({
         </CardContent>
       </Card>
 
+      {/* Location Confirmation (First Assessment Only) */}
+      {isFirstAssessment && currentWound && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Location Confirmation</CardTitle>
+            <CardDescription>
+              Confirm wound location before creating first assessment
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="locationConfirmation"
+                checked={locationConfirmed}
+                onCheckedChange={(checked) =>
+                  setLocationConfirmed(checked as boolean)
+                }
+              />
+              <Label
+                htmlFor="locationConfirmation"
+                className="text-sm leading-relaxed font-normal"
+              >
+                I confirm this wound (#{currentWound.woundNumber}) is located on
+                the{" "}
+                <span className="font-semibold">{currentWound.location}</span>
+              </Label>
+            </div>
+            {!locationValidation.valid && (
+              <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>{locationValidation.error}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Assessment Notes */}
       <Card>
         <CardHeader>
@@ -574,7 +762,7 @@ export default function AssessmentForm({
       <Separator />
 
       <div className="flex gap-3">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !canSubmit}>
           {isSubmitting
             ? "Saving..."
             : assessment

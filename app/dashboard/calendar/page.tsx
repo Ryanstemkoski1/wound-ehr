@@ -10,15 +10,24 @@ import NewVisitDialog from "@/components/calendar/new-visit-dialog";
 export default function CalendarPage() {
   const [facilityId, setFacilityId] = useState<string | undefined>();
   const [patientId, setPatientId] = useState<string | undefined>();
+  const [clinicianId, setClinicianId] = useState<string | undefined>();
   const [showNewVisitDialog, setShowNewVisitDialog] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleFilterChange = useCallback(
-    (filters: { facilityId?: string; patientId?: string; status?: string }) => {
+    (filters: {
+      facilityId?: string;
+      patientId?: string;
+      clinicianId?: string;
+      status?: string;
+    }) => {
       setFacilityId(
         filters.facilityId === "all" ? undefined : filters.facilityId
       );
       setPatientId(filters.patientId === "all" ? undefined : filters.patientId);
+      setClinicianId(
+        filters.clinicianId === "all" ? undefined : filters.clinicianId
+      );
       // Status filter not implemented yet - would need to be passed to getCalendarEvents
       setRefreshKey((prev) => prev + 1); // Force calendar reload
     },
@@ -64,6 +73,7 @@ export default function CalendarPage() {
           key={refreshKey}
           facilityId={facilityId}
           patientId={patientId}
+          clinicianId={clinicianId}
         />
       </div>
 

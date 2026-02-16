@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PatientForm from "@/components/patients/patient-form";
+import { getUserRole, getUserCredentials } from "@/lib/rbac";
 
 type Params = Promise<{ id: string }>;
 
@@ -15,6 +16,10 @@ export default async function EditPatientPage({ params }: { params: Params }) {
   if (!user) {
     redirect("/login");
   }
+
+  // Get user role and credentials for field permissions
+  const role = await getUserRole();
+  const credentials = await getUserCredentials();
 
   // Get user's facility IDs
   const { data: userFacilities } = await supabase
@@ -73,5 +78,12 @@ export default async function EditPatientPage({ params }: { params: Params }) {
     } | null,
   };
 
-  return <PatientForm patient={patientData} facilities={facilities} />;
+  return (
+    <PatientForm
+      patient={patientData}
+      facilities={facilities}
+      userCredentials={credentials}
+      userRole={role?.role || null}
+    />
+  );
 }

@@ -13,6 +13,8 @@ import {
   X,
   Activity,
   FileSignature,
+  Inbox,
+  BarChart,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -23,10 +25,12 @@ const navigation = [
   { name: "Patients", href: "/dashboard/patients", icon: Users },
   { name: "Wounds", href: "/dashboard/wounds", icon: Activity },
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+  { name: "Reports", href: "/dashboard/reports", icon: BarChart },
   { name: "Billing", href: "/dashboard/billing", icon: DollarSign },
 ];
 
 const adminNavigation = [
+  { name: "Office Inbox", href: "/dashboard/admin/inbox", icon: Inbox },
   { name: "Users", href: "/dashboard/admin/users", icon: Users },
   { name: "Facilities", href: "/dashboard/admin/facilities", icon: Building2 },
   { name: "Invites", href: "/dashboard/admin/invites", icon: Shield },

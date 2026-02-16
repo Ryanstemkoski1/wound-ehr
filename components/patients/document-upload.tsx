@@ -14,11 +14,20 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, X, AlertCircle } from "lucide-react";
+import { Upload, FileText, X, AlertCircle, Lock } from "lucide-react";
 import {
   uploadPatientDocument,
   type DocumentType,
 } from "@/app/actions/documents";
+import type { Credentials } from "@/lib/credentials";
+import type { UserRole } from "@/lib/rbac";
+import { canUploadDocuments } from "@/lib/field-permissions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: "face_sheet", label: "Face Sheet" },
@@ -48,11 +57,15 @@ const ALLOWED_TYPES = [
 
 type DocumentUploadProps = {
   patientId: string;
+  userCredentials: Credentials | null;
+  userRole: UserRole | null;
   onUploadComplete?: () => void;
 };
 
 export function DocumentUpload({
   patientId,
+  userCredentials,
+  userRole,
   onUploadComplete,
 }: DocumentUploadProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -272,11 +285,45 @@ export function DocumentUpload({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DOCUMENT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
+                {DOCUMENT_TYPES.map((type) => {
+                  const canUpload = canUploadDocuments(
+                    userCredentials,
+                    userRole,
+                    type.value
+                  );
+                  const isAdminOnly =
+                    type.value === "insurance" || type.value === "face_sheet";
+
+                  if (!canUpload && isAdminOnly) {
+                    return (
+                      <TooltipProvider key={type.value}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <SelectItem
+                              value={type.value}
+                              disabled
+                              className="flex items-center gap-2"
+                            >
+                              <Lock className="inline h-3 w-3" />
+                              {type.label} (Admin Only)
+                            </SelectItem>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-sm">
+                              Only administrators can upload this document type
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  }
+
+                  return (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

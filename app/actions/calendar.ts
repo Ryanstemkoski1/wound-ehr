@@ -39,18 +39,26 @@ const createVisitFromCalendarSchema = z.object({
  * Get calendar events for a date range
  * @param startDate - Start of date range
  * @param endDate - End of date range
+ * @param facilityId - Optional facility filter
  * @param patientId - Optional patient filter
+ * @param clinicianId - Optional clinician filter ("my-patients" for current user's assigned patients)
  */
 export async function getCalendarEvents(
   startDate: Date,
   endDate: Date,
   facilityId?: string,
-  patientId?: string
+  patientId?: string,
+  clinicianId?: string
 ): Promise<
   { success: true; events: CalendarEvent[] } | { success: false; error: string }
 > {
   try {
     const supabase = await createClient();
+
+    // Get current user for "my-patients" filter
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     let query = supabase
       .from("visits")
@@ -63,8 +71,8 @@ export async function getCalendarEvents(
           last_name,
           facility_id,
           facility:facilities(id, name)
-  ),
-  assessments:assessments(id)
+        ),
+        assessments:assessments(id)
       `
       )
       .gte("visit_date", startDate.toISOString())
@@ -81,10 +89,36 @@ export async function getCalendarEvents(
       throw error;
     }
 
+    let filteredVisits = visits || [];
+
     // Filter by facility if provided
-    const filteredVisits = facilityId
-      ? (visits || []).filter((v) => v.patient.facility_id === facilityId)
-      : visits || [];
+    if (facilityId) {
+      filteredVisits = filteredVisits.filter(
+        (v) => v.patient.facility_id === facilityId
+      );
+    }
+
+    // Filter by clinician if provided
+    if (clinicianId) {
+      const targetUserId =
+        clinicianId === "my-patients" ? user?.id : clinicianId;
+
+      if (targetUserId) {
+        // Get patient IDs assigned to this clinician
+        const { data: assignments } = await supabase
+          .from("patient_clinicians")
+          .select("patient_id")
+          .eq("user_id", targetUserId)
+          .eq("is_active", true);
+
+        const assignedPatientIds = assignments?.map((a) => a.patient_id) || [];
+
+        // Filter visits to only assigned patients
+        filteredVisits = filteredVisits.filter((v) =>
+          assignedPatientIds.includes(v.patient_id)
+        );
+      }
+    }
 
     const events: CalendarEvent[] = filteredVisits.map(
       (visit): CalendarEvent => {

@@ -28,16 +28,21 @@ import BillingFormWithCredentials, {
   type BillingFormData,
 } from "@/components/billing/billing-form-with-credentials";
 import type { Credentials } from "@/lib/credentials";
+import type { UserRole } from "@/lib/rbac";
+import { getVisitFieldPermissions } from "@/lib/field-permissions";
 import { toast } from "sonner";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import AutosaveIndicator from "@/components/ui/autosave-indicator";
 import AutosaveRecoveryModal from "@/components/ui/autosave-recovery-modal";
 import { hasRecentAutosave } from "@/lib/autosave";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 type VisitFormProps = {
   patientId: string;
-  userId: string; // Added for autosave
+  userId: string; // Current logged-in user ID
   userCredentials: Credentials | null;
+  userRole: UserRole | null;
   allowedCPTCodes: string[];
   restrictedCPTCodes: Array<{
     code: string;
@@ -46,6 +51,7 @@ type VisitFormProps = {
   }>;
   visit?: {
     id: string;
+    clinicianId: string | null; // ID of user who created the visit
     visitDate: Date;
     visitType: string;
     location: string | null;
@@ -75,6 +81,7 @@ export default function VisitForm({
   patientId,
   userId,
   userCredentials,
+  userRole,
   allowedCPTCodes,
   restrictedCPTCodes,
   visit,
@@ -83,6 +90,16 @@ export default function VisitForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Check if user can edit this visit
+  const permissions = getVisitFieldPermissions(
+    userCredentials,
+    userRole,
+    visit?.clinicianId || undefined,
+    userId
+  );
+  const isReadOnly = permissions.visit_details !== "edit";
+
   const [visitDate, setVisitDate] = useState(
     visit?.visitDate ? new Date(visit.visitDate).toISOString().slice(0, 16) : ""
   );
@@ -355,6 +372,18 @@ export default function VisitForm({
           </div>
         )}
 
+        {/* Read-Only Notice */}
+        {isReadOnly && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              This visit was created by another clinician. You can view the
+              details but cannot make changes. Only administrators or the
+              original clinician can edit this visit.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
             {error}
@@ -370,13 +399,22 @@ export default function VisitForm({
               value={visitDate}
               onChange={(e) => setVisitDate(e.target.value)}
               required
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="visitType">Visit Type</Label>
-            <Select value={visitType} onValueChange={setVisitType} required>
-              <SelectTrigger>
+            <Select
+              value={visitType}
+              onValueChange={setVisitType}
+              required
+              disabled={isReadOnly}
+            >
+              <SelectTrigger
+                className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
+              >
                 <SelectValue placeholder="Select visit type" />
               </SelectTrigger>
               <SelectContent>
@@ -394,14 +432,22 @@ export default function VisitForm({
             placeholder="e.g., Facility Room 101, Patient Home, etc."
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            disabled={isReadOnly}
+            className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
           />
         </div>
 
         {visit && (
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
+            <Select
+              value={status}
+              onValueChange={setStatus}
+              disabled={isReadOnly}
+            >
+              <SelectTrigger
+                className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -421,8 +467,14 @@ export default function VisitForm({
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="followUpType">Follow-Up Type</Label>
-              <Select value={followUpType} onValueChange={setFollowUpType}>
-                <SelectTrigger>
+              <Select
+                value={followUpType}
+                onValueChange={setFollowUpType}
+                disabled={isReadOnly}
+              >
+                <SelectTrigger
+                  className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
+                >
                   <SelectValue placeholder="Select follow-up type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -440,6 +492,8 @@ export default function VisitForm({
                   type="date"
                   value={followUpDate}
                   onChange={(e) => setFollowUpDate(e.target.value)}
+                  disabled={isReadOnly}
+                  className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
                 />
               </div>
             )}
@@ -453,6 +507,8 @@ export default function VisitForm({
               rows={3}
               value={followUpNotes}
               onChange={(e) => setFollowUpNotes(e.target.value)}
+              disabled={isReadOnly}
+              className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
             />
           </div>
         </div>
@@ -465,6 +521,8 @@ export default function VisitForm({
             rows={4}
             value={additionalNotes}
             onChange={(e) => setAdditionalNotes(e.target.value)}
+            disabled={isReadOnly}
+            className={isReadOnly ? "bg-muted cursor-not-allowed" : ""}
           />
         </div>
 
@@ -473,6 +531,7 @@ export default function VisitForm({
             id="timeSpent"
             checked={timeSpent}
             onCheckedChange={(checked) => setTimeSpent(checked as boolean)}
+            disabled={isReadOnly}
           />
           <Label
             htmlFor="timeSpent"
@@ -505,7 +564,7 @@ export default function VisitForm({
         />
 
         <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || isReadOnly}>
             {isSubmitting
               ? "Saving..."
               : visit

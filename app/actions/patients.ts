@@ -4,6 +4,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getUserRole, getUserCredentials } from "@/lib/rbac";
+import { canEditDemographics, canEditInsurance } from "@/lib/field-permissions";
 
 // Database types
 type DbWound = {
@@ -172,6 +174,29 @@ export async function updatePatient(patientId: string, formData: FormData) {
     return { error: "Unauthorized" };
   }
 
+  // Get user permissions
+  const userRole = await getUserRole();
+  const userCredentials = await getUserCredentials();
+  const canEditDemographicsFields = canEditDemographics(
+    userCredentials,
+    userRole?.role || null
+  );
+  const canEditInsuranceFields = canEditInsurance(
+    userCredentials,
+    userRole?.role || null
+  );
+
+  // Get existing patient to compare what's being changed
+  const { data: existingPatient } = await supabase
+    .from("patients")
+    .select("*")
+    .eq("id", patientId)
+    .single();
+
+  if (!existingPatient) {
+    return { error: "Patient not found" };
+  }
+
   // Validate basic fields
   const validatedFields = patientSchema.safeParse({
     facilityId: formData.get("facilityId"),
@@ -195,6 +220,64 @@ export async function updatePatient(patientId: string, formData: FormData) {
   }
 
   const data = validatedFields.data;
+
+  // Check if user is attempting to modify demographics fields without permission
+  if (!canEditDemographicsFields) {
+    const demographicsChanged =
+      existingPatient.facility_id !== data.facilityId ||
+      existingPatient.first_name !== data.firstName ||
+      existingPatient.last_name !== data.lastName ||
+      existingPatient.dob !== data.dob ||
+      existingPatient.mrn !== data.mrn ||
+      existingPatient.gender !== (data.gender || null) ||
+      existingPatient.phone !== (data.phone || null) ||
+      existingPatient.email !== (data.email || null) ||
+      existingPatient.address !== (data.address || null) ||
+      existingPatient.city !== (data.city || null) ||
+      existingPatient.state !== (data.state || null) ||
+      existingPatient.zip !== (data.zip || null);
+
+    if (demographicsChanged) {
+      return {
+        error:
+          "You do not have permission to update patient demographics or contact information",
+      };
+    }
+  }
+
+  // Check if user is attempting to modify insurance/emergency contact without permission
+  if (!canEditInsuranceFields) {
+    const insuranceData = formData.get("primaryInsurance");
+    const secondaryInsuranceData = formData.get("secondaryInsurance");
+    const emergencyContactData = formData.get("emergencyContact");
+
+    if (insuranceData || secondaryInsuranceData || emergencyContactData) {
+      // Compare with existing data
+      const newInsurance = {
+        primary: insuranceData ? JSON.parse(insuranceData as string) : null,
+        secondary: secondaryInsuranceData
+          ? JSON.parse(secondaryInsuranceData as string)
+          : null,
+      };
+      const newEmergencyContact = emergencyContactData
+        ? JSON.parse(emergencyContactData as string)
+        : null;
+
+      const insuranceChanged =
+        JSON.stringify(existingPatient.insurance_info) !==
+        JSON.stringify(newInsurance);
+      const emergencyContactChanged =
+        JSON.stringify(existingPatient.emergency_contact) !==
+        JSON.stringify(newEmergencyContact);
+
+      if (insuranceChanged || emergencyContactChanged) {
+        return {
+          error:
+            "You do not have permission to update insurance or emergency contact information",
+        };
+      }
+    }
+  }
 
   try {
     const supabase = await createClient();

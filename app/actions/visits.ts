@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requiresPatientSignature } from "@/app/actions/signatures";
+import { getUserRole, getUserCredentials } from "@/lib/rbac";
+import { canEditVisit } from "@/lib/field-permissions";
+import { invalidateVisitPDFCache } from "@/app/actions/pdf-cached";
 
 // Validation schema
 const visitSchema = z.object({
@@ -146,37 +149,38 @@ export async function getVisit(visitId: string) {
         .order("created_at", { ascending: false });
 
       // Transform assessments to camelCase
-      const assessments = assessmentsData?.map((assessment) => ({
-        id: assessment.id,
-        visitId: assessment.visit_id,
-        woundId: assessment.wound_id,
-        wound: {
-          woundNumber: assessment.wound?.wound_number || "",
-          location: assessment.wound?.location || "",
-        },
-        woundType: assessment.wound_type,
-        pressureStage: assessment.pressure_stage,
-        healingStatus: assessment.healing_status,
-        atRiskReopening: assessment.at_risk_reopening,
-        length: assessment.length,
-        width: assessment.width,
-        depth: assessment.depth,
-        area: assessment.area,
-        undermining: assessment.undermining,
-        tunneling: assessment.tunneling,
-        epithelialPercent: assessment.epithelial_percent,
-        granulationPercent: assessment.granulation_percent,
-        sloughPercent: assessment.slough_percent,
-        exudateAmount: assessment.exudate_amount,
-        exudateType: assessment.exudate_type,
-        odor: assessment.odor,
-        periwoundCondition: assessment.periwound_condition,
-        painLevel: assessment.pain_level,
-        infectionSigns: assessment.infection_signs,
-        assessmentNotes: assessment.assessment_notes,
-        createdAt: assessment.created_at,
-        updatedAt: assessment.updated_at,
-      })) || [];
+      const assessments =
+        assessmentsData?.map((assessment) => ({
+          id: assessment.id,
+          visitId: assessment.visit_id,
+          woundId: assessment.wound_id,
+          wound: {
+            woundNumber: assessment.wound?.wound_number || "",
+            location: assessment.wound?.location || "",
+          },
+          woundType: assessment.wound_type,
+          pressureStage: assessment.pressure_stage,
+          healingStatus: assessment.healing_status,
+          atRiskReopening: assessment.at_risk_reopening,
+          length: assessment.length,
+          width: assessment.width,
+          depth: assessment.depth,
+          area: assessment.area,
+          undermining: assessment.undermining,
+          tunneling: assessment.tunneling,
+          epithelialPercent: assessment.epithelial_percent,
+          granulationPercent: assessment.granulation_percent,
+          sloughPercent: assessment.slough_percent,
+          exudateAmount: assessment.exudate_amount,
+          exudateType: assessment.exudate_type,
+          odor: assessment.odor,
+          periwoundCondition: assessment.periwound_condition,
+          painLevel: assessment.pain_level,
+          infectionSigns: assessment.infection_signs,
+          assessmentNotes: assessment.assessment_notes,
+          createdAt: assessment.created_at,
+          updatedAt: assessment.updated_at,
+        })) || [];
 
       // Fetch related treatments
       const { data: treatments } = await supabase
@@ -196,6 +200,7 @@ export async function getVisit(visitId: string) {
         id: visit.id,
         patientId: visit.patient_id,
         facilityId: visit.facility_id,
+        clinicianId: visit.clinician_id,
         visitDate: new Date(visit.visit_date),
         visitType: visit.visit_type,
         location: visit.location,
@@ -216,7 +221,6 @@ export async function getVisit(visitId: string) {
         additionalNotes: visit.additional_notes,
         createdAt: visit.created_at,
         updatedAt: visit.updated_at,
-        createdBy: visit.created_by,
         patient: {
           id: visit.patient.id,
           firstName: visit.patient.first_name,
@@ -348,6 +352,10 @@ export async function updateVisit(visitId: string, formData: FormData) {
     return { error: "Unauthorized" };
   }
 
+  // Get user permissions
+  const userRole = await getUserRole();
+  const userCredentials = await getUserCredentials();
+
   try {
     const data = {
       patientId: formData.get("patientId") as string,
@@ -368,12 +376,27 @@ export async function updateVisit(visitId: string, formData: FormData) {
     // Check if user has access to this visit
     const { data: existingVisit, error: visitError } = await supabase
       .from("visits")
-      .select("id, patient_id, status")
+      .select("id, patient_id, status, clinician_id")
       .eq("id", visitId)
       .maybeSingle();
 
     if (visitError || !existingVisit) {
       return { error: "Visit not found or access denied" };
+    }
+
+    // Check if user has permission to edit this visit (ownership check)
+    const canEdit = canEditVisit(
+      userCredentials,
+      userRole?.role || null,
+      existingVisit.clinician_id,
+      user.id
+    );
+
+    if (!canEdit) {
+      return {
+        error:
+          "You do not have permission to edit this visit. Only the original clinician or administrators can make changes.",
+      };
     }
 
     // Prevent editing if visit is signed or submitted
@@ -407,6 +430,14 @@ export async function updateVisit(visitId: string, formData: FormData) {
 
     if (updateError) {
       throw updateError;
+    }
+
+    // Invalidate PDF cache if visit was previously signed/submitted
+    if (
+      existingVisit.status === "signed" ||
+      existingVisit.status === "submitted"
+    ) {
+      await invalidateVisitPDFCache(visitId);
     }
 
     revalidatePath("/dashboard/patients");
@@ -701,6 +732,9 @@ export async function createAddendum(visitId: string, content: string) {
       // Don't fail the request, addendum was created successfully
     }
 
+    // Invalidate PDF cache since visit content changed
+    await invalidateVisitPDFCache(visitId);
+
     revalidatePath(`/dashboard/patients`);
     revalidatePath(`/dashboard/calendar`);
 
@@ -747,10 +781,13 @@ export async function getVisitsForQuickAssessment(patientId: string) {
       .in("visit_id", visitIds);
 
     // Count assessments per visit
-    const countsMap = (assessmentCounts || []).reduce((acc, curr) => {
-      acc[curr.visit_id] = (acc[curr.visit_id] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const countsMap = (assessmentCounts || []).reduce(
+      (acc, curr) => {
+        acc[curr.visit_id] = (acc[curr.visit_id] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     // Transform to camelCase with counts
     return visits.map((visit) => ({

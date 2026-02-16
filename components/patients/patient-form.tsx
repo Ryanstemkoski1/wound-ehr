@@ -15,9 +15,21 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { createPatient, updatePatient } from "@/app/actions/patients";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus, X, Lock } from "lucide-react";
 import Link from "next/link";
+import type { Credentials } from "@/lib/credentials";
+import type { UserRole } from "@/lib/rbac";
+import {
+  getPatientFieldPermissions,
+  getReadOnlyReason,
+} from "@/lib/field-permissions";
 
 type Facility = {
   id: string;
@@ -66,13 +78,29 @@ type Patient = {
 type PatientFormProps = {
   patient?: Patient;
   facilities: Facility[];
+  userCredentials: Credentials | null;
+  userRole: UserRole | null;
 };
 
-export default function PatientForm({ patient, facilities }: PatientFormProps) {
+export default function PatientForm({
+  patient,
+  facilities,
+  userCredentials,
+  userRole,
+}: PatientFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const isEdit = !!patient;
+
+  // Get field permissions based on user credentials and role
+  const permissions = getPatientFieldPermissions(userCredentials, userRole);
+
+  // Check which field categories are read-only
+  const isDemographicsReadOnly = permissions.demographics !== "edit";
+  const isContactReadOnly = permissions.contact !== "edit";
+  const isInsuranceReadOnly = permissions.insurance !== "edit";
+  const isEmergencyContactReadOnly = permissions.emergency_contact !== "edit";
 
   // State for JSONB fields
   const [allergies, setAllergies] = useState<string[]>(
@@ -175,6 +203,39 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
     setMedicalHistory(medicalHistory.filter((_, i) => i !== index));
   }
 
+  // Helper component for read-only field labels
+  const ReadOnlyLabel = ({
+    htmlFor,
+    children,
+    required = false,
+  }: {
+    htmlFor: string;
+    children: React.ReactNode;
+    required?: boolean;
+  }) => {
+    const reason = getReadOnlyReason("demographics", userCredentials, userRole);
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Label
+              htmlFor={htmlFor}
+              className="flex cursor-help items-center gap-2"
+            >
+              <Lock className="text-muted-foreground h-3 w-3" />
+              {children}
+              {required && <span className="text-red-500">*</span>}
+            </Label>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">{reason}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -215,19 +276,39 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
           <TabsContent value="demographics" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Basic Information
+                  {isDemographicsReadOnly && (
+                    <span className="text-muted-foreground text-xs font-normal">
+                      (Admin Only)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="facilityId">
-                    Facility <span className="text-red-500">*</span>
-                  </Label>
+                  {isDemographicsReadOnly ? (
+                    <ReadOnlyLabel htmlFor="facilityId" required>
+                      Facility
+                    </ReadOnlyLabel>
+                  ) : (
+                    <Label htmlFor="facilityId">
+                      Facility <span className="text-red-500">*</span>
+                    </Label>
+                  )}
                   <Select
                     name="facilityId"
                     defaultValue={patient?.facilityId}
                     required
+                    disabled={isDemographicsReadOnly}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={
+                        isDemographicsReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
+                    >
                       <SelectValue placeholder="Select facility" />
                     </SelectTrigger>
                     <SelectContent>
@@ -242,48 +323,98 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">
-                      First Name <span className="text-red-500">*</span>
-                    </Label>
+                    {isDemographicsReadOnly ? (
+                      <ReadOnlyLabel htmlFor="firstName" required>
+                        First Name
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="firstName">
+                        First Name <span className="text-red-500">*</span>
+                      </Label>
+                    )}
                     <Input
                       id="firstName"
                       name="firstName"
                       defaultValue={patient?.firstName}
                       required
                       placeholder="John"
+                      disabled={isDemographicsReadOnly}
+                      className={
+                        isDemographicsReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">
-                      Last Name <span className="text-red-500">*</span>
-                    </Label>
+                    {isDemographicsReadOnly ? (
+                      <ReadOnlyLabel htmlFor="lastName" required>
+                        Last Name
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="lastName">
+                        Last Name <span className="text-red-500">*</span>
+                      </Label>
+                    )}
                     <Input
                       id="lastName"
                       name="lastName"
                       defaultValue={patient?.lastName}
                       required
                       placeholder="Doe"
+                      disabled={isDemographicsReadOnly}
+                      className={
+                        isDemographicsReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="dob">
-                      Date of Birth <span className="text-red-500">*</span>
-                    </Label>
+                    {isDemographicsReadOnly ? (
+                      <ReadOnlyLabel htmlFor="dob" required>
+                        Date of Birth
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="dob">
+                        Date of Birth <span className="text-red-500">*</span>
+                      </Label>
+                    )}
                     <Input
                       id="dob"
                       name="dob"
                       type="date"
                       defaultValue={patient?.dob ? formatDate(patient.dob) : ""}
                       required
+                      disabled={isDemographicsReadOnly}
+                      className={
+                        isDemographicsReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    <Select name="gender" defaultValue={patient?.gender || ""}>
-                      <SelectTrigger>
+                    {isDemographicsReadOnly ? (
+                      <ReadOnlyLabel htmlFor="gender">Gender</ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="gender">Gender</Label>
+                    )}
+                    <Select
+                      name="gender"
+                      defaultValue={patient?.gender || ""}
+                      disabled={isDemographicsReadOnly}
+                    >
+                      <SelectTrigger
+                        className={
+                          isDemographicsReadOnly
+                            ? "bg-muted cursor-not-allowed"
+                            : ""
+                        }
+                      >
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -294,15 +425,27 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mrn">
-                      MRN <span className="text-red-500">*</span>
-                    </Label>
+                    {isDemographicsReadOnly ? (
+                      <ReadOnlyLabel htmlFor="mrn" required>
+                        MRN
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="mrn">
+                        MRN <span className="text-red-500">*</span>
+                      </Label>
+                    )}
                     <Input
                       id="mrn"
                       name="mrn"
                       defaultValue={patient?.mrn}
                       required
                       placeholder="123456"
+                      disabled={isDemographicsReadOnly}
+                      className={
+                        isDemographicsReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
                     />
                   </div>
                 </div>
@@ -311,68 +454,125 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Contact Information
+                  {isContactReadOnly && (
+                    <span className="text-muted-foreground text-xs font-normal">
+                      (Admin Only)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    {isContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="phone">Phone</ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="phone">Phone</Label>
+                    )}
                     <Input
                       id="phone"
                       name="phone"
                       type="tel"
                       defaultValue={patient?.phone || ""}
                       placeholder="(555) 123-4567"
+                      disabled={isContactReadOnly}
+                      className={
+                        isContactReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    {isContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="email">Email</ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="email">Email</Label>
+                    )}
                     <Input
                       id="email"
                       name="email"
                       type="email"
                       defaultValue={patient?.email || ""}
                       placeholder="john.doe@example.com"
+                      disabled={isContactReadOnly}
+                      className={
+                        isContactReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
+                  {isContactReadOnly ? (
+                    <ReadOnlyLabel htmlFor="address">
+                      Street Address
+                    </ReadOnlyLabel>
+                  ) : (
+                    <Label htmlFor="address">Street Address</Label>
+                  )}
                   <Input
                     id="address"
                     name="address"
                     defaultValue={patient?.address || ""}
                     placeholder="123 Main Street"
+                    disabled={isContactReadOnly}
+                    className={
+                      isContactReadOnly ? "bg-muted cursor-not-allowed" : ""
+                    }
                   />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
+                    {isContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="city">City</ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="city">City</Label>
+                    )}
                     <Input
                       id="city"
                       name="city"
                       defaultValue={patient?.city || ""}
                       placeholder="Springfield"
+                      disabled={isContactReadOnly}
+                      className={
+                        isContactReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
+                    {isContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="state">State</ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="state">State</Label>
+                    )}
                     <Input
                       id="state"
                       name="state"
                       defaultValue={patient?.state || ""}
                       placeholder="IL"
+                      disabled={isContactReadOnly}
+                      className={
+                        isContactReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="zip">ZIP Code</Label>
+                    {isContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="zip">ZIP Code</ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="zip">ZIP Code</Label>
+                    )}
                     <Input
                       id="zip"
                       name="zip"
                       defaultValue={patient?.zip || ""}
                       placeholder="62701"
+                      disabled={isContactReadOnly}
+                      className={
+                        isContactReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                 </div>
@@ -384,11 +584,24 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
           <TabsContent value="insurance" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Primary Insurance</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Primary Insurance
+                  {isInsuranceReadOnly && (
+                    <span className="text-muted-foreground text-xs font-normal">
+                      (Admin Only)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="primaryInsuranceProvider">Provider</Label>
+                  {isInsuranceReadOnly ? (
+                    <ReadOnlyLabel htmlFor="primaryInsuranceProvider">
+                      Provider
+                    </ReadOnlyLabel>
+                  ) : (
+                    <Label htmlFor="primaryInsuranceProvider">Provider</Label>
+                  )}
                   <Input
                     id="primaryInsuranceProvider"
                     name="primaryInsuranceProvider"
@@ -396,11 +609,21 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                       patient?.insuranceInfo?.primary?.provider || ""
                     }
                     placeholder="Blue Cross Blue Shield"
+                    disabled={isInsuranceReadOnly}
+                    className={
+                      isInsuranceReadOnly ? "bg-muted cursor-not-allowed" : ""
+                    }
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="primaryPolicyNumber">Policy Number</Label>
+                    {isInsuranceReadOnly ? (
+                      <ReadOnlyLabel htmlFor="primaryPolicyNumber">
+                        Policy Number
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="primaryPolicyNumber">Policy Number</Label>
+                    )}
                     <Input
                       id="primaryPolicyNumber"
                       name="primaryPolicyNumber"
@@ -408,10 +631,20 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                         patient?.insuranceInfo?.primary?.policyNumber || ""
                       }
                       placeholder="ABC123456"
+                      disabled={isInsuranceReadOnly}
+                      className={
+                        isInsuranceReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="primaryGroupNumber">Group Number</Label>
+                    {isInsuranceReadOnly ? (
+                      <ReadOnlyLabel htmlFor="primaryGroupNumber">
+                        Group Number
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="primaryGroupNumber">Group Number</Label>
+                    )}
                     <Input
                       id="primaryGroupNumber"
                       name="primaryGroupNumber"
@@ -419,6 +652,10 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                         patient?.insuranceInfo?.primary?.groupNumber || ""
                       }
                       placeholder="GRP789"
+                      disabled={isInsuranceReadOnly}
+                      className={
+                        isInsuranceReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                 </div>
@@ -427,11 +664,24 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Secondary Insurance</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Secondary Insurance
+                  {isInsuranceReadOnly && (
+                    <span className="text-muted-foreground text-xs font-normal">
+                      (Admin Only)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="secondaryInsuranceProvider">Provider</Label>
+                  {isInsuranceReadOnly ? (
+                    <ReadOnlyLabel htmlFor="secondaryInsuranceProvider">
+                      Provider
+                    </ReadOnlyLabel>
+                  ) : (
+                    <Label htmlFor="secondaryInsuranceProvider">Provider</Label>
+                  )}
                   <Input
                     id="secondaryInsuranceProvider"
                     name="secondaryInsuranceProvider"
@@ -439,11 +689,23 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                       patient?.insuranceInfo?.secondary?.provider || ""
                     }
                     placeholder="United Healthcare"
+                    disabled={isInsuranceReadOnly}
+                    className={
+                      isInsuranceReadOnly ? "bg-muted cursor-not-allowed" : ""
+                    }
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="secondaryPolicyNumber">Policy Number</Label>
+                    {isInsuranceReadOnly ? (
+                      <ReadOnlyLabel htmlFor="secondaryPolicyNumber">
+                        Policy Number
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="secondaryPolicyNumber">
+                        Policy Number
+                      </Label>
+                    )}
                     <Input
                       id="secondaryPolicyNumber"
                       name="secondaryPolicyNumber"
@@ -451,10 +713,20 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                         patient?.insuranceInfo?.secondary?.policyNumber || ""
                       }
                       placeholder="DEF456789"
+                      disabled={isInsuranceReadOnly}
+                      className={
+                        isInsuranceReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="secondaryGroupNumber">Group Number</Label>
+                    {isInsuranceReadOnly ? (
+                      <ReadOnlyLabel htmlFor="secondaryGroupNumber">
+                        Group Number
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="secondaryGroupNumber">Group Number</Label>
+                    )}
                     <Input
                       id="secondaryGroupNumber"
                       name="secondaryGroupNumber"
@@ -462,6 +734,10 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                         patient?.insuranceInfo?.secondary?.groupNumber || ""
                       }
                       placeholder="GRP456"
+                      disabled={isInsuranceReadOnly}
+                      className={
+                        isInsuranceReadOnly ? "bg-muted cursor-not-allowed" : ""
+                      }
                     />
                   </div>
                 </div>
@@ -568,33 +844,70 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
           <TabsContent value="emergency" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Emergency Contact Information</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Emergency Contact Information
+                  {isEmergencyContactReadOnly && (
+                    <span className="text-muted-foreground text-xs font-normal">
+                      (Admin Only)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyContactName">Name</Label>
+                  {isEmergencyContactReadOnly ? (
+                    <ReadOnlyLabel htmlFor="emergencyContactName">
+                      Name
+                    </ReadOnlyLabel>
+                  ) : (
+                    <Label htmlFor="emergencyContactName">Name</Label>
+                  )}
                   <Input
                     id="emergencyContactName"
                     name="emergencyContactName"
                     defaultValue={patient?.emergencyContact?.name || ""}
                     placeholder="Jane Doe"
+                    disabled={isEmergencyContactReadOnly}
+                    className={
+                      isEmergencyContactReadOnly
+                        ? "bg-muted cursor-not-allowed"
+                        : ""
+                    }
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyContactPhone">Phone</Label>
+                    {isEmergencyContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="emergencyContactPhone">
+                        Phone
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="emergencyContactPhone">Phone</Label>
+                    )}
                     <Input
                       id="emergencyContactPhone"
                       name="emergencyContactPhone"
                       type="tel"
                       defaultValue={patient?.emergencyContact?.phone || ""}
                       placeholder="(555) 987-6543"
+                      disabled={isEmergencyContactReadOnly}
+                      className={
+                        isEmergencyContactReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyContactRelationship">
-                      Relationship
-                    </Label>
+                    {isEmergencyContactReadOnly ? (
+                      <ReadOnlyLabel htmlFor="emergencyContactRelationship">
+                        Relationship
+                      </ReadOnlyLabel>
+                    ) : (
+                      <Label htmlFor="emergencyContactRelationship">
+                        Relationship
+                      </Label>
+                    )}
                     <Input
                       id="emergencyContactRelationship"
                       name="emergencyContactRelationship"
@@ -602,6 +915,12 @@ export default function PatientForm({ patient, facilities }: PatientFormProps) {
                         patient?.emergencyContact?.relationship || ""
                       }
                       placeholder="Spouse, Child, etc."
+                      disabled={isEmergencyContactReadOnly}
+                      className={
+                        isEmergencyContactReadOnly
+                          ? "bg-muted cursor-not-allowed"
+                          : ""
+                      }
                     />
                   </div>
                 </div>

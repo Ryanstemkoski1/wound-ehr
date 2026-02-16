@@ -21,6 +21,7 @@ import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { VisitSignatureWorkflow } from "@/components/visits/visit-signature-workflow";
 import { AddAddendumDialog } from "@/components/visits/add-addendum-dialog";
 import { VisitAddendums } from "@/components/visits/visit-addendums";
+import { SendToOfficeButton } from "@/components/visits/send-to-office-button";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -87,7 +88,8 @@ export default async function VisitDetailPage({ params }: PageProps) {
           </p>
           {visit.status !== "signed" && visit.status !== "submitted" && (
             <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-              💡 <strong>Need to document a wound?</strong> Click "Add Assessment" above to get started
+              💡 <strong>Need to document a wound?</strong> Click "Add
+              Assessment" above to get started
             </p>
           )}
         </div>
@@ -100,6 +102,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
               size="lg"
             />
           )}
+          <SendToOfficeButton visitId={visitId} currentStatus={visit.status} />
           <VisitPDFDownloadButton
             visitId={visitId}
             visitDate={visit.visitDate}
@@ -376,15 +379,18 @@ export default async function VisitDetailPage({ params }: PageProps) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <CardTitle>Wound Assessments (This Visit)</CardTitle>
-                  {visit.status !== "signed" && visit.status !== "submitted" && (
-                    <NewAssessmentButton
-                      patientId={patientId}
-                      visitId={visitId}
-                    />
-                  )}
+                  {visit.status !== "signed" &&
+                    visit.status !== "submitted" && (
+                      <NewAssessmentButton
+                        patientId={patientId}
+                        visitId={visitId}
+                      />
+                    )}
                 </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Assessments documented during this visit on {new Date(visit.visitDate).toLocaleDateString()}. Click an assessment to edit details.
+                  Assessments documented during this visit on{" "}
+                  {new Date(visit.visitDate).toLocaleDateString()}. Click an
+                  assessment to edit details.
                 </p>
               </div>
             </CardHeader>
@@ -420,12 +426,14 @@ export default async function VisitDetailPage({ params }: PageProps) {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-4 rounded-full bg-gradient-to-br from-blue-100 to-teal-100 p-6 dark:from-blue-900/30 dark:to-teal-900/30">
+                  <div className="mb-4 rounded-full bg-linear-to-br from-blue-100 to-teal-100 p-6 dark:from-blue-900/30 dark:to-teal-900/30">
                     <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400" />
                   </div>
                   <h3 className="mb-2 text-xl font-bold">Ready to Document?</h3>
                   <p className="mb-6 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-                    Click the <strong>"Add Assessment"</strong> button at the top of this page to document wound conditions, measurements, and treatment plans.
+                    Click the <strong>"Add Assessment"</strong> button at the
+                    top of this page to document wound conditions, measurements,
+                    and treatment plans.
                   </p>
                   {visit.status !== "signed" &&
                     visit.status !== "submitted" && (
