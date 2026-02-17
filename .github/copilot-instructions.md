@@ -4,23 +4,22 @@
 
 This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind CSS v4** for building an Electronic Health Record (EHR) system for wound care. The project uses the modern Next.js App Router architecture with shadcn/ui components.
 
-**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `SYSTEM_DESIGN.md` (v5.0). This includes:**
+**⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `docs/SYSTEM_DESIGN.md`. This includes:**
 
-- Database schema (17 tables with Supabase PostgreSQL)
+- Database schema (17+ tables with Supabase PostgreSQL)
 - Frontend architecture (app router structure, components)
 - Backend patterns (Server Components + Server Actions)
 - UI/UX workflows (assessment forms, photo management, calendar, signatures)
-- Implementation phases (Phase 9.4 complete, Phase 10 planning)
+- Implementation phases (Phase 10 mostly complete, Phase 11 planning)
 - Design decisions (auth, multi-facility, billing, compliance, libraries)
 
 **📚 Documentation Structure:**
-- **README.md** - Quick start guide, installation, tech stack overview
-- **SYSTEM_DESIGN.md** - Complete system architecture, database schema, technical decisions
-- **PROJECT_STATUS.md** - Current status, completed features, next phase planning
-- **docs/ENV_SETUP_GUIDE.md** - Detailed environment setup
-- **docs/archive/** - Historical phase completion reports (reference only)
 
-**Before implementing ANY feature, review the relevant section in `SYSTEM_DESIGN.md` and check `PROJECT_STATUS.md` for current status.**
+- **README.md** - Quick start guide, installation, tech stack overview
+- **docs/SYSTEM_DESIGN.md** - Complete system architecture, database schema, technical decisions
+- **docs/PROJECT_STATUS.md** - Current status, completed features, next phase planning
+
+**Before implementing ANY feature, review the relevant section in `docs/SYSTEM_DESIGN.md` and check `docs/PROJECT_STATUS.md` for current status.**
 
 ## Tech Stack & Configuration
 
@@ -46,7 +45,7 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 - `components/ui/` - shadcn/ui components (button, card, form, table, etc.)
 - `components/layout/` - Layout components (sidebar, header, dashboard layout)
 - `public/` - Static assets (logos, icons, favicon)
-- `supabase/` - Database migrations, seed scripts, schema documentation
+- `supabase/` - Database migration, seed script, schema documentation
 
 ### Import Paths (tsconfig aliases)
 
@@ -99,7 +98,7 @@ import { cn } from "@/lib/utils";
 
 ### Implementation Guidelines
 
-**ALWAYS consult `SYSTEM_DESIGN.md` before starting any development work:**
+**ALWAYS consult `docs/SYSTEM_DESIGN.md` before starting any development work:**
 
 1. **Database Changes**: Reference the ERD and schema notes (Section: Database Schema)
 2. **New Features**: Check implementation phases for correct sequencing (Section: Implementation Phases)
@@ -122,7 +121,7 @@ The database uses **10 tables** with Row Level Security (RLS):
 - `treatments` - Treatment plans and medical orders
 - `billings` - Billing codes and claims
 
-Schema location: `supabase/migrations/00001_initial_schema.sql`
+Schema location: `supabase/migrations/00001_complete_schema.sql`
 
 ### Supabase Backend Architecture
 
@@ -223,7 +222,7 @@ This project is configured for shadcn/ui. When adding components:
 
 ## Important Notes
 
-1. **System Design Document**: `SYSTEM_DESIGN.md` is the authoritative source for all architectural decisions, database schema, UI workflows, and implementation phases. Review it before making ANY changes.
+1. **System Design Document**: `docs/SYSTEM_DESIGN.md` is the authoritative source for all architectural decisions, database schema, UI workflows, and implementation phases. Review it before making ANY changes.
 
 2. **Tailwind v4 Breaking Changes**: This project uses Tailwind CSS v4 alpha with PostCSS. Traditional `tailwind.config.js` is NOT used. All configuration is in `globals.css` via `@theme` directive.
 

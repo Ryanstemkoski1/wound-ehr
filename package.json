@@ -12,8 +12,7 @@
     "format:check": "prettier --check .",
     "db:types": "supabase gen types typescript --linked > lib/database.types.ts",
     "seed": "tsx supabase/seed.ts",
-    "seed:reset": "tsx supabase/seed.ts --reset",
-    "migrate:00005": "node --loader tsx scripts/run-migration-00005.js"
+    "seed:reset": "tsx supabase/seed.ts --reset"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

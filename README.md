@@ -6,15 +6,10 @@ Modern Electronic Health Record (EHR) system designed for wound care management 
 
 ## 📚 Documentation
 
-**Start here:**
 - **[README.md](./README.md)** (this file) - Quick start guide and tech stack overview
-- **[SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)** - Complete system architecture, database schema, and technical decisions
-- **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - Current status, completed features, and next phase planning
-
-**Additional resources:**
-- **[docs/ENV_SETUP_GUIDE.md](./docs/ENV_SETUP_GUIDE.md)** - Detailed environment setup instructions
-- **[docs/archive/](./docs/archive/)** - Historical phase completion reports (reference only)
-- **[.github/copilot-instructions.md](./.github/copilot-instructions.md)** - Development guidelines and patterns
+- **[docs/SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)** - Complete system architecture, database schema, and technical decisions
+- **[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)** - Current status, completed features, and next phase planning
+- **[.github/copilot-instructions.md](./.github/copilot-instructions.md)** - AI development guidelines and patterns
 
 ---
 
@@ -56,7 +51,7 @@ Visit `http://localhost:3000`
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
 2. Go to SQL Editor in your Supabase dashboard
-3. Run migrations in order from `supabase/migrations/` (24 files)
+3. Run the schema from `supabase/migrations/00001_complete_schema.sql`
 4. Verify tables created in Database → Tables view
 5. Optional: Seed test data with `npm run seed`
 
@@ -104,7 +99,7 @@ Visit `http://localhost:3000`
 - `grafting_assessments` - Skin graft procedure documentation
 - `skin_sweep_assessments` - Full-body skin inspection forms
 
-**Schema:** See `supabase/migrations/` (24 migrations)  
+**Schema:** See `supabase/migrations/00001_complete_schema.sql`  
 **For detailed schema documentation, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)**
 
 ---
@@ -143,13 +138,19 @@ Visit `http://localhost:3000`
 - Skin sweep assessment (full-body skin inspection)
 - Patient page redesign (tab-based layout)
 
-### Next Phase (Phase 10) 🔄
+### Phase 10 (Current) 🚀
 
-- Production deployment preparation
-- Bulk photo uploads
-- Document versioning
-- Performance optimization
-- Enhanced mobile experience
+**Status:** 5 of 6 features complete, 1 blocked awaiting templates
+
+- ✅ Note approval workflow (office review, corrections, locking)
+- ❌ Abbreviated clinical output (blocked - awaiting G-tube/wound templates)
+- ✅ Calendar clinician filtering (patient assignments)
+- ✅ Reporting by criteria (clinician/date/facility filters)
+- ✅ Role-based field access (view-only demographics for clinicians)
+- ✅ Data validation rules (treatment/tissue/measurement validation)
+- ✅ Performance optimization (database indexes, query optimization)
+
+**Next:** Client demo, template collection, production deployment
 
 **Phase 9.4.2+: Specialized Templates & Features**
 
@@ -199,15 +200,13 @@ wound-ehr/
 │   ├── billing-codes.ts      # CPT/ICD-10 code database
 │   └── utils.ts              # Helper functions (cn, etc.)
 ├── supabase/                 # Database schema
-│   ├── migrations/           # 24 SQL migration files
+│   ├── migrations/           # SQL migration file
 │   └── seed.ts               # Seed script for test data
 ├── docs/                     # Documentation
-│   ├── ENV_SETUP_GUIDE.md    # Detailed setup instructions
-│   └── archive/              # Historical phase reports (reference)
+│   ├── SYSTEM_DESIGN.md      # Complete architecture & schema
+│   └── PROJECT_STATUS.md     # Current status and roadmap
 ├── public/                   # Static assets (logos, icons)
-├── README.md                 # This file - Quick start
-├── SYSTEM_DESIGN.md          # Complete architecture
-└── PROJECT_STATUS.md         # Current status and roadmap
+└── README.md                 # This file - Quick start
 ```
 
 ---
@@ -237,14 +236,17 @@ npm run seed:reset       # Reset and re-seed database
 ## 🔐 Authentication & Roles
 
 ### Administrative Roles
+
 - **Tenant Admin** - Full system access, manage all facilities
 - **Facility Admin** - Manage assigned facility, invite users
 - **User** - Basic access for patient care
 
 ### Clinical Credentials
+
 All users have ONE credential:
+
 - **RN** (Registered Nurse) - Requires patient signatures
-- **LVN** (Licensed Vocational Nurse) - Requires patient signatures  
+- **LVN** (Licensed Vocational Nurse) - Requires patient signatures
 - **MD** (Medical Doctor) - No patient signatures required
 - **DO** (Doctor of Osteopathy) - No patient signatures required
 - **PA** (Physician Assistant) - No patient signatures required
@@ -258,7 +260,7 @@ Users can have both a role AND credential (e.g., "Facility Admin (RN)")
 
 ## 🚨 Important Development Notes
 
-1. **Always consult `SYSTEM_DESIGN.md` before development** - Authoritative source
+1. **Always consult `docs/SYSTEM_DESIGN.md` before development** - Authoritative source
 2. **Use Supabase JS, NOT Prisma** - All DB operations via `@supabase/supabase-js`
 3. **Server Components by default** - Use `"use client"` only when needed
 4. **Tailwind v4** - Uses `@theme` directive in `globals.css`, not `tailwind.config.js`
@@ -269,8 +271,8 @@ Users can have both a role AND credential (e.g., "Facility Admin (RN)")
 
 ## 🤝 Contributing
 
-1. Review `SYSTEM_DESIGN.md` for architecture and patterns
-2. Check `PROJECT_STATUS.md` for current features and roadmap
+1. Review `docs/SYSTEM_DESIGN.md` for architecture and patterns
+2. Check `docs/PROJECT_STATUS.md` for current features and roadmap
 3. Follow conventions in `.github/copilot-instructions.md`
 4. Run `npm run format` and `npm run lint:fix` before committing
 
@@ -278,9 +280,7 @@ Users can have both a role AND credential (e.g., "Facility Admin (RN)")
 
 ## 📞 Support & Resources
 
-- **System Architecture:** See `SYSTEM_DESIGN.md`
-- **Current Status:** See `PROJECT_STATUS.md`
-- **Setup Help:** See `docs/ENV_SETUP_GUIDE.md`
-- **Phase History:** See `docs/archive/`
+- **System Architecture:** See `docs/SYSTEM_DESIGN.md`
+- **Current Status:** See `docs/PROJECT_STATUS.md`
 
 **Built with ❤️ for wound care specialists**

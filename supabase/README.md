@@ -1,63 +1,52 @@
 # Supabase Schema Management
 
-This directory contains the SQL migration files for the Wound EHR database schema.
+This directory contains the consolidated SQL schema for the Wound EHR database.
 
-## Without Local Supabase (Recommended for Remote-Only Development)
+## Schema File
 
-### Option 1: Apply via Supabase Dashboard (Easiest)
+**`migrations/00001_complete_schema.sql`** — Complete database schema including all 25 tables, indexes, RLS policies, functions, triggers, storage buckets, and seed data.
+
+## Applying the Schema
+
+### Option 1: Via Supabase Dashboard (Easiest)
 
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
-3. Copy the contents of `migrations/00001_initial_schema.sql`
+3. Copy the contents of `migrations/00001_complete_schema.sql`
 4. Paste and click **Run**
 
-### Option 2: Apply via Supabase CLI (No Docker Required)
+### Option 2: Via Supabase CLI
 
 ```bash
-# One-time setup: Link to your remote project
 npx supabase login
 npx supabase link --project-ref your-project-ref
-
-# Apply migration directly to remote
 npx supabase db push --db-url "postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
 ```
 
-### Option 3: Manual Table Creation
-
-Use the Supabase Dashboard's **Table Editor** to create tables visually, then run the RLS policies and triggers from the SQL Editor.
-
 ## Creating New Migrations
 
-When you need to modify the schema:
+When modifying the schema:
 
 1. Create a new file: `supabase/migrations/00002_description.sql`
 2. Write your SQL changes (ALTER TABLE, CREATE INDEX, etc.)
 3. Apply via Supabase Dashboard SQL Editor or `db push` command
 
-## Schema Version Control
-
-- **Keep migrations in git** - this is your schema source of truth
-- **Number migrations** - Use incremental numbering (00001, 00002, etc.)
-- **One-way only** - Migrations should only move forward, don't edit existing ones
-- **Document changes** - Add comments explaining what each migration does
-
 ## Current Schema
 
-- **10 tables**: users, facilities, user_facilities, patients, wounds, visits, assessments, photos, treatments, billings
-- **RLS enabled** on all tables with comprehensive policies
-- **Indexes** on all foreign keys and frequently queried columns
-- **Triggers** for automatic `updated_at` timestamp updates
+- **25 tables** with Row Level Security
+- **RLS enabled** on all tables (user_roles uses RPC functions instead)
+- **Comprehensive indexes** on all foreign keys and frequently queried columns
+- **Triggers** for automatic `updated_at` timestamps and auth user sync
 - **Storage bucket**: `wound-photos` for wound photo uploads
+- **Procedure scopes** seed data for credential-based restrictions
 
 ## Generating TypeScript Types
-
-After applying migrations, generate types:
 
 ```bash
 npm run db:types
 ```
 
-This creates `lib/database.types.ts` with full TypeScript definitions for your database.
+This creates `lib/database.types.ts` with full TypeScript definitions.
 
 ## Seeding the Database
 
