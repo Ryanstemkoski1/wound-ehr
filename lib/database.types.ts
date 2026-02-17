@@ -2195,7 +2195,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           created_at?: string | null
-          credentials: string
+          credentials?: string
           email: string
           expires_at: string
           facility_id?: string | null
@@ -2291,7 +2291,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          credentials: string
+          credentials?: string
           email: string
           id: string
           name?: string | null
@@ -2410,14 +2410,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "visits_patient_signature_id_fkey"
+            foreignKeyName: "visits_patient_signature_fk"
             columns: ["patient_signature_id"]
             isOneToOne: false
             referencedRelation: "signatures"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "visits_provider_signature_id_fkey"
+            foreignKeyName: "visits_provider_signature_fk"
             columns: ["provider_signature_id"]
             isOneToOne: false
             referencedRelation: "signatures"
@@ -2523,8 +2523,16 @@ export type Database = {
     }
     Functions: {
       can_perform_procedure: {
-        Args: { procedure_code: string; user_credentials: string }
+        Args: { cpt_code: string; user_credentials: string }
         Returns: boolean
+      }
+      get_allowed_procedures: {
+        Args: { user_credentials: string }
+        Returns: {
+          category: string
+          procedure_code: string
+          procedure_name: string
+        }[]
       }
       get_current_user_credentials: {
         Args: never
@@ -2540,6 +2548,15 @@ export type Database = {
       get_patient_gtube_procedure_count: {
         Args: { patient_id_param: string }
         Returns: number
+      }
+      get_restricted_procedures: {
+        Args: { user_credentials: string }
+        Returns: {
+          category: string
+          procedure_code: string
+          procedure_name: string
+          required_credentials: string[]
+        }[]
       }
       get_signature_audit_logs: {
         Args: {

@@ -1028,7 +1028,330 @@ CREATE INDEX IF NOT EXISTS idx_skin_sweep_assessments_facility_id ON skin_sweep_
 CREATE INDEX IF NOT EXISTS idx_skin_sweep_assessments_date ON skin_sweep_assessments(assessment_date DESC);
 
 -- =====================================================
--- 8. ROW LEVEL SECURITY (RLS)
+-- 8. FUNCTIONS
+-- =====================================================
+
+-- updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Handle new user creation (sync auth.users → public.users)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, name, credentials, created_at, updated_at)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'name', ''),
+    'Admin',
+    NOW(),
+    NOW()
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Auto-assign user role (default tenant)
+CREATE OR REPLACE FUNCTION auto_assign_user_role()
+RETURNS TRIGGER AS $$
+DECLARE
+  default_tenant_id UUID;
+  default_facility_id UUID;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = NEW.id) THEN
+    SELECT id INTO default_tenant_id FROM tenants ORDER BY created_at LIMIT 1;
+    IF default_tenant_id IS NOT NULL THEN
+      SELECT id INTO default_facility_id FROM facilities WHERE tenant_id = default_tenant_id LIMIT 1;
+      IF default_facility_id IS NOT NULL THEN
+        INSERT INTO user_roles (user_id, tenant_id, role, facility_id)
+        VALUES (NEW.id, default_tenant_id, 'user', default_facility_id)
+        ON CONFLICT (user_id, tenant_id) DO NOTHING;
+      END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get user tenant_id
+CREATE OR REPLACE FUNCTION get_user_tenant_id(p_user_id UUID)
+RETURNS UUID AS $$
+  SELECT tenant_id FROM user_roles WHERE user_id = p_user_id LIMIT 1;
+$$ LANGUAGE SQL STABLE;
+
+-- Check if user is tenant admin
+CREATE OR REPLACE FUNCTION is_tenant_admin(p_user_id UUID, p_tenant_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_roles WHERE user_id = p_user_id AND tenant_id = p_tenant_id AND role = 'tenant_admin'
+  );
+$$ LANGUAGE SQL STABLE;
+
+-- Check if user has facility access
+CREATE OR REPLACE FUNCTION has_facility_access(p_user_id UUID, p_facility_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_roles ur JOIN facilities f ON ur.tenant_id = f.tenant_id
+    WHERE ur.user_id = p_user_id AND (ur.role = 'tenant_admin' OR ur.facility_id = p_facility_id) AND f.id = p_facility_id
+  );
+$$ LANGUAGE SQL STABLE;
+
+-- Get user role info (bypasses RLS)
+CREATE OR REPLACE FUNCTION get_user_role_info(user_uuid uuid)
+RETURNS TABLE (id uuid, user_id uuid, tenant_id uuid, role text, facility_id uuid, created_at timestamptz)
+LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
+  SELECT ur.id, ur.user_id, ur.tenant_id, ur.role, ur.facility_id, ur.created_at
+  FROM user_roles ur WHERE ur.user_id = user_uuid ORDER BY ur.created_at ASC LIMIT 1;
+$$;
+
+-- Get all roles for a tenant (bypasses RLS)
+CREATE OR REPLACE FUNCTION get_tenant_user_roles(tenant_uuid uuid)
+RETURNS TABLE (id uuid, user_id uuid, tenant_id uuid, role text, facility_id uuid, created_at timestamptz)
+LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
+  SELECT ur.id, ur.user_id, ur.tenant_id, ur.role, ur.facility_id, ur.created_at
+  FROM user_roles ur WHERE ur.tenant_id = tenant_uuid ORDER BY ur.created_at DESC;
+$$;
+
+-- Check if patient has consent
+CREATE OR REPLACE FUNCTION has_patient_consent(p_patient_id UUID, p_consent_type TEXT DEFAULT 'initial_treatment')
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS(
+    SELECT 1 FROM patient_consents
+    WHERE patient_id = p_patient_id AND consent_type = p_consent_type AND patient_signature_id IS NOT NULL
+  );
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+-- Check if credentials allow a procedure
+CREATE OR REPLACE FUNCTION can_perform_procedure(user_credentials TEXT, cpt_code TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE allowed_creds TEXT[];
+BEGIN
+  SELECT allowed_credentials INTO allowed_creds FROM procedure_scopes WHERE procedure_code = cpt_code;
+  IF allowed_creds IS NULL THEN RETURN TRUE; END IF;
+  RETURN user_credentials = ANY(allowed_creds);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get allowed procedures for credential
+CREATE OR REPLACE FUNCTION get_allowed_procedures(user_credentials TEXT)
+RETURNS TABLE (procedure_code TEXT, procedure_name TEXT, category TEXT)
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY SELECT ps.procedure_code, ps.procedure_name, ps.category
+    FROM procedure_scopes ps WHERE user_credentials = ANY(ps.allowed_credentials) ORDER BY ps.category, ps.procedure_code;
+END;
+$$;
+
+-- Get restricted procedures for credential
+CREATE OR REPLACE FUNCTION get_restricted_procedures(user_credentials TEXT)
+RETURNS TABLE (procedure_code TEXT, procedure_name TEXT, category TEXT, required_credentials TEXT[])
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN QUERY SELECT ps.procedure_code, ps.procedure_name, ps.category, ps.allowed_credentials
+    FROM procedure_scopes ps WHERE NOT (user_credentials = ANY(ps.allowed_credentials)) ORDER BY ps.category, ps.procedure_code;
+END;
+$$;
+
+-- Get patient document count
+CREATE OR REPLACE FUNCTION get_patient_document_count(patient_uuid UUID)
+RETURNS INTEGER AS $$
+BEGIN RETURN (SELECT COUNT(*)::INTEGER FROM patient_documents WHERE patient_id = patient_uuid AND is_archived = false); END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Set document uploaded_by
+CREATE OR REPLACE FUNCTION set_document_uploaded_by()
+RETURNS TRIGGER AS $$
+BEGIN IF NEW.uploaded_by IS NULL THEN NEW.uploaded_by := auth.uid(); END IF; RETURN NEW; END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Set document archived metadata
+CREATE OR REPLACE FUNCTION set_document_archived_metadata()
+RETURNS TRIGGER AS $$
+BEGIN IF NEW.is_archived = true AND OLD.is_archived = false THEN NEW.archived_at := NOW(); NEW.archived_by := auth.uid(); END IF; RETURN NEW; END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Signature audit logs
+CREATE OR REPLACE FUNCTION get_signature_audit_logs(
+  p_tenant_id UUID DEFAULT NULL, p_facility_id UUID DEFAULT NULL, p_user_id UUID DEFAULT NULL,
+  p_signature_type TEXT DEFAULT NULL, p_start_date TIMESTAMPTZ DEFAULT NULL, p_end_date TIMESTAMPTZ DEFAULT NULL,
+  p_limit INTEGER DEFAULT 100, p_offset INTEGER DEFAULT 0
+)
+RETURNS TABLE (
+  signature_id UUID, signature_type TEXT, signature_method TEXT, signed_at TIMESTAMPTZ, ip_address TEXT,
+  visit_id UUID, visit_date TIMESTAMPTZ, visit_type TEXT, visit_status TEXT,
+  patient_id UUID, patient_name TEXT, patient_mrn TEXT,
+  facility_id UUID, facility_name TEXT,
+  signer_user_id UUID, signer_name TEXT, signer_role TEXT, signer_credentials TEXT,
+  created_at TIMESTAMPTZ
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT s.id, s.signature_type, s.signature_method, s.signed_at, s.ip_address,
+    v.id, v.visit_date, v.visit_type, v.status, p.id, (p.first_name || ' ' || p.last_name),
+    p.mrn, f.id, f.name, u.id, u.name, s.signer_role, u.credentials, s.created_at
+  FROM signatures s
+  LEFT JOIN visits v ON v.id = s.visit_id LEFT JOIN patients p ON p.id = s.patient_id
+  LEFT JOIN facilities f ON f.id = p.facility_id LEFT JOIN users u ON u.id = s.created_by
+  WHERE (p_tenant_id IS NULL OR f.id IN (SELECT uf.facility_id FROM user_facilities uf WHERE uf.user_id IN (SELECT ur.user_id FROM user_roles ur WHERE ur.tenant_id = p_tenant_id)))
+    AND (p_facility_id IS NULL OR f.id = p_facility_id) AND (p_user_id IS NULL OR s.created_by = p_user_id)
+    AND (p_signature_type IS NULL OR s.signature_type = p_signature_type)
+    AND (p_start_date IS NULL OR s.signed_at >= p_start_date) AND (p_end_date IS NULL OR s.signed_at <= p_end_date)
+  ORDER BY s.signed_at DESC LIMIT p_limit OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Signature audit stats
+CREATE OR REPLACE FUNCTION get_signature_audit_stats(
+  p_tenant_id UUID DEFAULT NULL, p_facility_id UUID DEFAULT NULL,
+  p_start_date TIMESTAMPTZ DEFAULT NULL, p_end_date TIMESTAMPTZ DEFAULT NULL
+)
+RETURNS TABLE (
+  total_signatures BIGINT, consent_signatures BIGINT, patient_signatures BIGINT, provider_signatures BIGINT,
+  drawn_signatures BIGINT, typed_signatures BIGINT, uploaded_signatures BIGINT,
+  total_visits_signed BIGINT, unique_signers BIGINT
+) AS $$
+BEGIN
+  RETURN QUERY WITH filtered AS (
+    SELECT s.*, p.facility_id AS patient_facility_id FROM signatures s LEFT JOIN patients p ON p.id = s.patient_id
+    WHERE (p_tenant_id IS NULL OR p.facility_id IN (SELECT uf.facility_id FROM user_facilities uf WHERE uf.user_id IN (SELECT ur.user_id FROM user_roles ur WHERE ur.tenant_id = p_tenant_id)))
+      AND (p_facility_id IS NULL OR p.facility_id = get_signature_audit_stats.p_facility_id)
+      AND (p_start_date IS NULL OR s.signed_at >= p_start_date) AND (p_end_date IS NULL OR s.signed_at <= p_end_date)
+  )
+  SELECT COUNT(*)::BIGINT, COUNT(*) FILTER (WHERE signature_type = 'consent')::BIGINT,
+    COUNT(*) FILTER (WHERE signature_type = 'patient')::BIGINT, COUNT(*) FILTER (WHERE signature_type = 'provider')::BIGINT,
+    COUNT(*) FILTER (WHERE signature_method = 'draw')::BIGINT, COUNT(*) FILTER (WHERE signature_method = 'type')::BIGINT,
+    COUNT(*) FILTER (WHERE signature_method = 'upload')::BIGINT,
+    COUNT(DISTINCT visit_id) FILTER (WHERE visit_id IS NOT NULL)::BIGINT,
+    COUNT(DISTINCT created_by) FILTER (WHERE created_by IS NOT NULL)::BIGINT
+  FROM filtered;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get skilled nursing assessment with wounds
+CREATE OR REPLACE FUNCTION get_skilled_nursing_assessment_with_wounds(assessment_id_param UUID)
+RETURNS JSON AS $$
+DECLARE result JSON;
+BEGIN
+  SELECT json_build_object(
+    'assessment', row_to_json(sna.*),
+    'wounds', COALESCE((SELECT json_agg(row_to_json(snw.*)) FROM skilled_nursing_wounds snw WHERE snw.assessment_id = assessment_id_param), '[]'::json)
+  ) INTO result FROM skilled_nursing_assessments sna WHERE sna.id = assessment_id_param;
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get current user credentials (used for signing, billing, scope checks)
+CREATE OR REPLACE FUNCTION get_current_user_credentials()
+RETURNS TABLE (credentials TEXT, name TEXT)
+LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
+  SELECT u.credentials, u.name FROM users u WHERE u.id = auth.uid() LIMIT 1;
+$$;
+
+-- Get patient G-tube procedure count
+CREATE OR REPLACE FUNCTION get_patient_gtube_procedure_count(patient_id_param UUID)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (SELECT COUNT(*)::INTEGER FROM gtube_procedures WHERE patient_id = patient_id_param);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Get visit addendums with author info (bypasses RLS for user data)
+CREATE OR REPLACE FUNCTION get_visit_addendums(p_visit_id UUID)
+RETURNS TABLE (
+  id UUID, note TEXT, note_type TEXT, created_at TIMESTAMPTZ, created_by UUID,
+  users JSON
+)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  RETURN QUERY
+  SELECT wn.id, wn.note, wn.note_type, wn.created_at, wn.created_by,
+    json_build_object('name', u.name, 'credentials', u.credentials) AS users
+  FROM wound_notes wn
+  LEFT JOIN users u ON u.id = wn.created_by
+  WHERE wn.visit_id = p_visit_id AND wn.note_type = 'addendum'
+  ORDER BY wn.created_at ASC;
+END;
+$$;
+
+-- Get all assessments for a visit (specialized + standard)
+CREATE OR REPLACE FUNCTION get_visit_all_assessments(visit_id_param UUID)
+RETURNS JSON AS $$
+DECLARE result JSON;
+BEGIN
+  SELECT json_build_object(
+    'standard', COALESCE((SELECT json_agg(row_to_json(a.*)) FROM assessments a WHERE a.visit_id = visit_id_param), '[]'::json),
+    'skilled_nursing', (SELECT row_to_json(sna.*) FROM skilled_nursing_assessments sna WHERE sna.visit_id = visit_id_param LIMIT 1),
+    'skilled_nursing_wounds', COALESCE((SELECT json_agg(row_to_json(snw.*)) FROM skilled_nursing_wounds snw WHERE snw.visit_id = visit_id_param), '[]'::json),
+    'grafting', COALESCE((SELECT json_agg(row_to_json(ga.*)) FROM grafting_assessments ga WHERE ga.visit_id = visit_id_param), '[]'::json),
+    'skin_sweep', COALESCE((SELECT json_agg(row_to_json(ssa.*)) FROM skin_sweep_assessments ssa WHERE ssa.visit_id = visit_id_param), '[]'::json)
+  ) INTO result;
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if user is facility admin
+CREATE OR REPLACE FUNCTION is_facility_admin(p_user_id UUID, p_facility_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = p_user_id
+    AND (role = 'tenant_admin' OR (role = 'facility_admin' AND facility_id = p_facility_id))
+  );
+$$ LANGUAGE SQL STABLE;
+
+-- Check if visit is ready for signature
+CREATE OR REPLACE FUNCTION is_visit_ready_for_signature(p_visit_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM visits v
+    WHERE v.id = p_visit_id
+    AND v.status IN ('complete', 'completed', 'ready_for_signature', 'approved')
+    AND EXISTS (SELECT 1 FROM assessments a WHERE a.visit_id = v.id)
+  );
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+-- =====================================================
+-- 9. TRIGGERS
+-- =====================================================
+
+-- updated_at triggers
+CREATE TRIGGER update_facilities_updated_at BEFORE UPDATE ON facilities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_patients_updated_at BEFORE UPDATE ON patients FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_wounds_updated_at BEFORE UPDATE ON wounds FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_visits_updated_at BEFORE UPDATE ON visits FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_assessments_updated_at BEFORE UPDATE ON assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_treatments_updated_at BEFORE UPDATE ON treatments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_billings_updated_at BEFORE UPDATE ON billings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_roles_updated_at BEFORE UPDATE ON user_roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_wound_notes_updated_at BEFORE UPDATE ON wound_notes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_procedure_scopes_updated_at BEFORE UPDATE ON procedure_scopes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_skilled_nursing_assessments_updated_at BEFORE UPDATE ON skilled_nursing_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_skilled_nursing_wounds_updated_at BEFORE UPDATE ON skilled_nursing_wounds FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_gtube_procedures_updated_at BEFORE UPDATE ON gtube_procedures FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_grafting_assessments_updated_at BEFORE UPDATE ON grafting_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_skin_sweep_assessments_updated_at BEFORE UPDATE ON skin_sweep_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_patient_clinicians_updated_at BEFORE UPDATE ON patient_clinicians FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Auth triggers
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+DROP TRIGGER IF EXISTS on_auth_user_created_assign_role ON auth.users;
+CREATE TRIGGER on_auth_user_created_assign_role AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION auto_assign_user_role();
+
+-- Document triggers
+CREATE TRIGGER trigger_set_document_uploaded_by BEFORE INSERT ON patient_documents FOR EACH ROW EXECUTE FUNCTION set_document_uploaded_by();
+CREATE TRIGGER trigger_set_document_archived_metadata BEFORE UPDATE ON patient_documents FOR EACH ROW WHEN (NEW.is_archived IS DISTINCT FROM OLD.is_archived) EXECUTE FUNCTION set_document_archived_metadata();
+
+-- =====================================================
+-- 10. ROW LEVEL SECURITY (RLS)
 -- =====================================================
 
 -- Enable RLS on all tables
@@ -1470,259 +1793,6 @@ CREATE POLICY "Users can delete skin sweep assessments" ON skin_sweep_assessment
   USING (created_by = auth.uid());
 
 -- =====================================================
--- 9. FUNCTIONS
--- =====================================================
-
--- updated_at trigger function
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Handle new user creation (sync auth.users → public.users)
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.users (id, email, name, credentials, created_at, updated_at)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'name', ''),
-    'Admin',
-    NOW(),
-    NOW()
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Auto-assign user role (default tenant)
-CREATE OR REPLACE FUNCTION auto_assign_user_role()
-RETURNS TRIGGER AS $$
-DECLARE
-  default_tenant_id UUID;
-  default_facility_id UUID;
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = NEW.id) THEN
-    SELECT id INTO default_tenant_id FROM tenants ORDER BY created_at LIMIT 1;
-    IF default_tenant_id IS NOT NULL THEN
-      SELECT id INTO default_facility_id FROM facilities WHERE tenant_id = default_tenant_id LIMIT 1;
-      IF default_facility_id IS NOT NULL THEN
-        INSERT INTO user_roles (user_id, tenant_id, role, facility_id)
-        VALUES (NEW.id, default_tenant_id, 'user', default_facility_id)
-        ON CONFLICT (user_id, tenant_id) DO NOTHING;
-      END IF;
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Get user tenant_id
-CREATE OR REPLACE FUNCTION get_user_tenant_id(p_user_id UUID)
-RETURNS UUID AS $$
-  SELECT tenant_id FROM user_roles WHERE user_id = p_user_id LIMIT 1;
-$$ LANGUAGE SQL STABLE;
-
--- Check if user is tenant admin
-CREATE OR REPLACE FUNCTION is_tenant_admin(p_user_id UUID, p_tenant_id UUID)
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM user_roles WHERE user_id = p_user_id AND tenant_id = p_tenant_id AND role = 'tenant_admin'
-  );
-$$ LANGUAGE SQL STABLE;
-
--- Check if user has facility access
-CREATE OR REPLACE FUNCTION has_facility_access(p_user_id UUID, p_facility_id UUID)
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM user_roles ur JOIN facilities f ON ur.tenant_id = f.tenant_id
-    WHERE ur.user_id = p_user_id AND (ur.role = 'tenant_admin' OR ur.facility_id = p_facility_id) AND f.id = p_facility_id
-  );
-$$ LANGUAGE SQL STABLE;
-
--- Get user role info (bypasses RLS)
-CREATE OR REPLACE FUNCTION get_user_role_info(user_uuid uuid)
-RETURNS TABLE (id uuid, user_id uuid, tenant_id uuid, role text, facility_id uuid, created_at timestamptz)
-LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
-  SELECT ur.id, ur.user_id, ur.tenant_id, ur.role, ur.facility_id, ur.created_at
-  FROM user_roles ur WHERE ur.user_id = user_uuid ORDER BY ur.created_at ASC LIMIT 1;
-$$;
-
--- Get all roles for a tenant (bypasses RLS)
-CREATE OR REPLACE FUNCTION get_tenant_user_roles(tenant_uuid uuid)
-RETURNS TABLE (id uuid, user_id uuid, tenant_id uuid, role text, facility_id uuid, created_at timestamptz)
-LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
-  SELECT ur.id, ur.user_id, ur.tenant_id, ur.role, ur.facility_id, ur.created_at
-  FROM user_roles ur WHERE ur.tenant_id = tenant_uuid ORDER BY ur.created_at DESC;
-$$;
-
--- Check if patient has consent
-CREATE OR REPLACE FUNCTION has_patient_consent(p_patient_id UUID, p_consent_type TEXT DEFAULT 'initial_treatment')
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS(
-    SELECT 1 FROM patient_consents
-    WHERE patient_id = p_patient_id AND consent_type = p_consent_type AND patient_signature_id IS NOT NULL
-  );
-$$ LANGUAGE SQL SECURITY DEFINER;
-
--- Check if credentials allow a procedure
-CREATE OR REPLACE FUNCTION can_perform_procedure(user_credentials TEXT, cpt_code TEXT)
-RETURNS BOOLEAN AS $$
-DECLARE allowed_creds TEXT[];
-BEGIN
-  SELECT allowed_credentials INTO allowed_creds FROM procedure_scopes WHERE procedure_code = cpt_code;
-  IF allowed_creds IS NULL THEN RETURN TRUE; END IF;
-  RETURN user_credentials = ANY(allowed_creds);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Get allowed procedures for credential
-CREATE OR REPLACE FUNCTION get_allowed_procedures(user_credentials TEXT)
-RETURNS TABLE (procedure_code TEXT, procedure_name TEXT, category TEXT)
-LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  RETURN QUERY SELECT ps.procedure_code, ps.procedure_name, ps.category
-    FROM procedure_scopes ps WHERE user_credentials = ANY(ps.allowed_credentials) ORDER BY ps.category, ps.procedure_code;
-END;
-$$;
-
--- Get restricted procedures for credential
-CREATE OR REPLACE FUNCTION get_restricted_procedures(user_credentials TEXT)
-RETURNS TABLE (procedure_code TEXT, procedure_name TEXT, category TEXT, required_credentials TEXT[])
-LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  RETURN QUERY SELECT ps.procedure_code, ps.procedure_name, ps.category, ps.allowed_credentials
-    FROM procedure_scopes ps WHERE NOT (user_credentials = ANY(ps.allowed_credentials)) ORDER BY ps.category, ps.procedure_code;
-END;
-$$;
-
--- Get patient document count
-CREATE OR REPLACE FUNCTION get_patient_document_count(patient_uuid UUID)
-RETURNS INTEGER AS $$
-BEGIN RETURN (SELECT COUNT(*)::INTEGER FROM patient_documents WHERE patient_id = patient_uuid AND is_archived = false); END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Set document uploaded_by
-CREATE OR REPLACE FUNCTION set_document_uploaded_by()
-RETURNS TRIGGER AS $$
-BEGIN IF NEW.uploaded_by IS NULL THEN NEW.uploaded_by := auth.uid(); END IF; RETURN NEW; END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Set document archived metadata
-CREATE OR REPLACE FUNCTION set_document_archived_metadata()
-RETURNS TRIGGER AS $$
-BEGIN IF NEW.is_archived = true AND OLD.is_archived = false THEN NEW.archived_at := NOW(); NEW.archived_by := auth.uid(); END IF; RETURN NEW; END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Signature audit logs
-CREATE OR REPLACE FUNCTION get_signature_audit_logs(
-  p_tenant_id UUID DEFAULT NULL, p_facility_id UUID DEFAULT NULL, p_user_id UUID DEFAULT NULL,
-  p_signature_type TEXT DEFAULT NULL, p_start_date TIMESTAMPTZ DEFAULT NULL, p_end_date TIMESTAMPTZ DEFAULT NULL,
-  p_limit INTEGER DEFAULT 100, p_offset INTEGER DEFAULT 0
-)
-RETURNS TABLE (
-  signature_id UUID, signature_type TEXT, signature_method TEXT, signed_at TIMESTAMPTZ, ip_address TEXT,
-  visit_id UUID, visit_date TIMESTAMPTZ, visit_type TEXT, visit_status TEXT,
-  patient_id UUID, patient_name TEXT, patient_mrn TEXT,
-  facility_id UUID, facility_name TEXT,
-  signer_user_id UUID, signer_name TEXT, signer_role TEXT, signer_credentials TEXT,
-  created_at TIMESTAMPTZ
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT s.id, s.signature_type, s.signature_method, s.signed_at, s.ip_address,
-    v.id, v.visit_date, v.visit_type, v.status, p.id, (p.first_name || ' ' || p.last_name),
-    p.mrn, f.id, f.name, u.id, u.name, s.signer_role, u.credentials, s.created_at
-  FROM signatures s
-  LEFT JOIN visits v ON v.id = s.visit_id LEFT JOIN patients p ON p.id = s.patient_id
-  LEFT JOIN facilities f ON f.id = p.facility_id LEFT JOIN users u ON u.id = s.created_by
-  WHERE (p_tenant_id IS NULL OR f.id IN (SELECT uf.facility_id FROM user_facilities uf WHERE uf.user_id IN (SELECT ur.user_id FROM user_roles ur WHERE ur.tenant_id = p_tenant_id)))
-    AND (p_facility_id IS NULL OR f.id = p_facility_id) AND (p_user_id IS NULL OR s.created_by = p_user_id)
-    AND (p_signature_type IS NULL OR s.signature_type = p_signature_type)
-    AND (p_start_date IS NULL OR s.signed_at >= p_start_date) AND (p_end_date IS NULL OR s.signed_at <= p_end_date)
-  ORDER BY s.signed_at DESC LIMIT p_limit OFFSET p_offset;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Signature audit stats
-CREATE OR REPLACE FUNCTION get_signature_audit_stats(
-  p_tenant_id UUID DEFAULT NULL, p_facility_id UUID DEFAULT NULL,
-  p_start_date TIMESTAMPTZ DEFAULT NULL, p_end_date TIMESTAMPTZ DEFAULT NULL
-)
-RETURNS TABLE (
-  total_signatures BIGINT, consent_signatures BIGINT, patient_signatures BIGINT, provider_signatures BIGINT,
-  drawn_signatures BIGINT, typed_signatures BIGINT, uploaded_signatures BIGINT,
-  total_visits_signed BIGINT, unique_signers BIGINT
-) AS $$
-BEGIN
-  RETURN QUERY WITH filtered AS (
-    SELECT s.*, p.facility_id AS patient_facility_id FROM signatures s LEFT JOIN patients p ON p.id = s.patient_id
-    WHERE (p_tenant_id IS NULL OR p.facility_id IN (SELECT uf.facility_id FROM user_facilities uf WHERE uf.user_id IN (SELECT ur.user_id FROM user_roles ur WHERE ur.tenant_id = p_tenant_id)))
-      AND (p_facility_id IS NULL OR p.facility_id = get_signature_audit_stats.p_facility_id)
-      AND (p_start_date IS NULL OR s.signed_at >= p_start_date) AND (p_end_date IS NULL OR s.signed_at <= p_end_date)
-  )
-  SELECT COUNT(*)::BIGINT, COUNT(*) FILTER (WHERE signature_type = 'consent')::BIGINT,
-    COUNT(*) FILTER (WHERE signature_type = 'patient')::BIGINT, COUNT(*) FILTER (WHERE signature_type = 'provider')::BIGINT,
-    COUNT(*) FILTER (WHERE signature_method = 'draw')::BIGINT, COUNT(*) FILTER (WHERE signature_method = 'type')::BIGINT,
-    COUNT(*) FILTER (WHERE signature_method = 'upload')::BIGINT,
-    COUNT(DISTINCT visit_id) FILTER (WHERE visit_id IS NOT NULL)::BIGINT,
-    COUNT(DISTINCT created_by) FILTER (WHERE created_by IS NOT NULL)::BIGINT
-  FROM filtered;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Get skilled nursing assessment with wounds
-CREATE OR REPLACE FUNCTION get_skilled_nursing_assessment_with_wounds(assessment_id_param UUID)
-RETURNS JSON AS $$
-DECLARE result JSON;
-BEGIN
-  SELECT json_build_object(
-    'assessment', row_to_json(sna.*),
-    'wounds', COALESCE((SELECT json_agg(row_to_json(snw.*)) FROM skilled_nursing_wounds snw WHERE snw.assessment_id = assessment_id_param), '[]'::json)
-  ) INTO result FROM skilled_nursing_assessments sna WHERE sna.id = assessment_id_param;
-  RETURN result;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- =====================================================
--- 10. TRIGGERS
--- =====================================================
-
--- updated_at triggers
-CREATE TRIGGER update_facilities_updated_at BEFORE UPDATE ON facilities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_patients_updated_at BEFORE UPDATE ON patients FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_wounds_updated_at BEFORE UPDATE ON wounds FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_visits_updated_at BEFORE UPDATE ON visits FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_assessments_updated_at BEFORE UPDATE ON assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_treatments_updated_at BEFORE UPDATE ON treatments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_billings_updated_at BEFORE UPDATE ON billings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_user_roles_updated_at BEFORE UPDATE ON user_roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_wound_notes_updated_at BEFORE UPDATE ON wound_notes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_procedure_scopes_updated_at BEFORE UPDATE ON procedure_scopes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_skilled_nursing_assessments_updated_at BEFORE UPDATE ON skilled_nursing_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_skilled_nursing_wounds_updated_at BEFORE UPDATE ON skilled_nursing_wounds FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_gtube_procedures_updated_at BEFORE UPDATE ON gtube_procedures FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_grafting_assessments_updated_at BEFORE UPDATE ON grafting_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_skin_sweep_assessments_updated_at BEFORE UPDATE ON skin_sweep_assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_patient_clinicians_updated_at BEFORE UPDATE ON patient_clinicians FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Auth triggers
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
-DROP TRIGGER IF EXISTS on_auth_user_created_assign_role ON auth.users;
-CREATE TRIGGER on_auth_user_created_assign_role AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION auto_assign_user_role();
-
--- Document triggers
-CREATE TRIGGER trigger_set_document_uploaded_by BEFORE INSERT ON patient_documents FOR EACH ROW EXECUTE FUNCTION set_document_uploaded_by();
-CREATE TRIGGER trigger_set_document_archived_metadata BEFORE UPDATE ON patient_documents FOR EACH ROW WHEN (NEW.is_archived IS DISTINCT FROM OLD.is_archived) EXECUTE FUNCTION set_document_archived_metadata();
-
--- =====================================================
 -- 11. GRANTS
 -- =====================================================
 
@@ -1736,6 +1806,12 @@ GRANT EXECUTE ON FUNCTION get_restricted_procedures TO authenticated;
 GRANT EXECUTE ON FUNCTION get_patient_document_count TO authenticated;
 GRANT EXECUTE ON FUNCTION get_signature_audit_logs TO authenticated;
 GRANT EXECUTE ON FUNCTION get_signature_audit_stats TO authenticated;
+GRANT EXECUTE ON FUNCTION get_current_user_credentials TO authenticated;
+GRANT EXECUTE ON FUNCTION get_patient_gtube_procedure_count TO authenticated;
+GRANT EXECUTE ON FUNCTION get_visit_addendums TO authenticated;
+GRANT EXECUTE ON FUNCTION get_visit_all_assessments TO authenticated;
+GRANT EXECUTE ON FUNCTION is_facility_admin TO authenticated;
+GRANT EXECUTE ON FUNCTION is_visit_ready_for_signature TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON patient_documents TO authenticated;
 
 -- =====================================================
