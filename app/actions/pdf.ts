@@ -282,27 +282,31 @@ export async function getVisitDataForPDF(visitId: string) {
     let addendums = undefined;
     if (visit.status === "signed" || visit.status === "submitted") {
       // Try RPC function first (bypasses RLS for user data)
+      type AddendumRow = {
+        id: string;
+        note: string;
+        note_type: string;
+        created_at: string;
+        created_by: string;
+        users: { name: string | null; credentials: string | null } | null;
+      };
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         "get_visit_addendums",
         { p_visit_id: visitId }
       );
 
-      if (!rpcError && rpcData && rpcData.length > 0) {
-        addendums = rpcData.map((addendum) => {
-          const users = addendum.users as {
-            name: string | null;
-            credentials: string | null;
-          } | null;
-          return {
-            id: addendum.id,
-            note: addendum.note,
-            createdAt: new Date(addendum.created_at),
-            author: {
-              name: users?.name || "Unknown",
-              credentials: users?.credentials || null,
-            },
-          };
-        });
+      const typedRpcData = rpcData as AddendumRow[] | null;
+
+      if (!rpcError && typedRpcData && typedRpcData.length > 0) {
+        addendums = typedRpcData.map((addendum) => ({
+          id: addendum.id,
+          note: addendum.note,
+          createdAt: new Date(addendum.created_at),
+          author: {
+            name: addendum.users?.name || "Unknown",
+            credentials: addendum.users?.credentials || null,
+          },
+        }));
       } else {
         // Fallback to direct query (won't have user data due to RLS)
         const { data: addendumsData } = await supabase
