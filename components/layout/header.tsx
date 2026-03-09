@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { User as UserIcon, LogOut, Menu } from "lucide-react";
@@ -11,8 +12,13 @@ type HeaderProps = {
 };
 
 export default function Header({ user, onMobileMenuClick }: HeaderProps) {
+  const router = useRouter();
+
   async function handleLogout() {
-    await logout();
+    const result = await logout();
+    if ("redirectTo" in result && result.redirectTo) {
+      router.push(result.redirectTo);
+    }
   }
 
   return (

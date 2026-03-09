@@ -23,6 +23,7 @@ type ConsentDialogProps = {
   patientId: string;
   patientName: string;
   open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const DEFAULT_CONSENT_TEXT = `
@@ -71,9 +72,11 @@ This consent remains in effect for all wound care treatment provided at this fac
 export function ConsentDialog({
   patientId,
   patientName,
-  open = true,
+  open: controlledOpen,
+  onOpenChange,
 }: ConsentDialogProps) {
   const router = useRouter();
+  const [internalOpen, setInternalOpen] = useState(controlledOpen ?? true);
   const [agreed, setAgreed] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [activeTab, setActiveTab] = useState<"electronic" | "upload">(
@@ -81,6 +84,19 @@ export function ConsentDialog({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isOpen = controlledOpen ?? internalOpen;
+
+  const handleOpenChange = (value: boolean) => {
+    setInternalOpen(value);
+    onOpenChange?.(value);
+    if (!value) {
+      // Reset state when closing
+      setShowSignature(false);
+      setAgreed(false);
+      setError(null);
+    }
+  };
 
   const handleAgree = () => {
     if (agreed) {
@@ -124,7 +140,7 @@ export function ConsentDialog({
 
   if (showSignature) {
     return (
-      <Dialog open={open} onOpenChange={() => {}}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Sign Consent Form</DialogTitle>
@@ -154,7 +170,7 @@ export function ConsentDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden">
         <DialogHeader>
           <DialogTitle>Consent for Treatment Required</DialogTitle>

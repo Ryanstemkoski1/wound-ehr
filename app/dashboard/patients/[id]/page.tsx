@@ -29,7 +29,7 @@ import VisitCard from "@/components/visits/visit-card";
 import PatientPDFDownloadButton from "@/components/pdf/patient-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { WoundsListClient } from "@/components/wounds/wounds-list-client";
-import { ConsentDialog } from "@/components/patients/consent-dialog";
+import { ConsentBanner } from "@/components/patients/consent-banner";
 import { ConsentStatusCard } from "@/components/patients/consent-status-card";
 import { PatientDocumentsTab } from "@/components/patients/patient-documents-tab";
 import { ClinicianAssignment } from "@/components/patients/clinician-assignment";
@@ -123,9 +123,9 @@ export default async function PatientDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Consent Dialog - Shows if no consent exists */}
+      {/* Consent Warning - Shows banner if no consent exists */}
       {!hasConsent && (
-        <ConsentDialog
+        <ConsentBanner
           patientId={id}
           patientName={`${patient.firstName} ${patient.lastName}`}
         />

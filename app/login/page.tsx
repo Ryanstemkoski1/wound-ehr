@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { login } from "@/app/actions/auth";
@@ -19,6 +19,7 @@ import {
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const successMessage = searchParams.get("message");
 
   const [error, setError] = useState<string>("");
@@ -33,6 +34,8 @@ function LoginForm() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+    } else if (result && "redirectTo" in result && result.redirectTo) {
+      router.push(result.redirectTo);
     }
   }
 

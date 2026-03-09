@@ -187,9 +187,11 @@ function AcceptInviteContent() {
         throw new Error(result.error);
       }
 
-      // Success! The signup action will handle redirect
-      // But we still show success state briefly
-      setSuccess(true);
+      // Success! Redirect to dashboard
+      if (result && "redirectTo" in result) {
+        setSuccess(true);
+        router.push(result.redirectTo as string);
+      }
     } catch (err) {
       console.error("Signup error:", err);
       setError(

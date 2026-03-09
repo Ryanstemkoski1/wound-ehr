@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { resetPassword } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import { Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [validSession, setValidSession] = useState(false);
@@ -54,8 +56,9 @@ export default function ResetPasswordPage() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+    } else if (result && "redirectTo" in result) {
+      router.push(result.redirectTo as string);
     }
-    // If successful, redirect happens automatically
   }
 
   if (checking) {

@@ -2,7 +2,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -66,9 +65,9 @@ export async function signup(formData: FormData) {
     }
   }
 
-  // Redirect to dashboard (no email confirmation needed for invite-only system)
+  // Return redirect target (no email confirmation needed for invite-only system)
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  return { success: true, redirectTo: "/dashboard" };
 }
 
 export async function login(formData: FormData) {
@@ -176,7 +175,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  return { success: true, redirectTo: "/dashboard" };
 }
 
 export async function logout() {
@@ -191,7 +190,7 @@ export async function logout() {
   }
 
   revalidatePath("/", "layout");
-  redirect("/login");
+  return { success: true, redirectTo: "/login" };
 }
 
 export async function resendConfirmation(formData: FormData) {
@@ -292,5 +291,5 @@ export async function resetPassword(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/login?message=password_updated");
+  return { success: true, redirectTo: "/login?message=password_updated" };
 }
