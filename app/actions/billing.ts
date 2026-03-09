@@ -343,14 +343,14 @@ export async function getAllBilling(filters?: {
         modifiers: b.modifiers ?? [],
         timeSpent: !!b.time_spent,
         notes: b.notes ?? null,
-        createdAt: b.created_at,
+        createdAt: b.created_at ? new Date(b.created_at) : new Date(),
         visit: visit
           ? {
               id: visit.id,
-              visitDate: visit.visit_date,
+              visitDate: new Date(visit.visit_date),
               visitType: visit.visit_type,
             }
-          : { id: b.visit_id, visitDate: null, visitType: "" },
+          : { id: b.visit_id, visitDate: new Date(), visitType: "" },
         patient: patient
           ? {
               id: patient.id,

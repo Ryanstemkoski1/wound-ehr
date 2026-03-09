@@ -64,10 +64,12 @@ export async function getTenantUsers() {
 
     // Filter users by facility if current user is facility_admin
     type TenantUserRole = {
+      id: string;
       user_id: string;
       role: string;
       facility_id: string | null;
       tenant_id: string;
+      created_at: string;
     };
     let filteredRoles = userRoles as TenantUserRole[];
     if (currentRole?.role === "facility_admin" && currentRole?.facility_id) {
@@ -82,20 +84,24 @@ export async function getTenantUsers() {
         ?.filter((ur) => ur.facility_id)
         .map((ur) => ur.facility_id) || [];
 
-    let facilitiesMap = new Map();
+    let facilitiesMap = new Map<string, { id: string; name: string }>();
     if (facilityIds.length > 0) {
       const { data: facilities } = await supabase
         .from("facilities")
         .select("id, name")
         .in("id", facilityIds);
 
-      facilitiesMap = new Map(facilities?.map((f) => [f.id, f]) || []);
+      facilitiesMap = new Map(
+        facilities?.map((f) => [f.id, { id: f.id, name: f.name }]) || []
+      );
     }
 
     // Add facility info to user roles
     const userRolesWithFacility = filteredRoles?.map((role) => ({
       ...role,
-      facility: role.facility_id ? facilitiesMap.get(role.facility_id) : null,
+      facility: role.facility_id
+        ? (facilitiesMap.get(role.facility_id) ?? null)
+        : null,
     }));
 
     // Get user details from the users table
@@ -119,10 +125,21 @@ export async function getTenantUsers() {
     }
 
     // Combine user roles with user details
-    const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
+    const usersMap = new Map(
+      usersData?.map((u) => [
+        u.id,
+        {
+          id: u.id,
+          email: u.email,
+          name: u.name,
+          credentials: u.credentials,
+        },
+      ]) || []
+    );
     const combinedData = userRolesWithFacility?.map((role) => ({
       ...role,
-      users: usersMap.get(role.user_id) || null,
+      role: role.role as "tenant_admin" | "facility_admin" | "user",
+      users: usersMap.get(role.user_id) ?? null,
     }));
 
     return { data: combinedData };

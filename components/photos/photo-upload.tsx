@@ -177,7 +177,7 @@ export function PhotoUpload({
             >
               <div className="flex gap-4">
                 {/* Preview thumbnail */}
-                <div className="bg-muted relative h-24 w-24 flex-shrink-0 overflow-hidden rounded">
+                <div className="bg-muted relative h-24 w-24 shrink-0 overflow-hidden rounded">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.preview}
