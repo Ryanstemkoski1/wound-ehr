@@ -978,6 +978,66 @@ export type Database = {
           },
         ]
       }
+      patient_recording_consents: {
+        Row: {
+          consent_given: boolean
+          consent_text: string
+          consent_version: string
+          consented_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          patient_id: string
+          revoked_at: string | null
+          revoked_reason: string | null
+          signature_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          consent_given?: boolean
+          consent_text: string
+          consent_version?: string
+          consented_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          patient_id: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          signature_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          consent_given?: boolean
+          consent_text?: string
+          consent_version?: string
+          consented_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          patient_id?: string
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          signature_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_recording_consents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_recording_consents_signature_id_fkey"
+            columns: ["signature_id"]
+            isOneToOne: false
+            referencedRelation: "signatures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -2307,20 +2367,107 @@ export type Database = {
         }
         Relationships: []
       }
+      visit_transcripts: {
+        Row: {
+          ai_service: string | null
+          approved_by: string | null
+          audio_duration_seconds: number | null
+          audio_filename: string | null
+          audio_size_bytes: number | null
+          audio_url: string | null
+          clinician_approved_at: string | null
+          clinician_edited: boolean | null
+          cost_llm: number | null
+          cost_transcription: number | null
+          created_at: string | null
+          error_message: string | null
+          final_note: string | null
+          id: string
+          processing_completed_at: string | null
+          processing_started_at: string | null
+          processing_status: string | null
+          transcript_clinical: string | null
+          transcript_metadata: Json | null
+          transcript_raw: string | null
+          updated_at: string | null
+          visit_id: string
+        }
+        Insert: {
+          ai_service?: string | null
+          approved_by?: string | null
+          audio_duration_seconds?: number | null
+          audio_filename?: string | null
+          audio_size_bytes?: number | null
+          audio_url?: string | null
+          clinician_approved_at?: string | null
+          clinician_edited?: boolean | null
+          cost_llm?: number | null
+          cost_transcription?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          final_note?: string | null
+          id?: string
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          processing_status?: string | null
+          transcript_clinical?: string | null
+          transcript_metadata?: Json | null
+          transcript_raw?: string | null
+          updated_at?: string | null
+          visit_id: string
+        }
+        Update: {
+          ai_service?: string | null
+          approved_by?: string | null
+          audio_duration_seconds?: number | null
+          audio_filename?: string | null
+          audio_size_bytes?: number | null
+          audio_url?: string | null
+          clinician_approved_at?: string | null
+          clinician_edited?: boolean | null
+          cost_llm?: number | null
+          cost_transcription?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          final_note?: string | null
+          id?: string
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          processing_status?: string | null
+          transcript_clinical?: string | null
+          transcript_metadata?: Json | null
+          transcript_raw?: string | null
+          updated_at?: string | null
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_transcripts_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visits: {
         Row: {
           addendum_count: number | null
           additional_notes: string | null
+          ai_note_approved: boolean | null
+          ai_transcript_id: string | null
           approved_at: string | null
           approved_by: string | null
           clinician_credentials: string | null
           clinician_id: string | null
           clinician_name: string | null
+          clinician_notes_manual: string | null
           correction_notes: Json | null
           created_at: string | null
           follow_up_date: string | null
           follow_up_notes: string | null
           follow_up_type: string | null
+          has_ai_transcript: boolean | null
           id: string
           location: string | null
           number_of_addenda: number | null
@@ -2342,16 +2489,20 @@ export type Database = {
         Insert: {
           addendum_count?: number | null
           additional_notes?: string | null
+          ai_note_approved?: boolean | null
+          ai_transcript_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           clinician_credentials?: string | null
           clinician_id?: string | null
           clinician_name?: string | null
+          clinician_notes_manual?: string | null
           correction_notes?: Json | null
           created_at?: string | null
           follow_up_date?: string | null
           follow_up_notes?: string | null
           follow_up_type?: string | null
+          has_ai_transcript?: boolean | null
           id?: string
           location?: string | null
           number_of_addenda?: number | null
@@ -2373,16 +2524,20 @@ export type Database = {
         Update: {
           addendum_count?: number | null
           additional_notes?: string | null
+          ai_note_approved?: boolean | null
+          ai_transcript_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           clinician_credentials?: string | null
           clinician_id?: string | null
           clinician_name?: string | null
+          clinician_notes_manual?: string | null
           correction_notes?: Json | null
           created_at?: string | null
           follow_up_date?: string | null
           follow_up_notes?: string | null
           follow_up_type?: string | null
+          has_ai_transcript?: boolean | null
           id?: string
           location?: string | null
           number_of_addenda?: number | null
@@ -2402,6 +2557,13 @@ export type Database = {
           voided_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "visits_ai_transcript_id_fkey"
+            columns: ["ai_transcript_id"]
+            isOneToOne: false
+            referencedRelation: "visit_transcripts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "visits_patient_id_fkey"
             columns: ["patient_id"]

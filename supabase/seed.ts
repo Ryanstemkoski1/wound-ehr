@@ -4,7 +4,7 @@
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 
-dotenv.config({ path: ".env" });
+dotenv.config({ path: ".env.local" });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Use service role for seeding
@@ -535,6 +535,100 @@ async function main() {
   const user = authUsers.users[0];
   console.log(`✅ Found user: ${user.email}`);
 
+  // === Ensure public.users record exists for ALL auth users ===
+  console.log(`\n👤 Ensuring public.users records exist...`);
+  for (const authUser of authUsers.users) {
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", authUser.id)
+      .single();
+
+    if (!existingUser) {
+      const { error: userInsertError } = await supabase.from("users").insert({
+        id: authUser.id,
+        email: authUser.email!,
+        name:
+          authUser.user_metadata?.name || authUser.email?.split("@")[0] || "",
+        credentials: "Admin",
+      });
+
+      if (userInsertError) {
+        console.error(
+          `  ⚠️  Error creating public.users for ${authUser.email}:`,
+          userInsertError.message
+        );
+      } else {
+        console.log(`  ✓ Created public.users record for ${authUser.email}`);
+      }
+    } else {
+      console.log(`  ✓ public.users exists for ${authUser.email}`);
+    }
+  }
+
+  // === Ensure a default tenant exists ===
+  console.log(`\n🏢 Ensuring default tenant exists...`);
+  let { data: tenant } = await supabase
+    .from("tenants")
+    .select("*")
+    .order("created_at")
+    .limit(1)
+    .single();
+
+  if (!tenant) {
+    const { data: newTenant, error: tenantError } = await supabase
+      .from("tenants")
+      .insert({
+        name: "Wound Care Organization",
+        subdomain: "woundcare",
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (tenantError) {
+      console.error("❌ Error creating tenant:", tenantError);
+      process.exit(1);
+    }
+    tenant = newTenant;
+    console.log(`  ✓ Created tenant: ${tenant.name}`);
+  } else {
+    console.log(`  ✓ Tenant exists: ${tenant.name}`);
+  }
+
+  // === Ensure user_roles exist for ALL auth users ===
+  console.log(`\n🔑 Ensuring user roles exist...`);
+  for (let i = 0; i < authUsers.users.length; i++) {
+    const authUser = authUsers.users[i];
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", authUser.id)
+      .eq("tenant_id", tenant.id)
+      .single();
+
+    if (!existingRole) {
+      // First user becomes tenant_admin, others become 'user'
+      const role = i === 0 ? "tenant_admin" : "user";
+      const { error: roleError } = await supabase.from("user_roles").insert({
+        user_id: authUser.id,
+        tenant_id: tenant.id,
+        role,
+      });
+
+      if (roleError) {
+        console.error(
+          `  ⚠️  Error creating role for ${authUser.email}:`,
+          roleError.message
+        );
+      } else {
+        console.log(`  ✓ Assigned ${role} to ${authUser.email}`);
+      }
+    } else {
+      console.log(`  ✓ Role exists for ${authUser.email}`);
+    }
+  }
+
   // Check for existing facilities
   const { data: existingFacilities, error: facilityError } = await supabase
     .from("facilities")
@@ -596,6 +690,7 @@ async function main() {
       const { data: facility, error } = await supabase
         .from("facilities")
         .insert({
+          tenant_id: tenant.id,
           name: facilityNames[i],
           address: `${randomInt(100, 9999)} ${randomElement(streets)}`,
           city: city.name,
@@ -637,6 +732,41 @@ async function main() {
   }
 
   const facilityIds = facilities.map((f) => f.id);
+
+  // === Ensure ALL auth users have user_facilities assignments ===
+  console.log(`\n🔗 Ensuring user_facilities for all auth users...`);
+  for (const authUser of authUsers.users) {
+    const { data: existingUF } = await supabase
+      .from("user_facilities")
+      .select("id")
+      .eq("user_id", authUser.id);
+
+    if (!existingUF || existingUF.length === 0) {
+      // Assign all facilities to this user
+      const ufInserts = facilities.map((f) => ({
+        user_id: authUser.id,
+        facility_id: f.id,
+      }));
+      const { error: ufError } = await supabase
+        .from("user_facilities")
+        .insert(ufInserts);
+
+      if (ufError) {
+        console.error(
+          `  ⚠️  Error assigning facilities to ${authUser.email}:`,
+          ufError.message
+        );
+      } else {
+        console.log(
+          `  ✓ Assigned ${facilities.length} facilities to ${authUser.email}`
+        );
+      }
+    } else {
+      console.log(
+        `  ✓ ${authUser.email} already has ${existingUF.length} facility assignments`
+      );
+    }
+  }
 
   // Check for existing patients
   const { data: existingPatients } = await supabase
@@ -1067,7 +1197,7 @@ async function main() {
       `
       )
       .in("patient.facility_id", facilityIds)
-      .eq("status", "complete");
+      .eq("status", "completed");
 
     const billingInserts = [];
 

@@ -33,6 +33,8 @@ import { ConsentDialog } from "@/components/patients/consent-dialog";
 import { ConsentStatusCard } from "@/components/patients/consent-status-card";
 import { PatientDocumentsTab } from "@/components/patients/patient-documents-tab";
 import { ClinicianAssignment } from "@/components/patients/clinician-assignment";
+import { checkRecordingConsent } from "@/app/actions/ai-transcription";
+import { RecordingConsentStatus } from "@/components/signatures/recording-consent-status";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -65,6 +67,11 @@ export default async function PatientDetailPage({
   // Check if patient has consent-to-treat
   const consentResult = await getPatientConsent(id);
   const hasConsent = !consentResult.error && consentResult.data !== null;
+
+  // Check recording consent for AI transcription
+  const recordingConsentResult = await checkRecordingConsent(id);
+  const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
+  const recordingConsent = recordingConsentResult.consent ?? null;
 
   // Get patient documents
   const documentsResult = await getPatientDocuments(id);
@@ -173,6 +180,14 @@ export default async function PatientDetailPage({
           consentData={consentResult.data}
         />
       )}
+
+      {/* Recording Consent for AI Transcription */}
+      <RecordingConsentStatus
+        patientId={id}
+        patientName={`${patient.firstName} ${patient.lastName}`}
+        consent={recordingConsent}
+        hasConsent={hasRecordingConsent}
+      />
 
       {/* Clinician Assignment */}
       <ClinicianAssignment

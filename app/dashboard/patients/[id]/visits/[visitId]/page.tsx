@@ -22,6 +22,12 @@ import { VisitSignatureWorkflow } from "@/components/visits/visit-signature-work
 import { AddAddendumDialog } from "@/components/visits/add-addendum-dialog";
 import { VisitAddendums } from "@/components/visits/visit-addendums";
 import { SendToOfficeButton } from "@/components/visits/send-to-office-button";
+import { VisitAIStatusCard } from "@/components/visits/visit-ai-status-card";
+import { AIReviewPanel } from "@/components/visits/ai-note-review";
+import {
+  checkRecordingConsent,
+  getVisitTranscript,
+} from "@/app/actions/ai-transcription";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -54,6 +60,12 @@ export default async function VisitDetailPage({ params }: PageProps) {
   // Get billing information
   const billingResult = await getBillingForVisit(visitId);
   const billing = billingResult.success ? billingResult.billing : null;
+
+  // Check AI recording consent and transcript status
+  const recordingConsentResult = await checkRecordingConsent(patientId);
+  const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
+  const transcriptResult = await getVisitTranscript(visitId);
+  const transcript = transcriptResult.transcript ?? null;
 
   // Get current user's name and credentials for signing
   const { data: userData } = await supabase.rpc("get_current_user_credentials");
@@ -127,6 +139,62 @@ export default async function VisitDetailPage({ params }: PageProps) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Visit Information */}
         <div className="space-y-6 lg:col-span-2">
+          {/* AI Documentation Status */}
+          <VisitAIStatusCard
+            visitId={visitId}
+            patientId={patientId}
+            patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+            hasRecordingConsent={hasRecordingConsent}
+            hasTranscript={!!transcript}
+            transcriptId={transcript?.id ?? null}
+            transcriptStatus={
+              (transcript?.processing_status as
+                | "pending"
+                | "processing"
+                | "completed"
+                | "failed"
+                | "deleted") ?? null
+            }
+            aiNoteApproved={!!transcript?.clinician_approved_at}
+            visitStatus={visit.status || "draft"}
+          />
+
+          {/* AI Note Review Panel — shown when transcript is completed */}
+          {transcript &&
+            (transcript.processing_status === "completed" ||
+              !!transcript.clinician_approved_at) && (
+              <AIReviewPanel
+                transcript={{
+                  id: transcript.id,
+                  visit_id: transcript.visit_id,
+                  transcript_raw: transcript.transcript_raw ?? null,
+                  transcript_clinical: transcript.transcript_clinical ?? null,
+                  final_note: transcript.final_note ?? null,
+                  clinician_edited: transcript.clinician_edited ?? false,
+                  clinician_approved_at:
+                    transcript.clinician_approved_at ?? null,
+                  approved_by: transcript.approved_by ?? null,
+                  audio_duration_seconds:
+                    transcript.audio_duration_seconds ?? null,
+                  audio_filename: transcript.audio_filename ?? null,
+                  audio_url: transcript.audio_url ?? null,
+                  cost_transcription: transcript.cost_transcription ?? null,
+                  cost_llm: transcript.cost_llm ?? null,
+                  processing_status: transcript.processing_status,
+                  transcript_metadata:
+                    (transcript.transcript_metadata as Record<
+                      string,
+                      unknown
+                    >) ?? null,
+                  error_message: transcript.error_message ?? null,
+                }}
+                visitId={visitId}
+                isEditable={
+                  visit.status !== "signed" && visit.status !== "submitted"
+                }
+              />
+            )}
+
           <Card>
             <CardHeader>
               <CardTitle>Visit Information</CardTitle>
