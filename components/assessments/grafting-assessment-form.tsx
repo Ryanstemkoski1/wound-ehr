@@ -73,12 +73,15 @@ export default function GraftingAssessmentForm({
   // Watch fields for conditional rendering and calculations
   const watchGraftLength = watch("graftSizeLength");
   const watchGraftWidth = watch("graftSizeWidth");
-  const watchDonorLength = watch("donorSizeLength");
-  const watchDonorWidth = watch("donorSizeWidth");
+  // Donor size watches reserved for future donor area calculation
+  watch("donorSizeLength");
+  watch("donorSizeWidth");
 
   // Calculate graft area
   const graftArea = useMemo(() => {
-    const length = watchGraftLength ? parseFloat(watchGraftLength.toString()) : 0;
+    const length = watchGraftLength
+      ? parseFloat(watchGraftLength.toString())
+      : 0;
     const width = watchGraftWidth ? parseFloat(watchGraftWidth.toString()) : 0;
     if (length > 0 && width > 0) {
       return (length * width).toFixed(2);
@@ -227,7 +230,9 @@ export default function GraftingAssessmentForm({
                   <div className="space-y-2">
                     <Label htmlFor="procedureType">Procedure Type *</Label>
                     <Select
-                      onValueChange={(value) => setValue("procedureType", value)}
+                      onValueChange={(value) =>
+                        setValue("procedureType", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
@@ -256,7 +261,9 @@ export default function GraftingAssessmentForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="graftType">Graft Type *</Label>
-                    <Select onValueChange={(value) => setValue("graftType", value)}>
+                    <Select
+                      onValueChange={(value) => setValue("graftType", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select graft type" />
                       </SelectTrigger>
@@ -285,7 +292,9 @@ export default function GraftingAssessmentForm({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="meshRatio">Mesh Ratio (if applicable)</Label>
+                    <Label htmlFor="meshRatio">
+                      Mesh Ratio (if applicable)
+                    </Label>
                     <Input
                       id="meshRatio"
                       placeholder="e.g., 1:1.5, 3:1"
@@ -450,7 +459,9 @@ export default function GraftingAssessmentForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="graftColor">Graft Color</Label>
-                    <Select onValueChange={(value) => setValue("graftColor", value)}>
+                    <Select
+                      onValueChange={(value) => setValue("graftColor", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select color" />
                       </SelectTrigger>
@@ -521,7 +532,10 @@ export default function GraftingAssessmentForm({
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="hasBlistering" {...register("hasBlistering")} />
+                    <Checkbox
+                      id="hasBlistering"
+                      {...register("hasBlistering")}
+                    />
                     <Label htmlFor="hasBlistering">Blistering</Label>
                   </div>
 
@@ -534,7 +548,10 @@ export default function GraftingAssessmentForm({
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="graftNecrosis" {...register("graftNecrosis")} />
+                    <Checkbox
+                      id="graftNecrosis"
+                      {...register("graftNecrosis")}
+                    />
                     <Label htmlFor="graftNecrosis">Necrosis Present</Label>
                   </div>
 
@@ -628,7 +645,10 @@ export default function GraftingAssessmentForm({
                         onCheckedChange={(checked) => {
                           const current = formValues.infectionSigns || [];
                           if (checked) {
-                            setValue("infectionSigns", [...current, "erythema"]);
+                            setValue("infectionSigns", [
+                              ...current,
+                              "erythema",
+                            ]);
                           } else {
                             setValue(
                               "infectionSigns",
@@ -690,7 +710,9 @@ export default function GraftingAssessmentForm({
                 <div className="space-y-2">
                   <Label htmlFor="donorSiteCondition">Condition</Label>
                   <Select
-                    onValueChange={(value) => setValue("donorSiteCondition", value)}
+                    onValueChange={(value) =>
+                      setValue("donorSiteCondition", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select condition" />
@@ -778,7 +800,9 @@ export default function GraftingAssessmentForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="moistureManagement">Moisture Management</Label>
+                  <Label htmlFor="moistureManagement">
+                    Moisture Management
+                  </Label>
                   <Textarea
                     id="moistureManagement"
                     placeholder="Describe moisture control strategies"
@@ -957,7 +981,9 @@ export default function GraftingAssessmentForm({
                 <div className="space-y-2">
                   <Label htmlFor="overallAssessment">Overall Assessment</Label>
                   <Select
-                    onValueChange={(value) => setValue("overallAssessment", value)}
+                    onValueChange={(value) =>
+                      setValue("overallAssessment", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select assessment" />

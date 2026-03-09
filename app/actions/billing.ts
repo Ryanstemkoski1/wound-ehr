@@ -323,40 +323,53 @@ export async function getAllBilling(filters?: {
     }
 
     // Map to camelCase shape expected by UI
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapped = (billings || []).map((b: any) => ({
-      id: b.id,
-      cptCodes: b.cpt_codes ?? [],
-      icd10Codes: b.icd10_codes ?? [],
-      modifiers: b.modifiers ?? [],
-      timeSpent: !!b.time_spent,
-      notes: b.notes ?? null,
-      createdAt: b.created_at,
-      visit: b.visit
-        ? {
-            id: b.visit.id,
-            visitDate: b.visit.visit_date,
-            visitType: b.visit.visit_type,
-          }
-        : { id: b.visit_id, visitDate: null, visitType: "" },
-      patient: b.patient
-        ? {
-            id: b.patient.id,
-            firstName: b.patient.first_name,
-            lastName: b.patient.last_name,
-            mrn: b.patient.mrn,
-            facility: b.patient.facility
-              ? { id: b.patient.facility.id, name: b.patient.facility.name }
-              : { id: "", name: "" },
-          }
-        : {
-            id: b.patient_id,
-            firstName: "",
-            lastName: "",
-            mrn: "",
-            facility: { id: "", name: "" },
-          },
-    }));
+    const mapped = (billings || []).map((b) => {
+      const visit = b.visit as {
+        id: string;
+        visit_date: string;
+        visit_type: string;
+      } | null;
+      const patient = b.patient as {
+        id: string;
+        first_name: string;
+        last_name: string;
+        mrn: string;
+        facility: { id: string; name: string } | null;
+      } | null;
+      return {
+        id: b.id,
+        cptCodes: b.cpt_codes ?? [],
+        icd10Codes: b.icd10_codes ?? [],
+        modifiers: b.modifiers ?? [],
+        timeSpent: !!b.time_spent,
+        notes: b.notes ?? null,
+        createdAt: b.created_at,
+        visit: visit
+          ? {
+              id: visit.id,
+              visitDate: visit.visit_date,
+              visitType: visit.visit_type,
+            }
+          : { id: b.visit_id, visitDate: null, visitType: "" },
+        patient: patient
+          ? {
+              id: patient.id,
+              firstName: patient.first_name,
+              lastName: patient.last_name,
+              mrn: patient.mrn,
+              facility: patient.facility
+                ? { id: patient.facility.id, name: patient.facility.name }
+                : { id: "", name: "" },
+            }
+          : {
+              id: b.patient_id,
+              firstName: "",
+              lastName: "",
+              mrn: "",
+              facility: { id: "", name: "" },
+            },
+      };
+    });
 
     return { success: true as const, billings: mapped };
   } catch (error) {

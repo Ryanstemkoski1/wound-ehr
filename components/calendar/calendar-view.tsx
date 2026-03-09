@@ -149,7 +149,7 @@ export default function CalendarView({
     } finally {
       setIsLoading(false);
     }
-  }, [date, facilityId, patientId, view]);
+  }, [date, facilityId, patientId, clinicianId, view]);
 
   useEffect(() => {
     loadEvents();

@@ -288,15 +288,21 @@ export async function getVisitDataForPDF(visitId: string) {
       );
 
       if (!rpcError && rpcData && rpcData.length > 0) {
-        addendums = rpcData.map((addendum: any) => ({
-          id: addendum.id,
-          note: addendum.note,
-          createdAt: new Date(addendum.created_at),
-          author: {
-            name: addendum.author_name || "Unknown",
-            credentials: addendum.author_credentials || null,
-          },
-        }));
+        addendums = rpcData.map((addendum) => {
+          const users = addendum.users as {
+            name: string | null;
+            credentials: string | null;
+          } | null;
+          return {
+            id: addendum.id,
+            note: addendum.note,
+            createdAt: new Date(addendum.created_at),
+            author: {
+              name: users?.name || "Unknown",
+              credentials: users?.credentials || null,
+            },
+          };
+        });
       } else {
         // Fallback to direct query (won't have user data due to RLS)
         const { data: addendumsData } = await supabase

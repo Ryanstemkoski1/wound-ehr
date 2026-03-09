@@ -52,8 +52,7 @@ export function SignVisitDialog({
       // Success
       onOpenChange(false);
       router.refresh();
-    } catch (_err) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       setError("Failed to sign visit");
       setIsSubmitting(false);
     }

@@ -65,8 +65,7 @@ export function PatientSignatureDialog({
       // Success
       onOpenChange(false);
       router.refresh();
-    } catch (_err) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       setError("Failed to save patient signature");
       setIsSubmitting(false);
     }

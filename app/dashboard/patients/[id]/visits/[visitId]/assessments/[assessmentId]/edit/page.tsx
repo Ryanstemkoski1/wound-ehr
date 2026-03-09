@@ -58,7 +58,8 @@ export default async function EditAssessmentPage({ params }: PageProps) {
           {new Date(assessment.visit.visitDate).toLocaleDateString()}
         </p>
         <p className="text-sm text-blue-600 dark:text-blue-400">
-          💡 Modify any field below and click "Update Assessment" to save changes
+          💡 Modify any field below and click &quot;Update Assessment&quot; to
+          save changes
         </p>
       </div>
       <AssessmentForm

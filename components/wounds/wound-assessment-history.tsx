@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { format } from "date-fns";
-import { FileText, Calendar, Ruler, Activity, Image as ImageIcon } from "lucide-react";
+import {
+  FileText,
+  Calendar,
+  Ruler,
+  Activity,
+  Image as ImageIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -41,13 +47,12 @@ type WoundAssessmentHistoryProps = {
 
 export function WoundAssessmentHistory({
   patientId,
-  woundId,
   assessments,
 }: WoundAssessmentHistoryProps) {
   if (assessments.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Activity className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+      <div className="py-12 text-center">
+        <Activity className="text-muted-foreground mx-auto h-12 w-12 opacity-50" />
         <h3 className="mt-4 text-lg font-semibold">No assessments yet</h3>
         <p className="text-muted-foreground mt-2">
           Assessments will appear here as they are documented during visits
@@ -61,7 +66,7 @@ export function WoundAssessmentHistory({
       {/* Timeline */}
       <div className="relative">
         {/* Timeline line */}
-        <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+        <div className="bg-border absolute top-0 bottom-0 left-4 w-px" />
 
         {/* Assessment cards */}
         <div className="space-y-6">
@@ -75,20 +80,20 @@ export function WoundAssessmentHistory({
             return (
               <div key={assessment.id} className="relative pl-12">
                 {/* Timeline dot */}
-                <div className="absolute left-0 top-2 h-8 w-8 rounded-full bg-background border-4 border-primary flex items-center justify-center">
-                  <FileText className="h-3 w-3 text-primary" />
+                <div className="bg-background border-primary absolute top-2 left-0 flex h-8 w-8 items-center justify-center rounded-full border-4">
+                  <FileText className="text-primary h-3 w-3" />
                 </div>
 
                 {/* Card */}
                 <Link
                   href={`/dashboard/patients/${patientId}/visits/${assessment.visitId}/assessments/${assessment.id}/edit`}
                 >
-                  <Card className="group hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500">
+                  <Card className="group cursor-pointer border-l-4 border-l-blue-500 transition-shadow hover:shadow-md">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-3">
                           {/* Header */}
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge
                               variant="secondary"
                               className="font-semibold"
@@ -96,12 +101,12 @@ export function WoundAssessmentHistory({
                               {assessment.assessmentType === "standard"
                                 ? "Standard Assessment"
                                 : assessment.assessmentType === "wound_note"
-                                ? "Wound Note"
-                                : assessment.assessmentType === "grafting"
-                                ? "Grafting Assessment"
-                                : assessment.assessmentType === "skin_sweep"
-                                ? "Skin Sweep"
-                                : assessment.assessmentType}
+                                  ? "Wound Note"
+                                  : assessment.assessmentType === "grafting"
+                                    ? "Grafting Assessment"
+                                    : assessment.assessmentType === "skin_sweep"
+                                      ? "Skin Sweep"
+                                      : assessment.assessmentType}
                             </Badge>
 
                             {assessment.healingStatus && (
@@ -110,8 +115,8 @@ export function WoundAssessmentHistory({
                                   assessment.healingStatus === "improving"
                                     ? "default"
                                     : assessment.healingStatus === "stable"
-                                    ? "secondary"
-                                    : "destructive"
+                                      ? "secondary"
+                                      : "destructive"
                                 }
                                 className="capitalize"
                               >
@@ -127,7 +132,7 @@ export function WoundAssessmentHistory({
                           </div>
 
                           {/* Visit Info */}
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                          <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                             <div className="flex items-center gap-1.5">
                               <Calendar className="h-3.5 w-3.5" />
                               <span>
@@ -151,8 +156,8 @@ export function WoundAssessmentHistory({
 
                           {/* Measurements */}
                           {hasMeasurements && (
-                            <div className="flex items-center gap-4 text-sm flex-wrap">
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-4 text-sm">
+                              <div className="text-muted-foreground flex items-center gap-1.5">
                                 <Ruler className="h-3.5 w-3.5" />
                                 <span>Measurements:</span>
                               </div>
@@ -186,17 +191,18 @@ export function WoundAssessmentHistory({
                             {assessment.photos.slice(0, 3).map((photo) => (
                               <div
                                 key={photo.id}
-                                className="w-16 h-16 rounded-md overflow-hidden border"
+                                className="h-16 w-16 overflow-hidden rounded-md border"
                               >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={photo.url}
                                   alt={photo.filename}
-                                  className="w-full h-full object-cover"
+                                  className="h-full w-full object-cover"
                                 />
                               </div>
                             ))}
                             {assessment.photos.length > 3 && (
-                              <div className="w-16 h-16 rounded-md border bg-muted flex items-center justify-center text-xs font-medium">
+                              <div className="bg-muted flex h-16 w-16 items-center justify-center rounded-md border text-xs font-medium">
                                 +{assessment.photos.length - 3}
                               </div>
                             )}
@@ -205,8 +211,8 @@ export function WoundAssessmentHistory({
                       </div>
 
                       {/* Click to edit hint */}
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
+                      <div className="mt-3 border-t pt-3">
+                        <p className="text-muted-foreground group-hover:text-primary text-xs transition-colors">
                           Click to view full assessment details →
                         </p>
                       </div>

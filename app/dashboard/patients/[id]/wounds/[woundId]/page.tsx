@@ -26,9 +26,41 @@ import { format } from "date-fns";
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
 
+// Shape returned by getPhotos / getPhotosForComparison server actions
+type RawPhoto = {
+  id: string;
+  url: string;
+  filename: string;
+  caption: string | null;
+  uploaded_at: string | null;
+  uploadedAt?: string | null;
+  wound?: {
+    id: string;
+    wound_number?: string;
+    woundNumber?: string;
+    location: string;
+  } | null;
+  visit?: {
+    id: string;
+    visit_date?: string;
+    visitDate?: string | Date;
+    visit_type?: string;
+    visitType?: string;
+  } | null;
+  assessment?: {
+    id: string;
+    healing_status?: string | null;
+    healingStatus?: string | null;
+    length?: number | null;
+    width?: number | null;
+    depth?: number | null;
+    area?: number | null;
+  } | null;
+  uploader?: { name: string | null; email: string } | null;
+};
+
 // Normalize raw DB rows to the PhotoGallery shape
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapPhoto(p: any) {
+function mapPhoto(p: RawPhoto) {
   const safeDate = (value: unknown) =>
     value ? new Date(value as string) : new Date("1970-01-01T00:00:00.000Z");
 
@@ -39,15 +71,15 @@ function mapPhoto(p: any) {
     caption: p.caption ?? null,
     uploadedAt: safeDate(p.uploaded_at ?? p.uploadedAt),
     wound: {
-      id: p.wound?.id,
-      woundNumber: p.wound?.wound_number ?? p.wound?.woundNumber,
-      location: p.wound?.location,
+      id: p.wound?.id ?? "",
+      woundNumber: p.wound?.wound_number ?? p.wound?.woundNumber ?? "",
+      location: p.wound?.location ?? "",
     },
     visit: p.visit
       ? {
           id: p.visit.id,
           visitDate: safeDate(p.visit.visit_date ?? p.visit.visitDate),
-          visitType: p.visit.visit_type ?? p.visit.visitType,
+          visitType: p.visit.visit_type ?? p.visit.visitType ?? "",
         }
       : null,
     assessment: p.assessment
@@ -91,8 +123,12 @@ export default async function WoundDetailPage({
   const photosResult = await getPhotos(woundId);
   const comparisonResult = await getPhotosForComparison(woundId);
 
-  const photos = (photosResult.photos || []).map(mapPhoto);
-  const comparisonPhotos = (comparisonResult.photos || []).map(mapPhoto);
+  const photos = ((photosResult.photos || []) as unknown as RawPhoto[]).map(
+    mapPhoto
+  );
+  const comparisonPhotos = (
+    (comparisonResult.photos || []) as unknown as RawPhoto[]
+  ).map(mapPhoto);
 
   // Calculate stats from assessments
   const latestAssessment = assessments[0];
@@ -219,7 +255,8 @@ export default async function WoundDetailPage({
             <div>
               <CardTitle>Assessment History</CardTitle>
               <CardDescription className="mt-1.5">
-                Complete record of all assessments for this wound across all visits
+                Complete record of all assessments for this wound across all
+                visits
               </CardDescription>
             </div>
             <QuickAssessmentDialog
@@ -238,8 +275,10 @@ export default async function WoundDetailPage({
         <CardContent>
           {assessments.length > 0 ? (
             <>
-              <p className="text-sm text-blue-600 dark:text-blue-400 mb-6">
-                💡 <strong>Quick Tip:</strong> Click any assessment card to view full details and edit. Click "Add Assessment" above to document this wound at a specific visit.
+              <p className="mb-6 text-sm text-blue-600 dark:text-blue-400">
+                💡 <strong>Quick Tip:</strong> Click any assessment card to view
+                full details and edit. Click &quot;Add Assessment&quot; above to
+                document this wound at a specific visit.
               </p>
               <WoundAssessmentHistory
                 patientId={patientId}
@@ -248,13 +287,14 @@ export default async function WoundDetailPage({
               />
             </>
           ) : (
-            <div className="text-center py-12">
-              <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4">
-                <Plus className="h-6 w-6 text-primary" />
+            <div className="py-12 text-center">
+              <div className="from-primary/20 to-primary/5 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br">
+                <Plus className="text-primary h-6 w-6" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Ready to Document?</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Start tracking this wound's progress by creating your first assessment during a patient visit.
+              <h3 className="mb-2 text-lg font-semibold">Ready to Document?</h3>
+              <p className="text-muted-foreground mx-auto mb-6 max-w-md">
+                Start tracking this wound&apos;s progress by creating your first
+                assessment during a patient visit.
               </p>
               <QuickAssessmentDialog
                 patientId={patientId}
@@ -278,7 +318,8 @@ export default async function WoundDetailPage({
           <CardHeader>
             <CardTitle>All Photos ({photos.length})</CardTitle>
             <CardDescription>
-              View and compare all wound photos from assessments to track healing progress
+              View and compare all wound photos from assessments to track
+              healing progress
             </CardDescription>
           </CardHeader>
           <CardContent>

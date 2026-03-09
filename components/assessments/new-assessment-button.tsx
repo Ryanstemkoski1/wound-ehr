@@ -23,14 +23,13 @@ export default function NewAssessmentButton({
 }: NewAssessmentButtonProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showSelector, setShowSelector] = useState(false);
+  const [showSelector, setShowSelector] = useState(
+    () => searchParams.get("quick") === "true"
+  );
 
-  // Auto-open if coming from quick assessment flow
+  // Clean up URL if coming from quick assessment flow
   useEffect(() => {
-    const quick = searchParams.get("quick");
-    if (quick === "true") {
-      setShowSelector(true);
-      // Clean up URL
+    if (searchParams.get("quick") === "true") {
       const url = new URL(window.location.href);
       url.searchParams.delete("quick");
       window.history.replaceState({}, "", url.toString());

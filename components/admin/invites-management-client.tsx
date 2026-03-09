@@ -142,8 +142,7 @@ export function InvitesManagementClient({
       await navigator.clipboard.writeText(inviteLink);
       setCopiedToken(token);
       setTimeout(() => setCopiedToken(null), 2000);
-    } catch (_err) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       // Fallback for older browsers or when clipboard permission is denied
       const textArea = document.createElement("textarea");
       textArea.value = inviteLink;

@@ -464,16 +464,19 @@ export async function getPatientWoundsForVisit(patientId: string): Promise<
     }
 
     // Format wounds with last assessment date
-    const formattedWounds = (wounds || []).map((wound: any) => ({
-      id: wound.id,
-      location: wound.location,
-      wound_type: wound.wound_type,
-      status: wound.status,
-      last_assessment_date:
-        wound.assessments && wound.assessments.length > 0
-          ? wound.assessments[0].created_at
-          : undefined,
-    }));
+    const formattedWounds = (wounds || []).map((wound) => {
+      const assessments = wound.assessments as { created_at: string }[] | null;
+      return {
+        id: wound.id,
+        location: wound.location,
+        wound_type: wound.wound_type,
+        status: wound.status,
+        last_assessment_date:
+          assessments && assessments.length > 0
+            ? assessments[0].created_at
+            : undefined,
+      };
+    });
 
     return { success: true, wounds: formattedWounds };
   } catch (error) {

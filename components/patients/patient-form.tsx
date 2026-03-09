@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,44 @@ import {
   getPatientFieldPermissions,
   getReadOnlyReason,
 } from "@/lib/field-permissions";
+
+// Helper component for read-only field labels â€” defined outside PatientForm
+// to avoid React's "cannot create components during render" rule
+function ReadOnlyLabel({
+  htmlFor,
+  children,
+  required = false,
+  userCredentials,
+  userRole,
+}: {
+  htmlFor: string;
+  children: React.ReactNode;
+  required?: boolean;
+  userCredentials: Credentials | null;
+  userRole: UserRole | null;
+}) {
+  const reason = getReadOnlyReason("demographics", userCredentials, userRole);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Label
+            htmlFor={htmlFor}
+            className="flex cursor-help items-center gap-2"
+          >
+            <Lock className="text-muted-foreground h-3 w-3" />
+            {children}
+            {required && <span className="text-red-500">*</span>}
+          </Label>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-sm">{reason}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 type Facility = {
   id: string;
@@ -203,39 +241,6 @@ export default function PatientForm({
     setMedicalHistory(medicalHistory.filter((_, i) => i !== index));
   }
 
-  // Helper component for read-only field labels
-  const ReadOnlyLabel = ({
-    htmlFor,
-    children,
-    required = false,
-  }: {
-    htmlFor: string;
-    children: React.ReactNode;
-    required?: boolean;
-  }) => {
-    const reason = getReadOnlyReason("demographics", userCredentials, userRole);
-
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Label
-              htmlFor={htmlFor}
-              className="flex cursor-help items-center gap-2"
-            >
-              <Lock className="text-muted-foreground h-3 w-3" />
-              {children}
-              {required && <span className="text-red-500">*</span>}
-            </Label>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-sm">{reason}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -288,7 +293,12 @@ export default function PatientForm({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {isDemographicsReadOnly ? (
-                    <ReadOnlyLabel htmlFor="facilityId" required>
+                    <ReadOnlyLabel
+                      userCredentials={userCredentials}
+                      userRole={userRole}
+                      htmlFor="facilityId"
+                      required
+                    >
                       Facility
                     </ReadOnlyLabel>
                   ) : (
@@ -324,7 +334,12 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     {isDemographicsReadOnly ? (
-                      <ReadOnlyLabel htmlFor="firstName" required>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="firstName"
+                        required
+                      >
                         First Name
                       </ReadOnlyLabel>
                     ) : (
@@ -348,7 +363,12 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isDemographicsReadOnly ? (
-                      <ReadOnlyLabel htmlFor="lastName" required>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="lastName"
+                        required
+                      >
                         Last Name
                       </ReadOnlyLabel>
                     ) : (
@@ -375,7 +395,12 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     {isDemographicsReadOnly ? (
-                      <ReadOnlyLabel htmlFor="dob" required>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="dob"
+                        required
+                      >
                         Date of Birth
                       </ReadOnlyLabel>
                     ) : (
@@ -399,7 +424,13 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isDemographicsReadOnly ? (
-                      <ReadOnlyLabel htmlFor="gender">Gender</ReadOnlyLabel>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="gender"
+                      >
+                        Gender
+                      </ReadOnlyLabel>
                     ) : (
                       <Label htmlFor="gender">Gender</Label>
                     )}
@@ -426,7 +457,12 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isDemographicsReadOnly ? (
-                      <ReadOnlyLabel htmlFor="mrn" required>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="mrn"
+                        required
+                      >
                         MRN
                       </ReadOnlyLabel>
                     ) : (
@@ -467,7 +503,13 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     {isContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="phone">Phone</ReadOnlyLabel>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="phone"
+                      >
+                        Phone
+                      </ReadOnlyLabel>
                     ) : (
                       <Label htmlFor="phone">Phone</Label>
                     )}
@@ -485,7 +527,13 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="email">Email</ReadOnlyLabel>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="email"
+                      >
+                        Email
+                      </ReadOnlyLabel>
                     ) : (
                       <Label htmlFor="email">Email</Label>
                     )}
@@ -505,7 +553,11 @@ export default function PatientForm({
 
                 <div className="space-y-2">
                   {isContactReadOnly ? (
-                    <ReadOnlyLabel htmlFor="address">
+                    <ReadOnlyLabel
+                      userCredentials={userCredentials}
+                      userRole={userRole}
+                      htmlFor="address"
+                    >
                       Street Address
                     </ReadOnlyLabel>
                   ) : (
@@ -526,7 +578,13 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     {isContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="city">City</ReadOnlyLabel>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="city"
+                      >
+                        City
+                      </ReadOnlyLabel>
                     ) : (
                       <Label htmlFor="city">City</Label>
                     )}
@@ -543,7 +601,13 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="state">State</ReadOnlyLabel>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="state"
+                      >
+                        State
+                      </ReadOnlyLabel>
                     ) : (
                       <Label htmlFor="state">State</Label>
                     )}
@@ -560,7 +624,13 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="zip">ZIP Code</ReadOnlyLabel>
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="zip"
+                      >
+                        ZIP Code
+                      </ReadOnlyLabel>
                     ) : (
                       <Label htmlFor="zip">ZIP Code</Label>
                     )}
@@ -596,7 +666,11 @@ export default function PatientForm({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {isInsuranceReadOnly ? (
-                    <ReadOnlyLabel htmlFor="primaryInsuranceProvider">
+                    <ReadOnlyLabel
+                      userCredentials={userCredentials}
+                      userRole={userRole}
+                      htmlFor="primaryInsuranceProvider"
+                    >
                       Provider
                     </ReadOnlyLabel>
                   ) : (
@@ -618,7 +692,11 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     {isInsuranceReadOnly ? (
-                      <ReadOnlyLabel htmlFor="primaryPolicyNumber">
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="primaryPolicyNumber"
+                      >
                         Policy Number
                       </ReadOnlyLabel>
                     ) : (
@@ -639,7 +717,11 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isInsuranceReadOnly ? (
-                      <ReadOnlyLabel htmlFor="primaryGroupNumber">
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="primaryGroupNumber"
+                      >
                         Group Number
                       </ReadOnlyLabel>
                     ) : (
@@ -676,7 +758,11 @@ export default function PatientForm({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {isInsuranceReadOnly ? (
-                    <ReadOnlyLabel htmlFor="secondaryInsuranceProvider">
+                    <ReadOnlyLabel
+                      userCredentials={userCredentials}
+                      userRole={userRole}
+                      htmlFor="secondaryInsuranceProvider"
+                    >
                       Provider
                     </ReadOnlyLabel>
                   ) : (
@@ -698,7 +784,11 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     {isInsuranceReadOnly ? (
-                      <ReadOnlyLabel htmlFor="secondaryPolicyNumber">
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="secondaryPolicyNumber"
+                      >
                         Policy Number
                       </ReadOnlyLabel>
                     ) : (
@@ -721,7 +811,11 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isInsuranceReadOnly ? (
-                      <ReadOnlyLabel htmlFor="secondaryGroupNumber">
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="secondaryGroupNumber"
+                      >
                         Group Number
                       </ReadOnlyLabel>
                     ) : (
@@ -856,7 +950,11 @@ export default function PatientForm({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {isEmergencyContactReadOnly ? (
-                    <ReadOnlyLabel htmlFor="emergencyContactName">
+                    <ReadOnlyLabel
+                      userCredentials={userCredentials}
+                      userRole={userRole}
+                      htmlFor="emergencyContactName"
+                    >
                       Name
                     </ReadOnlyLabel>
                   ) : (
@@ -878,7 +976,11 @@ export default function PatientForm({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     {isEmergencyContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="emergencyContactPhone">
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="emergencyContactPhone"
+                      >
                         Phone
                       </ReadOnlyLabel>
                     ) : (
@@ -900,7 +1002,11 @@ export default function PatientForm({
                   </div>
                   <div className="space-y-2">
                     {isEmergencyContactReadOnly ? (
-                      <ReadOnlyLabel htmlFor="emergencyContactRelationship">
+                      <ReadOnlyLabel
+                        userCredentials={userCredentials}
+                        userRole={userRole}
+                        htmlFor="emergencyContactRelationship"
+                      >
                         Relationship
                       </ReadOnlyLabel>
                     ) : (

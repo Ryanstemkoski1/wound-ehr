@@ -129,7 +129,9 @@ export default async function WoundsPage() {
           Monitor and manage all active wounds across your patients
         </p>
         <p className="text-sm text-blue-600 dark:text-blue-400">
-          💡 <strong>Quick Tip:</strong> Click "View Wound" to see full history and add assessments, or click "Patient" to access patient records
+          💡 <strong>Quick Tip:</strong> Click &quot;View Wound&quot; to see
+          full history and add assessments, or click &quot;Patient&quot; to
+          access patient records
         </p>
       </div>
 

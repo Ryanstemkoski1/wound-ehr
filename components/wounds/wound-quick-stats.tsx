@@ -1,6 +1,13 @@
 "use client";
 
-import { TrendingDown, TrendingUp, Minus, Calendar, Activity } from "lucide-react";
+import { useMemo } from "react";
+import {
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  Calendar,
+  Activity,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -28,8 +35,13 @@ export function WoundQuickStats({
   latestHealingStatus,
 }: WoundQuickStatsProps) {
   // Calculate days since onset
-  const daysSinceOnset = Math.floor(
-    (Date.now() - new Date(onsetDate).getTime()) / (1000 * 60 * 60 * 24)
+  const daysSinceOnset = useMemo(
+    () =>
+      Math.floor(
+        // eslint-disable-next-line react-hooks/purity
+        (Date.now() - new Date(onsetDate).getTime()) / (1000 * 60 * 60 * 24)
+      ),
+    [onsetDate]
   );
 
   // Calculate area change
@@ -42,22 +54,21 @@ export function WoundQuickStats({
     previousMeasurements
   ) {
     areaChange = latestMeasurements.area - previousMeasurements.area;
-    areaChangePercent =
-      (areaChange / previousMeasurements.area) * 100;
+    areaChangePercent = (areaChange / previousMeasurements.area) * 100;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
       {/* Days Since Onset */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-muted-foreground text-sm font-medium">
             Days Since Onset
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-muted-foreground" />
+            <Calendar className="text-muted-foreground h-5 w-5" />
             <div className="text-2xl font-bold">{daysSinceOnset}</div>
           </div>
         </CardContent>
@@ -66,13 +77,13 @@ export function WoundQuickStats({
       {/* Total Assessments */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-muted-foreground text-sm font-medium">
             Total Assessments
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-muted-foreground" />
+            <Activity className="text-muted-foreground h-5 w-5" />
             <div className="text-2xl font-bold">{assessmentCount}</div>
           </div>
         </CardContent>
@@ -81,7 +92,7 @@ export function WoundQuickStats({
       {/* Latest Area */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-muted-foreground text-sm font-medium">
             Latest Area
           </CardTitle>
         </CardHeader>
@@ -93,13 +104,13 @@ export function WoundQuickStats({
               </div>
               {latestMeasurements.length !== null &&
                 latestMeasurements.width !== null && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {latestMeasurements.length} × {latestMeasurements.width} cm
                   </p>
                 )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No measurements</p>
+            <p className="text-muted-foreground text-sm">No measurements</p>
           )}
         </CardContent>
       </Card>
@@ -107,7 +118,7 @@ export function WoundQuickStats({
       {/* Healing Trend */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-muted-foreground text-sm font-medium">
             Healing Trend
           </CardTitle>
         </CardHeader>
@@ -131,19 +142,19 @@ export function WoundQuickStats({
                   </>
                 ) : (
                   <>
-                    <Minus className="h-5 w-5 text-muted-foreground" />
-                    <div className="text-2xl font-bold text-muted-foreground">
+                    <Minus className="text-muted-foreground h-5 w-5" />
+                    <div className="text-muted-foreground text-2xl font-bold">
                       0%
                     </div>
                   </>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {areaChange < 0
                   ? "Wound shrinking (good)"
                   : areaChange > 0
-                  ? "Wound growing (concern)"
-                  : "No change"}
+                    ? "Wound growing (concern)"
+                    : "No change"}
               </p>
             </div>
           ) : latestHealingStatus ? (
@@ -152,15 +163,15 @@ export function WoundQuickStats({
                 latestHealingStatus === "improving"
                   ? "default"
                   : latestHealingStatus === "stable"
-                  ? "secondary"
-                  : "destructive"
+                    ? "secondary"
+                    : "destructive"
               }
-              className="capitalize text-base py-1.5 px-3"
+              className="px-3 py-1.5 text-base capitalize"
             >
               {latestHealingStatus}
             </Badge>
           ) : (
-            <p className="text-sm text-muted-foreground">Not enough data</p>
+            <p className="text-muted-foreground text-sm">Not enough data</p>
           )}
         </CardContent>
       </Card>

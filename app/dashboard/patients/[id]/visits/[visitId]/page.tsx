@@ -100,8 +100,8 @@ export default async function VisitDetailPage({ params }: PageProps) {
           </p>
           {visit.status !== "signed" && visit.status !== "submitted" && (
             <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-              💡 <strong>Need to document a wound?</strong> Click "Add
-              Assessment" above to get started
+              💡 <strong>Need to document a wound?</strong> Click &quot;Add
+              Assessment&quot; above to get started
             </p>
           )}
         </div>
@@ -499,9 +499,9 @@ export default async function VisitDetailPage({ params }: PageProps) {
                   </div>
                   <h3 className="mb-2 text-xl font-bold">Ready to Document?</h3>
                   <p className="mb-6 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-                    Click the <strong>"Add Assessment"</strong> button at the
-                    top of this page to document wound conditions, measurements,
-                    and treatment plans.
+                    Click the <strong>&quot;Add Assessment&quot;</strong> button
+                    at the top of this page to document wound conditions,
+                    measurements, and treatment plans.
                   </p>
                   {visit.status !== "signed" &&
                     visit.status !== "submitted" && (

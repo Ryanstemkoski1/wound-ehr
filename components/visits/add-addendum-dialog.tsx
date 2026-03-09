@@ -51,7 +51,7 @@ export function AddAddendumDialog({
         setOpen(false);
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       alert("Failed to create addendum");
     } finally {
       setIsSubmitting(false);

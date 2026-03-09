@@ -99,7 +99,7 @@ export function ConsentStatusCard({
                     } else {
                       alert("No document URL found");
                     }
-                  } catch (error) {
+                  } catch {
                     alert("Failed to load document");
                   } finally {
                     setIsLoading(false);

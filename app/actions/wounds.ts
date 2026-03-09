@@ -390,7 +390,15 @@ export async function getWoundAssessments(woundId: string) {
 
     // Fetch photos for all assessments
     const assessmentIds = assessments?.map((a) => a.id) || [];
-    let photosMap: Record<string, any[]> = {};
+    type PhotoRow = {
+      id: string;
+      url: string;
+      file_name: string;
+      caption: string | null;
+      uploaded_at: string | null;
+      assessment_id: string | null;
+    };
+    let photosMap: Record<string, PhotoRow[]> = {};
 
     if (assessmentIds.length > 0) {
       const { data: allPhotos } = await supabase
@@ -400,14 +408,19 @@ export async function getWoundAssessments(woundId: string) {
 
       // Group photos by assessment_id
       photosMap =
-        allPhotos?.reduce((acc: Record<string, any[]>, photo) => {
-          const assessmentId = photo.assessment_id;
-          if (!acc[assessmentId]) {
-            acc[assessmentId] = [];
-          }
-          acc[assessmentId].push(photo);
-          return acc;
-        }, {}) || {};
+        allPhotos?.reduce(
+          (acc: Record<string, PhotoRow[]>, photo) => {
+            const assessmentId = photo.assessment_id;
+            if (assessmentId && !acc[assessmentId]) {
+              acc[assessmentId] = [];
+            }
+            if (assessmentId) {
+              acc[assessmentId].push(photo as PhotoRow);
+            }
+            return acc;
+          },
+          {} as Record<string, PhotoRow[]>
+        ) || {};
     }
 
     // Transform to camelCase with null safety
@@ -471,12 +484,12 @@ export async function getWoundAssessments(woundId: string) {
               location: "",
             },
         photos:
-          photosMap[assessment.id]?.map((photo: any) => ({
+          photosMap[assessment.id]?.map((photo) => ({
             id: photo.id,
             url: photo.url,
             filename: photo.file_name,
             caption: photo.caption,
-            uploadedAt: new Date(photo.uploaded_at),
+            uploadedAt: new Date(photo.uploaded_at || ""),
           })) || [],
       })) || []
     );

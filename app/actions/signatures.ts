@@ -729,7 +729,7 @@ export async function getConsentDocumentUrl(patientId: string) {
         consent_document_url: signedUrlData.signedUrl,
       },
     };
-  } catch (error) {
+  } catch {
     return { error: "Failed to get consent document" };
   }
 }

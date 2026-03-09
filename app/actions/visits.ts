@@ -685,7 +685,7 @@ export async function createAddendum(visitId: string, content: string) {
     // Verify visit exists and is signed/submitted
     const { data: visit, error: visitError } = await supabase
       .from("visits")
-      .select("id, status")
+      .select("id, status, addendum_count")
       .eq("id", visitId)
       .single();
 
@@ -721,9 +721,7 @@ export async function createAddendum(visitId: string, content: string) {
     const { error: updateError } = await supabase
       .from("visits")
       .update({
-        addendum_count: (visit as any).addendum_count
-          ? (visit as any).addendum_count + 1
-          : 1,
+        addendum_count: (visit.addendum_count || 0) + 1,
       })
       .eq("id", visitId);
 

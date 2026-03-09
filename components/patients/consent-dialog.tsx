@@ -112,8 +112,7 @@ export function ConsentDialog({
 
       // Success - refresh to close dialog
       router.refresh();
-    } catch (_err) {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       setError("Failed to save consent");
       setIsSubmitting(false);
     }

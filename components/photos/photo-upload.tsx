@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X, Loader2, ImageIcon } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 import { uploadPhoto } from "@/app/actions/photos";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,7 +37,6 @@ export function PhotoUpload({
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newPhotos = acceptedFiles.map((file) => {
-      const reader = new FileReader();
       const preview = URL.createObjectURL(file);
 
       return {
@@ -85,9 +84,7 @@ export function PhotoUpload({
       if (result.error) {
         setPhotos((prev) =>
           prev.map((p, i) =>
-            i === index
-              ? { ...p, uploading: false, error: result.error }
-              : p
+            i === index ? { ...p, uploading: false, error: result.error } : p
           )
         );
       } else {
@@ -175,7 +172,7 @@ export function PhotoUpload({
               key={index}
               className={cn(
                 "rounded-lg border p-4",
-                photo.uploaded && "bg-green-50 border-green-200"
+                photo.uploaded && "border-green-200 bg-green-50"
               )}
             >
               <div className="flex gap-4">
@@ -189,7 +186,7 @@ export function PhotoUpload({
                   />
                   {photo.uploaded && (
                     <div className="absolute inset-0 flex items-center justify-center bg-green-500/20">
-                      <div className="bg-green-500 text-white rounded-full p-1">
+                      <div className="rounded-full bg-green-500 p-1 text-white">
                         ✓
                       </div>
                     </div>

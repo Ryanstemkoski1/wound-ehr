@@ -19,8 +19,10 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   // Allow larger Server Action payloads (audio uploads, etc.)
-  serverActions: {
-    bodySizeLimit: "10mb",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
   // Optimize production builds
   productionBrowserSourceMaps: false,

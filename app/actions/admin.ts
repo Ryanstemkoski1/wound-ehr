@@ -63,18 +63,24 @@ export async function getTenantUsers() {
     }
 
     // Filter users by facility if current user is facility_admin
-    let filteredRoles = userRoles as any[];
+    type TenantUserRole = {
+      user_id: string;
+      role: string;
+      facility_id: string | null;
+      tenant_id: string;
+    };
+    let filteredRoles = userRoles as TenantUserRole[];
     if (currentRole?.role === "facility_admin" && currentRole?.facility_id) {
       filteredRoles = filteredRoles?.filter(
-        (ur: any) => ur.facility_id === currentRole.facility_id
+        (ur) => ur.facility_id === currentRole.facility_id
       );
     }
 
     // Get facility info for roles that have facility_id
     const facilityIds =
       filteredRoles
-        ?.filter((ur: any) => ur.facility_id)
-        .map((ur: any) => ur.facility_id) || [];
+        ?.filter((ur) => ur.facility_id)
+        .map((ur) => ur.facility_id) || [];
 
     let facilitiesMap = new Map();
     if (facilityIds.length > 0) {
@@ -87,13 +93,13 @@ export async function getTenantUsers() {
     }
 
     // Add facility info to user roles
-    const userRolesWithFacility = filteredRoles?.map((role: any) => ({
+    const userRolesWithFacility = filteredRoles?.map((role) => ({
       ...role,
       facility: role.facility_id ? facilitiesMap.get(role.facility_id) : null,
     }));
 
     // Get user details from the users table
-    const userIds = userRolesWithFacility?.map((ur: any) => ur.user_id) || [];
+    const userIds = userRolesWithFacility?.map((ur) => ur.user_id) || [];
     if (userIds.length === 0) {
       return { data: [] };
     }
@@ -114,7 +120,7 @@ export async function getTenantUsers() {
 
     // Combine user roles with user details
     const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
-    const combinedData = userRolesWithFacility?.map((role: any) => ({
+    const combinedData = userRolesWithFacility?.map((role) => ({
       ...role,
       users: usersMap.get(role.user_id) || null,
     }));
