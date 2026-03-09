@@ -140,22 +140,30 @@ export async function login(formData: FormData) {
 
   // Check if user exists in our users table (in case auth user exists but was removed from tenant)
   if (data.user) {
-    // Use service role to bypass RLS for user existence check
-    const { createServiceClient } = await import("@/lib/supabase/service");
-    const serviceClient = createServiceClient();
-    const { data: userRecord } = await serviceClient
-      .from("users")
-      .select("id")
-      .eq("id", data.user.id)
-      .single();
+    try {
+      // Use service role to bypass RLS for user existence check
+      const { createServiceClient } = await import("@/lib/supabase/service");
+      const serviceClient = createServiceClient();
+      const { data: userRecord } = await serviceClient
+        .from("users")
+        .select("id")
+        .eq("id", data.user.id)
+        .single();
 
-    if (!userRecord) {
-      // User exists in auth but not in our database - they were removed
-      await supabase.auth.signOut();
-      return {
-        error:
-          "Your account has been removed from this organization. Please contact an administrator.",
-      };
+      if (!userRecord) {
+        // User exists in auth but not in our database - they were removed
+        await supabase.auth.signOut();
+        return {
+          error:
+            "Your account has been removed from this organization. Please contact an administrator.",
+        };
+      }
+    } catch {
+      // Service client unavailable (missing SUPABASE_SERVICE_ROLE_KEY)
+      // Fall through - allow login, RLS will still protect data
+      console.warn(
+        "Service role key not configured - skipping user existence check"
+      );
     }
 
     // Check if user has any roles assigned
