@@ -242,6 +242,23 @@ export async function getVisitDataForPDF(visitId: string) {
 
     if (billingsError) throw billingsError;
 
+    // Fetch treatment orders for this visit (per-wound)
+    const { data: treatmentsData } = await supabase
+      .from("treatments")
+      .select("wound_id, generated_order_text, treatment_orders")
+      .eq("visit_id", visitId);
+
+    // Build a lookup: wound_id → treatment order text
+    const treatmentByWound: Record<string, string> = {};
+    if (treatmentsData) {
+      for (const t of treatmentsData) {
+        if (t.wound_id) {
+          treatmentByWound[t.wound_id] =
+            t.generated_order_text || (t.treatment_orders as string) || "";
+        }
+      }
+    }
+
     // Fetch signatures if visit is signed or submitted
     let signatures = undefined;
     if (visit.status === "signed" || visit.status === "submitted") {
@@ -373,7 +390,9 @@ export async function getVisitDataForPDF(visitId: string) {
             odor: assessment.odor,
             painLevel: assessment.pain_level,
             healingStatus: assessment.healing_status,
-            treatmentplan: assessment.assessment_notes,
+            treatmentplan:
+              treatmentByWound[assessment.wound_id] ||
+              assessment.assessment_notes,
           })) || [],
         billing:
           billings && billings.length > 0
@@ -444,6 +463,22 @@ export async function getWoundDataForPDF(woundId: string) {
 
     if (assessmentsError) throw assessmentsError;
 
+    // Fetch treatment orders for this wound (keyed by visit_id)
+    const { data: woundTreatments } = await supabase
+      .from("treatments")
+      .select("visit_id, generated_order_text, treatment_orders")
+      .eq("wound_id", woundId);
+
+    const treatmentByVisit: Record<string, string> = {};
+    if (woundTreatments) {
+      for (const t of woundTreatments) {
+        if (t.visit_id) {
+          treatmentByVisit[t.visit_id] =
+            t.generated_order_text || (t.treatment_orders as string) || "";
+        }
+      }
+    }
+
     // Fetch photos for each assessment
     // Photos are now uploaded during assessment creation and linked via assessment_id
     const assessmentsWithPhotos = await Promise.all(
@@ -492,7 +527,9 @@ export async function getWoundDataForPDF(woundId: string) {
           odor: assessment.odor,
           painLevel: assessment.pain_level,
           healingStatus: assessment.healing_status,
-          treatmentplan: assessment.assessment_notes,
+          treatmentplan:
+            treatmentByVisit[assessment.visit_id] ||
+            assessment.assessment_notes,
           photos: assessment.photos.map(
             (photo: { url: string; caption: string | null }) => ({
               url: photo.url,

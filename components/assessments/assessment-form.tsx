@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createAssessment, updateAssessment } from "@/app/actions/assessments";
+import { createTreatment } from "@/app/actions/treatments";
 import {
   validateTissueComposition,
   validateMeasurements,
@@ -31,6 +32,13 @@ import {
   calculateTissueTotal,
 } from "@/lib/validations/assessment";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import TreatmentOrderBuilder from "./treatment-order-builder";
+import {
+  type TreatmentOrderData,
+  EMPTY_TREATMENT_ORDER,
+  buildOrderText,
+} from "@/lib/treatment-options";
 
 type Wound = {
   id: string;
@@ -66,6 +74,8 @@ type AssessmentFormProps = {
     infectionSigns: unknown;
     assessmentNotes: string | null;
   };
+  /** Existing treatment order data (for edit mode) */
+  existingTreatment?: TreatmentOrderData | null;
   onSuccess?: () => void;
 };
 
@@ -118,12 +128,16 @@ export default function AssessmentForm({
   patientId,
   wounds,
   assessment,
+  existingTreatment,
   onSuccess,
 }: AssessmentFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [selectedWound, setSelectedWound] = useState(assessment?.woundId || "");
+  const [treatmentOrder, setTreatmentOrder] = useState<TreatmentOrderData>(
+    existingTreatment || { ...EMPTY_TREATMENT_ORDER }
+  );
   const [atRiskReopening, setAtRiskReopening] = useState(
     assessment?.atRiskReopening || false
   );
@@ -262,6 +276,28 @@ export default function AssessmentForm({
     const result = assessment
       ? await updateAssessment(assessment.id, formData)
       : await createAssessment(formData);
+
+    // Save treatment order if any fields were changed from defaults
+    const hasChanges =
+      JSON.stringify(treatmentOrder) !== JSON.stringify(EMPTY_TREATMENT_ORDER);
+
+    if (hasChanges && selectedWound) {
+      const orderText = buildOrderText(treatmentOrder);
+      const treatmentFormData = new FormData();
+      treatmentFormData.append("visitId", visitId);
+      treatmentFormData.append("woundId", selectedWound);
+      treatmentFormData.append("treatmentTab", treatmentOrder.activeTab);
+      treatmentFormData.append("generatedOrderText", orderText);
+      treatmentFormData.append(
+        "treatmentState",
+        JSON.stringify(treatmentOrder)
+      );
+
+      const treatmentResult = await createTreatment(treatmentFormData);
+      if (!treatmentResult.success) {
+        toast.error(`Treatment order failed to save: ${treatmentResult.error}`);
+      }
+    }
 
     setIsSubmitting(false);
 
@@ -742,6 +778,14 @@ export default function AssessmentForm({
           </CardContent>
         </Card>
       )}
+
+      {/* Treatment Order Builder */}
+      <TreatmentOrderBuilder
+        value={treatmentOrder}
+        onChange={setTreatmentOrder}
+        exudateAmount={exudateAmount}
+        disabled={isSubmitting}
+      />
 
       {/* Assessment Notes */}
       <Card>

@@ -8,7 +8,8 @@ Modern Electronic Health Record (EHR) system designed for wound care management 
 
 - **[README.md](./README.md)** (this file) - Quick start guide and tech stack overview
 - **[docs/SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)** - Complete system architecture, database schema, and technical decisions
-- **[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)** - Current status, completed features, and next phase planning
+- **[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)** - Current status and what's remaining
+- **[docs/phase-11/](./docs/phase-11/)** - Phase 11 plan, AI research, test plan, user guide
 - **[.github/copilot-instructions.md](./.github/copilot-instructions.md)** - AI development guidelines and patterns
 
 ---
@@ -79,7 +80,7 @@ Visit `http://localhost:3000`
 
 ## 🗄️ Database
 
-**17 core tables** with Row Level Security (RLS):
+**20+ tables** with Row Level Security (RLS):
 
 - `users` - User accounts with credentials (RN, LVN, MD, DO, PA, NP, CNA, Admin)
 - `facilities` - Medical facilities/clinics
@@ -98,9 +99,13 @@ Visit `http://localhost:3000`
 - `skilled_nursing_assessments` - RN/LVN comprehensive assessment forms
 - `grafting_assessments` - Skin graft procedure documentation
 - `skin_sweep_assessments` - Full-body skin inspection forms
+- `patient_clinicians` - Clinician-patient assignments with roles
+- `addendum_notifications` - Post-approval change tracking
+- `visit_transcripts` - AI audio transcripts and generated notes
+- `patient_recording_consents` - Patient consent for AI recording
 
-**Schema:** See `supabase/migrations/00001_complete_schema.sql`  
-**For detailed schema documentation, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)**
+**Schema:** See `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix)  
+**For detailed schema documentation, see [SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)**
 
 ---
 
@@ -138,35 +143,26 @@ Visit `http://localhost:3000`
 - Skin sweep assessment (full-body skin inspection)
 - Patient page redesign (tab-based layout)
 
-### Phase 10 (Current) 🚀
-
-**Status:** 5 of 6 features complete, 1 blocked awaiting templates
+### Phase 10 ✅
 
 - ✅ Note approval workflow (office review, corrections, locking)
-- ❌ Abbreviated clinical output (blocked - awaiting G-tube/wound templates)
+- ⚠️ Abbreviated clinical output (blocked — awaiting G-tube/wound templates)
 - ✅ Calendar clinician filtering (patient assignments)
 - ✅ Reporting by criteria (clinician/date/facility filters)
 - ✅ Role-based field access (view-only demographics for clinicians)
 - ✅ Data validation rules (treatment/tissue/measurement validation)
 - ✅ Performance optimization (database indexes, query optimization)
 
-**Next:** Client demo, template collection, production deployment
+### Phase 11.1: AI Clinical Note Generation ✅
 
-**Phase 9.4.2+: Specialized Templates & Features**
+- ✅ OpenAI Whisper speech-to-text transcription
+- ✅ GPT-4 Turbo clinical note generation
+- ✅ Patient recording consent workflow with signature
+- ✅ Audio recording interface (waveform, pause/resume)
+- ✅ Clinician review and approval interface
+- ✅ Background processing with real-time status polling
 
-- RN/LVN shorthand note template (awaiting client input)
-- Specialized assessment types (Grafting, Skin Sweep, G-tube)
-- Document versioning and bulk uploads
-
-**Phase 7: Analytics & Polish**
-
-- Dashboard charts and wound healing metrics
-- Performance optimization
-- Accessibility improvements (WCAG 2.1 AA)
-- Mobile/tablet responsiveness
-- User testing and documentation
-
----
+**Next:** Phase 11.2–11.5 (mobile optimization, PDF enhancements, polish) — see [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)
 
 ---
 
@@ -175,12 +171,13 @@ Visit `http://localhost:3000`
 ```
 wound-ehr/
 ├── app/                      # Next.js App Router
-│   ├── actions/              # Server Actions (16 files for DB operations)
+│   ├── actions/              # Server Actions (21 files for DB operations)
+│   ├── api/                  # API Route Handlers (audio upload)
 │   ├── dashboard/            # Protected application pages
 │   ├── auth/                 # Authentication pages
 │   ├── layout.tsx            # Root layout
 │   └── globals.css           # Tailwind CSS v4 config
-├── components/               # React components (110+ files)
+├── components/               # React components (130+ files)
 │   ├── ui/                   # shadcn/ui components (40+ files)
 │   ├── layout/               # Header, sidebar, navigation
 │   ├── patients/             # Patient management
@@ -189,22 +186,30 @@ wound-ehr/
 │   ├── assessments/          # Assessment forms (standard, RN/LVN, grafting, skin sweep)
 │   ├── signatures/           # Electronic signature components
 │   ├── photos/               # Photo upload and management
-│   └── pdf/                  # PDF generation components
+│   ├── pdf/                  # PDF generation components
+│   ├── admin/                # Admin components (inbox, corrections, audits)
+│   ├── billing/              # Billing forms and reports
+│   ├── calendar/             # Calendar views and filters
+│   └── reports/              # Report components
 ├── lib/                      # Utilities and helpers
 │   ├── supabase/             # Supabase client configurations (server, client, middleware)
+│   ├── ai/                   # OpenAI service (Whisper + GPT-4)
+│   ├── hooks/                # Custom React hooks (audio recorder, etc.)
+│   ├── validations/          # Assessment validation rules
 │   ├── database.types.ts     # Auto-generated TypeScript types
 │   ├── rbac.ts               # Role-based access control
 │   ├── credentials.ts        # Credential-based authorization
-│   ├── procedures.ts         # Procedure restriction logic
-│   ├── autosave.ts           # Autosave utilities
+│   ├── field-permissions.ts  # Field-level access control
 │   ├── billing-codes.ts      # CPT/ICD-10 code database
 │   └── utils.ts              # Helper functions (cn, etc.)
 ├── supabase/                 # Database schema
-│   ├── migrations/           # SQL migration file
+│   ├── migrations/           # SQL migration files (00001, 00027, 00028)
 │   └── seed.ts               # Seed script for test data
 ├── docs/                     # Documentation
-│   ├── SYSTEM_DESIGN.md      # Complete architecture & schema
-│   └── PROJECT_STATUS.md     # Current status and roadmap
+│   ├── SYSTEM_DESIGN.md      # Architecture, schema, design decisions
+│   ├── PROJECT_STATUS.md     # Current status and what's remaining
+│   ├── phase-11/             # Phase 11 plan, research, test plan, user guide
+│   └── archive/              # Historical phase completion reports
 ├── public/                   # Static assets (logos, icons)
 └── README.md                 # This file - Quick start
 ```

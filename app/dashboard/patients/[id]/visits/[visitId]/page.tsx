@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getVisit } from "@/app/actions/visits";
 import { getBillingForVisit } from "@/app/actions/billing";
+import { getTreatmentsByVisit } from "@/app/actions/treatments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
   FileText,
   Edit,
   DollarSign,
+  Stethoscope,
 } from "lucide-react";
 import Link from "next/link";
 import AssessmentCard from "@/components/assessments/assessment-card";
@@ -28,6 +30,10 @@ import {
   checkRecordingConsent,
   getVisitTranscript,
 } from "@/app/actions/ai-transcription";
+import {
+  getVisitDebridementAssessments,
+  getVisitNotSeenReport,
+} from "@/app/actions/new-forms";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -61,11 +67,18 @@ export default async function VisitDetailPage({ params }: PageProps) {
   const billingResult = await getBillingForVisit(visitId);
   const billing = billingResult.success ? billingResult.billing : null;
 
+  // Get treatment orders for this visit
+  const treatments = await getTreatmentsByVisit(visitId);
+
   // Check AI recording consent and transcript status
   const recordingConsentResult = await checkRecordingConsent(patientId);
   const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
   const transcriptResult = await getVisitTranscript(visitId);
   const transcript = transcriptResult.transcript ?? null;
+
+  // Fetch new form data
+  const debridementAssessments = await getVisitDebridementAssessments(visitId);
+  const notSeenReport = await getVisitNotSeenReport(visitId);
 
   // Get current user's name and credentials for signing
   const { data: userData } = await supabase.rpc("get_current_user_credentials");
@@ -360,6 +373,63 @@ export default async function VisitDetailPage({ params }: PageProps) {
             </Card>
           )}
 
+          {/* Treatment Orders */}
+          {treatments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5" />
+                  Treatment Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {treatments.map(
+                  (treatment: {
+                    id: string;
+                    wound_id: string | null;
+                    treatment_tab: string | null;
+                    generated_order_text: string | null;
+                    treatment_orders: string | null;
+                    wound?: {
+                      wound_number: string;
+                      location: string;
+                      wound_type: string;
+                    } | null;
+                  }) => (
+                    <div
+                      key={treatment.id}
+                      className="space-y-2 rounded-lg border p-3"
+                    >
+                      {treatment.wound && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            Wound #{treatment.wound.wound_number}
+                          </Badge>
+                          <span className="text-muted-foreground text-xs">
+                            {treatment.wound.location}
+                          </span>
+                        </div>
+                      )}
+                      {treatment.treatment_tab && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs capitalize"
+                        >
+                          {treatment.treatment_tab.replace(/_/g, " ")}
+                        </Badge>
+                      )}
+                      <p className="text-sm leading-relaxed">
+                        {treatment.generated_order_text ||
+                          treatment.treatment_orders ||
+                          "No order text generated"}
+                      </p>
+                    </div>
+                  )
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {visit.followUpType && (
             <Card>
               <CardHeader>
@@ -397,6 +467,144 @@ export default async function VisitDetailPage({ params }: PageProps) {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Debridement Assessments */}
+          {debridementAssessments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  ⚡ Debridement Assessments
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {debridementAssessments.map(
+                  (da: {
+                    id: string;
+                    wound_location: string | null;
+                    wound_type: string | null;
+                    pre_size_length: number | null;
+                    pre_size_width: number | null;
+                    pre_size_depth: number | null;
+                    post_size_length: number | null;
+                    post_size_width: number | null;
+                    area_debrided: number | null;
+                    goals_of_care: string[] | null;
+                    created_at: string;
+                  }) => (
+                    <div
+                      key={da.id}
+                      className="space-y-2 rounded-lg border p-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {da.wound_location || "Location not specified"}
+                          </Badge>
+                          {da.wound_type && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs capitalize"
+                            >
+                              {da.wound_type}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-zinc-500">
+                          {new Date(da.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <span className="text-zinc-500">Pre-size: </span>
+                          {da.pre_size_length && da.pre_size_width
+                            ? `${da.pre_size_length}×${da.pre_size_width}${da.pre_size_depth ? `×${da.pre_size_depth}` : ""} cm`
+                            : "—"}
+                        </div>
+                        <div>
+                          <span className="text-zinc-500">Post-size: </span>
+                          {da.post_size_length && da.post_size_width
+                            ? `${da.post_size_length}×${da.post_size_width} cm`
+                            : "—"}
+                        </div>
+                        <div>
+                          <span className="text-zinc-500">Area debrided: </span>
+                          {da.area_debrided ? `${da.area_debrided} cm²` : "—"}
+                        </div>
+                      </div>
+                      {da.goals_of_care && da.goals_of_care.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {da.goals_of_care.map((g) => (
+                            <Badge
+                              key={g}
+                              variant="secondary"
+                              className="text-xs capitalize"
+                            >
+                              {g.replace(/_/g, " ")}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Patient Not Seen Report */}
+          {notSeenReport && (
+            <Card className="border-amber-200 dark:border-amber-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                  🚫 Patient Not Seen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <span className="text-sm text-zinc-500">Reason: </span>
+                  <span className="text-sm font-medium capitalize">
+                    {((notSeenReport.reason as string) || "").replace(
+                      /_/g,
+                      " "
+                    )}
+                  </span>
+                </div>
+                {notSeenReport.pertinent_notes && (
+                  <div>
+                    <span className="text-sm text-zinc-500">Notes: </span>
+                    <span className="text-sm">
+                      {notSeenReport.pertinent_notes as string}
+                    </span>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {notSeenReport.follow_up_rescheduled && (
+                    <Badge variant="outline" className="text-xs">
+                      Rescheduled
+                      {notSeenReport.follow_up_new_date
+                        ? ` — ${new Date(notSeenReport.follow_up_new_date as string).toLocaleDateString()}`
+                        : ""}
+                    </Badge>
+                  )}
+                  {notSeenReport.facility_notified && (
+                    <Badge variant="outline" className="text-xs">
+                      Facility Notified
+                    </Badge>
+                  )}
+                  {notSeenReport.family_notified && (
+                    <Badge variant="outline" className="text-xs">
+                      Family Notified
+                    </Badge>
+                  )}
+                  {notSeenReport.referral_source_notified && (
+                    <Badge variant="outline" className="text-xs">
+                      Referral Source Notified
+                    </Badge>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -513,7 +721,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                           size="lg"
                         />
                         <p className="text-xs text-zinc-500">
-                          Choose from 5 assessment types after clicking
+                          Choose from 7 assessment types after clicking
                         </p>
                       </div>
                     )}

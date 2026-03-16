@@ -20,8 +20,13 @@ import {
   createAssessment,
   autosaveAssessmentDraft,
 } from "@/app/actions/assessments";
+import {
+  autosaveTreatmentDraft,
+  createTreatment,
+} from "@/app/actions/treatments";
 import { updatePhotoAssessmentId } from "@/app/actions/photos";
 import { WoundSwitcher } from "./wound-switcher";
+import TreatmentOrderBuilder from "./treatment-order-builder";
 import { Check } from "lucide-react";
 import { PhotoUpload } from "@/components/photos/photo-upload";
 import { useAutosave } from "@/lib/hooks/use-autosave";
@@ -29,6 +34,11 @@ import AutosaveIndicator from "@/components/ui/autosave-indicator";
 import AutosaveRecoveryModal from "@/components/ui/autosave-recovery-modal";
 import { hasRecentAutosave } from "@/lib/autosave";
 import { toast } from "sonner";
+import {
+  type TreatmentOrderData,
+  EMPTY_TREATMENT_ORDER,
+  buildOrderText,
+} from "@/lib/treatment-options";
 
 type Wound = {
   id: string;
@@ -149,6 +159,15 @@ export default function MultiWoundAssessmentForm({
     });
     return initial;
   });
+  const [treatmentOrders, setTreatmentOrders] = useState<
+    Record<string, TreatmentOrderData>
+  >(() => {
+    const initial: Record<string, TreatmentOrderData> = {};
+    wounds.forEach((w) => {
+      initial[w.id] = { ...EMPTY_TREATMENT_ORDER };
+    });
+    return initial;
+  });
   const [completedWoundIds, setCompletedWoundIds] = useState<Set<string>>(
     new Set()
   );
@@ -164,8 +183,11 @@ export default function MultiWoundAssessmentForm({
   const [assessmentIds, setAssessmentIds] = useState<Record<string, string>>(
     {}
   );
+  const [treatmentIds, setTreatmentIds] = useState<Record<string, string>>({});
 
   const currentAssessment = assessments[activeWoundId] || EMPTY_ASSESSMENT;
+  const currentTreatment =
+    treatmentOrders[activeWoundId] || EMPTY_TREATMENT_ORDER;
 
   // Client-side autosave hook (localStorage)
   const { loadSavedData, clearSavedData } = useAutosave({
@@ -256,10 +278,40 @@ export default function MultiWoundAssessmentForm({
       } else {
         setAutosaveStatus("error");
       }
+
+      // Also autosave treatment order for this wound
+      const treatment = treatmentOrders[activeWoundId];
+      if (treatment) {
+        const orderText = buildOrderText(treatment);
+        const treatmentResult = await autosaveTreatmentDraft(
+          treatmentIds[activeWoundId] || null,
+          activeWoundId,
+          visitId,
+          {
+            treatmentTab: treatment.activeTab,
+            generatedOrderText: orderText,
+            treatmentState: JSON.stringify(treatment),
+          }
+        );
+
+        if (treatmentResult.success && treatmentResult.treatmentId) {
+          setTreatmentIds((prev) => ({
+            ...prev,
+            [activeWoundId]: treatmentResult.treatmentId!,
+          }));
+        }
+      }
     }, 120000); // 2 minutes
 
     return () => clearInterval(interval);
-  }, [assessments, activeWoundId, visitId, assessmentIds]);
+  }, [
+    assessments,
+    treatmentOrders,
+    activeWoundId,
+    visitId,
+    assessmentIds,
+    treatmentIds,
+  ]);
 
   // Auto-calculate area
   const calculatedArea = useMemo(() => {
@@ -299,7 +351,13 @@ export default function MultiWoundAssessmentForm({
       },
     }));
   };
-
+  // Update treatment order for current wound
+  const updateTreatmentOrder = (data: TreatmentOrderData) => {
+    setTreatmentOrders((prev) => ({
+      ...prev,
+      [activeWoundId]: data,
+    }));
+  };
   // Handle wound change with auto-save
   const handleWoundChange = async (newWoundId: string) => {
     if (isCurrentAssessmentComplete) {
@@ -364,6 +422,34 @@ export default function MultiWoundAssessmentForm({
             oldAssessmentId,
             result.assessmentId
           );
+        }
+
+        // Save treatment order for this wound
+        const treatment = treatmentOrders[wound.id];
+        if (treatment) {
+          // Check if user actually changed anything from the defaults
+          const hasChanges =
+            JSON.stringify(treatment) !== JSON.stringify(EMPTY_TREATMENT_ORDER);
+
+          if (hasChanges) {
+            const orderText = buildOrderText(treatment);
+            const treatmentFormData = new FormData();
+            treatmentFormData.append("visitId", visitId);
+            treatmentFormData.append("woundId", wound.id);
+            treatmentFormData.append("treatmentTab", treatment.activeTab);
+            treatmentFormData.append("generatedOrderText", orderText);
+            treatmentFormData.append(
+              "treatmentState",
+              JSON.stringify(treatment)
+            );
+
+            const treatmentResult = await createTreatment(treatmentFormData);
+            if (!treatmentResult.success) {
+              toast.error(
+                `Treatment order failed to save: ${treatmentResult.error}`
+              );
+            }
+          }
         }
       }
 
@@ -815,6 +901,14 @@ export default function MultiWoundAssessmentForm({
               </div>
             </CardContent>
           </Card>
+
+          {/* Treatment Order Builder */}
+          <TreatmentOrderBuilder
+            value={currentTreatment}
+            onChange={updateTreatmentOrder}
+            exudateAmount={currentAssessment.exudateAmount}
+            disabled={isSubmitting}
+          />
 
           {/* Assessment Notes */}
           <Card>

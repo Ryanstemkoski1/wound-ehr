@@ -43,6 +43,8 @@ export default function NewAssessmentButton({
       | "gtube-procedure"
       | "grafting"
       | "skin-sweep"
+      | "debridement"
+      | "patient-not-seen"
   ) => {
     if (type === "standard") {
       router.push(
@@ -61,6 +63,14 @@ export default function NewAssessmentButton({
     } else if (type === "skin-sweep") {
       router.push(
         `/dashboard/patients/${patientId}/visits/${visitId}/skin-sweep/new`
+      );
+    } else if (type === "debridement") {
+      router.push(
+        `/dashboard/patients/${patientId}/visits/${visitId}/debridement/new`
+      );
+    } else if (type === "patient-not-seen") {
+      router.push(
+        `/dashboard/patients/${patientId}/visits/${visitId}/not-seen/new`
       );
     }
   };

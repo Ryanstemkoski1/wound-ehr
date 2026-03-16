@@ -6,18 +6,19 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 
 **⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `docs/SYSTEM_DESIGN.md`. This includes:**
 
-- Database schema (17+ tables with Supabase PostgreSQL)
+- Database schema (20+ tables with Supabase PostgreSQL)
 - Frontend architecture (app router structure, components)
 - Backend patterns (Server Components + Server Actions)
 - UI/UX workflows (assessment forms, photo management, calendar, signatures)
-- Implementation phases (Phase 10 mostly complete, Phase 11 planning)
-- Design decisions (auth, multi-facility, billing, compliance, libraries)
+- Implementation phases (Phases 1–11.1 complete, Phase 11.2–11.5 in progress)
+- Design decisions (auth, multi-facility, billing, compliance, AI transcription)
 
 **📚 Documentation Structure:**
 
 - **README.md** - Quick start guide, installation, tech stack overview
 - **docs/SYSTEM_DESIGN.md** - Complete system architecture, database schema, technical decisions
-- **docs/PROJECT_STATUS.md** - Current status, completed features, next phase planning
+- **docs/PROJECT_STATUS.md** - Current status and what's remaining
+- **docs/phase-11/** - Phase 11 plan, AI research, test plan, user guide
 
 **Before implementing ANY feature, review the relevant section in `docs/SYSTEM_DESIGN.md` and check `docs/PROJECT_STATUS.md` for current status.**
 
@@ -108,20 +109,39 @@ import { cn } from "@/lib/utils";
 
 ### Database Schema
 
-The database uses **10 tables** with Row Level Security (RLS):
+The database uses **21 tables** with Row Level Security (RLS):
+
+**Core tables (Phase 1-8):**
 
 - `users` - User accounts (synced with auth.users via trigger)
 - `facilities` - Medical facilities/clinics
 - `user_facilities` - User-facility associations (many-to-many)
 - `patients` - Patient demographics and medical info
 - `wounds` - Wound records with location and type
-- `visits` - Patient visit records
-- `assessments` - Detailed wound assessments
+- `visits` - Patient visit records with signature workflow
+- `assessments` - Detailed wound assessments with measurements
 - `photos` - Wound photo metadata (files in Supabase Storage)
 - `treatments` - Treatment plans and medical orders
-- `billings` - Billing codes and claims
+- `billings` - Billing codes (CPT, ICD-10) and claims
 
-Schema location: `supabase/migrations/00001_complete_schema.sql`
+**Compliance tables (Phase 9):**
+
+- `signatures` - Electronic signatures with audit trail
+- `patient_consents` - Initial consent-to-treat forms
+- `procedure_scopes` - Credential-based procedure restrictions
+- `patient_documents` - Patient document attachments (11 types)
+- `skilled_nursing_assessments` - RN/LVN comprehensive assessment forms
+- `grafting_assessments` - Skin graft procedure documentation
+- `skin_sweep_assessments` - Full-body skin inspection forms
+
+**Phase 10-11 tables:**
+
+- `patient_clinicians` - Clinician-patient assignments with roles
+- `addendum_notifications` - Post-approval change tracking
+- `visit_transcripts` - AI audio transcripts and generated notes
+- `patient_recording_consents` - Patient consent for AI recording
+
+Schema location: `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix)
 
 ### Supabase Backend Architecture
 
@@ -224,7 +244,7 @@ This project is configured for shadcn/ui. When adding components:
 
 1. **System Design Document**: `docs/SYSTEM_DESIGN.md` is the authoritative source for all architectural decisions, database schema, UI workflows, and implementation phases. Review it before making ANY changes.
 
-2. **Tailwind v4 Breaking Changes**: This project uses Tailwind CSS v4 alpha with PostCSS. Traditional `tailwind.config.js` is NOT used. All configuration is in `globals.css` via `@theme` directive.
+2. **Tailwind v4 Breaking Changes**: This project uses Tailwind CSS v4 with PostCSS. Traditional `tailwind.config.js` is NOT used. All configuration is in `globals.css` via `@theme` directive.
 
 3. **ESLint Flat Config**: Uses the new ESLint flat config format (`eslint.config.mjs`) with Next.js preset and Prettier integration.
 
@@ -232,6 +252,8 @@ This project is configured for shadcn/ui. When adding components:
 
 5. **React 19**: Latest React with improved hooks, actions, and server component capabilities. Use modern patterns like `use()` hook and form actions where applicable.
 
-6. **Supabase Backend**: All database operations use Supabase PostgreSQL via Supabase JS. Authentication via Supabase Auth. Photo storage via Supabase Storage. TypeScript types generated from database schema.
+6. **Supabase Backend**: All database operations use Supabase PostgreSQL via Supabase JS. Authentication via Supabase Auth. Photo storage via Supabase Storage. Audio storage for AI transcription via Supabase Storage (`visit-audio` bucket). TypeScript types generated from database schema.
 
 7. **Server-First Architecture**: Use Server Components for data fetching (async/await DB queries) and Server Actions for mutations (`"use server"` directive). Avoid Client Components unless absolutely necessary for interactivity.
+
+8. **AI Integration**: OpenAI Whisper (`whisper-1`) for speech-to-text and GPT-4 Turbo for clinical note generation. Audio uploaded via API Route Handler (`app/api/upload-audio/route.ts`), not Server Actions (binary FormData limitation).

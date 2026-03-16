@@ -21,6 +21,8 @@ import {
   Activity,
   Scissors,
   ScanEye,
+  Zap,
+  UserX,
 } from "lucide-react";
 
 type AssessmentType =
@@ -28,7 +30,9 @@ type AssessmentType =
   | "skilled-nursing"
   | "gtube-procedure"
   | "grafting"
-  | "skin-sweep";
+  | "skin-sweep"
+  | "debridement"
+  | "patient-not-seen";
 
 type AssessmentTypeSelectorProps = {
   open: boolean;
@@ -63,7 +67,7 @@ export default function AssessmentTypeSelector({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-6 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-6 py-6 md:grid-cols-3 lg:grid-cols-4">
           <Card
             className="hover:border-primary flex min-h-[280px] cursor-pointer flex-col transition-all hover:shadow-lg"
             onClick={() => handleSelect("standard")}
@@ -165,6 +169,47 @@ export default function AssessmentTypeSelector({
                 Comprehensive full-body skin inspection documenting all areas,
                 wounds found, at-risk areas, prevention measures, and patient
                 education.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="hover:border-primary flex min-h-[280px] cursor-pointer flex-col transition-all hover:shadow-lg"
+            onClick={() => handleSelect("debridement")}
+          >
+            <CardHeader>
+              <div className="flex flex-col items-center space-y-3 text-center">
+                <div className="bg-primary/10 rounded-full p-4">
+                  <Zap className="text-primary h-8 w-8" />
+                </div>
+                <CardTitle className="text-xl">Debridement</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <CardDescription className="text-center text-base leading-relaxed">
+                Contactless ultrasonic debridement (Arobella) with pre/post
+                wound assessment, device settings, procedure notes, goals, and
+                medical necessity.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="hover:border-primary flex min-h-[280px] cursor-pointer flex-col transition-all hover:shadow-lg"
+            onClick={() => handleSelect("patient-not-seen")}
+          >
+            <CardHeader>
+              <div className="flex flex-col items-center space-y-3 text-center">
+                <div className="bg-primary/10 rounded-full p-4">
+                  <UserX className="text-primary h-8 w-8" />
+                </div>
+                <CardTitle className="text-xl">Patient Not Seen</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <CardDescription className="text-center text-base leading-relaxed">
+                Document why a scheduled patient was not seen during this visit,
+                including reason, pertinent notes, and follow-up plan.
               </CardDescription>
             </CardContent>
           </Card>
