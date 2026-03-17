@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import {
-  useAudioRecorder,
   formatDuration,
   formatFileSize,
-  getExtensionForMime,
 } from "@/lib/hooks/use-audio-recorder";
-import { processTranscription } from "@/app/actions/ai-transcription";
+import { useRecordingContext } from "@/lib/recording-context";
 import { AI_CONFIG } from "@/lib/ai-config";
 import {
   Card,
@@ -137,9 +135,6 @@ function WaveformVisualizer({
       const history = historyRef.current;
 
       // Draw waveform bars
-      ctx.fillStyle =
-        getComputedStyle(canvas).getPropertyValue("--tw-fill") || "#14b8a6";
-
       for (let i = 0; i < history.length; i++) {
         const x = (i / maxPoints) * width;
         const barHeight = Math.max(2, history[i] * height * 0.8);
@@ -182,156 +177,55 @@ export function AudioRecorder({
   onProcessingStarted,
   disabled = false,
 }: AudioRecorderProps) {
-  const recorder = useAudioRecorder();
-  const [uploadState, setUploadState] = useState<
-    "idle" | "uploading" | "processing" | "done" | "error"
-  >("idle");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  );
+  // Use the layout-level recording context instead of a local hook.
+  // This ensures the MediaRecorder and audio blob survive navigation.
+  const {
+    session,
+    recorder,
+    uploadState,
+    uploadProgress,
+    uploadError,
+    startSession,
+    endSession,
+    uploadAndProcess,
+    resetUpload,
+  } = useRecordingContext();
 
-  // Simulate gradual progress between two bounds while waiting for async work
-  const startProgressSimulation = useCallback(
-    (from: number, to: number, durationMs: number) => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      const steps = Math.max(1, Math.floor(durationMs / 300));
-      const increment = (to - from) / steps;
-      let current = from;
-      setUploadProgress(from);
-      progressIntervalRef.current = setInterval(() => {
-        current += increment;
-        if (current >= to) {
-          current = to;
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-            progressIntervalRef.current = null;
-          }
-        }
-        setUploadProgress(Math.round(current));
-      }, 300);
-    },
-    []
-  );
+  // Register this visit as the active session when mounting
+  const handleStartRecording = useCallback(async () => {
+    startSession(visitId, patientId);
+    await recorder.startRecording();
+  }, [visitId, patientId, startSession, recorder]);
 
-  const stopProgressSimulation = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-  }, []);
-
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => stopProgressSimulation();
-  }, [stopProgressSimulation]);
+  // Upload handler delegates to context
+  const handleUploadAndProcess = useCallback(async () => {
+    await uploadAndProcess(onProcessingStarted);
+  }, [uploadAndProcess, onProcessingStarted]);
 
   // Max duration warning threshold (50 mins of 60 = 83%)
   const durationPercent =
     (recorder.duration / AI_CONFIG.AUDIO.MAX_DURATION_SECONDS) * 100;
   const isDurationWarning = durationPercent > 83;
 
-  // Upload and process the recorded audio
-  const handleUploadAndProcess = useCallback(async () => {
-    if (!recorder.audioBlob) return;
+  // Check if a different visit's recording is active
+  const otherSessionActive =
+    session !== null && session.visitId !== visitId && recorder.state !== "idle";
 
-    setUploadState("uploading");
-    setUploadProgress(10);
-    setUploadError(null);
-
-    try {
-      // Build file from blob
-      const ext = getExtensionForMime(recorder.audioBlob.type);
-      const filename = `visit-recording-${Date.now()}.${ext}`;
-      const file = new File([recorder.audioBlob], filename, {
-        type: recorder.audioBlob.type,
-      });
-
-      console.log("[AudioRecorder] File ready:", {
-        name: filename,
-        type: recorder.audioBlob.type,
-        size: recorder.audioBlob.size,
-      });
-
-      // Upload via API route (not server action — binary FormData hangs in RSC protocol)
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("visitId", visitId);
-      formData.append("patientId", patientId);
-
-      // Animate progress 5→55% during upload
-      startProgressSimulation(5, 55, 15000);
-
-      console.log("[AudioRecorder] Calling /api/upload-audio...");
-      const response = await fetch("/api/upload-audio", {
-        method: "POST",
-        body: formData,
-      });
-
-      stopProgressSimulation();
-
-      const uploadResult = await response.json();
-      console.log(
-        "[AudioRecorder] Upload response:",
-        response.status,
-        uploadResult
-      );
-
-      if (!response.ok || uploadResult.error || !uploadResult.transcript) {
-        setUploadState("error");
-        setUploadError(
-          uploadResult.error || `Upload failed (${response.status})`
-        );
-        return;
-      }
-
-      setUploadProgress(60);
-
-      // Start AI processing (server action is fine for non-binary data)
-      setUploadState("processing");
-      setUploadProgress(65);
-
-      const transcriptId = uploadResult.transcript.id;
-      onProcessingStarted?.(transcriptId);
-
-      // Animate progress 65→95% during AI processing (estimate ~60s)
-      startProgressSimulation(65, 95, 60000);
-
-      const processResult = await processTranscription(transcriptId);
-
-      stopProgressSimulation();
-      setUploadProgress(100);
-
-      if (processResult.error) {
-        // Processing failed but upload succeeded — not a hard error
-        setUploadState("done");
-        setUploadError(
-          `Upload successful but AI processing failed: ${processResult.error}. You can retry from the visit page.`
-        );
-      } else {
-        setUploadState("done");
-      }
-    } catch (err) {
-      stopProgressSimulation();
-      setUploadState("error");
-      const message =
-        err instanceof Error
-          ? err.message
-          : "An unexpected error occurred during upload.";
-      console.error("[AudioRecorder] Error:", message);
-      setUploadError(message);
-    }
-  }, [
-    recorder.audioBlob,
-    visitId,
-    patientId,
-    onProcessingStarted,
-    startProgressSimulation,
-    stopProgressSimulation,
-  ]);
+  if (otherSessionActive) {
+    return (
+      <Card className="border-amber-200 bg-amber-50/30 dark:border-amber-800 dark:bg-amber-950/10">
+        <CardContent className="space-y-2 pt-6">
+          <Alert className="border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/20">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              A recording is already in progress for another visit. Finish or
+              discard that recording before starting a new one.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Idle state — show start button
   if (recorder.state === "idle" && uploadState === "idle") {
@@ -383,7 +277,7 @@ export function AudioRecorder({
           )}
 
           <Button
-            onClick={recorder.startRecording}
+            onClick={handleStartRecording}
             disabled={disabled || !recorder.isSupported}
             className="w-full gap-2 bg-red-600 text-white hover:bg-red-700"
             size="lg"
@@ -411,7 +305,14 @@ export function AudioRecorder({
               {recorder.errorMessage || "Recording error occurred"}
             </AlertDescription>
           </Alert>
-          <Button onClick={recorder.reset} variant="outline" className="w-full">
+          <Button
+            onClick={() => {
+              recorder.reset();
+              endSession();
+            }}
+            variant="outline"
+            className="w-full"
+          >
             Try Again
           </Button>
         </CardContent>
@@ -527,13 +428,19 @@ export function AudioRecorder({
             <Button
               variant="ghost"
               size="lg"
-              onClick={recorder.discardRecording}
+              onClick={endSession}
               className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/20"
             >
               <Trash2 className="h-4 w-4" />
               Discard
             </Button>
           </div>
+
+          {/* Navigation safe notice */}
+          <p className="text-center text-xs text-teal-600 dark:text-teal-400">
+            You can safely navigate to other pages — your recording will
+            continue in the background.
+          </p>
         </CardContent>
       </Card>
     );
@@ -583,7 +490,7 @@ export function AudioRecorder({
             </Button>
             <Button
               variant="ghost"
-              onClick={recorder.discardRecording}
+              onClick={endSession}
               className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/20"
             >
               <Trash2 className="h-4 w-4" />
@@ -635,8 +542,9 @@ export function AudioRecorder({
             value={uploadProgress}
             className="[&>div]:bg-blue-500 [&>div]:transition-all [&>div]:duration-300"
           />
-          <p className="text-center text-xs text-blue-600 dark:text-blue-400">
-            {uploadProgress}% — Please do not close this page
+          <p className="text-center text-xs text-teal-600 dark:text-teal-400">
+            {uploadProgress}% — You can safely navigate away. Upload and
+            processing will continue in the background.
           </p>
         </CardContent>
       </Card>
@@ -671,7 +579,10 @@ export function AudioRecorder({
 
           <Button
             variant="outline"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              endSession();
+              window.location.reload();
+            }}
             className="w-full"
           >
             Refresh Page
@@ -703,9 +614,9 @@ export function AudioRecorder({
             <Button
               variant="ghost"
               onClick={() => {
-                setUploadState("idle");
-                setUploadError(null);
+                resetUpload();
                 recorder.reset();
+                endSession();
               }}
               className="text-red-600"
             >

@@ -134,11 +134,11 @@ Desktop-first design. Some forms not optimized for tablet/mobile. Signature pad 
 
 ### 3. No Automated Test Coverage
 
-Primarily manual testing. 40+ test scenarios documented in [phase-11/AI_DOCUMENTATION_TEST_PLAN.md](./phase-11/AI_DOCUMENTATION_TEST_PLAN.md).
+Primarily manual testing. 40+ test scenarios documented in [archive/AI_DOCUMENTATION_TEST_PLAN.md](./archive/AI_DOCUMENTATION_TEST_PLAN.md).
 
-### 4. AI Recording Persistence
+### 4. AI Recording Persistence — FIXED
 
-Audio recording can be lost when navigating away during a visit. Needs recording state persisted across navigation. Fix planned for Phase 11.5.
+~~Audio recording can be lost when navigating away during a visit.~~ Recording state is now lifted to a layout-level React Context (`RecordingProvider`). The `MediaRecorder`, audio chunks, blob, and upload/processing all persist across page navigation. A floating `PersistentRecorderBar` shows recording status when the user navigates away from the visit page. A `beforeunload` guard warns before closing the browser tab.
 
 ### 5. Missing user_preferences Table
 
@@ -171,5 +171,6 @@ See [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) for:
 - Security model (RBAC + credentials + RLS)
 - Technology stack details
 
-See [phase-11/PHASE_11_PLAN.md](./phase-11/PHASE_11_PLAN.md) for detailed Phase 11 implementation plan.
 See [archive/PHASE_HISTORY.md](./archive/PHASE_HISTORY.md) for Phase 9–10 completion history.
+See [archive/AI_DOCUMENTATION_USER_GUIDE.md](./archive/AI_DOCUMENTATION_USER_GUIDE.md) for AI feature user guide.
+See [archive/AI_DOCUMENTATION_TEST_PLAN.md](./archive/AI_DOCUMENTATION_TEST_PLAN.md) for AI test scenarios.
