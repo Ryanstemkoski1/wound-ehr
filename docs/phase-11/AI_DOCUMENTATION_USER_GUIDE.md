@@ -60,7 +60,7 @@ Once consent is obtained, the visit detail page shows the **Audio Recorder**.
 - **Choose the right microphone** — Use the dropdown to select your preferred mic (headset, laptop, or external)
 - **Check the level meter** — The green bar should move when you speak; if flat, check your mic
 - **Keep recording under 60 minutes** — Maximum audio length is 60 minutes
-- **File size limit** — Maximum 500 MB per recording
+- **File size limit** — Maximum 25 MB per recording (Whisper API limit; keep recordings under 60 minutes)
 - **Speak naturally** — The AI handles medical terminology well; don't slow down or over-enunciate
 - **Minimize background noise** — Close doors, turn off fans if possible
 

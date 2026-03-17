@@ -1,6 +1,26 @@
 # Wound EHR — Phase 11 Update
 
-**Last Updated:** March 16, 2026
+**Last Updated:** March 17, 2026
+
+---
+
+## March 17, 2026 — Client Forms COMPLETE
+
+### Phase 11.7: Client Forms — Done
+
+All 4 clinical form types built with database migrations, server actions, and full UI integration:
+
+| Component                                    | Description                                                                            |
+| -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Migration 00030**                          | `debridement_assessments`, `patient_not_seen_reports`, `incident_reports` tables + RLS |
+| **Migration 00031**                          | Added `provider_signature_id` to `patient_consents`                                    |
+| **`app/actions/new-forms.ts`**               | CRUD for debridement, patient-not-seen, incident reports                               |
+| **`app/actions/specialized-assessments.ts`** | Updated with G-tube procedures                                                         |
+| **Debridement form**                         | Pre/post wound assessment for Arobella ultrasonic debridement                          |
+| **Patient Not Seen form**                    | Reason patient was not seen + follow-up plan                                           |
+| **Incident Report form**                     | Facility incident documentation                                                        |
+| **G-tube Procedure form**                    | G-tube replacement/removal documentation                                               |
+| **Consent provider signature**               | Provider can now co-sign patient consent forms                                         |
 
 ---
 
@@ -31,12 +51,14 @@ All 8 sub-tasks completed in a single session. The Treatment Order Builder is no
 
 ### Updated Priority Order
 
-1. ~~Treatment Order Builder~~ ✅ DONE
-2. Clinical summary PDFs (once templates arrive) ← **NEXT**
-3. Facility access control (hide pending notes)
+1. ~~Treatment Order Builder~~ ✅ DONE (Mar 16)
+2. ~~Client Forms~~ ✅ DONE (Mar 17)
+3. Facility access control (hide pending notes) ← **NEXT**
 4. Mobile UI optimization
 5. PDF printing enhancements
 6. Final polish
+
+> Clinical summary PDFs (11.2.2) were dropped — client confirmed the implemented forms fulfill the requirement.
 
 ---
 
@@ -115,25 +137,23 @@ Very reasonable — roughly **$0.10–0.30 per visit**. At 300 visits/month that
 
 ---
 
-## Next Up: Phase 11.2 — PDF Clinical Summaries & Facility Access
+## Next Up: Phase 11.2.1 — Facility Access Control
 
-Clinical summary templates are needed from Aaron/Erin. Once received:
+**Priority: HIGH** — Facility users currently see clinician notes before office approval.
 
-- G-tube clinical summary PDF
-- Wound care clinical summary PDF
-- Facility access control (hide pending/unapproved notes from facility users)
+- Create `canViewVisitDetails(user, visit)` utility in `lib/rbac.ts`
+- Update visit list UI — hide content for unapproved visits (show "Pending" badge)
+- Block PDF downloads for unapproved visits
 
-Estimated time: **~3 days** once templates received. Facility access: **~1 day**.
+Estimated time: **~1 day**.
+
+> Phase 11.2.2 (Clinical Summary PDFs) was dropped — the client forms built in Phase 11.7 fulfill the requirement.
 
 ## After That: Phases 11.3–11.5
 
-The client is sending PDF form templates soon. We'll be building:
-
-- G-tube clinical summary PDF
-- Wound care clinical summary PDF
-- Facility access control (hide pending/unapproved notes from facility users)
-
-Estimated time: **~1.5 weeks** once templates received.
+- **11.3: Mobile UI optimization** (~1.5 weeks) — Touch-friendly controls, bottom nav, offline support
+- **11.4: Printing & PDF enhancements** (~1 week) — Clinician signatures on PDFs, photo size options
+- **11.5: Final polish** (~1 week) — Auto-save indicators, global search, notifications
 
 ---
 
@@ -142,7 +162,7 @@ Estimated time: **~1.5 weeks** once templates received.
 | What                        | Time Estimate | Notes                                                          |
 | --------------------------- | ------------- | -------------------------------------------------------------- |
 | Treatment Order Builder     | ~~1 week~~    | ✅ COMPLETE — Mar 16, 2026                                     |
-| Clinical summary PDFs       | ~3 days       | G-tube + wound care summaries — awaiting templates             |
+| Client Forms (11.7)         | ~~3 days~~    | ✅ COMPLETE — Mar 17, 2026                                     |
 | Facility access control     | ~1 day        | Hide pending notes from facility users                         |
 | Mobile UI optimization      | ~1.5 weeks    | Touch-friendly, offline support, bottom nav for phones/tablets |
 | Printing & PDF enhancements | ~1 week       | Clinician signatures on PDFs, photo size options               |
@@ -155,8 +175,10 @@ Estimated time: **~1.5 weeks** once templates received.
 ## Suggested Talking Points for Client
 
 - Treatment Order Builder is COMPLETE — 4-tab sentence builder, per-wound, saves/loads/displays/PDFs
+- Client Forms are COMPLETE — debridement, patient-not-seen, incident reports, G-tube procedures, consent provider signatures
+- Clinical Summary PDFs dropped — the new client forms cover the requirement
 - AI notetaker is working and ready for a live demo — let's schedule with Dr. May and clinicians
-- PDF clinical summaries are next (once templates arrive from Aaron/Erin)
+- Facility access control is next (~1 day) — highest priority remaining item
 - Weekly Monday check-ins will help us stay on track and control scope
 - Monthly AI cost will be minimal (~$30–80/month)
 - Need to confirm production OpenAI API key before go-live

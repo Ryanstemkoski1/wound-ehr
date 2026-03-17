@@ -1,5 +1,7 @@
 # AI Transcription Service Research & Architecture Design
 
+> **⚠️ Historical Document:** This is the original research and evaluation document from Phase 11.1. Code samples and schema DDL shown here are illustrative drafts — the actual implementation may differ. For current architecture, see [SYSTEM_DESIGN.md](../SYSTEM_DESIGN.md).
+
 **Phase:** 11.1.1 - Research & Architecture  
 **Date:** March 7, 2026  
 **Status:** ✅ APPROVED — Client selected OpenAI Whisper API + GPT-4 (direct API)  

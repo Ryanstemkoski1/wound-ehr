@@ -6,12 +6,12 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 
 **⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `docs/SYSTEM_DESIGN.md`. This includes:**
 
-- Database schema (20+ tables with Supabase PostgreSQL)
-- Frontend architecture (app router structure, components)
+- Database schema (31 tables with Supabase PostgreSQL)
+- Frontend architecture (app router structure, 134 components)
 - Backend patterns (Server Components + Server Actions)
 - UI/UX workflows (assessment forms, photo management, calendar, signatures)
-- Implementation phases (Phases 1–11.1 complete, Phase 11.2–11.5 in progress)
-- Design decisions (auth, multi-facility, billing, compliance, AI transcription)
+- Implementation phases (Phases 1–11.1, 11.6, 11.7 complete; Phase 11.2–11.5 remaining)
+- Design decisions (auth, multi-tenant, billing, compliance, AI transcription)
 
 **📚 Documentation Structure:**
 
@@ -24,7 +24,7 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 
 ## Tech Stack & Configuration
 
-- **Framework**: Next.js 16.0.1 (App Router)
+- **Framework**: Next.js 16.0.7 (App Router)
 - **React**: 19.2.0 (latest with React Compiler support)
 - **Styling**: Tailwind CSS v4 (using PostCSS plugin `@tailwindcss/postcss`)
 - **UI Components**: shadcn/ui with "new-york" style variant
@@ -109,7 +109,7 @@ import { cn } from "@/lib/utils";
 
 ### Database Schema
 
-The database uses **21 tables** with Row Level Security (RLS):
+The database uses **31 tables** with Row Level Security (RLS):
 
 **Core tables (Phase 1-8):**
 
@@ -140,8 +140,17 @@ The database uses **21 tables** with Row Level Security (RLS):
 - `addendum_notifications` - Post-approval change tracking
 - `visit_transcripts` - AI audio transcripts and generated notes
 - `patient_recording_consents` - Patient consent for AI recording
+- `debridement_assessments` - Arobella ultrasonic debridement documentation
+- `patient_not_seen_reports` - Reason patient was not seen + follow-up plan
+- `incident_reports` - Facility incident reports
+- `gtube_procedures` - G-tube replacement/removal documentation
+- `skilled_nursing_wounds` - Sub-table for wound entries within skilled nursing assessment
+- `tenants` - SaaS organizations / multi-tenant root
+- `user_roles` - RBAC roles (tenant_admin/facility_admin/user)
+- `user_invites` - Email invites with token + expiry
+- `wound_notes` - Per-wound notes and addendums
 
-Schema location: `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix)
+Schema location: `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix, 00029 treatment builder, 00030 clinical forms, 00031 consent provider sig)
 
 ### Supabase Backend Architecture
 

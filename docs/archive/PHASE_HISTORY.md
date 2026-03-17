@@ -1,6 +1,6 @@
 # Wound EHR — Phase Completion History
 
-> **Archived:** March 16, 2026
+> **Archived:** March 17, 2026
 > This file contains historical phase completion details moved from PROJECT_STATUS.md and SYSTEM_DESIGN.md during a documentation cleanup. For current status, see [PROJECT_STATUS.md](../PROJECT_STATUS.md).
 
 ---
@@ -108,7 +108,7 @@
 
 ### 10.4.2: Performance Optimization ✅ (Feb 16)
 
-- Migration 00027: 40+ strategic database indexes
+- 40+ strategic database indexes (added in base schema consolidation)
 - PDF generation caching (Supabase Storage)
 - Calendar load: 65% faster, Patient search: 85% faster
 - "My Patients" filter: 78% faster
@@ -140,3 +140,39 @@
 - Clinician AI preference settings
 - Audio playback with waveform in review UI
 - Batch audio retention cleanup (90-day policy)
+
+---
+
+## Phase 11.6: Treatment Order Builder
+
+**Status:** COMPLETE (March 16, 2026)
+**Timeline:** Single session
+
+- ✅ Migration 00029: `wound_id` FK + treatment builder columns on `treatments` table
+- ✅ `lib/treatment-options.ts` (~590 lines) — all dropdown options, TypeScript types, sentence builder functions
+- ✅ `app/actions/treatments.ts` (~356 lines) — CRUD + autosave + upsert
+- ✅ `treatment-order-builder.tsx` — 4-tab UI (Topical, Compression/NPWT, Skin/Moisture, Rash/Dermatitis)
+- ✅ Multi-wound form integration (per-wound treatment state)
+- ✅ Edit form integration (pre-loads existing treatment)
+- ✅ Visit detail display (per-wound order sentences)
+- ✅ PDF integration (treatment orders in wound progress PDF)
+
+**Stats:** 8 sub-tasks, 1 migration
+
+---
+
+## Phase 11.7: Client Forms
+
+**Status:** COMPLETE (March 16–17, 2026)
+
+- ✅ Migration 00030: `debridement_assessments`, `patient_not_seen_reports`, `incident_reports` + RLS
+- ✅ Migration 00031: `provider_signature_id` on `patient_consents`
+- ✅ `app/actions/new-forms.ts` — CRUD for debridement, patient-not-seen, incident reports
+- ✅ `app/actions/specialized-assessments.ts` — updated with G-tube procedures
+- ✅ Debridement assessment form (Arobella ultrasonic debridement)
+- ✅ Patient Not Seen form (reason + follow-up plan)
+- ✅ Incident Report form (facility incident documentation)
+- ✅ G-tube Procedure form (replacement/removal)
+- ✅ Consent provider signature support
+
+**Stats:** 2 migrations, 4 new clinical forms

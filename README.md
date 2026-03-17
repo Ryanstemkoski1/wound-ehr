@@ -62,7 +62,7 @@ Visit `http://localhost:3000`
 
 | Category      | Technology                      |
 | ------------- | ------------------------------- |
-| Framework     | Next.js 16.0.1 (App Router)     |
+| Framework     | Next.js 16.0.7 (App Router)     |
 | React         | 19.2.0 with Server Components   |
 | TypeScript    | Strict mode enabled             |
 | Styling       | Tailwind CSS v4 (OKLCH colors)  |
@@ -80,31 +80,15 @@ Visit `http://localhost:3000`
 
 ## 🗄️ Database
 
-**20+ tables** with Row Level Security (RLS):
+**31 tables** with Row Level Security (RLS), 75+ policies, 20+ RPC functions.
 
-- `users` - User accounts with credentials (RN, LVN, MD, DO, PA, NP, CNA, Admin)
-- `facilities` - Medical facilities/clinics
-- `user_facilities` - User-facility associations (many-to-many)
-- `patients` - Patient demographics and medical info
-- `wounds` - Wound records with location, type, and status
-- `visits` - Patient visit records with signature workflow
-- `assessments` - Standard wound assessments with measurements
-- `photos` - Wound photo metadata (files in Supabase Storage)
-- `treatments` - Treatment plans and medical orders
-- `billings` - Billing codes (CPT, ICD-10) and claims
-- `signatures` - Electronic signatures with audit trail
-- `patient_consents` - Initial consent-to-treat forms
-- `procedure_scopes` - Credential-based procedure restrictions
-- `patient_documents` - Patient document attachments (11 types)
-- `skilled_nursing_assessments` - RN/LVN comprehensive assessment forms
-- `grafting_assessments` - Skin graft procedure documentation
-- `skin_sweep_assessments` - Full-body skin inspection forms
-- `patient_clinicians` - Clinician-patient assignments with roles
-- `addendum_notifications` - Post-approval change tracking
-- `visit_transcripts` - AI audio transcripts and generated notes
-- `patient_recording_consents` - Patient consent for AI recording
+Core: `patients`, `wounds`, `visits`, `assessments`, `photos`, `treatments`, `billings`, `wound_notes`
+Auth: `tenants`, `users`, `user_roles`, `user_invites`, `user_facilities`, `facilities`
+Compliance: `signatures`, `patient_consents`, `patient_clinicians`, `addendum_notifications`, `procedure_scopes`, `patient_documents`
+Specialized: `skilled_nursing_assessments`, `skilled_nursing_wounds`, `gtube_procedures`, `grafting_assessments`, `skin_sweep_assessments`, `debridement_assessments`, `patient_not_seen_reports`, `incident_reports`
+AI: `visit_transcripts`, `patient_recording_consents`
 
-**Schema:** See `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix)  
+**Schema:** `supabase/migrations/` (6 files: 00001, 00027–00031)
 **For detailed schema documentation, see [SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)**
 
 ---
@@ -145,13 +129,12 @@ Visit `http://localhost:3000`
 
 ### Phase 10 ✅
 
-- ✅ Note approval workflow (office review, corrections, locking)
-- ⚠️ Abbreviated clinical output (blocked — awaiting G-tube/wound templates)
-- ✅ Calendar clinician filtering (patient assignments)
-- ✅ Reporting by criteria (clinician/date/facility filters)
-- ✅ Role-based field access (view-only demographics for clinicians)
-- ✅ Data validation rules (treatment/tissue/measurement validation)
-- ✅ Performance optimization (database indexes, query optimization)
+- Note approval workflow (office review, corrections, locking)
+- Calendar clinician filtering (patient assignments)
+- Reporting by criteria (clinician/date/facility filters)
+- Role-based field access (view-only demographics for clinicians)
+- Data validation rules (treatment/tissue/measurement validation)
+- Performance optimization (database indexes, query optimization)
 
 ### Phase 11.1: AI Clinical Note Generation ✅
 
@@ -162,7 +145,21 @@ Visit `http://localhost:3000`
 - ✅ Clinician review and approval interface
 - ✅ Background processing with real-time status polling
 
-**Next:** Phase 11.2–11.5 (mobile optimization, PDF enhancements, polish) — see [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)
+### Phase 11.6: Treatment Order Builder ✅
+
+- 4-tab sentence builder (Topical / Compression / Skin / Rash)
+- Auto-generated treatment order text per wound
+- Integrated into assessment forms and visit detail
+
+### Phase 11.7: Client Clinical Forms ✅
+
+- Arobella debridement assessment (4-tab form)
+- Patient not seen report (reason checkboxes + clinician signature)
+- Consent-to-treatment (multi-step with 3 signatures)
+- Photo/video consent modal
+- Incident report (workplace incident + employee signature)
+
+**Next:** Phase 11.2–11.5 (facility access control, mobile optimization, PDF enhancements, polish) — see [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)
 
 ---
 
@@ -171,14 +168,14 @@ Visit `http://localhost:3000`
 ```
 wound-ehr/
 ├── app/                      # Next.js App Router
-│   ├── actions/              # Server Actions (21 files for DB operations)
+│   ├── actions/              # Server Actions (23 files, ~175 functions)
 │   ├── api/                  # API Route Handlers (audio upload)
 │   ├── dashboard/            # Protected application pages
 │   ├── auth/                 # Authentication pages
 │   ├── layout.tsx            # Root layout
 │   └── globals.css           # Tailwind CSS v4 config
-├── components/               # React components (130+ files)
-│   ├── ui/                   # shadcn/ui components (40+ files)
+├── components/               # React components (134 files)
+│   ├── ui/                   # shadcn/ui components (39 files)
 │   ├── layout/               # Header, sidebar, navigation
 │   ├── patients/             # Patient management
 │   ├── wounds/               # Wound tracking
@@ -203,7 +200,7 @@ wound-ehr/
 │   ├── billing-codes.ts      # CPT/ICD-10 code database
 │   └── utils.ts              # Helper functions (cn, etc.)
 ├── supabase/                 # Database schema
-│   ├── migrations/           # SQL migration files (00001, 00027, 00028)
+│   ├── migrations/           # SQL migration files (00001, 00027–00031)
 │   └── seed.ts               # Seed script for test data
 ├── docs/                     # Documentation
 │   ├── SYSTEM_DESIGN.md      # Architecture, schema, design decisions

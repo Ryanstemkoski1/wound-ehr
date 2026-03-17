@@ -286,7 +286,7 @@
 
 ### TC-6.2: Oversized file
 
-- **Steps**: Attempt to upload audio > 500 MB
+- **Steps**: Attempt to upload audio > 25 MB (Whisper API limit)
 - **Expected**: Client-side validation rejects before upload
 
 ### TC-6.3: API key missing

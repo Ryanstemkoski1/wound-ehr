@@ -914,7 +914,9 @@ Phase 11 focuses on revolutionary AI-powered clinical documentation and mobile d
 
 ### 11.7: Additional Enhancements (Week 8)
 
-**Goal:** Polish, bug fixes, and nice-to-have features
+> **Note:** The 11.7 label was reused. The work below (auto-save, search, notifications) was NOT implemented under 11.7. Instead, Phase 11.7 delivered **Client Forms** (debridement, patient-not-seen, incident reports, G-tube procedures, consent provider signatures) via migrations 00030–00031. The features listed below remain as future work under Phase 11.5.
+
+**Goal:** Polish, bug fixes, and nice-to-have features (deferred to 11.5)
 
 ---
 
@@ -1162,24 +1164,18 @@ Phase 11 focuses on revolutionary AI-powered clinical documentation and mobile d
 
 ### Budget & Resources
 
-**AI Transcription Costs (Estimated):**
+**AI Transcription Costs (Actual — OpenAI):**
 
-- Service: AWS HealthScribe or similar (HIPAA-compliant)
-- Cost: ~$0.10 per minute of audio
-- Average visit: 15 minutes = $1.50 per visit
-- Expected usage: 100 visits/month = $150/month
-- Annual cost: ~$1,800
-
-**Development Effort:**
-
-- Total hours: 320 hours (40 days × 8 hours)
-- At standard rate: [Client's rate structure]
+- Service: OpenAI Whisper (whisper-1) + GPT-4 Turbo (direct API)
+- Cost: ~$0.10–0.30 per visit
+- Expected usage: 300 visits/month = ~$30–80/month
+- Annual cost: ~$360–960
 
 **Infrastructure:**
 
-- Supabase Storage: +$25/month for audio files
-- AI API costs: ~$150/month (see above)
-- Total new monthly cost: ~$175
+- Supabase Storage: included in plan (visit-audio bucket)
+- AI API costs: ~$30–80/month (see above)
+- Total new monthly cost: ~$30–80
 
 ### Documentation Deliverables
 
@@ -1207,23 +1203,23 @@ Phase 11 focuses on revolutionary AI-powered clinical documentation and mobile d
 
 ### Next Steps (Immediate)
 
-**Week 1 Actions (March 6-13):**
+**Week 1 Actions (March 6–13):** ✅ All completed
 
 1. **Client Actions:**
-   - [ ] Send clinical summary templates (G-tube and wound care) to developer
-   - [ ] Review and approve patient recording consent form language
-   - [ ] Provide feedback on AI transcription priority (confirm this is most important)
+   - [x] Send clinical summary templates (G-tube and wound care) to developer — dropped; client forms fulfill the requirement
+   - [x] Review and approve patient recording consent form language
+   - [x] Provide feedback on AI transcription priority (confirm this is most important)
 
 2. **Developer Actions:**
-   - [ ] Research HIPAA-compliant AI transcription services (3 options minimum)
-   - [ ] Prepare service comparison matrix for client review
-   - [ ] Draft Business Associate Agreement requirements
-   - [ ] Begin database schema design (migration 00027)
+   - [x] Research HIPAA-compliant AI transcription services (3 options minimum)
+   - [x] Prepare service comparison matrix for client review
+   - [x] Draft Business Associate Agreement requirements
+   - [x] Begin database schema design (migration 00027)
 
 3. **Joint Actions:**
-   - [ ] Schedule kickoff call for Phase 11 (week of March 6)
-   - [ ] Confirm budget approval for AI transcription costs
-   - [ ] Establish testing plan with client clinicians (UAT participants)
+   - [x] Schedule kickoff call for Phase 11 (week of March 6)
+   - [x] Confirm budget approval for AI transcription costs
+   - [x] Establish testing plan with client clinicians (UAT participants)
 
 ---
 
