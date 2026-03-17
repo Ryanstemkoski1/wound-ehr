@@ -3,18 +3,18 @@
 > **Internal use only.** Copy the relevant week's report and send to client at the listed date.
 > Reports are for Monday check-in emails (per Dr. May's 30-minute Monday meetings).
 >
-> **Timeline: 4 weeks from March 9 meeting → April 6 delivery**
+> **Timeline: 4 weeks from March 9 meeting → April 5 delivery**
 >
-> - Report 1: March 17 (covers week of March 9–16)
-> - Report 2: March 24 (covers week of March 17–23)
-> - Report 3: March 31 (covers week of March 24–30)
-> - Report 4: April 7 (covers week of March 31 – April 6 + delivery)
+> - Report 1: March 16 (covers week of March 9–15)
+> - Report 2: March 23 (covers week of March 16–22)
+> - Report 3: March 30 (covers week of March 23–29)
+> - Report 4: April 6 (covers week of March 30 – April 5 + delivery)
 >
 > **Post-launch improvements: Reports 5–7 (flexible timing after delivery)**
 
 ---
 
-## Report 1 — Monday, March 17
+## Report 1 — Monday, March 16
 
 **Subject: Weekly Update — Recording Fix + Treatment Order Builder Started**
 
@@ -46,8 +46,8 @@ What I got done:
 
 **Next 2 weeks:**
 
-- **Week of March 24:** Finish the Treatment Order Builder — all 4 tabs with live sentence preview, integration into the assessment flow, orders on visit summaries and PDF exports. Start clinical forms.
-- **Week of March 31:** Build the new clinical forms (debridement, patient-not-seen, incident, G-tube) and the facility access fix. Integration testing.
+- **Week of March 16:** Finish the Treatment Order Builder — all 4 tabs with live sentence preview, integration into the assessment flow, orders on visit summaries and PDF exports. Start clinical forms.
+- **Week of March 23:** Build the new clinical forms (debridement, patient-not-seen, incident, G-tube) and the facility access fix. Integration testing.
 
 **Timeline check:** On track. Recording fix is done. Treatment Order Builder is about 60% complete. 3 weeks to go.
 
@@ -56,7 +56,7 @@ Ryan
 
 ---
 
-## Report 2 — Monday, March 24
+## Report 2 — Monday, March 23
 
 **Subject: Weekly Update — Treatment Order Builder COMPLETE ✅ + Clinical Forms Started**
 
@@ -92,8 +92,8 @@ Got a head start on the new clinical form types:
 
 **Next 2 weeks:**
 
-- **Week of March 31:** Finish remaining forms (incident reports, G-tube procedures, provider signature on consents), facility access control (hiding unapproved notes from facility users).
-- **Week of April 7:** Final testing across all features, bug fixes, and delivery.
+- **Week of March 23:** Finish remaining forms (incident reports, G-tube procedures, provider signature on consents), facility access control (hiding unapproved notes from facility users).
+- **Week of March 30:** Final testing across all features, bug fixes, and delivery.
 
 **Timeline check:** Ahead of schedule. Treatment Order Builder done and clinical forms started early. 2 weeks to go.
 
@@ -102,7 +102,7 @@ Ryan
 
 ---
 
-## Report 3 — Monday, March 31
+## Report 3 — Monday, March 30
 
 **Subject: Weekly Update — Clinical Forms COMPLETE ✅ + Facility Access Fixed ✅**
 
@@ -132,7 +132,7 @@ The office has full control over what facility users see before approval.
 
 **Next 2 weeks:**
 
-- **Week of April 7:** Final end-to-end testing (assessment → treatment orders → clinical forms → signatures → office approval → PDF). Fix any issues. Deliver for your team to start testing.
+- **Week of March 30:** Final end-to-end testing (assessment → treatment orders → clinical forms → signatures → office approval → PDF). Fix any issues. Deliver for your team to start testing.
 - **After delivery:** I have a list of improvements — mobile optimization for tablets/phones, PDF enhancements, and some quality-of-life items. Happy to discuss timing once the core system is in your hands.
 
 **Timeline check:** Ahead of schedule. All core features are built. Final week is about making sure everything works together smoothly.
@@ -153,7 +153,7 @@ Ryan
 
 ---
 
-## Report 4 — Monday, April 7
+## Report 4 — Monday, April 6
 
 **Subject: Core Delivery — Ready for Your Team to Test**
 
@@ -321,8 +321,8 @@ Ryan
 
 > **Notes for Ryan:**
 >
-> - **Reports 1–4 (core delivery):** Send on Mondays March 17, 24, 31, April 7. Work is already done.
+> - **Reports 1–4 (core delivery):** Send on Mondays March 16, 23, 30, April 6. Work is already done.
 > - **Reports 5–7 (post-launch):** No fixed dates — send when you actually build each piece.
-> - Report 1 is ready to send today (March 17).
+> - Report 1 is ready to send today (March 16).
 > - Recording fix is in Report 1 since Ryan committed to it in the March 9 meeting.
 > - Post-launch work positioned as "improvements" not "unfinished business."
