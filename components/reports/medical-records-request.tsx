@@ -41,6 +41,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getPatientRecords } from "@/app/actions/reports";
 import Link from "next/link";
+import { toast } from "sonner";
 
 type PatientRecordsData = {
   patient: {
@@ -91,7 +92,7 @@ export function MedicalRecordsRequest({
 
   const handleRunReport = async () => {
     if (!selectedPatient) {
-      alert("Please select a patient");
+      toast.warning("Please select a patient");
       return;
     }
 
@@ -107,12 +108,12 @@ export function MedicalRecordsRequest({
         setData(result.data as unknown as PatientRecordsData);
       } else {
         console.error("Failed to fetch patient records:", result.error);
-        alert("Failed to load records. Please try again.");
+        toast.error("Failed to load records. Please try again.");
         setData(null);
       }
     } catch (error) {
       console.error("Error fetching patient records:", error);
-      alert("Failed to load records. Please try again.");
+      toast.error("Failed to load records. Please try again.");
       setData(null);
     } finally {
       setLoading(false);

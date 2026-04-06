@@ -31,10 +31,10 @@ export default function ResetPasswordPage() {
     const checkSession = async () => {
       const supabase = createClient();
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (session) {
+      if (user) {
         setValidSession(true);
       } else {
         setError(

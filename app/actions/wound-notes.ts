@@ -48,7 +48,7 @@ export async function createWoundNote(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/patients");
+  revalidatePath("/dashboard/patients");
   return { success: true, data };
 }
 
@@ -67,7 +67,7 @@ export async function updateWoundNote(noteId: string, note: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/patients");
+  revalidatePath("/dashboard/patients");
   return { success: true };
 }
 
@@ -86,6 +86,6 @@ export async function deleteWoundNote(noteId: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/patients");
+  revalidatePath("/dashboard/patients");
   return { success: true };
 }

@@ -69,25 +69,33 @@ export default async function PatientDetailPage({
   }
 
   // Check if patient has consent-to-treat
-  const consentResult = await getPatientConsent(id);
+  // Parallelize independent data fetches
+  const [
+    consentResult,
+    recordingConsentResult,
+    documentsResult,
+    cliniciansResult,
+    userRole,
+    userCredentials,
+  ] = await Promise.all([
+    getPatientConsent(id),
+    checkRecordingConsent(id),
+    getPatientDocuments(id),
+    getPatientClinicians(id),
+    getUserRole(),
+    getUserCredentials(),
+  ]);
+
   const hasConsent = !consentResult.error && consentResult.data !== null;
 
-  // Check recording consent for AI transcription
-  const recordingConsentResult = await checkRecordingConsent(id);
   const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
   const recordingConsent = recordingConsentResult.consent ?? null;
 
-  // Get patient documents
-  const documentsResult = await getPatientDocuments(id);
   const documents = documentsResult.documents || [];
 
-  // Get clinician assignments
-  const cliniciansResult = await getPatientClinicians(id);
   const clinicians = cliniciansResult.data || [];
 
   // Get available clinicians for assignment (admins only)
-  const userRole = await getUserRole();
-  const userCredentials = await getUserCredentials();
   const isAdmin =
     userRole?.role === "tenant_admin" || userRole?.role === "facility_admin";
   const availableCliniciansResult = isAdmin

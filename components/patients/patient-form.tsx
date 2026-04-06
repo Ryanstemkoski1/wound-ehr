@@ -851,7 +851,7 @@ export default function PatientForm({
                     placeholder="Add an allergy..."
                     value={newAllergy}
                     onChange={(e) => setNewAllergy(e.target.value)}
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         addAllergy();
@@ -895,7 +895,7 @@ export default function PatientForm({
                     placeholder="Add a medical condition..."
                     value={newCondition}
                     onChange={(e) => setNewCondition(e.target.value)}
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         addCondition();

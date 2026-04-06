@@ -21,19 +21,19 @@ export async function getPatientDataForPDF(patientId: string) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
     let clinician: { name: string; credentials: string | null } | undefined;
-    if (user) {
-      const { data: userData } = await supabase
-        .from("users")
-        .select("name, credentials")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (userData?.name) {
-        clinician = {
-          name: userData.name,
-          credentials: userData.credentials ?? null,
-        };
-      }
+    const { data: userData } = await supabase
+      .from("users")
+      .select("name, credentials")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (userData?.name) {
+      clinician = {
+        name: userData.name,
+        credentials: userData.credentials ?? null,
+      };
     }
 
     // Fetch complete patient data
@@ -502,19 +502,19 @@ export async function getWoundDataForPDF(woundId: string) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
     let clinician: { name: string; credentials: string | null } | undefined;
-    if (user) {
-      const { data: userData } = await supabase
-        .from("users")
-        .select("name, credentials")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (userData?.name) {
-        clinician = {
-          name: userData.name,
-          credentials: userData.credentials ?? null,
-        };
-      }
+    const { data: userData } = await supabase
+      .from("users")
+      .select("name, credentials")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (userData?.name) {
+      clinician = {
+        name: userData.name,
+        credentials: userData.credentials ?? null,
+      };
     }
 
     // Fetch complete wound data
@@ -661,6 +661,10 @@ export async function generatePatientsCSV(
 ): Promise<{ success: true; csv: string } | { success: false; error: string }> {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
 
     // Fetch patients
     let query = supabase
@@ -759,6 +763,10 @@ export async function generateWoundsCSV(
 ): Promise<{ success: true; csv: string } | { success: false; error: string }> {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
 
     // Fetch wounds
     let query = supabase

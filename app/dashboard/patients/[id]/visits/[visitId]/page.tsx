@@ -69,8 +69,10 @@ export default async function VisitDetailPage({ params }: PageProps) {
   }
 
   // Check facility access control — facility users cannot see unapproved visits
-  const userRole = await getUserRole();
-  const rbacCredentials = await getRbacCredentials();
+  const [userRole, rbacCredentials] = await Promise.all([
+    getUserRole(),
+    getRbacCredentials(),
+  ]);
   const canView = canViewVisitDetails(
     userRole?.role || null,
     rbacCredentials,
@@ -82,25 +84,28 @@ export default async function VisitDetailPage({ params }: PageProps) {
     redirect(`/dashboard/patients/${patientId}?restricted=1`);
   }
 
-  // Get billing information
-  const billingResult = await getBillingForVisit(visitId);
+  // Parallelize independent data fetches
+  const [
+    billingResult,
+    treatments,
+    recordingConsentResult,
+    transcriptResult,
+    debridementAssessments,
+    notSeenReport,
+    { data: userData },
+  ] = await Promise.all([
+    getBillingForVisit(visitId),
+    getTreatmentsByVisit(visitId),
+    checkRecordingConsent(patientId),
+    getVisitTranscript(visitId),
+    getVisitDebridementAssessments(visitId),
+    getVisitNotSeenReport(visitId),
+    supabase.rpc("get_current_user_credentials"),
+  ]);
+
   const billing = billingResult.success ? billingResult.billing : null;
-
-  // Get treatment orders for this visit
-  const treatments = await getTreatmentsByVisit(visitId);
-
-  // Check AI recording consent and transcript status
-  const recordingConsentResult = await checkRecordingConsent(patientId);
   const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
-  const transcriptResult = await getVisitTranscript(visitId);
   const transcript = transcriptResult.transcript ?? null;
-
-  // Fetch new form data
-  const debridementAssessments = await getVisitDebridementAssessments(visitId);
-  const notSeenReport = await getVisitNotSeenReport(visitId);
-
-  // Get current user's name and credentials for signing
-  const { data: userData } = await supabase.rpc("get_current_user_credentials");
 
   const userName = userData && userData.length > 0 ? userData[0].name : "";
   const userCredentials =

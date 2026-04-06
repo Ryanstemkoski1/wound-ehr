@@ -289,6 +289,19 @@ export async function deletePatientDocument(documentId: string) {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // Check admin role
+    const { getUserRole } = await import("@/lib/rbac");
+    const userRole = await getUserRole();
+    if (
+      !userRole ||
+      (userRole.role !== "tenant_admin" && userRole.role !== "facility_admin")
+    ) {
+      return {
+        success: false,
+        error: "Only administrators can delete documents",
+      };
+    }
+
     // Get document metadata
     const { data: document, error: docError } = await supabase
       .from("patient_documents")

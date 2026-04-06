@@ -38,10 +38,10 @@ export function Footer() {
               Facilities
             </Link>
             <Link
-              href="/dashboard/analytics"
+              href="/dashboard/reports"
               className="hover:text-foreground transition-colors"
             >
-              Analytics
+              Reports
             </Link>
           </nav>
 

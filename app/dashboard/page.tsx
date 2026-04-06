@@ -41,34 +41,31 @@ export default async function DashboardPage() {
   // Get user role for admin features
   const userRole = await getUserRole();
 
-  // Get admin stats if user is tenant admin
+  // Get admin stats if user is tenant admin (parallel)
   let totalUsers = 0;
   let totalFacilities = 0;
   let pendingInvites = 0;
 
   if (userRole?.role === "tenant_admin") {
     try {
-      // Count total users in tenant
-      const { count: usersCount } = await supabase
-        .from("user_roles")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", userRole.tenant_id);
-      totalUsers = usersCount || 0;
-
-      // Count facilities
-      const { count: facilitiesCount } = await supabase
-        .from("facilities")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", userRole.tenant_id);
-      totalFacilities = facilitiesCount || 0;
-
-      // Count pending invites
-      const { count: invitesCount } = await supabase
-        .from("invites")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", userRole.tenant_id)
-        .eq("status", "pending");
-      pendingInvites = invitesCount || 0;
+      const [usersResult, facilitiesResult, invitesResult] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", userRole.tenant_id),
+        supabase
+          .from("facilities")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", userRole.tenant_id),
+        supabase
+          .from("invites")
+          .select("*", { count: "exact", head: true })
+          .eq("tenant_id", userRole.tenant_id)
+          .eq("status", "pending"),
+      ]);
+      totalUsers = usersResult.count || 0;
+      totalFacilities = facilitiesResult.count || 0;
+      pendingInvites = invitesResult.count || 0;
     } catch (error) {
       console.error("Admin stats fetch error:", error);
     }
@@ -113,78 +110,108 @@ export default async function DashboardPage() {
       // User has no facilities, show empty dashboard
       hasError = false;
     } else {
-      // Count active patients
-      const { count: patientsCount } = await supabase
-        .from("patients")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true)
-        .in("facility_id", facilityIds);
+      // Get patient count and patient IDs in parallel
+      const [patientsCountResult, patientsResult] = await Promise.all([
+        supabase
+          .from("patients")
+          .select("*", { count: "exact", head: true })
+          .eq("is_active", true)
+          .in("facility_id", facilityIds),
+        supabase.from("patients").select("id").in("facility_id", facilityIds),
+      ]);
 
-      totalPatients = patientsCount || 0;
-
-      // Get all patients in user's facilities for wound queries
-      const { data: patients } = await supabase
-        .from("patients")
-        .select("id")
-        .in("facility_id", facilityIds);
-
-      const patientIds = patients?.map((p) => p.id) || [];
+      totalPatients = patientsCountResult.count || 0;
+      const patientIds = patientsResult.data?.map((p) => p.id) || [];
 
       if (patientIds.length > 0) {
-        // Count active wounds
-        const { count: woundsCount } = await supabase
-          .from("wounds")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "active")
-          .in("patient_id", patientIds);
-
-        activeWounds = woundsCount || 0;
-
-        // Count visits this month
+        // All these queries are independent — run in parallel
         const startOfMonth = new Date(
           new Date().getFullYear(),
           new Date().getMonth(),
           1
         ).toISOString();
-        const { count: visitsCount } = await supabase
-          .from("visits")
-          .select("*", { count: "exact", head: true })
-          .in("patient_id", patientIds)
-          .gte("visit_date", startOfMonth);
 
-        visitsThisMonth = visitsCount || 0;
+        // Build the 6-month date ranges for visit history
+        const monthRanges = Array.from({ length: 6 }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - (5 - i));
+          return {
+            start: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              1
+            ).toISOString(),
+            end: new Date(
+              date.getFullYear(),
+              date.getMonth() + 1,
+              0
+            ).toISOString(),
+            label: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              1
+            ).toLocaleDateString("en-US", { month: "short" }),
+          };
+        });
 
-        // Count pending visits
-        const { count: pendingCount } = await supabase
-          .from("visits")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "incomplete")
-          .in("patient_id", patientIds);
-
-        pendingVisits = pendingCount || 0;
-
-        // Get recent visits
-        const { data: visits } = await supabase
-          .from("visits")
-          .select(
+        const [
+          woundsCountResult,
+          visitsCountResult,
+          pendingCountResult,
+          recentVisitsResult,
+          woundsResult,
+          ...monthlyVisitResults
+        ] = await Promise.all([
+          // Active wounds count
+          supabase
+            .from("wounds")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "active")
+            .in("patient_id", patientIds),
+          // Visits this month
+          supabase
+            .from("visits")
+            .select("*", { count: "exact", head: true })
+            .in("patient_id", patientIds)
+            .gte("visit_date", startOfMonth),
+          // Pending visits
+          supabase
+            .from("visits")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "incomplete")
+            .in("patient_id", patientIds),
+          // Recent 5 visits
+          supabase
+            .from("visits")
+            .select(
+              `
+              *,
+              patient:patients!inner(id, first_name, last_name)
             `
-            *,
-            patient:patients!inner(id, first_name, last_name)
-          `
-          )
-          .in("patient_id", patientIds)
-          .order("visit_date", { ascending: false })
-          .limit(5);
+            )
+            .in("patient_id", patientIds)
+            .order("visit_date", { ascending: false })
+            .limit(5),
+          // Wound status distribution
+          supabase.from("wounds").select("status").in("patient_id", patientIds),
+          // 6 monthly visit counts — all in parallel instead of sequential loop
+          ...monthRanges.map((range) =>
+            supabase
+              .from("visits")
+              .select("*", { count: "exact", head: true })
+              .in("patient_id", patientIds)
+              .gte("visit_date", range.start)
+              .lte("visit_date", range.end)
+          ),
+        ]);
 
-        recentVisits = visits || [];
+        activeWounds = woundsCountResult.count || 0;
+        visitsThisMonth = visitsCountResult.count || 0;
+        pendingVisits = pendingCountResult.count || 0;
+        recentVisits = recentVisitsResult.data || [];
 
-        // Get wound status distribution
-        const { data: wounds } = await supabase
-          .from("wounds")
-          .select("status")
-          .in("patient_id", patientIds);
-
-        const statusGroups = (wounds || []).reduce(
+        // Process wound status distribution
+        const statusGroups = (woundsResult.data || []).reduce(
           (acc: Record<string, number>, wound) => {
             acc[wound.status] = (acc[wound.status] || 0) + 1;
             return acc;
@@ -198,48 +225,12 @@ export default async function DashboardPage() {
             count: count as number,
           })
         );
-      }
-    }
 
-    // Get visits for last 6 months
-    visitsLast6Months = [];
-    if (facilityIds.length > 0) {
-      const { data: patients } = await supabase
-        .from("patients")
-        .select("id")
-        .in("facility_id", facilityIds);
-
-      const patientIds = patients?.map((p) => p.id) || [];
-
-      if (patientIds.length > 0) {
-        for (let i = 0; i < 6; i++) {
-          const date = new Date();
-          date.setMonth(date.getMonth() - (5 - i));
-          const startOfMonth = new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            1
-          ).toISOString();
-          const endOfMonth = new Date(
-            date.getFullYear(),
-            date.getMonth() + 1,
-            0
-          ).toISOString();
-
-          const { count } = await supabase
-            .from("visits")
-            .select("*", { count: "exact", head: true })
-            .in("patient_id", patientIds)
-            .gte("visit_date", startOfMonth)
-            .lte("visit_date", endOfMonth);
-
-          visitsLast6Months.push({
-            month: new Date(startOfMonth).toLocaleDateString("en-US", {
-              month: "short",
-            }),
-            visits: count || 0,
-          });
-        }
+        // Process monthly visit counts
+        visitsLast6Months = monthRanges.map((range, i) => ({
+          month: range.label,
+          visits: monthlyVisitResults[i]?.count || 0,
+        }));
       }
     }
 

@@ -51,6 +51,7 @@ import { inviteUser, cancelInvite } from "@/app/actions/admin";
 import { formatDistanceToNow } from "date-fns";
 import type { Credentials } from "@/lib/credentials";
 import { CREDENTIALS_LABELS } from "@/lib/credentials";
+import { toast } from "sonner";
 
 type Invite = {
   id: string;
@@ -107,7 +108,7 @@ export function InvitesManagementClient({
     const result = await inviteUser(formData);
 
     if (result.error) {
-      alert(result.error);
+      toast.error(result.error);
     } else {
       setShowInviteDialog(false);
       setInviteForm({
@@ -128,7 +129,7 @@ export function InvitesManagementClient({
     const result = await cancelInvite(inviteId);
 
     if (result.error) {
-      alert(result.error);
+      toast.error(result.error);
     } else {
       router.refresh();
     }
@@ -156,7 +157,7 @@ export function InvitesManagementClient({
         setTimeout(() => setCopiedToken(null), 2000);
       } catch (copyErr) {
         console.error("Failed to copy:", copyErr);
-        alert("Failed to copy link. Please copy manually: " + inviteLink);
+        toast.error("Failed to copy link. Please copy manually.");
       }
       document.body.removeChild(textArea);
     }

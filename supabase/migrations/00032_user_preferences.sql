@@ -27,10 +27,11 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 );
 
 -- Index for fast lookup by user
-CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
 
 -- Auto-update updated_at
-CREATE OR REPLACE TRIGGER set_user_preferences_updated_at
+DROP TRIGGER IF EXISTS set_user_preferences_updated_at ON user_preferences;
+CREATE TRIGGER set_user_preferences_updated_at
   BEFORE UPDATE ON user_preferences
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
@@ -41,20 +42,24 @@ CREATE OR REPLACE TRIGGER set_user_preferences_updated_at
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- Users can read and write their own preferences
+DROP POLICY IF EXISTS "Users can view own preferences" ON user_preferences;
 CREATE POLICY "Users can view own preferences"
   ON user_preferences FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own preferences" ON user_preferences;
 CREATE POLICY "Users can insert own preferences"
   ON user_preferences FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own preferences" ON user_preferences;
 CREATE POLICY "Users can update own preferences"
   ON user_preferences FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Admins can view all (for support/debugging)
+DROP POLICY IF EXISTS "Admins can view all preferences" ON user_preferences;
 CREATE POLICY "Admins can view all preferences"
   ON user_preferences FOR SELECT
   USING (

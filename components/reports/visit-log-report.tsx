@@ -47,6 +47,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   getVisitLog,
   exportVisitLogToCSV,
@@ -178,11 +179,11 @@ export function VisitLogReport({
         window.URL.revokeObjectURL(url);
       } else {
         console.error("Failed to export CSV:", result.error);
-        alert("Failed to export CSV. Please try again.");
+        toast.error("Failed to export CSV. Please try again.");
       }
     } catch (error) {
       console.error("Error exporting CSV:", error);
-      alert("Failed to export CSV. Please try again.");
+      toast.error("Failed to export CSV. Please try again.");
     } finally {
       setExporting(false);
     }

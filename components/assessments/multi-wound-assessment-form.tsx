@@ -461,6 +461,7 @@ export default function MultiWoundAssessmentForm({
       setError(
         err instanceof Error ? err.message : "Failed to save assessments"
       );
+    } finally {
       setIsSubmitting(false);
     }
   };

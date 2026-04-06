@@ -227,6 +227,25 @@ export async function createVisitFromCalendar(
   }
 }
 
+// Finalized statuses that cannot be rescheduled, deleted, or arbitrarily changed
+const FINALIZED_STATUSES = [
+  "signed",
+  "submitted",
+  "approved",
+  "voided",
+  "sent_to_office",
+];
+
+// Valid status transitions for calendar status changes
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  scheduled: ["in_progress", "cancelled", "no_show"],
+  incomplete: ["in_progress", "cancelled", "no_show"],
+  in_progress: ["completed", "cancelled"],
+  draft: ["in_progress", "completed", "cancelled"],
+  completed: ["draft"],
+  needs_correction: ["draft"],
+};
+
 /**
  * Reschedule a visit (drag-and-drop)
  */
@@ -236,6 +255,28 @@ export async function rescheduleVisit(
   try {
     const validated = rescheduleVisitSchema.parse(data);
     const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // Check current status — cannot reschedule finalized visits
+    const { data: currentVisit } = await supabase
+      .from("visits")
+      .select("status")
+      .eq("id", validated.visitId)
+      .single();
+
+    if (
+      currentVisit &&
+      FINALIZED_STATUSES.includes(currentVisit.status || "")
+    ) {
+      return {
+        success: false,
+        error: "Cannot reschedule a finalized visit",
+      };
+    }
 
     const { data: visit, error } = await supabase
       .from("visits")
@@ -312,11 +353,41 @@ export async function getPatientsForCalendar(facilityId?: string) {
 }
 
 /**
- * Update visit status
+ * Update visit status (with transition validation)
  */
 export async function updateVisitStatus(visitId: string, status: string) {
   try {
     const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // Validate status transition
+    const { data: currentVisit } = await supabase
+      .from("visits")
+      .select("status")
+      .eq("id", visitId)
+      .single();
+
+    if (currentVisit) {
+      const currentStatus = currentVisit.status || "draft";
+      const allowedTransitions = VALID_STATUS_TRANSITIONS[currentStatus];
+      if (allowedTransitions && !allowedTransitions.includes(status)) {
+        return {
+          success: false,
+          error: `Cannot change status from "${currentStatus}" to "${status}"`,
+        };
+      }
+      // Block any transition TO a finalized status via calendar
+      if (FINALIZED_STATUSES.includes(status)) {
+        return {
+          success: false,
+          error: `Status "${status}" can only be set through the proper workflow`,
+        };
+      }
+    }
 
     const { error } = await supabase
       .from("visits")
@@ -347,11 +418,34 @@ export async function updateVisitStatus(visitId: string, status: string) {
 }
 
 /**
- * Delete visit
+ * Delete visit (with auth + status guard)
  */
 export async function deleteVisit(visitId: string) {
   try {
     const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // Check current status — cannot delete finalized visits
+    const { data: currentVisit } = await supabase
+      .from("visits")
+      .select("status")
+      .eq("id", visitId)
+      .single();
+
+    if (
+      currentVisit &&
+      FINALIZED_STATUSES.includes(currentVisit.status || "")
+    ) {
+      return {
+        success: false,
+        error:
+          "Cannot delete a finalized visit. Contact administrator if deletion is needed.",
+      };
+    }
 
     const { error } = await supabase.from("visits").delete().eq("id", visitId);
 
@@ -396,13 +490,14 @@ export async function searchPatientsForCalendar(
   try {
     const supabase = await createClient();
 
-    // Search by name (case-insensitive) or MRN
+    // Search by name (case-insensitive) or MRN — sanitize for PostgREST
+    const sanitizedTerm = searchTerm.replace(/[%_\\(),.*]/g, "");
     const { data: patients, error } = await supabase
       .from("patients")
       .select("id, first_name, last_name, mrn, facility_id")
       .eq("facility_id", facilityId)
       .or(
-        `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,mrn.ilike.%${searchTerm}%`
+        `first_name.ilike.%${sanitizedTerm}%,last_name.ilike.%${sanitizedTerm}%,mrn.ilike.%${sanitizedTerm}%`
       )
       .order("last_name", { ascending: true })
       .order("first_name", { ascending: true })

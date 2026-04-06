@@ -15,6 +15,7 @@ import {
 import { FilePlus, Loader2 } from "lucide-react";
 import { createAddendum } from "@/app/actions/visits";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type AddAddendumDialogProps = {
   visitId: string;
@@ -36,7 +37,7 @@ export function AddAddendumDialog({
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      alert("Please enter addendum content");
+      toast.warning("Please enter addendum content");
       return;
     }
 
@@ -45,14 +46,14 @@ export function AddAddendumDialog({
       const result = await createAddendum(visitId, content);
 
       if (result.error) {
-        alert("Failed to create addendum: " + result.error);
+        toast.error("Failed to create addendum: " + result.error);
       } else {
         setContent("");
         setOpen(false);
         router.refresh();
       }
     } catch {
-      alert("Failed to create addendum");
+      toast.error("Failed to create addendum");
     } finally {
       setIsSubmitting(false);
     }

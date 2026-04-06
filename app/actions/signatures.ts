@@ -401,7 +401,8 @@ export async function signVisit(
     const requiresPatient = requiresPatientSig(
       userData.credentials as Credentials
     );
-    const newStatus = requiresPatient ? "signed" : "signed"; // Can submit immediately if no patient sig needed
+    // If no patient signature needed, mark as submitted directly
+    const newStatus = requiresPatient ? "signed" : "submitted";
 
     const { error: updateError } = await supabase
       .from("visits")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -91,6 +92,7 @@ export function VisitAIStatusCard({
   aiNoteApproved,
   visitStatus,
 }: VisitAIStatusCardProps) {
+  const router = useRouter();
   const isVisitEditable =
     visitStatus !== "signed" && visitStatus !== "submitted";
 
@@ -103,8 +105,8 @@ export function VisitAIStatusCard({
     enabled:
       transcriptStatus === "pending" || transcriptStatus === "processing",
     onCompleted: () => {
-      // Force page reload to get fresh server data
-      window.location.reload();
+      // Refresh server data without full page reload
+      router.refresh();
     },
   });
 
@@ -116,11 +118,11 @@ export function VisitAIStatusCard({
     setIsRetrying(true);
     try {
       await retryFailedTranscription(transcriptId);
-      window.location.reload();
+      router.refresh();
     } catch {
       setIsRetrying(false);
     }
-  }, [transcriptId]);
+  }, [transcriptId, router]);
 
   // No recording consent — prompt to obtain it
   if (!hasRecordingConsent) {

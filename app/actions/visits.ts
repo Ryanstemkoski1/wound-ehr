@@ -304,6 +304,7 @@ export async function createVisit(formData: FormData) {
         location: validated.location || null,
         status: "draft", // Always start as draft for signature workflow
         requires_patient_signature: needsPatientSignature,
+        clinician_id: user.id,
         clinician_name: clinicianName,
         clinician_credentials: clinicianCredentials,
         follow_up_type: validated.followUpType || null,
@@ -432,14 +433,6 @@ export async function updateVisit(visitId: string, formData: FormData) {
       throw updateError;
     }
 
-    // Invalidate PDF cache if visit was previously signed/submitted
-    if (
-      existingVisit.status === "signed" ||
-      existingVisit.status === "submitted"
-    ) {
-      await invalidateVisitPDFCache(visitId);
-    }
-
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${existingVisit.patient_id}`);
     revalidatePath(`/dashboard/visits/${visitId}`);
@@ -518,12 +511,25 @@ export async function markVisitComplete(visitId: string) {
     // Check if user has access to this visit
     const { data: visit, error: visitError } = await supabase
       .from("visits")
-      .select("id, patient_id")
+      .select("id, patient_id, status")
       .eq("id", visitId)
       .maybeSingle();
 
     if (visitError || !visit) {
       return { error: "Visit not found or access denied" };
+    }
+
+    // Only allow completing visits in appropriate status
+    const completableStatuses = [
+      "scheduled",
+      "incomplete",
+      "in_progress",
+      "draft",
+    ];
+    if (!completableStatuses.includes(visit.status || "")) {
+      return {
+        error: `Cannot mark visit as completed — current status is "${visit.status}".`,
+      };
     }
 
     // Update status to completed
@@ -595,6 +601,13 @@ export async function autosaveVisitDraft(
       return { success: true, visitId };
     } else {
       // Create a new draft visit
+      // Get user's credentials for clinician attribution
+      const { data: userDataArray } = await supabase.rpc(
+        "get_current_user_credentials"
+      );
+      const userData =
+        userDataArray && userDataArray.length > 0 ? userDataArray[0] : null;
+
       const { data, error } = await supabase
         .from("visits")
         .insert({
@@ -603,6 +616,9 @@ export async function autosaveVisitDraft(
           visit_type: formData.visitType as string,
           location: (formData.location as string) || null,
           status: "draft",
+          clinician_id: user.id,
+          clinician_name: userData?.name || "",
+          clinician_credentials: userData?.credentials || "",
           follow_up_type: (formData.followUpType as string) || null,
           follow_up_date: (formData.followUpDate as string) || null,
           follow_up_notes: (formData.followUpNotes as string) || null,

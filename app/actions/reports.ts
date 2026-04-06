@@ -99,6 +99,12 @@ export type FacilitySummaryResult = {
 export async function getVisitLog(filters: VisitLogFilters) {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return { success: false, error: "Unauthorized", data: [], total: 0 };
+
     const page = filters.page || 1;
     const limit = filters.limit || 50;
     const offset = (page - 1) * limit;
@@ -257,6 +263,10 @@ export async function getClinicianActivity(
 ) {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
 
     // Get clinician info
     const { data: clinician, error: clinicianError } = await supabase
@@ -393,6 +403,10 @@ export async function getFacilitySummary(
 ) {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
 
     // Get facility info
     const { data: facility, error: facilityError } = await supabase
@@ -532,6 +546,10 @@ export async function getPatientRecords(
 ) {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
 
     // Get patient info
     const { data: patient, error: patientError } = await supabase
@@ -727,6 +745,10 @@ export async function exportVisitLogToCSV(filters: VisitLogFilters) {
 export async function getAvailableCliniciansForReporting() {
   try {
     const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized", data: [] };
 
     // Get all users who have conducted visits
     const { data: visitClinicians } = await supabase

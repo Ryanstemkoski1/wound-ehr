@@ -20,6 +20,25 @@ export async function assignClinician(
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // Verify user is admin or assigning themselves
+    if (user.id !== userId) {
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (
+        !userRole ||
+        !["tenant_admin", "facility_admin"].includes(userRole.role)
+      ) {
+        return {
+          success: false,
+          error: "Only administrators can assign other clinicians",
+        };
+      }
+    }
+
     // Check if assignment already exists
     const { data: existing } = await supabase
       .from("patient_clinicians")
@@ -86,6 +105,30 @@ export async function removeClinician(patientId: string, userId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    // Only admins or self-removal allowed
+    if (user.id !== userId) {
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (
+        !userRole ||
+        !["tenant_admin", "facility_admin"].includes(userRole.role)
+      ) {
+        return {
+          success: false,
+          error: "Only administrators can remove other clinicians",
+        };
+      }
+    }
+
     // Soft delete by setting is_active to false
     const { error } = await supabase
       .from("patient_clinicians")

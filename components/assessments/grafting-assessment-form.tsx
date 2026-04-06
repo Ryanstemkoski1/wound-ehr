@@ -148,7 +148,11 @@ export default function GraftingAssessmentForm({
     setIsSubmitting(true);
     try {
       data.isDraft = isDraft;
-      await createGraftingAssessment(data);
+      const result = await createGraftingAssessment(data);
+      if (!result.success) {
+        toast.error(result.error || "Failed to save grafting assessment");
+        return;
+      }
       clearSavedData(); // Clear autosave after successful submission
       toast.success(
         isDraft
@@ -182,7 +186,7 @@ export default function GraftingAssessmentForm({
         <AutosaveIndicator status={autosaveStatus} lastSaved={lastSavedTime} />
       </div>
 
-      <form className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
         <Tabs defaultValue="procedure-info" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="procedure-info">Procedure</TabsTrigger>

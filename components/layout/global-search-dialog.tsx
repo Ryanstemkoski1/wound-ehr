@@ -43,6 +43,13 @@ export function GlobalSearchDialog() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   // Focus input when dialog opens
   useEffect(() => {
     if (open) {

@@ -177,6 +177,7 @@ export default function WoundForm({
           id="onsetDate"
           name="onsetDate"
           type="date"
+          max={new Date().toISOString().split("T")[0]}
           defaultValue={
             wound?.onsetDate
               ? new Date(wound.onsetDate).toISOString().split("T")[0]

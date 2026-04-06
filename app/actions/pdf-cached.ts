@@ -133,6 +133,13 @@ export async function checkCachedWoundPDF(visitId: string): Promise<{
   error?: string;
 }> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return { success: false, isCached: false, error: "Unauthorized" };
+
     const result = await getCachedPDF({
       visitId,
       pdfType: "wound-progress",
@@ -161,6 +168,12 @@ export async function cacheWoundPDF(
   error?: string;
 }> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     const arrayBuffer = await pdfBlob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -192,6 +205,13 @@ export async function checkCachedPatientPDF(visitId: string): Promise<{
   error?: string;
 }> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return { success: false, isCached: false, error: "Unauthorized" };
+
     const result = await getCachedPDF({
       visitId,
       pdfType: "patient-summary",
@@ -220,6 +240,12 @@ export async function cachePatientPDF(
   error?: string;
 }> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     const arrayBuffer = await pdfBlob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -250,6 +276,12 @@ export async function invalidateVisitPDFCache(visitId: string): Promise<{
   error?: string;
 }> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     const result = await invalidatePDFCache({ visitId });
     return result;
   } catch (error) {

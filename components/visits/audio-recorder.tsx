@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback, useRef, useEffect } from "react";
-import {
-  formatDuration,
-  formatFileSize,
-} from "@/lib/hooks/use-audio-recorder";
+import { useRouter } from "next/navigation";
+import { formatDuration, formatFileSize } from "@/lib/hooks/use-audio-recorder";
 import { useRecordingContext } from "@/lib/recording-context";
 import { AI_CONFIG } from "@/lib/ai-config";
 import {
@@ -177,6 +175,7 @@ export function AudioRecorder({
   onProcessingStarted,
   disabled = false,
 }: AudioRecorderProps) {
+  const router = useRouter();
   // Use the layout-level recording context instead of a local hook.
   // This ensures the MediaRecorder and audio blob survive navigation.
   const {
@@ -209,7 +208,9 @@ export function AudioRecorder({
 
   // Check if a different visit's recording is active
   const otherSessionActive =
-    session !== null && session.visitId !== visitId && recorder.state !== "idle";
+    session !== null &&
+    session.visitId !== visitId &&
+    recorder.state !== "idle";
 
   if (otherSessionActive) {
     return (
@@ -581,7 +582,7 @@ export function AudioRecorder({
             variant="outline"
             onClick={() => {
               endSession();
-              window.location.reload();
+              router.refresh();
             }}
             className="w-full"
           >

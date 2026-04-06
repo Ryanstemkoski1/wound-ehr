@@ -35,6 +35,7 @@ import {
   getClinicianActivity,
   type ClinicianActivityResult,
 } from "@/app/actions/reports";
+import { toast } from "sonner";
 
 type ClinicianActivityReportProps = {
   clinicians: Array<{
@@ -57,7 +58,7 @@ export function ClinicianActivityReport({
 
   const handleRunReport = async () => {
     if (!selectedClinician) {
-      alert("Please select a clinician");
+      toast.warning("Please select a clinician");
       return;
     }
 
@@ -73,12 +74,12 @@ export function ClinicianActivityReport({
         setData(result.data);
       } else {
         console.error("Failed to fetch clinician activity:", result.error);
-        alert("Failed to load report. Please try again.");
+        toast.error("Failed to load report. Please try again.");
         setData(null);
       }
     } catch (error) {
       console.error("Error fetching clinician activity:", error);
-      alert("Failed to load report. Please try again.");
+      toast.error("Failed to load report. Please try again.");
       setData(null);
     } finally {
       setLoading(false);

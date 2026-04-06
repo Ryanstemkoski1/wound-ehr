@@ -123,14 +123,15 @@ export default function SkinSweepAssessmentForm({
     setShowRecoveryModal(false);
   };
 
-  const onSubmit = async (
-    data: SkinSweepAssessmentData,
-    isDraft: boolean
-  ) => {
+  const onSubmit = async (data: SkinSweepAssessmentData, isDraft: boolean) => {
     setIsSubmitting(true);
     try {
       data.isDraft = isDraft;
-      await createSkinSweepAssessment(data);
+      const result = await createSkinSweepAssessment(data);
+      if (!result.success) {
+        toast.error(result.error || "Failed to save skin sweep assessment");
+        return;
+      }
       clearSavedData(); // Clear autosave after successful submission
       toast.success(
         isDraft
@@ -155,13 +156,9 @@ export default function SkinSweepAssessmentForm({
     fieldName: keyof SkinSweepAssessmentData,
     value: string
   ) => {
-    const currentValues =
-      (formValues[fieldName] as string[] | undefined) || [];
+    const currentValues = (formValues[fieldName] as string[] | undefined) || [];
     if (currentValues.includes(value)) {
-      setValue(
-        fieldName,
-        currentValues.filter((v) => v !== value) as never
-      );
+      setValue(fieldName, currentValues.filter((v) => v !== value) as never);
     } else {
       setValue(fieldName, [...currentValues, value] as never);
     }
@@ -219,7 +216,9 @@ export default function SkinSweepAssessmentForm({
                   <div className="space-y-2">
                     <Label htmlFor="assessmentType">Assessment Type *</Label>
                     <Select
-                      onValueChange={(value) => setValue("assessmentType", value)}
+                      onValueChange={(value) =>
+                        setValue("assessmentType", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
@@ -228,7 +227,9 @@ export default function SkinSweepAssessmentForm({
                         <SelectItem value="admission">
                           Admission Assessment
                         </SelectItem>
-                        <SelectItem value="routine">Routine Skin Check</SelectItem>
+                        <SelectItem value="routine">
+                          Routine Skin Check
+                        </SelectItem>
                         <SelectItem value="discharge">
                           Discharge Assessment
                         </SelectItem>
@@ -274,7 +275,9 @@ export default function SkinSweepAssessmentForm({
                   <div className="space-y-2">
                     <Label htmlFor="skinTemperature">Skin Temperature</Label>
                     <Select
-                      onValueChange={(value) => setValue("skinTemperature", value)}
+                      onValueChange={(value) =>
+                        setValue("skinTemperature", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select temperature" />
@@ -310,7 +313,9 @@ export default function SkinSweepAssessmentForm({
 
                   <div className="space-y-2">
                     <Label htmlFor="skinTurgor">Skin Turgor</Label>
-                    <Select onValueChange={(value) => setValue("skinTurgor", value)}>
+                    <Select
+                      onValueChange={(value) => setValue("skinTurgor", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select turgor" />
                       </SelectTrigger>
@@ -348,7 +353,9 @@ export default function SkinSweepAssessmentForm({
                       id="newWoundsDocumented"
                       type="number"
                       min="0"
-                      {...register("newWoundsDocumented", { valueAsNumber: true })}
+                      {...register("newWoundsDocumented", {
+                        valueAsNumber: true,
+                      })}
                     />
                   </div>
 
@@ -423,9 +430,9 @@ export default function SkinSweepAssessmentForm({
                     <div key={area} className="flex items-center space-x-2">
                       <Checkbox
                         id={`area-${area}`}
-                        checked={
-                          (formValues.areasInspected || []).includes(area)
-                        }
+                        checked={(formValues.areasInspected || []).includes(
+                          area
+                        )}
                         onCheckedChange={(checked) => {
                           if (checked) {
                             toggleArrayValue("areasInspected", area);
@@ -646,9 +653,9 @@ export default function SkinSweepAssessmentForm({
                     <div key={device} className="flex items-center space-x-2">
                       <Checkbox
                         id={`device-${device}`}
-                        checked={
-                          (formValues.devicesIdentified || []).includes(device)
-                        }
+                        checked={(formValues.devicesIdentified || []).includes(
+                          device
+                        )}
                         onCheckedChange={(checked) => {
                           if (checked) {
                             toggleArrayValue("devicesIdentified", device);
@@ -657,7 +664,10 @@ export default function SkinSweepAssessmentForm({
                           }
                         }}
                       />
-                      <Label htmlFor={`device-${device}`} className="capitalize">
+                      <Label
+                        htmlFor={`device-${device}`}
+                        className="capitalize"
+                      >
                         {device.replace("_", " ")}
                       </Label>
                     </div>
@@ -694,7 +704,9 @@ export default function SkinSweepAssessmentForm({
                       id="hasIncontinence"
                       {...register("hasIncontinence")}
                     />
-                    <Label htmlFor="hasIncontinence">Incontinence Present</Label>
+                    <Label htmlFor="hasIncontinence">
+                      Incontinence Present
+                    </Label>
                   </div>
 
                   <div className="space-y-2">
@@ -762,7 +774,9 @@ export default function SkinSweepAssessmentForm({
                     <div key={factor} className="flex items-center space-x-2">
                       <Checkbox
                         id={`risk-factor-${factor}`}
-                        checked={(formValues.riskFactors || []).includes(factor)}
+                        checked={(formValues.riskFactors || []).includes(
+                          factor
+                        )}
                         onCheckedChange={(checked) => {
                           if (checked) {
                             toggleArrayValue("riskFactors", factor);
@@ -798,14 +812,14 @@ export default function SkinSweepAssessmentForm({
 
                   <div className="space-y-2">
                     <Label htmlFor="riskLevel">Risk Level</Label>
-                    <Select onValueChange={(value) => setValue("riskLevel", value)}>
+                    <Select
+                      onValueChange={(value) => setValue("riskLevel", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select risk level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="no_risk">
-                          No Risk (19-23)
-                        </SelectItem>
+                        <SelectItem value="no_risk">No Risk (19-23)</SelectItem>
                         <SelectItem value="mild_risk">
                           Mild Risk (15-18)
                         </SelectItem>
@@ -848,19 +862,26 @@ export default function SkinSweepAssessmentForm({
                       "positioning_devices",
                       "turning_wedge",
                     ].map((equipment) => (
-                      <div key={equipment} className="flex items-center space-x-2">
+                      <div
+                        key={equipment}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`current-${equipment}`}
-                          checked={
-                            (formValues.equipmentCurrentlyInUse || []).includes(
-                              equipment
-                            )
-                          }
+                          checked={(
+                            formValues.equipmentCurrentlyInUse || []
+                          ).includes(equipment)}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              toggleArrayValue("equipmentCurrentlyInUse", equipment);
+                              toggleArrayValue(
+                                "equipmentCurrentlyInUse",
+                                equipment
+                              );
                             } else {
-                              toggleArrayValue("equipmentCurrentlyInUse", equipment);
+                              toggleArrayValue(
+                                "equipmentCurrentlyInUse",
+                                equipment
+                              );
                             }
                           }}
                         />
@@ -890,14 +911,15 @@ export default function SkinSweepAssessmentForm({
                       "positioning_devices",
                       "turning_wedge",
                     ].map((equipment) => (
-                      <div key={equipment} className="flex items-center space-x-2">
+                      <div
+                        key={equipment}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`recommend-${equipment}`}
-                          checked={
-                            (formValues.equipmentRecommendations || []).includes(
-                              equipment
-                            )
-                          }
+                          checked={(
+                            formValues.equipmentRecommendations || []
+                          ).includes(equipment)}
                           onCheckedChange={(checked) => {
                             if (checked) {
                               toggleArrayValue(
@@ -938,12 +960,15 @@ export default function SkinSweepAssessmentForm({
                       "positioning_devices",
                       "turning_wedge",
                     ].map((equipment) => (
-                      <div key={equipment} className="flex items-center space-x-2">
+                      <div
+                        key={equipment}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`ordered-${equipment}`}
-                          checked={
-                            (formValues.equipmentOrdered || []).includes(equipment)
-                          }
+                          checked={(formValues.equipmentOrdered || []).includes(
+                            equipment
+                          )}
                           onCheckedChange={(checked) => {
                             if (checked) {
                               toggleArrayValue("equipmentOrdered", equipment);
@@ -998,9 +1023,9 @@ export default function SkinSweepAssessmentForm({
                       <div key={topic} className="flex items-center space-x-2">
                         <Checkbox
                           id={`topic-${topic}`}
-                          checked={
-                            (formValues.educationTopics || []).includes(topic)
-                          }
+                          checked={(formValues.educationTopics || []).includes(
+                            topic
+                          )}
                           onCheckedChange={(checked) => {
                             if (checked) {
                               toggleArrayValue("educationTopics", topic);
@@ -1009,7 +1034,10 @@ export default function SkinSweepAssessmentForm({
                             }
                           }}
                         />
-                        <Label htmlFor={`topic-${topic}`} className="capitalize">
+                        <Label
+                          htmlFor={`topic-${topic}`}
+                          className="capitalize"
+                        >
                           {topic.replace("_", " ")}
                         </Label>
                       </div>
@@ -1021,14 +1049,18 @@ export default function SkinSweepAssessmentForm({
                   <div className="space-y-2">
                     <Label htmlFor="educationMethod">Education Method</Label>
                     <Select
-                      onValueChange={(value) => setValue("educationMethod", value)}
+                      onValueChange={(value) =>
+                        setValue("educationMethod", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select method" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="verbal">Verbal</SelectItem>
-                        <SelectItem value="written">Written Materials</SelectItem>
+                        <SelectItem value="written">
+                          Written Materials
+                        </SelectItem>
                         <SelectItem value="demonstration">
                           Demonstration
                         </SelectItem>
@@ -1121,7 +1153,10 @@ export default function SkinSweepAssessmentForm({
                       "physician",
                       "dme_supplier",
                     ].map((referral) => (
-                      <div key={referral} className="flex items-center space-x-2">
+                      <div
+                        key={referral}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`referral-${referral}`}
                           checked={(formValues.referralsMade || []).includes(
@@ -1178,7 +1213,9 @@ export default function SkinSweepAssessmentForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="providerAssessment">Provider Assessment</Label>
+                  <Label htmlFor="providerAssessment">
+                    Provider Assessment
+                  </Label>
                   <Textarea
                     id="providerAssessment"
                     placeholder="Clinical judgment and recommendations"

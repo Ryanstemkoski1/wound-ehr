@@ -107,9 +107,7 @@ export async function login(formData: FormData) {
         // User was invited, so we should auto-confirm their email
         return {
           error:
-            "Your email needs to be confirmed. Please contact your administrator or run: UPDATE auth.users SET email_confirmed_at = NOW() WHERE email = '" +
-            email +
-            "';",
+            "Your email needs to be confirmed. Please contact your administrator to confirm your account.",
         };
       }
 

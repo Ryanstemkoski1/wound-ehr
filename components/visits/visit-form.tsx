@@ -470,6 +470,22 @@ export default function VisitForm({
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
                 <SelectItem value="no-show">No Show</SelectItem>
+                {/* Workflow statuses shown read-only if already in that state */}
+                {[
+                  "draft",
+                  "sent_to_office",
+                  "needs_correction",
+                  "approved",
+                  "signed",
+                  "submitted",
+                  "voided",
+                ].includes(status) && (
+                  <SelectItem value={status} disabled>
+                    {status
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

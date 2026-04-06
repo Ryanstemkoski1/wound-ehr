@@ -40,8 +40,36 @@ export type CorrectionVisit = {
 
 export async function sendNoteToOffice(visitId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
 
   try {
+    // Verify visit is in a sendable status
+    const { data: currentVisit } = await supabase
+      .from("visits")
+      .select("status")
+      .eq("id", visitId)
+      .single();
+
+    const sendableStatuses = [
+      "complete",
+      "completed",
+      "being_corrected",
+      "signed",
+      "submitted",
+    ];
+    if (
+      !currentVisit ||
+      !sendableStatuses.includes(currentVisit.status || "")
+    ) {
+      return {
+        success: false,
+        error: `Cannot send to office — visit is currently "${currentVisit?.status || "unknown"}".`,
+      };
+    }
+
     // Update visit status to sent_to_office
     const { data, error } = await supabase
       .from("visits")
@@ -82,6 +110,23 @@ export async function requestCorrection(visitId: string, notes: string) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
+
+    // Verify user is admin
+    const { data: userRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (
+      !userRole ||
+      !["tenant_admin", "facility_admin"].includes(userRole.role)
+    ) {
+      return {
+        success: false,
+        error: "Unauthorized: Admin access required to request corrections",
+      };
+    }
 
     // Get current correction_notes array
     const { data: visit } = await supabase
@@ -129,9 +174,28 @@ export async function requestCorrection(visitId: string, notes: string) {
 
 export async function markAsCorrected(visitId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
 
   try {
-    // Update status to being_corrected first, then back to sent_to_office
+    // Verify visit is in needs_correction status
+    const { data: currentVisit } = await supabase
+      .from("visits")
+      .select("status")
+      .eq("id", visitId)
+      .single();
+
+    if (!currentVisit || currentVisit.status !== "needs_correction") {
+      return {
+        success: false,
+        error:
+          'Only visits in "needs_correction" status can be marked as corrected',
+      };
+    }
+
+    // Send corrected visit back to office
     const { data, error } = await supabase
       .from("visits")
       .update({
@@ -273,6 +337,10 @@ export async function voidNote(visitId: string, reason: string) {
 
 export async function getInboxNotes(filters?: InboxFilters) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized", data: [] };
 
   try {
     let query = supabase
@@ -351,6 +419,10 @@ export async function getInboxNotes(filters?: InboxFilters) {
 
 export async function getCorrectionsForClinician(userId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized", data: [] };
 
   try {
     // Since visits don't have created_by yet (added in Phase 10.2.2),

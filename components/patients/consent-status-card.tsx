@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, CheckCircle, Eye, Loader2 } from "lucide-react";
 import { ConsentDocumentViewer } from "./consent-document-viewer";
 import { getConsentDocumentUrl } from "@/app/actions/signatures";
+import { toast } from "sonner";
 
 type ConsentStatusCardProps = {
   hasConsent: boolean;
@@ -92,15 +93,15 @@ export function ConsentStatusCard({
                   try {
                     const result = await getConsentDocumentUrl(patientId);
                     if (result.error) {
-                      alert("Failed to load document: " + result.error);
+                      toast.error("Failed to load document: " + result.error);
                     } else if (result.data?.consent_document_url) {
                       setSignedUrl(result.data.consent_document_url);
                       setViewerOpen(true);
                     } else {
-                      alert("No document URL found");
+                      toast.error("No document URL found");
                     }
                   } catch {
-                    alert("Failed to load document");
+                    toast.error("Failed to load document");
                   } finally {
                     setIsLoading(false);
                   }

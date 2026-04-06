@@ -23,7 +23,9 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
   } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const term = query.trim();
+  // Sanitize for PostgREST filter syntax — escape characters that break .or()/.ilike()
+  const term = query.trim().replace(/[%_\\(),.*]/g, "");
+  if (!term) return [];
   const results: SearchResult[] = [];
 
   // Search patients (name, MRN)

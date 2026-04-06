@@ -290,19 +290,11 @@ function extractTreatmentData(formData: FormData) {
     treatment_tab: treatmentTab || null,
     generated_order_text: generatedOrderText || null,
     treatment_orders: generatedOrderText || null,
-    // Store full per-tab state in JSONB columns
-    primary_dressings:
-      treatmentTab === "topical" ? (state.topical ?? null) : null,
-    compression:
-      treatmentTab === "compression_npwt"
-        ? (state.compressionNpwt ?? null)
-        : null,
-    moisture_management:
-      treatmentTab === "skin_moisture" ? (state.skinMoisture ?? null) : null,
-    secondary_treatment:
-      treatmentTab === "rash_dermatitis"
-        ? (state.rashDermatitis ?? null)
-        : null,
+    // Store all tab state unconditionally to prevent data loss when switching tabs
+    primary_dressings: state.topical ?? null,
+    compression: state.compressionNpwt ?? null,
+    moisture_management: state.skinMoisture ?? null,
+    secondary_treatment: state.rashDermatitis ?? null,
     cleanser: (state.topical?.cleanser as string) || null,
     coverage: (state.topical?.coverage as string) || null,
     frequency_days: null,
@@ -339,18 +331,11 @@ function extractAutosaveData(formData: Record<string, unknown>) {
     treatment_tab: treatmentTab,
     generated_order_text: generatedOrderText,
     treatment_orders: generatedOrderText,
-    primary_dressings:
-      treatmentTab === "topical" ? (state.topical ?? null) : null,
-    compression:
-      treatmentTab === "compression_npwt"
-        ? (state.compressionNpwt ?? null)
-        : null,
-    moisture_management:
-      treatmentTab === "skin_moisture" ? (state.skinMoisture ?? null) : null,
-    secondary_treatment:
-      treatmentTab === "rash_dermatitis"
-        ? (state.rashDermatitis ?? null)
-        : null,
+    // Store all tab state unconditionally to prevent data loss when switching tabs
+    primary_dressings: state.topical ?? null,
+    compression: state.compressionNpwt ?? null,
+    moisture_management: state.skinMoisture ?? null,
+    secondary_treatment: state.rashDermatitis ?? null,
     cleanser: null,
     coverage: null,
     frequency_days: null,

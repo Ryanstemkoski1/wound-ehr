@@ -280,10 +280,8 @@ export async function updatePatient(patientId: string, formData: FormData) {
   }
 
   try {
-    const supabase = await createClient();
-
     // Check if MRN is unique within the facility (excluding current patient)
-    const { data: existingPatient } = await supabase
+    const { data: existingMrnPatient } = await supabase
       .from("patients")
       .select("id")
       .eq("facility_id", data.facilityId)
@@ -292,7 +290,7 @@ export async function updatePatient(patientId: string, formData: FormData) {
       .neq("id", patientId)
       .maybeSingle();
 
-    if (existingPatient) {
+    if (existingMrnPatient) {
       return {
         error: "A patient with this MRN already exists in this facility",
       };
@@ -416,11 +414,14 @@ export async function getPatients(facilityId?: string, search?: string) {
       query = query.eq("facility_id", facilityId);
     }
 
-    // Search by name or MRN
+    // Search by name or MRN (sanitize for PostgREST filter syntax)
     if (search) {
-      query = query.or(
-        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,mrn.ilike.%${search}%`
-      );
+      const sanitized = search.replace(/[%_\\(),.*]/g, "");
+      if (sanitized) {
+        query = query.or(
+          `first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,mrn.ilike.%${sanitized}%`
+        );
+      }
     }
 
     const { data: patients, error } = await query;

@@ -2,6 +2,32 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+// ============================================================================
+// VALIDATION SCHEMAS
+// ============================================================================
+
+const debridementSchema = z.object({
+  visitId: z.string().uuid("Invalid visit ID"),
+  patientId: z.string().uuid("Invalid patient ID"),
+  facilityId: z.string().uuid("Invalid facility ID"),
+  assessmentDate: z.string().min(1, "Assessment date is required"),
+});
+
+const patientNotSeenSchema = z.object({
+  patientId: z.string().uuid("Invalid patient ID"),
+  facilityId: z.string().uuid("Invalid facility ID"),
+  scheduledDate: z.string().min(1, "Scheduled date is required"),
+  reason: z.string().min(1, "Reason is required"),
+});
+
+const incidentReportSchema = z.object({
+  facilityId: z.string().uuid("Invalid facility ID"),
+  reportDate: z.string().min(1, "Report date is required"),
+  employeeName: z.string().min(1, "Employee name is required"),
+  description: z.string().min(1, "Description is required"),
+});
 
 // ============================================================================
 // TYPES
@@ -142,6 +168,12 @@ export type PhotoVideoConsentData = {
 export async function createDebridementAssessment(
   data: DebridementAssessmentData
 ): Promise<{ success: boolean; assessmentId?: string; error?: string }> {
+  // Validate required fields
+  const validation = debridementSchema.safeParse(data);
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0].message };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -277,6 +309,12 @@ export async function getVisitDebridementAssessments(visitId: string) {
 export async function createPatientNotSeenReport(
   data: PatientNotSeenData
 ): Promise<{ success: boolean; reportId?: string; error?: string }> {
+  // Validate required fields
+  const validation = patientNotSeenSchema.safeParse(data);
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0].message };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -370,6 +408,12 @@ export async function getVisitNotSeenReport(visitId: string) {
 export async function createIncidentReport(
   data: IncidentReportData
 ): Promise<{ success: boolean; reportId?: string; error?: string }> {
+  // Validate required fields
+  const validation = incidentReportSchema.safeParse(data);
+  if (!validation.success) {
+    return { success: false, error: validation.error.issues[0].message };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

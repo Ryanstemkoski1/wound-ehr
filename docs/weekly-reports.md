@@ -218,11 +218,11 @@ Ryan
 
 ## Report 5 — Monday, April 13
 
-**Subject: Weekly Update — AI Transcript Admin COMPLETE ✅ + Audio Player Upgrade ✅**
+**Subject: Weekly Update — AI Transcript Admin COMPLETE ✅ + Photo Preferences COMPLETE ✅**
 
 Hi Dr. May / Alana,
 
-Wrapped up the **AI transcript management** tools and some improvements to the audio playback experience.
+Wrapped up the **AI transcript management** tools, **photo printing preferences**, and some improvements to the audio playback experience.
 
 **AI Transcript Admin — COMPLETE:**
 
@@ -244,9 +244,19 @@ Upgraded the audio player that clinicians use when reviewing AI-generated notes:
 - **Time display** — Current position and total duration.
 - **Playback speed** — Cycle through 0.75×, 1×, 1.25×, 1.5×, 2× speed. Clinicians reviewing long recordings can speed through familiar sections.
 
+**Photo Printing Preferences — COMPLETE:**
+
+New Settings page (sidebar → Settings) where clinicians control how wound photos appear in PDF exports:
+
+- **Include/exclude toggle** — Turn wound photos on or off entirely for cleaner text-only reports when preferred.
+- **Photo size** — Small (thumbnail), Medium (standard), or Large (full detail). Controls how big photos print in the PDF.
+- **Photos per assessment** — Slider from 1–6. Defaults to 2, so clinicians who take more photos can include them all.
+- **Page size** — US Letter or A4.
+
+Preferences apply automatically to all Wound Progress Report PDFs.
+
 **Next week:**
 
-- Photo printing preferences — Settings page for clinicians to control wound photo inclusion and sizing in PDF exports
 - End-to-end testing across the full workflow with all new features
 - Bug fixes from anything that comes up
 
@@ -259,6 +269,7 @@ When you're ready, I'd love to do a 30-minute walkthrough with Dr. May and the c
 - ✅ Everything from prior weeks (13 items)
 - ✅ AI Transcript Admin (browse, filter, cost tracking, audio retention)
 - ✅ Enhanced Audio Player (progress bar, seek, speed control)
+- ✅ Photo Printing Preferences (include/exclude, size, count, page size)
 
 Best,
 Ryan
@@ -279,7 +290,7 @@ This week was focused on **end-to-end testing** and **fixing anything that came 
 - Tested on desktop, iPad, and phone — mobile optimizations holding up well
 - Verified facility access control with different user roles
 - Confirmed AI recording persists across page navigation
-- PDF credentials showing correctly across all document types
+- PDF credentials and photo preferences showing correctly across all document types
 
 **Fixes and refinements:**
 
@@ -287,8 +298,8 @@ This week was focused on **end-to-end testing** and **fixing anything that came 
 
 **Still available:**
 
-- Photo printing preferences (settings page for wound photos in PDFs)
 - Any adjustments based on clinician feedback once the team starts testing
+- Advanced PDF features (watermark, batch export) if needed
 
 **Action items from your side:**
 
@@ -307,8 +318,8 @@ Ryan
 >
 > - **Reports 1–3:** Already sent. Locked.
 > - **Report 4 (April 6):** Covers mobile, PDFs, and polish. Positions as continuous progress — no delivery stopping point.
-> - **Report 5 (April 13):** AI transcript admin + audio player. Asks for demo + API key again. Keeps "next week" items on the table.
+> - **Report 5 (April 13):** AI transcript admin + audio player + photo preferences. Asks for demo + API key again.
 > - **Report 6 (April 20):** Testing/refinement week. Leaves door open for continued work based on feedback.
 > - The "post-launch" framing is gone. Everything is presented as ongoing development progress.
-> - Photo printing preferences kept as upcoming work to maintain forward momentum.
+> - All Phase 11 features are complete (except optional 11.4.3 watermark/batch).
 > - Demo and API key requests repeated — these are client action items that keep them engaged.

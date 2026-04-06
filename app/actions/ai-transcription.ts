@@ -208,7 +208,6 @@ export async function uploadVisitAudio(
   formData: FormData
 ): Promise<UploadAudioResult> {
   try {
-    console.log("[uploadVisitAudio] Starting...");
     const supabase = await createClient();
     const {
       data: { user },
@@ -219,8 +218,6 @@ export async function uploadVisitAudio(
       console.error("[uploadVisitAudio] Auth failed:", authError?.message);
       return { error: "Unauthorized" };
     }
-    console.log("[uploadVisitAudio] Authenticated as:", user.email);
-
     const fileEntry = formData.get("file");
     const visitId = formData.get("visitId");
     const patientId = formData.get("patientId");
@@ -241,20 +238,12 @@ export async function uploadVisitAudio(
     }
 
     const file = fileEntry;
-    console.log("[uploadVisitAudio] File received:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
-
     // Validate consent
     const consentCheck = await checkRecordingConsent(patientId);
     if (!consentCheck.hasConsent) {
       console.error("[uploadVisitAudio] No consent for patient:", patientId);
       return { error: "Patient has not consented to audio recording" };
     }
-    console.log("[uploadVisitAudio] Consent verified");
-
     // Validate file type — use startsWith to handle codec suffixes
     // e.g. "audio/webm;codecs=opus" should match "audio/webm"
     const baseMimeType = file.type.split(";")[0].trim();
@@ -284,17 +273,9 @@ export async function uploadVisitAudio(
 
     // Convert File to Uint8Array for reliable server-side upload
     // Node.js File polyfill may not stream correctly to Supabase's fetch-based upload
-    console.log("[uploadVisitAudio] Converting file to buffer...");
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    console.log(
-      "[uploadVisitAudio] Buffer ready, size:",
-      uint8Array.length,
-      "bytes"
-    );
-
     // Upload to Supabase Storage
-    console.log("[uploadVisitAudio] Uploading to storage:", storagePath);
     const { error: uploadError } = await supabase.storage
       .from(AI_CONFIG.AUDIO.STORAGE_BUCKET)
       .upload(storagePath, uint8Array, {
@@ -307,10 +288,7 @@ export async function uploadVisitAudio(
       console.error("[uploadVisitAudio] Storage upload error:", uploadError);
       return { error: `Failed to upload audio: ${uploadError.message}` };
     }
-    console.log("[uploadVisitAudio] Storage upload complete");
-
     // Create transcript record in pending state
-    console.log("[uploadVisitAudio] Creating transcript record...");
     const { data: transcript, error: dbError } = await supabase
       .from("visit_transcripts")
       .insert({
@@ -334,8 +312,6 @@ export async function uploadVisitAudio(
         error: `Failed to create transcript record: ${dbError.message}`,
       };
     }
-    console.log("[uploadVisitAudio] Transcript record created:", transcript.id);
-
     // Link transcript to visit
     await supabase
       .from("visits")
@@ -345,7 +321,6 @@ export async function uploadVisitAudio(
       })
       .eq("id", visitId);
 
-    console.log("[uploadVisitAudio] Complete — transcript:", transcript.id);
     revalidatePath("/dashboard/patients");
     return { transcript };
   } catch (err) {

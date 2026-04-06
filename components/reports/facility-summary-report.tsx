@@ -40,6 +40,7 @@ import {
   getFacilitySummary,
   type FacilitySummaryResult,
 } from "@/app/actions/reports";
+import { toast } from "sonner";
 
 type FacilitySummaryReportProps = {
   facilities: Array<{ id: string; name: string }>;
@@ -58,7 +59,7 @@ export function FacilitySummaryReport({
 
   const handleRunReport = async () => {
     if (!selectedFacility) {
-      alert("Please select a facility");
+      toast.warning("Please select a facility");
       return;
     }
 
@@ -74,12 +75,12 @@ export function FacilitySummaryReport({
         setData(result.data);
       } else {
         console.error("Failed to fetch facility summary:", result.error);
-        alert("Failed to load report. Please try again.");
+        toast.error("Failed to load report. Please try again.");
         setData(null);
       }
     } catch (error) {
       console.error("Error fetching facility summary:", error);
-      alert("Failed to load report. Please try again.");
+      toast.error("Failed to load report. Please try again.");
       setData(null);
     } finally {
       setLoading(false);

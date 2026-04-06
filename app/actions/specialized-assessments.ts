@@ -827,6 +827,10 @@ export type GraftingAssessmentData = {
 
 export async function createGraftingAssessment(data: GraftingAssessmentData) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
 
   try {
     const { data: result, error } = await supabase
@@ -835,7 +839,7 @@ export async function createGraftingAssessment(data: GraftingAssessmentData) {
         visit_id: data.visitId,
         patient_id: data.patientId,
         facility_id: data.facilityId,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
+        created_by: user.id,
         procedure_date: data.procedureDate,
         postop_day: data.postopDay,
         procedure_type: data.procedureType,
@@ -893,7 +897,9 @@ export async function createGraftingAssessment(data: GraftingAssessmentData) {
     if (error) throw error;
 
     revalidatePath(`/dashboard/patients/${data.patientId}`);
-    revalidatePath(`/dashboard/patients/${data.patientId}/visits/${data.visitId}`);
+    revalidatePath(
+      `/dashboard/patients/${data.patientId}/visits/${data.visitId}`
+    );
 
     return { success: true, data: result };
   } catch (error) {
@@ -1013,6 +1019,10 @@ export type SkinSweepAssessmentData = {
 
 export async function createSkinSweepAssessment(data: SkinSweepAssessmentData) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
 
   try {
     const { data: result, error } = await supabase
@@ -1021,7 +1031,7 @@ export async function createSkinSweepAssessment(data: SkinSweepAssessmentData) {
         visit_id: data.visitId,
         patient_id: data.patientId,
         facility_id: data.facilityId,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
+        created_by: user.id,
         assessment_date: data.assessmentDate,
         assessment_type: data.assessmentType,
         areas_inspected: data.areasInspected,
@@ -1082,7 +1092,9 @@ export async function createSkinSweepAssessment(data: SkinSweepAssessmentData) {
     if (error) throw error;
 
     revalidatePath(`/dashboard/patients/${data.patientId}`);
-    revalidatePath(`/dashboard/patients/${data.patientId}/visits/${data.visitId}`);
+    revalidatePath(
+      `/dashboard/patients/${data.patientId}/visits/${data.visitId}`
+    );
 
     return { success: true, data: result };
   } catch (error) {

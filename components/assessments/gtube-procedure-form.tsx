@@ -124,7 +124,11 @@ export default function GTubeProcedureForm({
     setIsSubmitting(true);
     try {
       data.isDraft = isDraft;
-      await createGTubeProcedure(data);
+      const result = await createGTubeProcedure(data);
+      if (!result.success) {
+        toast.error(result.error || "Failed to save G-tube procedure");
+        return;
+      }
       clearSavedData(); // Clear autosave after successful submission
       toast.success(
         isDraft
@@ -158,7 +162,7 @@ export default function GTubeProcedureForm({
         <AutosaveIndicator status={autosaveStatus} lastSaved={lastSavedTime} />
       </div>
 
-      <form className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
         <Tabs defaultValue="patient-info" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="patient-info">Patient Info</TabsTrigger>

@@ -155,8 +155,8 @@ export function UsersManagementClient({
         alert(result.error);
       } else {
         setUserToEdit(null);
-        // Force a hard refresh to ensure credentials update shows
-        window.location.reload();
+        // Refresh server data to ensure credentials update shows
+        router.refresh();
       }
     } catch (error) {
       console.error("Update error:", error);

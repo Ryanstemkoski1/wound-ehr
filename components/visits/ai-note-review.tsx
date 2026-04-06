@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -430,6 +431,7 @@ export function AIReviewPanel({
   isEditable,
 }: AIReviewProps) {
   void _visitId; // Used for future navigation/linking
+  const router = useRouter();
   const aiNote = transcript.transcript_clinical || "";
   const rawTranscript = transcript.transcript_raw || "";
   const existingFinalNote = transcript.final_note || "";
@@ -473,12 +475,12 @@ export function AIReviewPanel({
         setIsApproving(false);
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch {
       setActionError("Failed to approve note");
       setIsApproving(false);
     }
-  }, [transcript.id, editedNote, wasEdited]);
+  }, [transcript.id, editedNote, wasEdited, router]);
 
   const handleRegenerate = useCallback(async () => {
     setIsRegenerating(true);
@@ -490,12 +492,12 @@ export function AIReviewPanel({
         setIsRegenerating(false);
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch {
       setActionError("Failed to regenerate note");
       setIsRegenerating(false);
     }
-  }, [transcript.id]);
+  }, [transcript.id, router]);
 
   const handleDiscard = useCallback(async () => {
     setIsDiscarding(true);
@@ -510,12 +512,12 @@ export function AIReviewPanel({
         setIsDiscarding(false);
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch {
       setActionError("Failed to discard note");
       setIsDiscarding(false);
     }
-  }, [transcript.id]);
+  }, [transcript.id, router]);
 
   const handleCopy = useCallback(async () => {
     const text = isEditing ? editedNote : aiNote;
