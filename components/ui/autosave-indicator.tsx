@@ -1,22 +1,68 @@
 // Autosave Indicator
-// Phase 9.3.2: Visual indicator showing autosave status
+// Phase 9.3.2 + Phase 11.5: Visual indicator showing autosave status
 
 "use client";
 
-import { Cloud, CloudOff, Check } from "lucide-react";
+import { Cloud, CloudOff, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AutosaveIndicatorProps = {
   status: "saving" | "saved" | "error" | "idle";
   lastSaved?: string;
   className?: string;
+  /** When true, renders as a fixed badge in the bottom-right corner */
+  floating?: boolean;
 };
 
 export default function AutosaveIndicator({
   status,
   lastSaved,
   className,
+  floating = false,
 }: AutosaveIndicatorProps) {
+  // Floating variant: fixed badge with colored background
+  if (floating) {
+    // Don't show when idle
+    if (status === "idle") return null;
+
+    return (
+      <div
+        className={cn(
+          "fixed right-4 bottom-20 z-40 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium shadow-md transition-all duration-300 md:right-6 md:bottom-6",
+          status === "saving" &&
+            "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+          status === "saved" &&
+            "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
+          status === "error" &&
+            "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+          className
+        )}
+        role="status"
+        aria-live="polite"
+      >
+        {status === "saving" && (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Saving…
+          </>
+        )}
+        {status === "saved" && (
+          <>
+            <Check className="h-3.5 w-3.5" />
+            Saved {lastSaved && <span className="opacity-70">{lastSaved}</span>}
+          </>
+        )}
+        {status === "error" && (
+          <>
+            <CloudOff className="h-3.5 w-3.5" />
+            Save failed
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Inline variant (original behavior)
   return (
     <div
       className={cn(

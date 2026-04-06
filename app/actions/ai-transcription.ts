@@ -860,3 +860,232 @@ export async function getAudioPlaybackUrl(transcriptId: string) {
     return { error: "Failed to get audio URL" };
   }
 }
+
+// =====================================================
+// ADMIN: TRANSCRIPT MANAGEMENT
+// =====================================================
+
+export type AdminTranscript = {
+  id: string;
+  visit_id: string;
+  audio_url: string | null;
+  audio_filename: string | null;
+  audio_size_bytes: number | null;
+  audio_duration_seconds: number | null;
+  processing_status: string;
+  clinician_edited: boolean;
+  clinician_approved_at: string | null;
+  cost_transcription: number | null;
+  cost_llm: number | null;
+  created_at: string;
+  error_message: string | null;
+  visit: {
+    id: string;
+    visit_date: string;
+    patient: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      mrn: string | null;
+    };
+    clinician: {
+      id: string;
+      full_name: string | null;
+    } | null;
+  };
+};
+
+export type TranscriptStats = {
+  total: number;
+  byStatus: Record<string, number>;
+  totalCostTranscription: number;
+  totalCostLlm: number;
+  audioStorageCount: number;
+  expiredAudioCount: number;
+};
+
+/**
+ * Fetch all transcripts for admin management page.
+ * Requires tenant_admin or facility_admin role.
+ */
+export async function getAdminTranscripts(filters?: {
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{
+  transcripts?: AdminTranscript[];
+  stats?: TranscriptStats;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Unauthorized" };
+    }
+
+    // Build query
+    let query = supabase
+      .from("visit_transcripts")
+      .select(
+        `
+        id,
+        visit_id,
+        audio_url,
+        audio_filename,
+        audio_size_bytes,
+        audio_duration_seconds,
+        processing_status,
+        clinician_edited,
+        clinician_approved_at,
+        cost_transcription,
+        cost_llm,
+        created_at,
+        error_message,
+        visit:visits!inner(
+          id,
+          visit_date,
+          patient:patients!inner(id, first_name, last_name, mrn),
+          clinician:users!visits_clinician_id_fkey(id, full_name)
+        )
+      `
+      )
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    // Apply filters
+    if (filters?.status) {
+      query = query.eq("processing_status", filters.status);
+    }
+    if (filters?.dateFrom) {
+      query = query.gte("created_at", filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      query = query.lte("created_at", filters.dateTo + "T23:59:59Z");
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Get admin transcripts error:", error);
+      return { error: `Failed to fetch transcripts: ${error.message}` };
+    }
+
+    const transcripts = (data ?? []) as unknown as AdminTranscript[];
+
+    // Compute stats
+    const retentionCutoff = new Date();
+    retentionCutoff.setDate(
+      retentionCutoff.getDate() - AI_CONFIG.RETENTION.AUDIO_DAYS
+    );
+
+    const stats: TranscriptStats = {
+      total: transcripts.length,
+      byStatus: {},
+      totalCostTranscription: 0,
+      totalCostLlm: 0,
+      audioStorageCount: 0,
+      expiredAudioCount: 0,
+    };
+
+    for (const t of transcripts) {
+      stats.byStatus[t.processing_status] =
+        (stats.byStatus[t.processing_status] || 0) + 1;
+      stats.totalCostTranscription += Number(t.cost_transcription ?? 0);
+      stats.totalCostLlm += Number(t.cost_llm ?? 0);
+      if (t.audio_url) {
+        stats.audioStorageCount++;
+        if (new Date(t.created_at) < retentionCutoff) {
+          stats.expiredAudioCount++;
+        }
+      }
+    }
+
+    return { transcripts, stats };
+  } catch (err) {
+    console.error("Get admin transcripts error:", err);
+    return { error: "Failed to fetch transcripts" };
+  }
+}
+
+/**
+ * Batch cleanup: delete audio files older than retention period.
+ * Returns count of deleted files.
+ */
+export async function cleanupExpiredAudio(
+  dryRun = false
+): Promise<{ deleted?: number; candidates?: number; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Unauthorized" };
+    }
+
+    const retentionCutoff = new Date();
+    retentionCutoff.setDate(
+      retentionCutoff.getDate() - AI_CONFIG.RETENTION.AUDIO_DAYS
+    );
+
+    // Find transcripts with audio older than retention period
+    const { data: expired, error: fetchError } = await supabase
+      .from("visit_transcripts")
+      .select("id, audio_url")
+      .not("audio_url", "is", null)
+      .lt("created_at", retentionCutoff.toISOString())
+      .neq("processing_status", "deleted");
+
+    if (fetchError) {
+      return { error: `Failed to find expired audio: ${fetchError.message}` };
+    }
+
+    const candidates = expired?.length ?? 0;
+
+    if (dryRun) {
+      return { candidates, deleted: 0 };
+    }
+
+    let deleted = 0;
+    for (const record of expired ?? []) {
+      if (!record.audio_url) continue;
+
+      // Delete from storage
+      const { error: delErr } = await supabase.storage
+        .from(AI_CONFIG.AUDIO.STORAGE_BUCKET)
+        .remove([record.audio_url]);
+
+      if (delErr) {
+        console.error(
+          `Failed to delete audio for transcript ${record.id}:`,
+          delErr
+        );
+        continue;
+      }
+
+      // Update record
+      await supabase
+        .from("visit_transcripts")
+        .update({
+          audio_url: null,
+          processing_status: "deleted" as ProcessingStatus,
+        })
+        .eq("id", record.id);
+
+      deleted++;
+    }
+
+    revalidatePath("/dashboard/admin/transcripts");
+    return { deleted, candidates };
+  } catch (err) {
+    console.error("Cleanup expired audio error:", err);
+    return { error: "Failed to cleanup expired audio" };
+  }
+}

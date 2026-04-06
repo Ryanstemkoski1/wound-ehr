@@ -45,6 +45,16 @@ type WoundProgressData = {
       woundType?: string;
     }>;
   }>;
+  clinician?: {
+    name: string;
+    credentials: string | null;
+  };
+  photoPreferences?: {
+    includePhotos: boolean;
+    photoSize: "small" | "medium" | "large";
+    maxPhotos: number;
+    pageSize: "letter" | "a4";
+  };
 };
 
 // PDF Styles
@@ -186,7 +196,14 @@ type WoundProgressPDFProps = {
 };
 
 export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
-  const { wound, assessments } = data;
+  const { wound, assessments, photoPreferences } = data;
+
+  // Photo size mapping (pt heights)
+  const photoHeightMap = { small: 100, medium: 150, large: 220 } as const;
+  const photoHeight = photoHeightMap[photoPreferences?.photoSize ?? "medium"];
+  const maxPhotos = photoPreferences?.maxPhotos ?? 2;
+  const includePhotos = photoPreferences?.includePhotos ?? true;
+  const pageSize = photoPreferences?.pageSize === "a4" ? "A4" : "LETTER";
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -227,7 +244,7 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size={pageSize} style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Wound Progress Report</Text>
@@ -367,7 +384,7 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
                 )}
 
                 {/* Photos */}
-                {assessment.photos.length > 0 && (
+                {includePhotos && assessment.photos.length > 0 && (
                   <View style={styles.photoContainer}>
                     <Text
                       style={{
@@ -376,11 +393,11 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
                         marginBottom: 6,
                       }}
                     >
-                      Photos ({assessment.photos.length}):
+                      Photos ({Math.min(assessment.photos.length, maxPhotos)}):
                     </Text>
                     <View style={styles.photoRow}>
                       {assessment.photos
-                        .slice(0, 2)
+                        .slice(0, maxPhotos)
                         .map((photo, photoIndex) => (
                           <View key={photoIndex} style={{ width: "48%" }}>
                             {/* Wound Label */}
@@ -415,7 +432,13 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
                               </Text>
                             )}
                             {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                            <Image src={photo.url} style={styles.photo} />
+                            <Image
+                              src={photo.url}
+                              style={{
+                                ...styles.photo,
+                                height: photoHeight,
+                              }}
+                            />
                             {photo.caption && (
                               <Text style={styles.photoCaption}>
                                 {photo.caption}
@@ -441,6 +464,25 @@ export default function WoundProgressPDF({ data }: WoundProgressPDFProps) {
               </View>
             ))}
         </View>
+
+        {/* Clinician Signature Footer */}
+        {data.clinician && (
+          <View
+            style={{
+              marginTop: 20,
+              paddingTop: 10,
+              borderTop: "1pt solid #e2e8f0",
+            }}
+          >
+            <Text style={{ fontSize: 9, fontWeight: "bold" }}>
+              Prepared by: {data.clinician.name}
+              {data.clinician.credentials && `, ${data.clinician.credentials}`}
+            </Text>
+            <Text style={{ fontSize: 8, color: "#64748b", marginTop: 2 }}>
+              Generated: {new Date().toLocaleDateString()}
+            </Text>
+          </View>
+        )}
 
         {/* Footer */}
         <View style={styles.footer}>

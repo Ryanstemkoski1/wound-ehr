@@ -7,7 +7,11 @@ import {
   getPatientClinicians,
   getAvailableClinicians,
 } from "@/app/actions/patient-clinicians";
-import { getUserRole, getUserCredentials } from "@/lib/rbac";
+import {
+  getUserRole,
+  getUserCredentials,
+  canViewVisitDetails,
+} from "@/lib/rbac";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -529,6 +533,13 @@ export default async function PatientDetailPage({
                     key={visit.id}
                     visit={visit}
                     patientId={patient.id}
+                    restricted={
+                      !canViewVisitDetails(
+                        userRole?.role || null,
+                        userCredentials,
+                        visit.status
+                      )
+                    }
                   />
                 )
               )}

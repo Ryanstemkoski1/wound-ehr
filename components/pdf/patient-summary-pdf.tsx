@@ -188,6 +188,10 @@ type PatientSummaryPDFProps = {
       activeWounds: number;
       totalVisits: number;
     };
+    clinician?: {
+      name: string;
+      credentials: string | null;
+    };
   };
 };
 
@@ -371,6 +375,25 @@ export default function PatientSummaryPDF({ data }: PatientSummaryPDFProps) {
             </View>
           ))}
         </View>
+
+        {/* Clinician Signature Footer */}
+        {data.clinician && (
+          <View
+            style={{
+              marginTop: 20,
+              paddingTop: 10,
+              borderTop: "1pt solid #e2e8f0",
+            }}
+          >
+            <Text style={{ fontSize: 9, fontWeight: "bold" }}>
+              Prepared by: {data.clinician.name}
+              {data.clinician.credentials && `, ${data.clinician.credentials}`}
+            </Text>
+            <Text style={{ fontSize: 8, color: "#64748b", marginTop: 2 }}>
+              Generated: {new Date().toLocaleDateString()}
+            </Text>
+          </View>
+        )}
 
         {/* Footer */}
         <View style={styles.footer}>

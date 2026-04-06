@@ -187,10 +187,14 @@ function TranscriptAudioPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(duration ?? 0);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   const loadAudio = useCallback(async () => {
-    if (audioUrl) return; // Already loaded
+    if (audioUrl) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -224,42 +228,115 @@ function TranscriptAudioPlayer({
     }
   }, [audioUrl, isPlaying, loadAudio]);
 
+  const handleSeek = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const audio = audioRef.current;
+      const bar = progressRef.current;
+      if (!audio || !bar || !audioDuration) return;
+      const rect = bar.getBoundingClientRect();
+      const pct = Math.max(
+        0,
+        Math.min(1, (e.clientX - rect.left) / rect.width)
+      );
+      audio.currentTime = pct * audioDuration;
+      setCurrentTime(audio.currentTime);
+    },
+    [audioDuration]
+  );
+
+  const cycleSpeed = useCallback(() => {
+    const speeds = [1, 1.25, 1.5, 2, 0.75];
+    const idx = speeds.indexOf(playbackRate);
+    const next = speeds[(idx + 1) % speeds.length];
+    setPlaybackRate(next);
+    if (audioRef.current) audioRef.current.playbackRate = next;
+  }, [playbackRate]);
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
+  const progress = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
+
   return (
-    <div className="flex items-center gap-2 rounded-md border bg-zinc-50 px-3 py-2 dark:bg-zinc-900">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 shrink-0"
-        onClick={togglePlayback}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isPlaying ? (
-          <Pause className="h-4 w-4" />
-        ) : (
-          <Play className="h-4 w-4" />
-        )}
-      </Button>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium">
-          {filename || "Visit Recording"}
-        </p>
-        {duration && (
-          <p className="text-xs text-zinc-500">{formatTime(duration)}</p>
-        )}
+    <div className="overflow-hidden rounded-md border bg-zinc-50 dark:bg-zinc-900">
+      {/* Top row: controls + filename */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={togglePlayback}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+        </Button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium">
+            {filename || "Visit Recording"}
+          </p>
+        </div>
+        {/* Playback speed */}
+        <button
+          type="button"
+          onClick={cycleSpeed}
+          className="text-muted-foreground hover:text-foreground shrink-0 rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors"
+          title="Playback speed"
+        >
+          {playbackRate}×
+        </button>
+        <Volume2 className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
       </div>
-      <Volume2 className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+
+      {/* Progress bar */}
+      {audioUrl && (
+        <div className="px-3 pb-2">
+          <div
+            ref={progressRef}
+            onClick={handleSeek}
+            className="group relative h-1.5 cursor-pointer rounded-full bg-zinc-200 dark:bg-zinc-700"
+            role="progressbar"
+            aria-valuenow={currentTime}
+            aria-valuemax={audioDuration}
+          >
+            <div
+              className="h-full rounded-full bg-teal-500 transition-[width] duration-150"
+              style={{ width: `${progress}%` }}
+            />
+            {/* Scrub handle */}
+            <div
+              className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-teal-600 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+              style={{ left: `calc(${progress}% - 6px)` }}
+            />
+          </div>
+          <div className="mt-1 flex justify-between text-[0.6rem] text-zinc-400">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(audioDuration)}</span>
+          </div>
+        </div>
+      )}
+
       {audioUrl && (
         <audio
           ref={audioRef}
           src={audioUrl}
+          onTimeUpdate={() => {
+            if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+          }}
+          onLoadedMetadata={() => {
+            if (audioRef.current) {
+              setAudioDuration(audioRef.current.duration);
+              audioRef.current.playbackRate = playbackRate;
+            }
+          }}
           onEnded={() => setIsPlaying(false)}
           onPause={() => setIsPlaying(false)}
           onPlay={() => setIsPlaying(true)}
@@ -267,9 +344,9 @@ function TranscriptAudioPlayer({
         />
       )}
       {error && (
-        <span className="text-xs text-red-500" title={error}>
-          Error
-        </span>
+        <p className="px-3 pb-2 text-xs text-red-500" title={error}>
+          {error}
+        </p>
       )}
     </div>
   );

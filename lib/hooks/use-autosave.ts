@@ -1,13 +1,15 @@
 // Autosave Hook
 // Phase 9.3.2: React hook for automatic form data persistence
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import {
   saveToLocalStorage,
   loadFromLocalStorage,
   clearAutosave,
   getAutosaveKey,
 } from "@/lib/autosave";
+
+export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
 export type AutosaveOptions<T> = {
   /** Unique identifier for the form type (e.g., 'visit', 'assessment') */
@@ -52,6 +54,8 @@ export function useAutosave<T>({
   const autosaveKey = getAutosaveKey(formType, entityId, userId);
   const lastSavedRef = useRef<string>("");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [saveStatus, setSaveStatus] = useState<AutosaveStatus>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
   // Autosave effect
   useEffect(() => {
@@ -68,9 +72,16 @@ export function useAutosave<T>({
 
       // Only save if data has changed
       if (currentData !== lastSavedRef.current) {
-        saveToLocalStorage(autosaveKey, data);
-        lastSavedRef.current = currentData;
-        onSave?.();
+        setSaveStatus("saving");
+        try {
+          saveToLocalStorage(autosaveKey, data);
+          lastSavedRef.current = currentData;
+          setSaveStatus("saved");
+          setLastSavedAt(new Date().toISOString());
+          onSave?.();
+        } catch {
+          setSaveStatus("error");
+        }
       }
     }, interval);
 
@@ -94,9 +105,16 @@ export function useAutosave<T>({
 
   // Manual save
   const saveNow = useCallback(() => {
-    saveToLocalStorage(autosaveKey, data);
-    lastSavedRef.current = JSON.stringify(data);
-    onSave?.();
+    setSaveStatus("saving");
+    try {
+      saveToLocalStorage(autosaveKey, data);
+      lastSavedRef.current = JSON.stringify(data);
+      setSaveStatus("saved");
+      setLastSavedAt(new Date().toISOString());
+      onSave?.();
+    } catch {
+      setSaveStatus("error");
+    }
   }, [autosaveKey, data, onSave]);
 
   return {
@@ -104,5 +122,7 @@ export function useAutosave<T>({
     clearSavedData,
     saveNow,
     autosaveKey,
+    saveStatus,
+    lastSavedAt,
   };
 }

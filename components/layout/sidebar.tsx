@@ -15,6 +15,8 @@ import {
   FileSignature,
   Inbox,
   BarChart,
+  BrainCircuit,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ const navigation = [
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart },
   { name: "Billing", href: "/dashboard/billing", icon: DollarSign },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 const adminNavigation = [
@@ -38,6 +41,11 @@ const adminNavigation = [
     name: "Signatures",
     href: "/dashboard/admin/signatures",
     icon: FileSignature,
+  },
+  {
+    name: "AI Transcripts",
+    href: "/dashboard/admin/transcripts",
+    icon: BrainCircuit,
   },
 ];
 
@@ -92,7 +100,13 @@ export default function Sidebar({
             className="flex items-center"
             onClick={handleLinkClick}
           >
-            <Image src="/icon.svg" alt="Wound EHR" width={32} height={32} />
+            <Image
+              src="/icon.svg"
+              alt="Wound EHR"
+              width={32}
+              height={32}
+              priority
+            />
             <span className="ml-2 text-lg font-semibold">Wound EHR</span>
           </Link>
 

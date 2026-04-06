@@ -4,6 +4,7 @@ import {
   Clock,
   FileText,
   Calendar as CalendarIcon,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +27,8 @@ type VisitCardProps = {
     followUpDate: Date | null;
   };
   patientId: string;
+  /** When true, visit is restricted — show "Pending Review" and hide link/details */
+  restricted?: boolean;
 };
 
 const VISIT_TYPE_LABELS: Record<string, string> = {
@@ -41,10 +44,58 @@ const STATUS_LABELS: Record<string, string> = {
   "no-show": "No Show",
 };
 
-export default function VisitCard({ visit, patientId }: VisitCardProps) {
+export default function VisitCard({
+  visit,
+  patientId,
+  restricted = false,
+}: VisitCardProps) {
   const isCompleted = visit.status === "completed";
   const isCancelled =
     visit.status === "cancelled" || visit.status === "no-show";
+
+  // Restricted view for facility users on unapproved visits
+  if (restricted) {
+    return (
+      <Card className="group relative overflow-hidden border-l-4 border-l-amber-400">
+        <CardHeader className="relative">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-linear-to-br from-amber-500/10 to-orange-500/10 p-2.5 ring-1 ring-amber-500/20">
+                <ShieldAlert
+                  className="h-5 w-5 text-amber-600 dark:text-amber-400"
+                  aria-hidden="true"
+                />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold text-zinc-700 dark:text-zinc-300">
+                  {new Date(visit.visitDate).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </CardTitle>
+                <CardDescription className="mt-1 font-medium">
+                  {VISIT_TYPE_LABELS[visit.visitType] || visit.visitType}
+                </CardDescription>
+              </div>
+            </div>
+            <Badge
+              variant="outline"
+              className="border-amber-300 font-semibold text-amber-700 dark:border-amber-700 dark:text-amber-400"
+            >
+              Pending Review
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            This visit note is pending office review and approval.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const statusVariant = isCompleted ? "secondary" : "default";
   const statusColor = isCompleted

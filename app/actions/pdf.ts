@@ -1,6 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  getUserRole,
+  getUserCredentials,
+  canDownloadVisitPDF,
+} from "@/lib/rbac";
+import { getUserPreferences } from "@/app/actions/preferences";
 
 /**
  * Get comprehensive patient data for PDF generation
@@ -10,6 +16,25 @@ import { createClient } from "@/lib/supabase/server";
 export async function getPatientDataForPDF(patientId: string) {
   try {
     const supabase = await createClient();
+
+    // Fetch current user info for clinician footer
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    let clinician: { name: string; credentials: string | null } | undefined;
+    if (user) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("name, credentials")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (userData?.name) {
+        clinician = {
+          name: userData.name,
+          credentials: userData.credentials ?? null,
+        };
+      }
+    }
 
     // Fetch complete patient data
     const { data: patient, error: patientError } = await supabase
@@ -172,6 +197,7 @@ export async function getPatientDataForPDF(patientId: string) {
             wounds?.filter((w) => w.status === "active").length || 0,
           totalVisits: visits?.length || 0,
         },
+        clinician,
       },
     };
   } catch (error) {
@@ -191,6 +217,34 @@ export async function getPatientDataForPDF(patientId: string) {
 export async function getVisitDataForPDF(visitId: string) {
   try {
     const supabase = await createClient();
+
+    // Facility access control: check if user can download this visit's PDF
+    const [role, credentials] = await Promise.all([
+      getUserRole(),
+      getUserCredentials(),
+    ]);
+
+    // Pre-check: fetch visit status before loading full data
+    const { data: visitCheck } = await supabase
+      .from("visits")
+      .select("status")
+      .eq("id", visitId)
+      .single();
+
+    if (
+      visitCheck &&
+      !canDownloadVisitPDF(
+        role?.role || null,
+        credentials,
+        visitCheck.status || "draft"
+      )
+    ) {
+      return {
+        success: false as const,
+        error:
+          "This visit note is pending office review. PDF downloads are available after approval.",
+      };
+    }
 
     // Fetch complete visit data
     const { data: visit, error: visitError } = await supabase
@@ -276,6 +330,17 @@ export async function getVisitDataForPDF(visitId: string) {
             .maybeSingle()
         : { data: null };
 
+      // Fetch provider credentials from users table
+      let providerCredentials: string | null = null;
+      if (providerSig?.created_by) {
+        const { data: providerUser } = await supabase
+          .from("users")
+          .select("credentials")
+          .eq("id", providerSig.created_by)
+          .maybeSingle();
+        providerCredentials = providerUser?.credentials ?? null;
+      }
+
       signatures = {
         provider: providerSig
           ? {
@@ -283,6 +348,7 @@ export async function getVisitDataForPDF(visitId: string) {
               signerRole: providerSig.signer_role,
               signatureData: providerSig.signature_data,
               signedAt: new Date(providerSig.signed_at),
+              credentials: providerCredentials,
             }
           : undefined,
         patient: patientSig
@@ -432,6 +498,25 @@ export async function getWoundDataForPDF(woundId: string) {
   try {
     const supabase = await createClient();
 
+    // Fetch current user info for clinician footer
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    let clinician: { name: string; credentials: string | null } | undefined;
+    if (user) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("name, credentials")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (userData?.name) {
+        clinician = {
+          name: userData.name,
+          credentials: userData.credentials ?? null,
+        };
+      }
+    }
+
     // Fetch complete wound data
     const { data: wound, error: woundError } = await supabase
       .from("wounds")
@@ -479,16 +564,24 @@ export async function getWoundDataForPDF(woundId: string) {
       }
     }
 
-    // Fetch photos for each assessment
-    // Photos are now uploaded during assessment creation and linked via assessment_id
+    // Load user preferences for photo settings
+    const { preferences: userPrefs } = await getUserPreferences();
+    const includePhotos = userPrefs?.pdf_include_photos ?? true;
+    const maxPhotos = userPrefs?.pdf_max_photos_per_assessment ?? 2;
+
+    // Fetch photos for each assessment (respects user preferences)
     const assessmentsWithPhotos = await Promise.all(
       (assessments || []).map(async (assessment) => {
+        if (!includePhotos) {
+          return { ...assessment, photos: [] };
+        }
+
         const { data: photos } = await supabase
           .from("photos")
           .select("url, caption")
           .eq("assessment_id", assessment.id)
           .order("uploaded_at", { ascending: true })
-          .limit(2);
+          .limit(maxPhotos);
 
         return {
           ...assessment,
@@ -540,6 +633,13 @@ export async function getWoundDataForPDF(woundId: string) {
             })
           ),
         })),
+        clinician,
+        photoPreferences: {
+          includePhotos: userPrefs?.pdf_include_photos ?? true,
+          photoSize: userPrefs?.pdf_photo_size ?? "medium",
+          maxPhotos: userPrefs?.pdf_max_photos_per_assessment ?? 2,
+          pageSize: userPrefs?.pdf_page_size ?? "letter",
+        },
       },
     };
   } catch (error) {

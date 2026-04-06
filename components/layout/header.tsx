@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { User as UserIcon, LogOut, Menu } from "lucide-react";
+import { GlobalSearchDialog } from "@/components/layout/global-search-dialog";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import type { User } from "@supabase/supabase-js";
 
 type HeaderProps = {
@@ -35,10 +37,14 @@ export default function Header({ user, onMobileMenuClick }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Reserved for breadcrumbs or page-specific filters */}
+        {/* Global search */}
+        <GlobalSearchDialog />
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
+        {/* Notifications */}
+        <NotificationBell />
+
         {/* User info */}
         <div className="hidden items-center gap-2 sm:flex">
           <UserIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />

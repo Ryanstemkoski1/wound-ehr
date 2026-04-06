@@ -151,7 +151,7 @@ export default function VisitForm({
   };
 
   // Client-side autosave hook (localStorage)
-  const { loadSavedData, clearSavedData } = useAutosave({
+  const { loadSavedData, clearSavedData, saveNow, saveStatus } = useAutosave({
     formType: "visit",
     entityId: visit?.id || patientId,
     userId,
@@ -163,6 +163,20 @@ export default function VisitForm({
       setLastSavedTime("just now");
     },
   });
+
+  // Ctrl+S / Cmd+S keyboard shortcut for manual save
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        saveNow();
+        setAutosaveStatus("saved");
+        setLastSavedTime("just now");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saveNow]);
 
   // Check for autosaved data on mount
   useEffect(() => {

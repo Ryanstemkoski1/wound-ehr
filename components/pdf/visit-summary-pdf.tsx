@@ -60,6 +60,7 @@ type VisitSummaryData = {
       signerRole: string;
       signatureData: string;
       signedAt: Date;
+      credentials?: string | null;
     };
     patient?: {
       signerName: string;
@@ -462,8 +463,10 @@ export default function VisitSummaryPDF({ data }: VisitSummaryPDFProps) {
                     style={styles.signatureImage}
                   />
                   <Text style={styles.signatureInfo}>
-                    Signed by: {data.signatures.provider.signerName} (
-                    {data.signatures.provider.signerRole})
+                    Signed by: {data.signatures.provider.signerName}
+                    {data.signatures.provider.credentials &&
+                      `, ${data.signatures.provider.credentials}`}{" "}
+                    ({data.signatures.provider.signerRole})
                   </Text>
                   <Text style={styles.signatureInfo}>
                     Date:{" "}

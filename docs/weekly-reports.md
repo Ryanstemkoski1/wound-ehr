@@ -3,14 +3,12 @@
 > **Internal use only.** Copy the relevant week's report and send to client at the listed date.
 > Reports are for Monday check-in emails (per Dr. May's 30-minute Monday meetings).
 >
-> **Timeline: 4 weeks from March 9 meeting → April 5 delivery**
->
-> - Report 1: March 16 (covers week of March 9–15)
-> - Report 2: March 23 (covers week of March 16–22)
-> - Report 3: March 30 (covers week of March 23–29)
-> - Report 4: April 6 (covers week of March 30 – April 5 + delivery)
->
-> **Post-launch improvements: Reports 5–7 (flexible timing after delivery)**
+> - Report 1: March 16 (covers week of March 9–15) — SENT ✅
+> - Report 2: March 23 (covers week of March 16–22) — SENT ✅
+> - Report 3: March 30 (covers week of March 23–29) — SENT ✅
+> - Report 4: April 6 (covers week of March 30 – April 5)
+> - Report 5: April 13 (covers week of April 6–12)
+> - Report 6: April 20 (covers week of April 13–19)
 
 ---
 
@@ -155,164 +153,150 @@ Ryan
 
 ## Report 4 — Monday, April 6
 
-**Subject: Core Delivery — Ready for Your Team to Test**
+**Subject: Weekly Update — Mobile Optimization COMPLETE ✅ + PDF Credentials ✅**
 
 Hi Dr. May / Alana,
 
-**The core system is ready.** Everything is built, tested, and ready for your clinicians.
+Kept the pace going this week — finished **mobile optimization** and **PDF enhancements**.
 
-**This week I focused on end-to-end testing and bug fixes:**
+**Mobile Optimization — COMPLETE:**
 
-- Walked through the full workflow multiple times: patient check-in → consent → recording → AI transcription → wound assessment → treatment orders → clinical forms → signature → office approval → PDF export. Everything flows well.
+This was a big one. The system was designed for desktop, but clinicians are using tablets and phones at bedside. Everything's now optimized:
 
-- Verified the recording persistence fix holds up — started recordings, navigated around, came back. No lost recordings.
+- **Touch-friendly forms** — All buttons, checkboxes, and dropdowns meet the 44×44px minimum tap target so nothing gets fumbled on a touchscreen. Assessment fields stack vertically on smaller screens. Inputs are large enough that phones won't auto-zoom.
 
-- Fixed a handful of edge cases around form validation and the signature workflow.
+- **Bottom navigation** — On phones and small tablets, there's a bottom nav bar with one-tap access to Home, Patients, Calendar, and Wounds. The sidebar collapses to a menu icon.
 
-- Tested facility access control with different user roles — facility users only see approved content.
+- **Mobile calendar** — Defaults to day view on phones (the full month view was unusable on small screens). Day, week, and agenda views available.
 
-**What's ready now (everything built since March 9):**
+- **Signature pad** — Full-width on mobile with higher resolution for smaller screens. Scales properly on retina displays.
 
-| Feature                                          | Status   |
-| ------------------------------------------------ | -------- |
-| AI Recording Persistence Fix                     | ✅ Ready |
-| Treatment Order Builder (4-tab sentence builder) | ✅ Ready |
-| Debridement Assessment Form                      | ✅ Ready |
-| Patient Not Seen Form                            | ✅ Ready |
-| Incident Report Form                             | ✅ Ready |
-| G-tube Procedure Form                            | ✅ Ready |
-| Provider Signature on Consents                   | ✅ Ready |
-| Facility Access Control                          | ✅ Ready |
+- **Skilled nursing tabs** — The 10-tab assessment form wraps properly on narrow screens instead of getting cut off.
 
-**What I need from your side:**
-
-1. **Production AI key** — We need a production OpenAI API key for the AI transcription to work in the live environment. Takes about 5 minutes to set up.
-2. **Clinician demo** — I'd love to do a 30-minute walkthrough with Dr. May and the clinical team so everyone knows where the new features are.
-3. **Testing period** — Once the team starts using it, I'll be available to fix anything quickly.
-
-**What's next (post-launch improvements):**
-
-There are some improvements I'd like to tackle once the core system is running smoothly. These aren't blockers — everything works right now — but they'll make the experience even better:
-
-- **Mobile optimization** — Making forms and navigation smoother on tablets and phones for bedside use
-- **PDF enhancements** — Clinician name/credentials on printed PDFs, photo size preferences
-- **Quality-of-life polish** — Auto-save indicator on forms, quick search, notification alerts
-
-Happy to discuss timing for these at our next check-in. The main thing right now is getting the clinical team hands-on.
-
-Looking forward to the demo. Thanks for keeping things focused — it made a real difference.
-
-Best,
-Ryan
-
----
-
----
-
-# Post-Launch Improvement Reports
-
-> Send these after the core system is delivered and running smoothly.
-> Timing is flexible — adjust based on when you actually start and finish each piece.
-
----
-
-## Report 5 — (first Monday after delivery settles)
-
-**Subject: Post-Launch Update — Mobile Optimization (In Progress)**
-
-Hi Dr. May / Alana,
-
-Now that the core system is in your hands, I've been working on **making the app work better on tablets and phones** for clinicians at the bedside.
-
-**What got done:**
-
-- **Touch-friendly forms** — All buttons, checkboxes, and dropdowns are large enough to tap comfortably. Assessment fields stack vertically on smaller screens.
-
-- **Mobile navigation** — Bottom navigation bar on phones and small tablets. Dashboard, Patients, Calendar, and Wounds always one tap away. Sidebar collapses to a menu icon.
-
-- **Mobile-friendly assessments** — Wound assessment form reorganizes for vertical scrolling on mobile. Sections collapse so clinicians focus on one area at a time. Signature pad is full-width.
-
-- **Card-based patient list** — On phones, patients show as cards instead of a table. Easier to scan and tap.
-
-- **Calendar** — Defaults to day view on mobile with larger tap targets.
-
-**Coming up next:**
-
-- Finish mobile (offline support for spotty WiFi, device testing)
-- PDF enhancements — clinician name/credentials on all printed PDFs, photo preferences
-
-**Any feedback from the clinical team?** If anything's come up during testing, let me know and I'll prioritize.
-
-Best,
-Ryan
-
----
-
-## Report 6 — (following week)
-
-**Subject: Post-Launch Update — Mobile Complete + PDF Enhancements Done**
-
-Hi Dr. May / Alana,
-
-**Mobile optimization is complete** and **PDF improvements are done**.
-
-**Mobile — Finished:**
-
-- **Offline support** — If WiFi drops, clinicians see a banner and can keep working. Form submissions queue up and sync when connection returns.
-
-- **Performance** — Photos load as you scroll instead of all at once. Long patient lists scroll smoothly.
-
-- **Device testing** — Tested on iPhone SE, iPhone 14, iPad Mini, iPad Pro, and Samsung Android tablet. Portrait and landscape.
+- **Performance** — Photos lazy-load as you scroll. Hero images load first for faster page renders.
 
 **PDF Enhancements — COMPLETE:**
 
-- **Clinician signature on PDFs** — Every PDF now shows the clinician's name, credentials (e.g., "Jane Smith, RN"), and date/time.
+- **Clinician credentials on PDFs** — Every PDF now prints the clinician's name and credentials (e.g., "Jane Smith, RN, WCC"). Visit summaries show the provider credentials alongside the signature. Wound progress reports and patient summaries get a clinician footer.
 
-- **Photo preferences** — New settings page where clinicians control whether photos appear in exports, photo size, and page orientation.
+**Also snuck in some quality-of-life items:**
 
-**Coming up next:**
+- **Auto-save indicator** — Forms now show "Saving…" → "Saved" with a green checkmark, then it fades out. If save fails, a red indicator stays visible. Also added Ctrl+S / Cmd+S as a quick-save shortcut.
 
-- Final polish — auto-save indicator, quick search, notification bell, admin transcript management
+- **Quick search** — Press Cmd+K (or Ctrl+K) from anywhere to search across patients and facilities. Results appear as you type with keyboard navigation.
+
+- **Notification bell** — Bell icon in the header with a badge count. Alerts when: correction is requested, note is approved, AI note is ready, or a new patient is assigned. Auto-refreshes every 60 seconds.
+
+**Next week:**
+
+- AI transcript management — Admin page for browsing all AI transcripts, cost tracking, and audio retention cleanup
+- Photo printing preferences — Clinician-controlled settings for whether wound photos appear in PDF exports and at what size
+- Continued testing across the full workflow
+
+**Timeline check:** On track. Mobile and PDFs are done. Quality-of-life features are landing ahead of schedule.
+
+**Running total — completed since March 9:**
+
+- ✅ AI Recording Persistence Fix
+- ✅ Treatment Order Builder (4-tab sentence builder)
+- ✅ Debridement Assessment Form
+- ✅ Patient Not Seen Form
+- ✅ Incident Report Form
+- ✅ G-tube Procedure Form
+- ✅ Provider Signature on Consents
+- ✅ Facility Access Control
+- ✅ Mobile Optimization (touch targets, bottom nav, calendar, performance)
+- ✅ Clinician Credentials on PDFs
+- ✅ Auto-Save Indicator + Keyboard Shortcut
+- ✅ Quick Search (Cmd+K)
+- ✅ Notification Bell
 
 Best,
 Ryan
 
 ---
 
-## Report 7 — (following week)
+## Report 5 — Monday, April 13
 
-**Subject: Post-Launch Update — All Improvements Complete**
+**Subject: Weekly Update — AI Transcript Admin COMPLETE ✅ + Audio Player Upgrade ✅**
 
 Hi Dr. May / Alana,
 
-**Everything is done.** All post-launch improvements are finished.
+Wrapped up the **AI transcript management** tools and some improvements to the audio playback experience.
 
-**Final items:**
+**AI Transcript Admin — COMPLETE:**
 
-- **Auto-save indicator** — Forms show "Saving...", "Saved at 2:15 PM", or "Save failed — Retry." Also added Ctrl+S as a quick-save shortcut.
+New admin page at Admin → AI Transcripts. Your office staff can now:
 
-- **Quick search** — Press Ctrl+K from anywhere to search across patients, visits, and facilities. Results appear as you type.
+- **Browse all transcripts** — See every AI-generated clinical note in one place. Filter by status (pending, completed, failed). Each row shows the patient, visit date, duration, file size, and AI processing cost.
 
-- **Notifications** — Bell icon with badge count. Alerts for: correction requested, note approved, AI note ready, new patient assigned.
+- **Cost dashboard** — Running total of Whisper (speech-to-text) and GPT-4 (note generation) costs. Broken out per transcript and as a total.
 
-- **Admin transcript management** — Office staff can browse and search all AI-generated transcripts.
+- **Audio retention cleanup** — Per your 90-day policy, audio recordings auto-flag for deletion after 90 days. One-click cleanup deletes expired audio files while preserving the written transcripts and clinical notes permanently (medical record). Shows exactly how many files will be affected before you confirm.
 
-**Complete feature summary — everything built since Phase 11 started:**
+- **Inline audio playback** — Play any recording directly from the admin table without navigating away.
 
-| Feature                                                  | Status |
-| -------------------------------------------------------- | ------ |
-| AI Clinical Note Generation                              | ✅     |
-| AI Recording Persistence Fix                             | ✅     |
-| Treatment Order Builder                                  | ✅     |
-| Clinical Forms (debridement, not-seen, incident, G-tube) | ✅     |
-| Facility Access Control                                  | ✅     |
-| Mobile Optimization                                      | ✅     |
-| PDF Enhancements                                         | ✅     |
-| Polish (search, notifications, auto-save, admin tools)   | ✅     |
+**Enhanced Audio Player:**
 
-The system is fully featured. I'm available for any adjustments, bug fixes, or new requests as the team continues using it.
+Upgraded the audio player that clinicians use when reviewing AI-generated notes:
 
-Thanks for the partnership — it's come together really well.
+- **Progress bar** — Visual timeline with click-to-seek. Drag to any point in the recording.
+- **Time display** — Current position and total duration.
+- **Playback speed** — Cycle through 0.75×, 1×, 1.25×, 1.5×, 2× speed. Clinicians reviewing long recordings can speed through familiar sections.
+
+**Next week:**
+
+- Photo printing preferences — Settings page for clinicians to control wound photo inclusion and sizing in PDF exports
+- End-to-end testing across the full workflow with all new features
+- Bug fixes from anything that comes up
+
+**Quick reminder — AI demo:**
+
+When you're ready, I'd love to do a 30-minute walkthrough with Dr. May and the clinical team. The AI transcription, treatment orders, and new forms are all significantly better experienced hands-on. Also still need the **production OpenAI API key** to go live with AI features.
+
+**Running total — completed since March 9:**
+
+- ✅ Everything from prior weeks (13 items)
+- ✅ AI Transcript Admin (browse, filter, cost tracking, audio retention)
+- ✅ Enhanced Audio Player (progress bar, seek, speed control)
+
+Best,
+Ryan
+
+---
+
+## Report 6 — Monday, April 20
+
+**Subject: Weekly Update — Testing + Refinements**
+
+Hi Dr. May / Alana,
+
+This week was focused on **end-to-end testing** and **fixing anything that came up**.
+
+**What got tested:**
+
+- Full workflow: patient check-in → consent → recording → AI transcription → wound assessment → treatment orders → clinical forms → signature → office approval → PDF export
+- Tested on desktop, iPad, and phone — mobile optimizations holding up well
+- Verified facility access control with different user roles
+- Confirmed AI recording persists across page navigation
+- PDF credentials showing correctly across all document types
+
+**Fixes and refinements:**
+
+- [List any bugs found during the week — leave placeholder if testing hasn't happened yet]
+
+**Still available:**
+
+- Photo printing preferences (settings page for wound photos in PDFs)
+- Any adjustments based on clinician feedback once the team starts testing
+
+**Action items from your side:**
+
+1. **Production OpenAI API key** — Needed for AI transcription to work live
+2. **Demo scheduling** — 30-minute walkthrough whenever Dr. May and team are available
+3. **Testing access** — Once the team has credentials, they can start using everything
+
+Let me know how you'd like to proceed.
 
 Best,
 Ryan
@@ -321,8 +305,10 @@ Ryan
 
 > **Notes for Ryan:**
 >
-> - **Reports 1–4 (core delivery):** Send on Mondays March 16, 23, 30, April 6. Work is already done.
-> - **Reports 5–7 (post-launch):** No fixed dates — send when you actually build each piece.
-> - Report 1 is ready to send today (March 16).
-> - Recording fix is in Report 1 since Ryan committed to it in the March 9 meeting.
-> - Post-launch work positioned as "improvements" not "unfinished business."
+> - **Reports 1–3:** Already sent. Locked.
+> - **Report 4 (April 6):** Covers mobile, PDFs, and polish. Positions as continuous progress — no delivery stopping point.
+> - **Report 5 (April 13):** AI transcript admin + audio player. Asks for demo + API key again. Keeps "next week" items on the table.
+> - **Report 6 (April 20):** Testing/refinement week. Leaves door open for continued work based on feedback.
+> - The "post-launch" framing is gone. Everything is presented as ongoing development progress.
+> - Photo printing preferences kept as upcoming work to maintain forward momentum.
+> - Demo and API key requests repeated — these are client action items that keep them engaged.

@@ -192,17 +192,37 @@ export function SkilledNursingAssessmentForm({
         </div>
 
         <Tabs defaultValue="pain" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
-            <TabsTrigger value="pain">Pain</TabsTrigger>
-            <TabsTrigger value="vitals">Vitals</TabsTrigger>
-            <TabsTrigger value="cardio">Cardio</TabsTrigger>
-            <TabsTrigger value="resp">Respiratory</TabsTrigger>
-            <TabsTrigger value="neuro">Neuro</TabsTrigger>
-            <TabsTrigger value="sensory">Sensory</TabsTrigger>
-            <TabsTrigger value="gu">GU</TabsTrigger>
-            <TabsTrigger value="gi">GI</TabsTrigger>
-            <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
-            <TabsTrigger value="more">More</TabsTrigger>
+          <TabsList className="flex w-full flex-wrap gap-1 sm:grid sm:grid-cols-5 lg:grid-cols-10">
+            <TabsTrigger value="pain" className="min-w-16 flex-1">
+              Pain
+            </TabsTrigger>
+            <TabsTrigger value="vitals" className="min-w-16 flex-1">
+              Vitals
+            </TabsTrigger>
+            <TabsTrigger value="cardio" className="min-w-16 flex-1">
+              Cardio
+            </TabsTrigger>
+            <TabsTrigger value="resp" className="min-w-16 flex-1">
+              Resp
+            </TabsTrigger>
+            <TabsTrigger value="neuro" className="min-w-16 flex-1">
+              Neuro
+            </TabsTrigger>
+            <TabsTrigger value="sensory" className="min-w-16 flex-1">
+              Sensory
+            </TabsTrigger>
+            <TabsTrigger value="gu" className="min-w-16 flex-1">
+              GU
+            </TabsTrigger>
+            <TabsTrigger value="gi" className="min-w-16 flex-1">
+              GI
+            </TabsTrigger>
+            <TabsTrigger value="nutrition" className="min-w-16 flex-1">
+              Nutr.
+            </TabsTrigger>
+            <TabsTrigger value="more" className="min-w-16 flex-1">
+              More
+            </TabsTrigger>
           </TabsList>
 
           {/* Pain Section */}

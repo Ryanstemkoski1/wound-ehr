@@ -299,3 +299,76 @@ export async function requireCredentials(allowedCredentials: Credentials[]) {
     );
   }
 }
+
+// =====================================================
+// VISIT ACCESS CONTROL
+// =====================================================
+
+/**
+ * Visit statuses that are considered "approved" for facility user visibility.
+ * Facility users can only view visit details when the office has approved the note.
+ */
+const FACILITY_VISIBLE_STATUSES = ["approved"] as const;
+
+/**
+ * Determine if a user is a "facility user" — someone who works at the facility
+ * but is NOT a clinician and NOT an admin. Facility admins CAN see all visits
+ * since they manage the facility. Tenant admins (office) can always see everything.
+ *
+ * A facility user is: role === "user" AND does NOT have clinical credentials.
+ */
+export function isFacilityUser(
+  role: UserRole | null,
+  credentials: Credentials | null
+): boolean {
+  if (!role) return false;
+  // Admins always have full access
+  if (role === "tenant_admin" || role === "facility_admin") return false;
+  // Clinical credentials = clinician, not a facility-only user
+  const clinicalCredentials: Credentials[] = [
+    "MD",
+    "DO",
+    "PA",
+    "NP",
+    "RN",
+    "LVN",
+    "CNA",
+  ];
+  if (credentials && clinicalCredentials.includes(credentials)) return false;
+  // role === "user" with no clinical credentials = facility user
+  return true;
+}
+
+/**
+ * Check whether a user can view the full details of a visit.
+ *
+ * - **Clinicians and admins** can always view visit details (they create/review them).
+ * - **Facility users** (non-clinical staff at a facility) can only see visit
+ *   details once the visit has been approved by the office.
+ *
+ * Returns `true` if the user can see the visit content, `false` if content
+ * should be hidden behind a "Pending Review" indicator.
+ */
+export function canViewVisitDetails(
+  role: UserRole | null,
+  credentials: Credentials | null,
+  visitStatus: string
+): boolean {
+  // Non-facility users (clinicians + admins) always have access
+  if (!isFacilityUser(role, credentials)) return true;
+  // Facility users can only see approved visits
+  return (FACILITY_VISIBLE_STATUSES as readonly string[]).includes(visitStatus);
+}
+
+/**
+ * Check whether a user can download/generate a PDF for a visit.
+ * Same rules as canViewVisitDetails — facility users cannot download
+ * PDFs for unapproved visits.
+ */
+export function canDownloadVisitPDF(
+  role: UserRole | null,
+  credentials: Credentials | null,
+  visitStatus: string
+): boolean {
+  return canViewVisitDetails(role, credentials, visitStatus);
+}

@@ -197,6 +197,7 @@ export function WoundAssessmentHistory({
                                 <img
                                   src={photo.url}
                                   alt={photo.filename}
+                                  loading="lazy"
                                   className="h-full w-full object-cover"
                                 />
                               </div>

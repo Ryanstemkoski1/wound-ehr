@@ -271,6 +271,7 @@ export default function WoundCard({
                 alt="Latest wound photo"
                 fill
                 className="object-cover"
+                sizes="(max-width: 768px) 100vw, 33vw"
               />
             </div>
           </div>
@@ -293,7 +294,7 @@ export default function WoundCard({
                   href={`/dashboard/patients/${patientId}/visits/${visit.id}`}
                   className="group/visit flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
-                  <span className="font-medium text-primary group-hover/visit:underline">
+                  <span className="text-primary font-medium group-hover/visit:underline">
                     {new Date(visit.visit_date).toLocaleDateString()}
                   </span>
                   <div className="flex items-center gap-1.5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Eraser, Pen, Type } from "lucide-react";
+import { useMobile } from "@/lib/hooks/use-media-query";
 
 type SignaturePadProps = {
   onSave: (signatureData: string, method: "draw" | "type") => void;
@@ -36,6 +37,30 @@ export function SignaturePad({
   const [typedName, setTypedName] = useState(signerName);
   const [activeTab, setActiveTab] = useState<"draw" | "type">("draw");
   const [isEmpty, setIsEmpty] = useState(true);
+  const isMobile = useMobile();
+
+  // Resize canvas when window resizes so the internal bitmap matches
+  // the CSS-rendered size (prevents blurry strokes on retina / resize).
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const resize = () => {
+      const canvas = signatureRef.current?.getCanvas();
+      if (!canvas || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.scale(dpr, dpr);
+    };
+    // Small delay to let layout settle
+    const id = setTimeout(resize, 50);
+    window.addEventListener("resize", resize);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener("resize", resize);
+    };
+  }, [activeTab]);
 
   const handleClear = () => {
     if (signatureRef.current) {
@@ -84,6 +109,9 @@ export function SignaturePad({
   const isSaveDisabled =
     activeTab === "draw" ? isEmpty : typedName.trim().length === 0;
 
+  // Responsive canvas height: 260px on phones, 200px on desktop
+  const canvasHeight = isMobile ? 260 : 200;
+
   return (
     <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
@@ -107,11 +135,15 @@ export function SignaturePad({
           </TabsList>
 
           <TabsContent value="draw" className="space-y-4">
-            <div className="rounded-lg border-2 border-zinc-300 bg-white dark:bg-zinc-950">
+            <div
+              ref={containerRef}
+              className="rounded-lg border-2 border-zinc-300 bg-white dark:bg-zinc-950"
+              style={{ height: canvasHeight }}
+            >
               <SignatureCanvas
                 ref={signatureRef}
                 canvasProps={{
-                  className: "w-full h-[200px] cursor-crosshair rounded-lg",
+                  className: "w-full h-full cursor-crosshair rounded-lg",
                   style: { touchAction: "none" },
                 }}
                 backgroundColor="transparent"

@@ -3,6 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getVisit } from "@/app/actions/visits";
 import { getBillingForVisit } from "@/app/actions/billing";
 import { getTreatmentsByVisit } from "@/app/actions/treatments";
+import {
+  getUserRole,
+  getUserCredentials as getRbacCredentials,
+  canViewVisitDetails,
+} from "@/lib/rbac";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +66,20 @@ export default async function VisitDetailPage({ params }: PageProps) {
 
   if (!visit || visit.patientId !== patientId) {
     notFound();
+  }
+
+  // Check facility access control — facility users cannot see unapproved visits
+  const userRole = await getUserRole();
+  const rbacCredentials = await getRbacCredentials();
+  const canView = canViewVisitDetails(
+    userRole?.role || null,
+    rbacCredentials,
+    visit.status || "draft"
+  );
+
+  if (!canView) {
+    // Redirect facility users back to the patient page with a message
+    redirect(`/dashboard/patients/${patientId}?restricted=1`);
   }
 
   // Get billing information

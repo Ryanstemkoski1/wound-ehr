@@ -15,6 +15,11 @@
 
 import { getCachedPDF, cachePDF, invalidatePDFCache } from "@/lib/pdf-cache";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getUserRole,
+  getUserCredentials,
+  canDownloadVisitPDF,
+} from "@/lib/rbac";
 
 /**
  * Check if cached PDF exists and return signed URL
@@ -27,6 +32,30 @@ export async function checkCachedVisitPDF(visitId: string): Promise<{
   error?: string;
 }> {
   try {
+    // Facility access control: check if user can download this visit's PDF
+    const supabase = await createClient();
+    const [role, credentials, { data: visitCheck }] = await Promise.all([
+      getUserRole(),
+      getUserCredentials(),
+      supabase.from("visits").select("status").eq("id", visitId).single(),
+    ]);
+
+    if (
+      visitCheck &&
+      !canDownloadVisitPDF(
+        role?.role || null,
+        credentials,
+        visitCheck.status || "draft"
+      )
+    ) {
+      return {
+        success: false,
+        isCached: false,
+        error:
+          "This visit note is pending office review. PDF downloads are available after approval.",
+      };
+    }
+
     const result = await getCachedPDF({
       visitId,
       pdfType: "visit-summary",

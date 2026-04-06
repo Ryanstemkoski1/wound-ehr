@@ -1,26 +1,30 @@
 # Wound EHR — Project Status
 
-**Last Updated:** March 17, 2026
+**Last Updated:** April 6, 2026
 
 ---
 
 ## Phase Completion
 
-| Phase      | Description                                                                     | Status          | Date         |
-| ---------- | ------------------------------------------------------------------------------- | --------------- | ------------ |
-| 1–8        | Core EHR (patients, wounds, visits, calendar, billing, photos, PDF)             | Complete        | Oct 2025     |
-| 9.1        | Credentials-based role system                                                   | Complete        | Nov 2025     |
-| 9.2        | Electronic signatures & audit trail                                             | Complete        | Nov 2025     |
-| 9.3        | High-priority compliance (7 sub-phases)                                         | Complete        | Nov 2025     |
-| 9.4        | Advanced features (documents, specialized assessments)                          | Complete        | Dec 2025     |
-| 10         | Production features (approval workflow, reports, field permissions, validation) | Complete        | Feb 2026     |
-| 11.1       | AI clinical note generation (Whisper + GPT-4)                                   | Complete        | Mar 9, 2026  |
-| 11.6       | Treatment Order Builder (4-tab sentence builder)                                | Complete        | Mar 16, 2026 |
-| 11.7       | Client Forms (debridement, consents, incident, not-seen)                        | Complete        | Mar 16, 2026 |
-| **11.2.1** | **Facility access control (hide unapproved notes)**                             | **Not started** | —            |
-| **11.3**   | **Mobile UI optimization**                                                      | **Not started** | —            |
-| **11.4**   | **Printing & PDF enhancements**                                                 | **Not started** | —            |
-| **11.5**   | **Final polish (search, notifications, admin tools)**                           | **Not started** | —            |
+| Phase  | Description                                                                     | Status   | Date         |
+| ------ | ------------------------------------------------------------------------------- | -------- | ------------ |
+| 1–8    | Core EHR (patients, wounds, visits, calendar, billing, photos, PDF)             | Complete | Oct 2025     |
+| 9.1    | Credentials-based role system                                                   | Complete | Nov 2025     |
+| 9.2    | Electronic signatures & audit trail                                             | Complete | Nov 2025     |
+| 9.3    | High-priority compliance (7 sub-phases)                                         | Complete | Nov 2025     |
+| 9.4    | Advanced features (documents, specialized assessments)                          | Complete | Dec 2025     |
+| 10     | Production features (approval workflow, reports, field permissions, validation) | Complete | Feb 2026     |
+| 11.1   | AI clinical note generation (Whisper + GPT-4)                                   | Complete | Mar 9, 2026  |
+| 11.6   | Treatment Order Builder (4-tab sentence builder)                                | Complete | Mar 16, 2026 |
+| 11.7   | Client Forms (debridement, consents, incident, not-seen)                        | Complete | Mar 16, 2026 |
+| 11.2.1 | Facility access control (hide unapproved notes)                                 | Complete | Apr 2, 2026  |
+| 11.3   | Mobile UI optimization (touch targets, bottom nav, calendar, perf)              | Complete | Apr 3, 2026  |
+| 11.4.1 | Clinician signature on PDFs (all 3 PDF types)                                   | Complete | Apr 3, 2026  |
+| 11.5.1 | Auto-save visual indicators (status tracking, Ctrl+S)                           | Complete | Apr 3, 2026  |
+| 11.5.2 | Global search (Cmd+K dialog, patients & facilities)                             | Complete | Apr 3, 2026  |
+| 11.5.3 | In-app notifications (bell, polling, mark read)                                 | Complete | Apr 3, 2026  |
+| 11.5.4 | AI transcript admin, enhanced audio player, retention cleanup                   | Complete | Apr 3, 2026  |
+| 11.4.2 | Photo printing preferences (settings page + PDF integration)                    | Complete | Apr 6, 2026  |
 
 > Phase 11.2.2 (Clinical Summary PDFs) was dropped — client confirmed the implemented forms fulfill the requirement.
 
@@ -30,107 +34,147 @@
 
 | Metric                   | Count                        |
 | ------------------------ | ---------------------------- |
-| Database tables          | 31                           |
+| Database tables          | 32                           |
 | RLS policies             | 75+                          |
 | RPC functions            | 20+                          |
-| Database migrations      | 6                            |
-| Route pages              | 41                           |
+| Database migrations      | 7                            |
+| Route pages              | 43                           |
 | API routes               | 1                            |
-| Server action files      | 23 (~175 exported functions) |
-| React components         | 134 (114 Client / 20 Server) |
-| Library utility files    | 24                           |
-| Custom hooks             | 3                            |
+| Server action files      | 25 (~190 exported functions) |
+| React components         | 144 (123 Client / 21 Server) |
+| Library utility files    | 25                           |
+| Custom hooks             | 7                            |
 | Supabase Storage buckets | 5                            |
 
 ---
 
 ## What's Remaining
 
-### Phase 11.2.1: Facility Access Control (~1 day)
-
-**Priority: HIGH — data disclosure risk.** Facility users currently see clinician notes before office approval.
-
-- Create `canViewVisitDetails(user, visit)` utility in `lib/rbac.ts`
-- Update visit list UI — hide content for unapproved visits (show "Pending" badge)
-- Update visit detail page — block access or mask content for facility users
-- Block PDF downloads for unapproved visits
-
-### Phase 11.3: Mobile UI Optimization (~1.5 weeks)
-
-**11.3.1: Mobile Assessment Forms** (2 days)
-
-- Touch-friendly controls (min 44×44px tap targets)
-- Larger checkboxes/radio buttons, stack fields vertically
-- Larger signature canvas (full-width), 16px font minimum
-
-**11.3.2: Mobile Navigation & Layout** (2 days)
-
-- Bottom navigation bar for screens < 768px
-- Card-based patient list on mobile
-- Day-view default for calendar on mobile
-- Collapse sidebar to hamburger menu
-
-**11.3.3: Offline Support & Performance** (2 days)
-
-- Service worker for offline page caching
-- Queue actions when offline, sync on reconnect
-- Offline indicator banner
-- Lazy load images, virtual scrolling
-
-**11.3.4: Mobile Testing** (1 day)
-
-- Device matrix: iPhone SE, iPhone 14, iPad Mini, iPad Pro, Android
-- Portrait + landscape orientation testing
-
-### Phase 11.4: Printing & PDF Enhancements (~1 week)
-
-**11.4.1: Clinician Signature on PDFs** (2 days)
-
-- Signature footer with clinician name, credentials, date/time on all PDFs
-
-**11.4.2: Photo Printing Preferences** (2 days)
-
-- New `user_preferences` table (migration needed)
-- Settings page (`/dashboard/settings`) for PDF preferences
-- Include/exclude photos, photo size, page size options
-
-**11.4.3: Advanced PDF Features** (1 day, optional)
+### Phase 11.4.3: Advanced PDF Features (optional)
 
 - Watermark option, batch PDF export (ZIP)
 
-### Phase 11.5: Final Polish (~1 week)
+---
 
-**11.5.1: Auto-Save Visual Indicators** (1 day)
+## Recently Completed (Apr 6, 2026)
 
-- Fixed-position save status indicator (Saving/Saved/Error)
-- Ctrl+S / Cmd+S keyboard shortcut
+### Phase 11.4.2: Photo Printing Preferences
 
-**11.5.2: Global Search** (1 day)
+**Database & Server Actions**
 
-- Cmd+K / Ctrl+K search modal across patients, visits, facilities
+- New `user_preferences` table (migration `00032_user_preferences.sql`) with RLS policies
+- `getUserPreferences()` returns saved preferences or sensible defaults
+- `savePDFPreferences()` upserts with validation (size, count, page size constraints)
 
-**11.5.3: In-app Notifications** (2 days)
+**Settings Page (`/dashboard/settings`)**
 
-- Bell icon with badge count
-- Types: correction requested, note approved, AI note ready, new patient assigned
+- Photo toggle (Switch): include/exclude wound photos from PDFs entirely
+- Photo size picker (Small / Medium / Large): maps to 100pt / 150pt / 220pt height
+- Photos-per-assessment slider (1–6): controls max photos per assessment entry
+- Page size dropdown: US Letter or A4
+- Save bar with change detection, saving state, and success feedback
+- New "Settings" link in sidebar navigation (Settings icon)
 
-**11.5.4: Deferred AI Items** (1 day)
+**PDF Integration**
 
-- Admin transcript management page
-- Audio playback with waveform in review UI
-- Batch audio retention cleanup (90-day policy)
+- `getWoundDataForPDF()` loads user preferences and respects photo include/exclude + max count
+- `WoundProgressPDF` component renders dynamic photo height, conditional photo section, and selectable page size
+- Defaults: photos on, medium size (150pt), 2 per assessment, US Letter — same as prior behavior
+
+---
+
+## Recently Completed (Apr 3, 2026)
+
+### Phase 11.3: Mobile UI Optimization
+
+**11.3.1: Touch-Friendly Forms**
+
+- Global 44×44px min touch targets for coarse pointers (CSS `@media (pointer: coarse)`)
+- 16px min font on inputs (prevents iOS zoom), larger checkboxes/radios
+- Signature pad: responsive height (260px mobile / 200px desktop), retina DPR scaling
+- Skilled nursing tabs: flexbox wrapping on small screens (10 tabs, shortened labels)
+- Safe-area-inset padding on body for notch devices
+- `prefers-reduced-motion` support to disable animations
+
+**11.3.2: Mobile Navigation & Layout**
+
+- Bottom navigation bar (`<BottomNavBar>`) — 5 items, `md:hidden`, safe-area padding
+- "More" button opens sidebar drawer on mobile
+- Calendar defaults to "day" view on mobile, restricts to day/week/agenda (no month)
+- Drag-resize disabled on mobile
+
+**11.3.3: Performance**
+
+- Logo image marked `priority` (LCP fix)
+- Lazy loading on native `<img>` tags in wound assessment history
+- Responsive `sizes` attribute on wound card photos
+
+**New hooks:** `useMediaQuery`, `useMobile`, `useTabletOrMobile`, `useTouchDevice` in `lib/hooks/use-media-query.ts`
+
+### Phase 11.4.1: Clinician Signature on PDFs
+
+- All 3 PDF types now include clinician signature footers
+- Visit Summary PDF: provider credentials displayed alongside signature
+- Wound Progress & Patient Summary PDFs: new clinician name + credentials + date footer
+- Credentials fetched from `users` table via `created_by` / current user
+
+### Phase 11.5.1–11.5.3: Final Polish
+
+**Auto-Save Indicators (11.5.1)**
+
+- `useAutosave` hook now tracks `saveStatus` and `lastSavedAt`
+- Floating save indicator variant (`floating` prop on `AutosaveIndicator`)
+- Ctrl+S / Cmd+S keyboard shortcut in visit form
+
+**Global Search (11.5.2)**
+
+- Cmd+K / Ctrl+K opens search dialog
+- Searches patients (name/MRN) and facilities (name)
+- Keyboard navigation (↑↓, Enter, Esc), debounced 250ms
+- Server action: `app/actions/search.ts`
+
+**In-app Notifications (11.5.3)**
+
+- Bell icon with red badge count in header
+- Aggregates: corrections, approvals, AI notes ready, patient assignments
+- Auto-polls every 60s, mark individual/all as read
+- Relative time formatting, click navigates to source
+
+### Phase 11.5.4: AI Transcript Management
+
+**Admin Transcripts Page**
+
+- New route: `/dashboard/admin/transcripts` with sidebar navigation link
+- Stats dashboard: total transcripts, cost breakdown (Whisper + GPT-4), storage count, expired audio count
+- Filterable table with status, patient, visit date, duration, size, cost columns
+- Inline audio playback from signed Supabase Storage URLs
+- Individual audio deletion per transcript
+
+**Enhanced Audio Player**
+
+- Replaced basic play/pause player with full-featured `TranscriptAudioPlayer`
+- Visual progress bar with click-to-seek and scrub handle
+- Current time / total duration display
+- Playback speed control (0.75×, 1×, 1.25×, 1.5×, 2×)
+
+**Audio Retention Cleanup**
+
+- `cleanupExpiredAudio()` server action: batch deletes audio files older than 90 days
+- Preserves written transcripts and clinical notes (permanent medical record)
+- Admin confirmation dialog with count of affected files
+- Dry-run capability for previewing impact
 
 ---
 
 ## Known Issues
 
-### 1. Facility Access Control — Data Disclosure Risk
+### 1. Facility Access Control — FIXED
 
-Unapproved notes visible to facility users. Phase 11.2.1 will hide pending note content and block PDF downloads. **Highest-priority unblocked work item.**
+~~Unapproved notes visible to facility users.~~ Facility users (non-clinical role=`user`) now see a “Pending Review” badge on visit cards and are redirected away from visit detail pages for unapproved visits. PDF downloads are blocked at the server action level (`getVisitDataForPDF`, `checkCachedVisitPDF`). Clinicians and admins are unaffected.
 
-### 2. Mobile Responsiveness
+### 2. Mobile Responsiveness — FIXED
 
-Desktop-first design. Some forms not optimized for tablet/mobile. Signature pad needs touch optimization. Addressed in Phase 11.3.
+~~Desktop-first design. Some forms not optimized for tablet/mobile. Signature pad needs touch optimization.~~ Phase 11.3 implemented: 44×44px touch targets, responsive signature pad, bottom navigation bar, mobile calendar view, safe-area-inset support, lazy loading, and `prefers-reduced-motion` support. Service worker offline support was descoped (not needed for clinical WiFi environments).
 
 ### 3. No Automated Test Coverage
 
@@ -140,13 +184,13 @@ Primarily manual testing. 40+ test scenarios documented in [archive/AI_DOCUMENTA
 
 ~~Audio recording can be lost when navigating away during a visit.~~ Recording state is now lifted to a layout-level React Context (`RecordingProvider`). The `MediaRecorder`, audio chunks, blob, and upload/processing all persist across page navigation. A floating `PersistentRecorderBar` shows recording status when the user navigates away from the visit page. A `beforeunload` guard warns before closing the browser tab.
 
-### 5. Missing user_preferences Table
+### 5. ~~Missing user_preferences Table~~ — FIXED
 
-Required for Phase 11.4 (PDF printing preferences). No migration created yet.
+~~Required for Phase 11.4 (PDF printing preferences). No migration created yet.~~ Migration `00032_user_preferences.sql` created with `user_preferences` table. Settings page at `/dashboard/settings` allows clinicians to configure PDF photo preferences (include/exclude, size, max per assessment, page size). Preferences wire into `getWoundDataForPDF()` and the `WoundProgressPDF` component.
 
-### 6. Missing Admin Transcript Page
+### 6. ~~Missing Admin Transcript Page~~ — FIXED
 
-`/dashboard/admin/transcripts` does not exist yet. Deferred from Phase 11.1, planned for Phase 11.5.
+`/dashboard/admin/transcripts` now exists with full management UI, stats dashboard, audio playback, and batch retention cleanup.
 
 ---
 

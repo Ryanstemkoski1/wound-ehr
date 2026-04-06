@@ -28,6 +28,7 @@ import { EventDetailsModal } from "./event-details-modal";
 import NewVisitDialog from "./new-visit-dialog";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+import { useMobile } from "@/lib/hooks/use-media-query";
 
 // Configure date-fns localizer
 const locales = {
@@ -85,8 +86,9 @@ export default function CalendarView({
   patientId,
   clinicianId,
 }: CalendarViewProps) {
+  const isMobile = useMobile();
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [view, setView] = useState<View>("month");
+  const [view, setView] = useState<View>(isMobile ? "day" : "month");
   const [date, setDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
@@ -249,21 +251,24 @@ export default function CalendarView({
   );
 
   // Custom event styling based on status
-  const eventStyleGetter = useCallback((event: CalendarEvent) => {
-    const colors =
-      statusColors[event.resource.status] || statusColors.scheduled;
+  const eventStyleGetter = useCallback(
+    (event: CalendarEvent) => {
+      const colors =
+        statusColors[event.resource.status] || statusColors.scheduled;
 
-    return {
-      style: {
-        backgroundColor: colors.background,
-        borderLeft: `4px solid ${colors.border}`,
-        color: colors.text,
-        borderRadius: "4px",
-        padding: "2px 5px",
-        fontSize: "0.875rem",
-      },
-    };
-  }, []);
+      return {
+        style: {
+          backgroundColor: colors.background,
+          borderLeft: `4px solid ${colors.border}`,
+          color: colors.text,
+          borderRadius: "4px",
+          padding: isMobile ? "4px 6px" : "2px 5px",
+          fontSize: isMobile ? "0.75rem" : "0.875rem",
+        },
+      };
+    },
+    [isMobile]
+  );
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -329,7 +334,7 @@ export default function CalendarView({
 
   return (
     <>
-      <div className="h-[calc(100vh-12rem)]">
+      <div className="h-[calc(100vh-12rem)] min-h-[400px]">
         {isLoading && (
           <div className="text-muted-foreground mb-2 text-sm">
             Loading calendar events...
@@ -341,6 +346,11 @@ export default function CalendarView({
           startAccessor="start"
           endAccessor="end"
           view={view}
+          views={
+            isMobile
+              ? ["day", "week", "agenda"]
+              : ["month", "week", "day", "agenda"]
+          }
           onView={setView}
           date={date}
           onNavigate={setDate}
@@ -349,7 +359,7 @@ export default function CalendarView({
           onEventDrop={handleEventDrop}
           onEventResize={handleEventResize}
           eventPropGetter={eventStyleGetter}
-          resizable
+          resizable={!isMobile}
           popup
           selectable
           style={{ height: "100%" }}

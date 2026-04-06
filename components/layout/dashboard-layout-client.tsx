@@ -6,6 +6,7 @@ import Header from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { RecordingProvider } from "@/lib/recording-context";
 import { PersistentRecorderBar } from "@/components/layout/persistent-recorder-bar";
+import { BottomNavBar } from "@/components/layout/bottom-nav-bar";
 import type { User } from "@supabase/supabase-js";
 import type { UserRole } from "@/lib/rbac";
 
@@ -46,7 +47,7 @@ export function DashboardLayoutClient({
           <PersistentRecorderBar />
           <main
             id="main-content"
-            className="bg-zinc-50 px-4 py-4 sm:px-6 sm:py-6 dark:bg-zinc-950"
+            className="bg-zinc-50 px-4 py-4 pb-20 sm:px-6 sm:py-6 md:pb-6 dark:bg-zinc-950"
             role="main"
           >
             {children}
@@ -54,6 +55,9 @@ export function DashboardLayoutClient({
           <Footer />
         </div>
       </div>
+
+      {/* Fixed bottom nav on mobile — outside the flex layout */}
+      <BottomNavBar onMoreClick={() => setMobileMenuOpen(true)} />
     </RecordingProvider>
   );
 }
