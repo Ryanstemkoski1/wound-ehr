@@ -7,10 +7,10 @@ This is a **Next.js 16** app with **React 19**, **TypeScript**, and **Tailwind C
 **⚠️ CRITICAL: All development work MUST follow the comprehensive system design documented in `docs/SYSTEM_DESIGN.md`. This includes:**
 
 - Database schema (31 tables with Supabase PostgreSQL)
-- Frontend architecture (app router structure, 134 components)
+- Frontend architecture (app router structure, 143 components)
 - Backend patterns (Server Components + Server Actions)
 - UI/UX workflows (assessment forms, photo management, calendar, signatures)
-- Implementation phases (Phases 1–11.1, 11.6, 11.7 complete; Phase 11.2–11.5 remaining)
+- Implementation phases (All phases 1–11.5 complete; only optional 11.4.3 remaining)
 - Design decisions (auth, multi-tenant, billing, compliance, AI transcription)
 
 **📚 Documentation Structure:**
@@ -150,7 +150,7 @@ The database uses **31 tables** with Row Level Security (RLS):
 - `user_invites` - Email invites with token + expiry
 - `wound_notes` - Per-wound notes and addendums
 
-Schema location: `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix, 00029 treatment builder, 00030 clinical forms, 00031 consent provider sig)
+Schema location: `supabase/migrations/` (00001 base schema, 00027 AI transcription, 00028 trigger fix, 00029 treatment builder, 00030 clinical forms, 00031 consent provider sig, 00032 user preferences, 00033 private wound photos)
 
 ### Supabase Backend Architecture
 

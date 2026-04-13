@@ -29,13 +29,19 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const result = await login(formData);
+    try {
+      const result = await login(formData);
 
-    if (result?.error) {
-      setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+      } else if (result && "redirectTo" in result && result.redirectTo) {
+        router.push(result.redirectTo);
+        return; // keep loading state while navigating
+      }
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
-    } else if (result && "redirectTo" in result && result.redirectTo) {
-      router.push(result.redirectTo);
     }
   }
 
@@ -54,13 +60,19 @@ function LoginForm() {
         <form action={handleSubmit}>
           <CardContent className="space-y-4">
             {successMessage === "password_updated" && (
-              <div className="rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200">
+              <div
+                role="status"
+                className="rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200"
+              >
                 ✓ Password updated successfully! You can now login with your new
                 password.
               </div>
             )}
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+              <div
+                role="alert"
+                className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"
+              >
                 {error}
               </div>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -45,6 +45,13 @@ export default function SettingsClient({ initialPreferences }: Props) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-clear saved indicator after 3 seconds
+  useEffect(() => {
+    if (!saved) return;
+    const timer = setTimeout(() => setSaved(false), 3000);
+    return () => clearTimeout(timer);
+  }, [saved]);
+
   const hasChanges =
     prefs.pdf_include_photos !== initialPreferences.pdf_include_photos ||
     prefs.pdf_photo_size !== initialPreferences.pdf_photo_size ||
@@ -62,7 +69,6 @@ export default function SettingsClient({ initialPreferences }: Props) {
         setError(result.error);
       } else {
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
       }
     } catch {
       setError("An unexpected error occurred");

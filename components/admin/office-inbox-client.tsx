@@ -60,7 +60,7 @@ export default function OfficeInboxClient({
   const [selectedNote, setSelectedNote] = useState<InboxNote | null>(null);
   const [showCorrectionDialog, setShowCorrectionDialog] = useState(false);
   const [showVoidDialog, setShowVoidDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingVisitId, setLoadingVisitId] = useState<string | null>(null);
   const router = useRouter();
 
   // Filter notes based on search term
@@ -88,7 +88,7 @@ export default function OfficeInboxClient({
       return;
     }
 
-    setIsLoading(true);
+    setLoadingVisitId(visitId);
     try {
       const result = await approveNote(visitId);
 
@@ -102,9 +102,8 @@ export default function OfficeInboxClient({
       }
     } catch (error) {
       toast.error("An error occurred while approving the note");
-      console.error(error);
     } finally {
-      setIsLoading(false);
+      setLoadingVisitId(null);
     }
   };
 
@@ -246,7 +245,7 @@ export default function OfficeInboxClient({
                         variant="default"
                         size="sm"
                         onClick={() => handleApprove(note.id)}
-                        disabled={isLoading}
+                        disabled={loadingVisitId === note.id}
                         title="Approve note"
                       >
                         <CheckCircle2 className="mr-1 h-4 w-4" />
@@ -256,7 +255,7 @@ export default function OfficeInboxClient({
                         variant="outline"
                         size="sm"
                         onClick={() => handleRequestCorrection(note)}
-                        disabled={isLoading}
+                        disabled={loadingVisitId === note.id}
                         title="Request correction"
                       >
                         Request Correction
@@ -265,7 +264,7 @@ export default function OfficeInboxClient({
                         variant="destructive"
                         size="sm"
                         onClick={() => handleVoidNote(note)}
-                        disabled={isLoading}
+                        disabled={loadingVisitId === note.id}
                         title="Void note"
                       >
                         <XCircle className="mr-1 h-4 w-4" />

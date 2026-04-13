@@ -36,9 +36,7 @@ export function VisitAddendums({ visitId }: VisitAddendumsProps) {
   useEffect(() => {
     async function loadAddendums() {
       setIsLoading(true);
-      console.log("Fetching addendums for visit:", visitId);
       const result = await getVisitAddendums(visitId);
-      console.log("Addendums result:", result);
       if (result.data) {
         setAddendums(result.data as Addendum[]);
       }

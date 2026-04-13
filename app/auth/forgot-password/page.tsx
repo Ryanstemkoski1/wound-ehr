@@ -27,15 +27,19 @@ export default function ForgotPasswordPage() {
     setError("");
     setSuccess("");
 
-    const result = await forgotPassword(formData);
+    try {
+      const result = await forgotPassword(formData);
 
-    if (result?.error) {
-      setError(result.error);
-    } else if (result?.success) {
-      setSuccess(result.success);
+      if (result?.error) {
+        setError(result.error);
+      } else if (result?.success) {
+        setSuccess(result.success);
+      }
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
@@ -60,12 +64,18 @@ export default function ForgotPasswordPage() {
         <form action={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+              <div
+                role="alert"
+                className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"
+              >
                 {error}
               </div>
             )}
             {success && (
-              <div className="rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200">
+              <div
+                role="status"
+                className="rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950 dark:text-green-200"
+              >
                 {success}
               </div>
             )}

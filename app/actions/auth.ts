@@ -61,7 +61,6 @@ export async function signup(formData: FormData) {
 
     if (inviteResult.error) {
       // If invite acceptance fails, still proceed with signup
-      console.error("Failed to accept invite:", inviteResult.error);
     }
   }
 
@@ -159,9 +158,6 @@ export async function login(formData: FormData) {
     } catch {
       // Service client unavailable (missing SUPABASE_SERVICE_ROLE_KEY)
       // Fall through - allow login, RLS will still protect data
-      console.warn(
-        "Service role key not configured - skipping user existence check"
-      );
     }
 
     // Check if user has any roles assigned

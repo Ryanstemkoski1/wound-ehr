@@ -11,13 +11,11 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const typeIcons: Record<SearchResult["type"], typeof User> = {
   patient: User,
-  visit: Search,
   facility: Building2,
 };
 
 const typeLabels: Record<SearchResult["type"], string> = {
   patient: "Patient",
-  visit: "Visit",
   facility: "Facility",
 };
 
@@ -28,8 +26,14 @@ export function GlobalSearchDialog() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isMac, setIsMac] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>(null);
+
+  // Detect platform for shortcut display
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().includes("MAC"));
+  }, []);
 
   // Cmd+K / Ctrl+K keyboard shortcut to open
   useEffect(() => {
@@ -53,7 +57,8 @@ export function GlobalSearchDialog() {
   // Focus input when dialog opens
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     } else {
       setQuery("");
       setResults([]);
@@ -126,7 +131,7 @@ export function GlobalSearchDialog() {
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">Search…</span>
         <kbd className="bg-muted hidden rounded px-1.5 py-0.5 font-mono text-[0.65rem] sm:inline">
-          ⌘K
+          {isMac ? "⌘K" : "Ctrl+K"}
         </kbd>
       </button>
 
@@ -152,7 +157,11 @@ export function GlobalSearchDialog() {
           </div>
 
           {/* Results */}
-          <div className="max-h-[300px] overflow-y-auto py-2">
+          <div
+            className="max-h-[300px] overflow-y-auto py-2"
+            role="listbox"
+            aria-label="Search results"
+          >
             {results.length === 0 && query.length >= 2 && !isLoading && (
               <p className="text-muted-foreground py-6 text-center text-sm">
                 No results found.

@@ -29,19 +29,24 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Check if user came from valid reset link
     const checkSession = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (user) {
-        setValidSession(true);
-      } else {
-        setError(
-          "Invalid or expired reset link. Please request a new password reset."
-        );
+        if (user) {
+          setValidSession(true);
+        } else {
+          setError(
+            "Invalid or expired reset link. Please request a new password reset."
+          );
+        }
+      } catch {
+        setError("Failed to verify reset link. Please try again.");
+      } finally {
+        setChecking(false);
       }
-      setChecking(false);
     };
 
     checkSession();
@@ -51,13 +56,19 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setError("");
 
-    const result = await resetPassword(formData);
+    try {
+      const result = await resetPassword(formData);
 
-    if (result?.error) {
-      setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+      } else if (result && "redirectTo" in result) {
+        router.push(result.redirectTo as string);
+        return;
+      }
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
-    } else if (result && "redirectTo" in result) {
-      router.push(result.redirectTo as string);
     }
   }
 
@@ -129,7 +140,10 @@ export default function ResetPasswordPage() {
         <form action={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+              <div
+                role="alert"
+                className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"
+              >
                 {error}
               </div>
             )}

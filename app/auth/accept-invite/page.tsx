@@ -35,7 +35,7 @@ const signupSchema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don&apos;t match",
+    message: "Passwords don't match",
     path: ["confirmPassword"],
   });
 
@@ -117,7 +117,6 @@ function AcceptInviteContent() {
             const result = await acceptInvite(inviteToken);
 
             if (result.error) {
-              console.error("Accept invite error:", result.error);
               setError(result.error);
               setIsValidating(false);
               return;
@@ -131,7 +130,6 @@ function AcceptInviteContent() {
             }, 1500);
             return;
           } catch (err) {
-            console.error("Exception during auto-accept:", err);
             setError("Failed to accept invite automatically");
             setIsValidating(false);
             return;
@@ -150,7 +148,6 @@ function AcceptInviteContent() {
 
         setIsValidating(false);
       } catch (err) {
-        console.error("Error validating invite:", err);
         setError("Failed to validate invite");
         setIsValidating(false);
       }
@@ -193,7 +190,6 @@ function AcceptInviteContent() {
         router.push(result.redirectTo as string);
       }
     } catch (err) {
-      console.error("Signup error:", err);
       setError(
         err instanceof Error ? err.message : "An error occurred during signup"
       );

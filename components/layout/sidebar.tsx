@@ -17,6 +17,7 @@ import {
   BarChart,
   BrainCircuit,
   Settings,
+  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart },
   { name: "Billing", href: "/dashboard/billing", icon: DollarSign },
+  { name: "Incidents", href: "/dashboard/incidents/new", icon: AlertTriangle },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

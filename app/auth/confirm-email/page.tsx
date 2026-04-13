@@ -64,9 +64,9 @@ export default function ConfirmEmailPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href="/login" className="w-full">
-            <Button className="w-full">Go to Login</Button>
-          </Link>
+          <Button className="w-full" asChild>
+            <Link href="/login">Go to Login</Link>
+          </Button>
           <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
             Already confirmed?{" "}
             <Link

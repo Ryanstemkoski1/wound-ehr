@@ -1,9 +1,16 @@
+import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/rbac";
 import { getInboxNotes } from "@/app/actions/approval-workflow";
 import OfficeInboxClient from "@/components/admin/office-inbox-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function OfficeInboxPage() {
+  const hasAccess = await isAdmin();
+  if (!hasAccess) {
+    redirect("/dashboard");
+  }
+
   const result = await getInboxNotes();
   const notes = result.success ? result.data : [];
 

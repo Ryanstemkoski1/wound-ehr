@@ -60,7 +60,6 @@ export async function getUserPreferences(): Promise<{
       .maybeSingle();
 
     if (error) {
-      console.error("Get user preferences error:", error);
       return { error: "Failed to load preferences" };
     }
 
@@ -78,7 +77,6 @@ export async function getUserPreferences(): Promise<{
         : DEFAULT_PDF_PREFERENCES,
     };
   } catch (err) {
-    console.error("Get user preferences error:", err);
     return { error: "Failed to load preferences" };
   }
 }
@@ -112,10 +110,10 @@ export async function savePDFPreferences(
       return { error: "Invalid page size" };
     }
     if (
-      prefs.pdf_max_photos_per_assessment < 0 ||
+      prefs.pdf_max_photos_per_assessment < 1 ||
       prefs.pdf_max_photos_per_assessment > 6
     ) {
-      return { error: "Max photos must be 0-6" };
+      return { error: "Max photos must be 1-6" };
     }
 
     const { error } = await supabase.from("user_preferences").upsert(
@@ -130,14 +128,12 @@ export async function savePDFPreferences(
     );
 
     if (error) {
-      console.error("Save preferences error:", error);
       return { error: `Failed to save: ${error.message}` };
     }
 
     revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (err) {
-    console.error("Save preferences error:", err);
     return { error: "Failed to save preferences" };
   }
 }

@@ -1,9 +1,16 @@
+import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/rbac";
 import { getAdminTranscripts } from "@/app/actions/ai-transcription";
 import TranscriptsManagementClient from "@/components/admin/transcripts-management-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminTranscriptsPage() {
+  const hasAccess = await isAdmin();
+  if (!hasAccess) {
+    redirect("/dashboard");
+  }
+
   const result = await getAdminTranscripts();
   const transcripts = result.transcripts ?? [];
   const stats = result.stats ?? {

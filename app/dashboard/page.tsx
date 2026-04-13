@@ -66,8 +66,8 @@ export default async function DashboardPage() {
       totalUsers = usersResult.count || 0;
       totalFacilities = facilitiesResult.count || 0;
       pendingInvites = invitesResult.count || 0;
-    } catch (error) {
-      console.error("Admin stats fetch error:", error);
+    } catch {
+      // Admin stats unavailable — non-critical
     }
   }
 
@@ -245,28 +245,21 @@ export default async function DashboardPage() {
       { week: "Week 7", healing: 27, stable: 3, declined: 0 },
       { week: "Week 8", healing: 30, stable: 2, declined: 0 },
     ];
-  } catch (error) {
-    console.error("Dashboard data fetch error:", error);
+  } catch {
     hasError = true;
-    // Use default values already set above
-    visitsLast6Months = [
-      { month: "May", visits: 0 },
-      { month: "Jun", visits: 0 },
-      { month: "Jul", visits: 0 },
-      { month: "Aug", visits: 0 },
-      { month: "Sep", visits: 0 },
-      { month: "Oct", visits: 0 },
-    ];
-    healingTrends = [
-      { week: "Week 1", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 2", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 3", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 4", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 5", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 6", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 7", healing: 0, stable: 0, declined: 0 },
-      { week: "Week 8", healing: 0, stable: 0, declined: 0 },
-    ];
+    // Use dynamic month labels for fallback
+    const fallbackMonths = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (5 - i));
+      return d.toLocaleDateString("en-US", { month: "short" });
+    });
+    visitsLast6Months = fallbackMonths.map((month) => ({ month, visits: 0 }));
+    healingTrends = Array.from({ length: 8 }, (_, i) => ({
+      week: `Week ${i + 1}`,
+      healing: 0,
+      stable: 0,
+      declined: 0,
+    }));
   }
 
   // Get corrections count for banner (clinician-facing)
@@ -274,8 +267,8 @@ export default async function DashboardPage() {
   try {
     const { data: corrections } = await getCorrectionsForClinician(user.id);
     correctionsCount = corrections?.length || 0;
-  } catch (error) {
-    console.error("Corrections count fetch error:", error);
+  } catch {
+    // Corrections count unavailable — non-critical
   }
 
   // Prepare chart data

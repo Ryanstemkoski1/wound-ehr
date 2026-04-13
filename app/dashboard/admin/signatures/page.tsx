@@ -1,6 +1,8 @@
 // Signature Audit Logs Page
 // Phase 9.3.7: Admin-only compliance reporting
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/rbac";
 import { SignatureAuditClient } from "@/components/admin/signature-audit-client";
 
 export const metadata: Metadata = {
@@ -10,7 +12,12 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function SignatureAuditPage() {
+export default async function SignatureAuditPage() {
+  const hasAccess = await isAdmin();
+  if (!hasAccess) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="space-y-6">
       <div>

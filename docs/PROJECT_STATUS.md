@@ -34,16 +34,16 @@
 
 | Metric                   | Count                        |
 | ------------------------ | ---------------------------- |
-| Database tables          | 32                           |
+| Database tables          | 31                           |
 | RLS policies             | 75+                          |
 | RPC functions            | 20+                          |
-| Database migrations      | 7                            |
+| Database migrations      | 8                            |
 | Route pages              | 43                           |
 | API routes               | 1                            |
-| Server action files      | 25 (~190 exported functions) |
-| React components         | 144 (123 Client / 21 Server) |
-| Library utility files    | 25                           |
-| Custom hooks             | 7                            |
+| Server action files      | 26 (~183 exported functions) |
+| React components         | 143 (126 Client / 17 Server) |
+| Library utility files    | 26                           |
+| Custom hooks             | 9                            |
 | Supabase Storage buckets | 5                            |
 
 ---
@@ -209,9 +209,9 @@ Primarily manual testing. 40+ test scenarios documented in [archive/AI_DOCUMENTA
 See [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) for:
 
 - Complete database schema (31 tables)
-- Frontend route structure (41 pages)
-- Component organization (134 files)
-- Server action inventory (23 files, ~175 functions)
+- Frontend route structure (43 pages)
+- Component organization (143 files)
+- Server action inventory (26 files, ~183 functions)
 - Security model (RBAC + credentials + RLS)
 - Technology stack details
 

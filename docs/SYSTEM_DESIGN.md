@@ -1,8 +1,8 @@
 # Wound EHR — System Design Document
 
-> **Version:** 7.0
-> **Date:** March 17, 2026
-> **Status:** Phases 1–11.1, 11.6, 11.7 complete | Phase 11.2–11.5 remaining
+> **Version:** 8.0
+> **Date:** April 10, 2026
+> **Status:** All phases complete (1–11.5) | Only optional 11.4.3 remaining
 
 ---
 
@@ -191,7 +191,13 @@ A fully custom, web-based EHR platform with wound-centric UI design, adaptive as
 | `visit_transcripts`          | Audio URL → Whisper transcript → GPT-4 clinical note → clinician review status |
 | `patient_recording_consents` | One-time consent per patient for audio recording (unique on `patient_id`)      |
 
-### Migrations (6 files)
+#### User Settings
+
+| Table              | Description                                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| `user_preferences` | Per-user settings (PDF photo include/exclude, photo size, max photos, page size) with defaults |
+
+### Migrations (8 files)
 
 | File                                     | Purpose                                                                                    |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -201,6 +207,8 @@ A fully custom, web-based EHR platform with wound-centric UI design, adaptive as
 | `00029_treatment_wound_id.sql`           | Adds `wound_id` FK + treatment builder columns to `treatments`                             |
 | `00030_new_clinical_forms.sql`           | `debridement_assessments`, `patient_not_seen_reports`, `incident_reports` + RLS            |
 | `00031_consent_provider_signature.sql`   | Adds `provider_signature_id` to `patient_consents`                                         |
+| `00032_user_preferences.sql`             | `user_preferences` table for PDF printing preferences + RLS policies                       |
+| `00033_private_wound_photos.sql`         | HIPAA fix: makes `wound-photos` bucket private, replaces public policy with auth-only      |
 
 ### RPC Functions (20+)
 
@@ -235,7 +243,7 @@ Key server-side PostgreSQL functions (most are `SECURITY DEFINER` to bypass RLS)
 
 ## Frontend Architecture
 
-### Route Structure (41 pages + 1 API route)
+### Route Structure (43 pages + 1 API route)
 
 #### Public Routes (8 pages)
 
@@ -250,7 +258,7 @@ Key server-side PostgreSQL functions (most are `SECURITY DEFINER` to bypass RLS)
 | `/auth/reset-password`  | Client | New password form                               |
 | `/auth/resend`          | Client | Resend confirmation email                       |
 
-#### Dashboard Routes (33 pages)
+#### Dashboard Routes (35 pages)
 
 All protected by auth guard in `app/dashboard/layout.tsx`.
 
@@ -294,17 +302,18 @@ All protected by auth guard in `app/dashboard/layout.tsx`.
 | `.../visits/[visitId]/debridement/new`       | Debridement assessment                   |
 | `.../visits/[visitId]/grafting/new`          | Grafting assessment                      |
 
-**Admin Routes (6 pages, `isAdmin()` gated):**
+**Admin Routes (8 pages, `isAdmin()` gated):**
 
-| Route                                   | Description                |
-| --------------------------------------- | -------------------------- |
-| `/dashboard/admin/users`                | User management            |
-| `/dashboard/admin/invites`              | Invite management          |
-| `/dashboard/admin/facilities`           | Facility list              |
-| `/dashboard/admin/facilities/new`       | New facility form          |
-| `/dashboard/admin/facilities/[id]/edit` | Edit facility              |
-| `/dashboard/admin/signatures`           | Signature audit logs       |
-| `/dashboard/admin/inbox`                | Office note approval inbox |
+| Route                                   | Description                                          |
+| --------------------------------------- | ---------------------------------------------------- |
+| `/dashboard/admin/users`                | User management                                      |
+| `/dashboard/admin/invites`              | Invite management                                    |
+| `/dashboard/admin/facilities`           | Facility list                                        |
+| `/dashboard/admin/facilities/new`       | New facility form                                    |
+| `/dashboard/admin/facilities/[id]/edit` | Edit facility                                        |
+| `/dashboard/admin/signatures`           | Signature audit logs                                 |
+| `/dashboard/admin/inbox`                | Office note approval inbox                           |
+| `/dashboard/admin/transcripts`          | AI transcript management, cost tracking, audio admin |
 
 **Other Dashboard Routes:**
 
@@ -316,6 +325,7 @@ All protected by auth guard in `app/dashboard/layout.tsx`.
 | `/dashboard/reports`       | Server | Report hub — 4 tabs: Visit Log, Clinician Activity, Facility Summary, Medical Records |
 | `/dashboard/corrections`   | Server | Clinician corrections needed list                                                     |
 | `/dashboard/incidents/new` | Server | Incident report form                                                                  |
+| `/dashboard/settings`      | Client | PDF printing preferences, photo settings                                              |
 
 **API Route:**
 
@@ -323,13 +333,13 @@ All protected by auth guard in `app/dashboard/layout.tsx`.
 | ------------------- | ------ | ----------------------------------------------------------------------------------- |
 | `/api/upload-audio` | POST   | Audio file upload for AI transcription (binary FormData — can't use Server Actions) |
 
-### Component Organization (134 files)
+### Component Organization (143 files)
 
 | Directory                 | Files | Description                                                                                                                                      |
 | ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `components/ui/`          | 39    | shadcn/ui primitives + custom (autosave indicator, dynamic breadcrumbs, loading skeletons)                                                       |
-| `components/layout/`      | 4     | App shell: sidebar, header, footer, dashboard layout                                                                                             |
-| `components/admin/`       | 6     | User/invite management, office inbox, signature audit, void/correction dialogs                                                                   |
+| `components/ui/`          | 42    | shadcn/ui primitives + custom (autosave indicator, save status, recovery modal, dynamic breadcrumbs, loading skeletons, carousel)                |
+| `components/layout/`      | 8     | App shell: sidebar, header, footer, dashboard layout client, bottom nav bar, global search dialog, notification bell, persistent recorder bar    |
+| `components/admin/`       | 7     | User/invite management, office inbox, signature audit, void/correction dialogs, AI transcripts management                                        |
 | `components/assessments/` | 13    | All clinical forms: standard, multi-wound, debridement, grafting, G-tube, skilled nursing, skin sweep, patient-not-seen, treatment order builder |
 | `components/billing/`     | 4     | Billing forms with credential-based CPT filtering                                                                                                |
 | `components/calendar/`    | 4     | Calendar view, filters, event modal, new visit dialog                                                                                            |
@@ -341,13 +351,14 @@ All protected by auth guard in `app/dashboard/layout.tsx`.
 | `components/pdf/`         | 7     | 3 PDF templates (@react-pdf) + 3 download buttons + CSV export                                                                                   |
 | `components/photos/`      | 3     | Photo gallery, upload, side-by-side comparison                                                                                                   |
 | `components/reports/`     | 5     | 4 report types under tabbed interface                                                                                                            |
+| `components/settings/`    | 1     | PDF printing preferences client component                                                                                                        |
 | `components/signatures/`  | 4     | Signature pad, display, recording consent modal/status                                                                                           |
 | `components/visits/`      | 13    | Visit form, actions, signature workflow, addendums, AI recorder/review/status                                                                    |
 | `components/wounds/`      | 9     | Wound card, form, actions, assessment history, board view, list view, quick stats                                                                |
 
-**Split: 114 Client Components (85%) / 20 Server Components (15%).** Server components are used for read-only cards (assessment, patient, visit), PDF templates, and base UI primitives.
+**Split: 126 Client Components (88%) / 17 Server Components (12%).** Server components are used for read-only cards (assessment, patient, visit), PDF templates, and base UI primitives.
 
-### Library Utilities (24 files in `lib/`)
+### Library Utilities (26 files in `lib/`)
 
 | File                                 | Purpose                                                                                                         |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
@@ -375,31 +386,36 @@ All protected by auth guard in `app/dashboard/layout.tsx`.
 | `supabase/admin.ts`                  | Service-role client (bypasses RLS — user deletion)                                                              |
 | `supabase/service.ts`                | Service-role client (bypasses RLS — user queries)                                                               |
 | `supabase/middleware.ts`             | Auth middleware: token refresh, route protection                                                                |
+| `recording-context.tsx`              | React Context + `useRecordingContext` for persistent cross-page audio recording                                 |
+| `hooks/use-media-query.ts`           | Responsive hooks: `useMediaQuery`, `useMobile`, `useTabletOrMobile`, `useTouchDevice`                           |
 
 ---
 
 ## Server Actions & API
 
-### 23 Action Files (~175 exported functions)
+### 26 Action Files (~183 exported functions)
 
 | File                         | #   | Purpose                                                      | Key Tables                                                                                          |
 | ---------------------------- | --- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
 | `admin.ts`                   | 7   | User/invite management                                       | `user_roles`, `user_invites`, `user_facilities`                                                     |
-| `ai-transcription.ts`        | 14  | Recording consent, audio upload, transcription, approval     | `visit_transcripts`, `patient_recording_consents`                                                   |
+| `ai-transcription.ts`        | 17  | Recording consent, audio upload, transcription, approval     | `visit_transcripts`, `patient_recording_consents`                                                   |
 | `approval-workflow.ts`       | 9   | Office inbox, corrections, approvals, addendum notifications | `visits`, `wound_notes`, `addendum_notifications`                                                   |
 | `assessments.ts`             | 6   | Wound assessment CRUD + autosave                             | `assessments`, `wounds`                                                                             |
 | `auth.ts`                    | 6   | Login, signup, password reset                                | `user_invites`, `user_roles`                                                                        |
 | `billing.ts`                 | 6   | CPT/ICD-10 billing CRUD                                      | `billings`                                                                                          |
 | `calendar.ts`                | 8   | Calendar events, scheduling, patient search                  | `visits`, `patient_clinicians`                                                                      |
 | `documents.ts`               | 7   | Patient document upload/archive                              | `patient_documents`                                                                                 |
-| `facilities.ts`              | 4   | Facility CRUD                                                | `facilities`, `user_facilities`                                                                     |
+| `facilities.ts`              | 6   | Facility CRUD                                                | `facilities`, `user_facilities`                                                                     |
 | `new-forms.ts`               | 12  | Debridement, not-seen, incident, consent forms               | `debridement_assessments`, `patient_not_seen_reports`, `incident_reports`, `patient_consents`       |
+| `notifications.ts`           | 3   | In-app notification aggregation, mark read                   | `addendum_notifications`, `visit_transcripts`, `patient_clinicians`                                 |
 | `patient-clinicians.ts`      | 7   | Clinician assignments                                        | `patient_clinicians`                                                                                |
 | `patients.ts`                | 5   | Patient CRUD with field permissions                          | `patients`                                                                                          |
 | `pdf.ts`                     | 5   | PDF data aggregation + CSV export                            | Multiple (read-only)                                                                                |
 | `pdf-cached.ts`              | 7   | PDF caching layer                                            | `visits` (status check)                                                                             |
 | `photos.ts`                  | 7   | Wound photo management                                       | `photos`                                                                                            |
+| `preferences.ts`             | 2   | User PDF printing preferences (get/save)                     | `user_preferences`                                                                                  |
 | `reports.ts`                 | 6   | Visit log, clinician activity, facility summary              | `visits`, `assessments`, `users`                                                                    |
+| `search.ts`                  | 1   | Global search across patients and facilities (Cmd+K)         | `patients`, `facilities`                                                                            |
 | `signature-audit.ts`         | 3   | Signature audit logs (admin only)                            | Via RPC                                                                                             |
 | `signatures.ts`              | 13  | Signatures, consent, visit signing workflow                  | `signatures`, `patient_consents`, `visits`                                                          |
 | `specialized-assessments.ts` | 13  | Skilled nursing, G-tube, grafting, skin sweep                | `skilled_nursing_assessments`, `gtube_procedures`, `grafting_assessments`, `skin_sweep_assessments` |

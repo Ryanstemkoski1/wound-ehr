@@ -18,8 +18,8 @@ export function CorrectionBanner({ count }: CorrectionBannerProps) {
       <AlertTitle>Corrections Needed</AlertTitle>
       <AlertDescription className="flex items-center justify-between">
         <span>
-          You have {count} visit note{count !== 1 ? "s" : ""} that need{" "}
-          {count === 1 ? "s" : ""} correction from the office.
+          You have {count} visit note{count !== 1 ? "s" : ""} that need
+          {count !== 1 ? "" : "s"} correction from the office.
         </span>
         <Button variant="outline" size="sm" asChild>
           <Link href="/dashboard/corrections">View Corrections</Link>
