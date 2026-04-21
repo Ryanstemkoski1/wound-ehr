@@ -168,12 +168,21 @@ export async function inviteUser(formData: FormData) {
       return { error: "No role found" };
     }
 
-    // Validate input
+    const emailInput = formData.get("email");
+    const roleInput = formData.get("role");
+    const credentialsInput = formData.get("credentials");
+    const facilityIdInput = formData.get("facilityId");
+
+    // Normalize FormData values: get() returns null when missing.
     const result = inviteUserSchema.safeParse({
-      email: formData.get("email"),
-      role: formData.get("role"),
-      credentials: formData.get("credentials"),
-      facilityId: formData.get("facilityId"),
+      email: typeof emailInput === "string" ? emailInput : undefined,
+      role: typeof roleInput === "string" ? roleInput : undefined,
+      credentials:
+        typeof credentialsInput === "string" ? credentialsInput : undefined,
+      facilityId:
+        typeof facilityIdInput === "string" && facilityIdInput.length > 0
+          ? facilityIdInput
+          : undefined,
     });
 
     if (!result.success) {
