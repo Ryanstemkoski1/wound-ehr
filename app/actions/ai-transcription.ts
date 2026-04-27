@@ -8,6 +8,8 @@ import {
   AI_CONFIG,
   RECORDING_CONSENT_TEXT,
   RECORDING_CONSENT_VERSION,
+  AI_PROCESSING_CONSENT_TEXT,
+  AI_PROCESSING_CONSENT_VENDOR,
 } from "@/lib/ai-config";
 import type {
   TranscriptRecord,
@@ -97,12 +99,18 @@ export async function checkRecordingConsent(
 }
 
 /**
- * Save a patient's recording consent with signature
+ * Save a patient's recording consent with signature.
+ *
+ * @param aiProcessingConsentGiven  When TRUE, also captures explicit
+ *   consent for transmission of PHI to a third-party AI vendor
+ *   (separate HIPAA / BAA gate). When FALSE, recording is allowed but
+ *   the audio MUST NOT be uploaded for AI processing.
  */
 export async function saveRecordingConsent(
   patientId: string,
   signatureId: string | null,
-  expiresInDays?: number
+  expiresInDays?: number,
+  aiProcessingConsentGiven: boolean = false
 ): Promise<ConsentResult> {
   try {
     const supabase = await createClient();
@@ -119,6 +127,8 @@ export async function saveRecordingConsent(
       ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
       : null;
 
+    const nowIso = new Date().toISOString();
+
     const { data: consent, error } = await supabase
       .from("patient_recording_consents")
       .upsert(
@@ -128,10 +138,22 @@ export async function saveRecordingConsent(
           consent_text: RECORDING_CONSENT_TEXT,
           consent_version: RECORDING_CONSENT_VERSION,
           signature_id: signatureId,
-          consented_at: new Date().toISOString(),
+          consented_at: nowIso,
           expires_at: expiresAt,
           revoked_at: null,
           revoked_reason: null,
+          // Separate AI-processing gate — only set when explicitly granted.
+          ai_processing_consent_given: aiProcessingConsentGiven,
+          ai_processing_consent_text: aiProcessingConsentGiven
+            ? AI_PROCESSING_CONSENT_TEXT
+            : null,
+          ai_processing_consented_at: aiProcessingConsentGiven ? nowIso : null,
+          ai_processing_signature_id: aiProcessingConsentGiven
+            ? signatureId
+            : null,
+          ai_vendor: aiProcessingConsentGiven
+            ? AI_PROCESSING_CONSENT_VENDOR
+            : null,
         },
         {
           onConflict: "patient_id",
@@ -193,6 +215,50 @@ export async function revokeRecordingConsent(
   } catch (err) {
     console.error("Revoke recording consent error:", err);
     return { error: "Failed to revoke recording consent" };
+  }
+}
+
+/**
+ * Revoke ONLY the AI-processing consent while keeping the recording
+ * consent intact. After this call uploadVisitAudio will refuse with 403
+ * because the upload route requires both gates to be true.
+ */
+export async function revokeAiProcessingConsent(
+  patientId: string
+): Promise<ConsentResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Unauthorized" };
+    }
+
+    const { data: consent, error } = await supabase
+      .from("patient_recording_consents")
+      .update({
+        ai_processing_consent_given: false,
+        ai_processing_consented_at: null,
+        ai_processing_signature_id: null,
+      })
+      .eq("patient_id", patientId)
+      .is("revoked_at", null)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Revoke AI consent error:", error);
+      return { error: `Failed to revoke AI consent: ${error.message}` };
+    }
+
+    revalidatePath("/dashboard/patients");
+    return { consent, hasConsent: true };
+  } catch (err) {
+    console.error("Revoke AI consent error:", err);
+    return { error: "Failed to revoke AI consent" };
   }
 }
 

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Validation schema
 const woundSchema = z.object({
@@ -67,6 +68,14 @@ export async function getWound(woundId: string) {
   if (!user) {
     return null;
   }
+
+  // Audit PHI access (fire-and-forget)
+  void auditPhiAccess({
+    action: "read",
+    table: "wounds",
+    recordId: woundId,
+    recordType: "wound_record",
+  });
 
   try {
     const { data: wound, error } = await supabase

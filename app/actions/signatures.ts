@@ -4,8 +4,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requiresPatientSignature as requiresPatientSig } from "@/lib/credentials";
 import type { Credentials } from "@/lib/credentials";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // =====================================================
 // TYPES
@@ -67,6 +69,10 @@ export async function createSignature(data: SignatureData) {
       return { error: "Signature data is required" };
     }
 
+    // ALWAYS use server-determined IP for the audit trail. We ignore
+    // any caller-supplied data.ipAddress to prevent spoofing.
+    const serverIp = await getClientIpAddress();
+
     // Create signature record
     const { data: signature, error } = await supabase
       .from("signatures")
@@ -78,7 +84,7 @@ export async function createSignature(data: SignatureData) {
         signer_role: data.signerRole,
         signature_data: data.signatureData,
         signature_method: data.signatureMethod,
-        ip_address: data.ipAddress,
+        ip_address: serverIp,
         created_by: user.id,
       })
       .select()
@@ -102,6 +108,14 @@ export async function createSignature(data: SignatureData) {
  */
 export async function getSignature(signatureId: string) {
   const supabase = await createClient();
+
+  // Audit: signature blobs are PHI — every read must be logged
+  void auditPhiAccess({
+    action: "read",
+    table: "signatures",
+    recordId: signatureId,
+    recordType: "electronic_signature",
+  });
 
   try {
     const { data, error } = await supabase
@@ -127,6 +141,14 @@ export async function getSignature(signatureId: string) {
  */
 export async function getVisitSignatures(visitId: string) {
   const supabase = await createClient();
+
+  // Audit: bulk PHI read on signatures for a visit
+  void auditPhiAccess({
+    action: "read",
+    table: "signatures",
+    recordId: visitId,
+    recordType: "visit_signatures",
+  });
 
   try {
     const { data, error } = await supabase
@@ -546,12 +568,32 @@ export async function submitVisit(visitId: string) {
 }
 
 /**
- * Get client IP address (helper for audit trail)
+ * Get client IP address from the inbound request headers.
+ * Honored proxy headers (in order): x-forwarded-for (first hop),
+ * x-real-ip, cf-connecting-ip. Returns null if none are set.
+ *
+ * Used for HIPAA-grade audit trail on signatures and consents —
+ * the value is server-determined; clients cannot spoof it.
  */
 export async function getClientIpAddress(): Promise<string | null> {
-  // In production, you'd extract this from headers
-  // For now, return null and handle on client side
-  return null;
+  try {
+    const h = await headers();
+    const xff = h.get("x-forwarded-for");
+    if (xff) {
+      // x-forwarded-for is a comma-separated list; first entry is the
+      // original client IP.
+      const first = xff.split(",")[0]?.trim();
+      if (first) return first;
+    }
+    return (
+      h.get("x-real-ip") ||
+      h.get("cf-connecting-ip") ||
+      h.get("true-client-ip") ||
+      null
+    );
+  } catch {
+    return null;
+  }
 }
 
 // =====================================================
@@ -688,6 +730,16 @@ export async function uploadScannedConsent(formData: FormData) {
  */
 export async function getConsentDocumentUrl(patientId: string) {
   const supabase = await createClient();
+
+  // Audit: signed-URL generation for a consent document is a PHI
+  // disclosure event — always log, including the patient_id.
+  void auditPhiAccess({
+    action: "export",
+    table: "patient_consents",
+    recordId: patientId,
+    recordType: "consent_document_signed_url",
+    reason: "Generated signed URL for consent document download",
+  });
 
   try {
     const { data: consent, error } = await supabase

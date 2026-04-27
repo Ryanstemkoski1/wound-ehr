@@ -132,34 +132,71 @@ export function RecordingConsentStatus({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-sm text-teal-700 dark:text-teal-300">
-            <div className="flex items-center gap-1.5">
-              <Mic className="h-3.5 w-3.5" />
-              <span>Obtained: {consentDate}</span>
-            </div>
-            {expiresDate && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-sm text-teal-700 dark:text-teal-300">
               <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Expires: {expiresDate}</span>
+                <Mic className="h-3.5 w-3.5" />
+                <span>Obtained: {consentDate}</span>
               </div>
-            )}
-            <div className="text-xs text-teal-600 dark:text-teal-400">
-              v{consent.consent_version}
+              {expiresDate && (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Expires: {expiresDate}</span>
+                </div>
+              )}
+              <div className="text-xs text-teal-600 dark:text-teal-400">
+                v{consent.consent_version}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {isExpiringSoon && (
-              <RecordingConsentModal
+            <div className="flex items-center gap-2">
+              {isExpiringSoon && (
+                <RecordingConsentModal
+                  patientId={patientId}
+                  patientName={patientName}
+                  trigger
+                />
+              )}
+              <RevokeRecordingConsentModal
                 patientId={patientId}
                 patientName={patientName}
-                trigger
               />
-            )}
-            <RevokeRecordingConsentModal
-              patientId={patientId}
-              patientName={patientName}
-            />
+            </div>
+          </div>
+
+          {/* AI processing consent sub-status */}
+          <div className="flex items-center justify-between border-t border-teal-200 pt-3 dark:border-teal-800">
+            <div className="flex items-center gap-2 text-sm">
+              {consent.ai_processing_consent_given ? (
+                <>
+                  <ShieldCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                  <span className="text-teal-700 dark:text-teal-300">
+                    AI processing authorized
+                    {consent.ai_vendor ? ` (${consent.ai_vendor})` : ""}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <span className="text-amber-700 dark:text-amber-300">
+                    AI processing NOT authorized — audio uploads will be
+                    rejected
+                  </span>
+                </>
+              )}
+            </div>
+            <Badge
+              variant="outline"
+              className={
+                consent.ai_processing_consent_given
+                  ? "border-teal-600 text-teal-700 dark:text-teal-300"
+                  : "border-amber-500 text-amber-700 dark:text-amber-300"
+              }
+            >
+              {consent.ai_processing_consent_given
+                ? "AI Consent Active"
+                : "AI Consent Missing"}
+            </Badge>
           </div>
         </div>
       </CardContent>

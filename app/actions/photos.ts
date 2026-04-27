@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Update photo's assessment_id (used when finalizing drafts)
 export async function updatePhotoAssessmentId(
@@ -71,7 +72,7 @@ export async function uploadPhoto(formData: FormData) {
       return { error: "File and woundId are required" };
     }
 
-    // Validate file type
+    // Validate file type (claimed Content-Type)
     const validTypes = [
       "image/jpeg",
       "image/jpg",
@@ -90,6 +91,23 @@ export async function uploadPhoto(formData: FormData) {
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return { error: "File size exceeds 10MB limit" };
+    }
+
+    // Server-side magic-byte sniff. Clients can spoof Content-Type, so
+    // we re-verify the bytes match an allowed image format. Rejecting
+    // here prevents storing arbitrary binaries / scripts as "photos".
+    const buffer = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    const { sniffImage } = await import("@/lib/image-sniff");
+    const sniff = sniffImage(buffer, file.type);
+    if (!sniff.allowed) {
+      return {
+        error: "Uploaded file is not a recognised image format.",
+      };
+    }
+    if (!sniff.matchesClaim) {
+      return {
+        error: `File contents (${sniff.mime ?? "unknown"}) do not match the declared type (${file.type}).`,
+      };
     }
 
     // Generate unique filename
@@ -226,6 +244,14 @@ export async function getPhoto(photoId: string) {
     if (authError || !user) {
       return { error: "Unauthorized" };
     }
+
+    // Audit PHI access (fire-and-forget)
+    void auditPhiAccess({
+      action: "read",
+      table: "photos",
+      recordId: photoId,
+      recordType: "wound_photo",
+    });
 
     const { data: photo, error } = await supabase
       .from("photos")

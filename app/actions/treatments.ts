@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { assertUuid, ValidationError } from "@/lib/validations/common";
 
 // ============================================================================
 // Treatment Order Server Actions — Phase 11.6
@@ -95,9 +96,17 @@ export async function createTreatment(formData: FormData): Promise<{
       return { success: false, error: "Visit ID and Wound ID are required" };
     }
 
-    const treatmentData = extractTreatmentData(formData);
+    try {
+      assertUuid(visitId, "visitId");
+      assertUuid(woundId, "woundId");
+    } catch (e) {
+      return {
+        success: false,
+        error: e instanceof ValidationError ? e.message : "Invalid input",
+      };
+    }
 
-    // Check if treatment already exists for this wound + visit
+    const treatmentData = extractTreatmentData(formData);
     const { data: existing } = await supabase
       .from("treatments")
       .select("id")
@@ -162,6 +171,14 @@ export async function updateTreatment(formData: FormData): Promise<{
     const treatmentId = formData.get("treatmentId") as string;
     if (!treatmentId) {
       return { success: false, error: "Treatment ID is required" };
+    }
+    try {
+      assertUuid(treatmentId, "treatmentId");
+    } catch (e) {
+      return {
+        success: false,
+        error: e instanceof ValidationError ? e.message : "Invalid input",
+      };
     }
 
     const treatmentData = extractTreatmentData(formData);
@@ -246,6 +263,15 @@ export async function deleteTreatment(treatmentId: string): Promise<{
 
   if (!user) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    assertUuid(treatmentId, "treatmentId");
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof ValidationError ? e.message : "Invalid input",
+    };
   }
 
   try {

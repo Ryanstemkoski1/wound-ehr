@@ -39,6 +39,7 @@ type VisitAIStatusCardProps = {
   patientId: string;
   patientName: string;
   hasRecordingConsent: boolean;
+  hasAiProcessingConsent: boolean;
   hasTranscript: boolean;
   transcriptId: string | null;
   transcriptStatus: TranscriptStatus;
@@ -86,6 +87,7 @@ export function VisitAIStatusCard({
   patientId,
   patientName,
   hasRecordingConsent,
+  hasAiProcessingConsent,
   hasTranscript,
   transcriptId,
   transcriptStatus,
@@ -151,7 +153,13 @@ export function VisitAIStatusCard({
   // Has consent but no transcript yet — show audio recorder
   if (!hasTranscript || !transcriptStatus) {
     if (isVisitEditable) {
-      return <AudioRecorder visitId={visitId} patientId={patientId} />;
+      return (
+        <AudioRecorder
+          visitId={visitId}
+          patientId={patientId}
+          hasAiProcessingConsent={hasAiProcessingConsent}
+        />
+      );
     }
 
     return (

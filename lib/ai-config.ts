@@ -165,6 +165,12 @@ export type RecordingConsent = {
   expires_at: string | null;
   revoked_at: string | null;
   revoked_reason: string | null;
+  // Phase 11.8 — separate consent for third-party AI processing (OpenAI, etc.)
+  ai_processing_consent_given: boolean;
+  ai_processing_consent_text: string | null;
+  ai_processing_consented_at: string | null;
+  ai_processing_signature_id: string | null;
+  ai_vendor: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -194,3 +200,34 @@ I understand that:
 7. NO GUARANTEE: I understand that while recordings improve documentation accuracy, they may occasionally contain technical errors or omissions. My healthcare team will review all AI-generated notes before finalizing them.`;
 
 export const RECORDING_CONSENT_VERSION = "1.0";
+
+// =====================================================
+// AI-PROCESSING CONSENT (third-party vendor disclosure)
+// =====================================================
+//
+// HIPAA: separate from recording consent because it authorizes
+// transmission of PHI to an external AI vendor (OpenAI). Capture
+// alongside recording consent and persist on the same row.
+
+export const AI_PROCESSING_CONSENT_VENDOR = "openai";
+
+export const AI_PROCESSING_CONSENT_TEXT = `CONSENT FOR AI PROCESSING OF AUDIO RECORDINGS
+
+In addition to consenting to be recorded, I authorize my healthcare provider to send audio recordings and the resulting transcripts to a third-party artificial intelligence vendor (currently OpenAI) for the purpose of:
+
+  • Generating verbatim transcripts of my visits;
+  • Producing draft clinical notes that my care team will review and edit before they enter my medical record.
+
+I understand that:
+
+1. THIRD-PARTY DISCLOSURE: My audio and transcript text will leave my healthcare provider's systems and be processed by the AI vendor identified above under a Business Associate Agreement (BAA) governing protected health information (PHI).
+
+2. NO TRAINING ON MY DATA: The vendor will not use my recordings or transcripts to train its AI models.
+
+3. DECLINING IS OK: I may consent to recording but DECLINE AI processing. If I decline AI processing, the audio will not be uploaded to the vendor and my clinician will document the visit manually.
+
+4. REVOCATION: I may revoke this AI-processing consent at any time. Revocation will not affect transcripts that were already generated and entered in my medical record.
+
+5. ACCURACY: AI-generated drafts may contain errors. A licensed clinician will review and approve every note before it is finalized.`;
+
+export const AI_PROCESSING_CONSENT_VERSION = "1.0";

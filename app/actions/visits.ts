@@ -7,6 +7,7 @@ import { requiresPatientSignature } from "@/app/actions/signatures";
 import { getUserRole, getUserCredentials } from "@/lib/rbac";
 import { canEditVisit } from "@/lib/field-permissions";
 import { invalidateVisitPDFCache } from "@/app/actions/pdf-cached";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Validation schema
 const visitSchema = z.object({
@@ -115,6 +116,14 @@ export async function getVisit(visitId: string) {
   if (!user) {
     return null;
   }
+
+  // Audit PHI access (fire-and-forget)
+  void auditPhiAccess({
+    action: "read",
+    table: "visits",
+    recordId: visitId,
+    recordType: "visit_record",
+  });
 
   try {
     const { data: visit, error } = await supabase

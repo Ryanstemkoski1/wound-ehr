@@ -4,11 +4,36 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { AI_CONFIG } from "@/lib/ai-config";
+import { auditPhiAccess } from "@/lib/audit-log";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
+
+// Same-origin CSRF guard for the audio upload endpoint. Server Actions
+// get this for free; raw API routes do not.
+function isSameOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (!origin) {
+    // No Origin header — fetch() always sends one for CORS-mode POSTs.
+    // Permit only if the request is non-CORS (Sec-Fetch-Site: same-origin).
+    return request.headers.get("sec-fetch-site") === "same-origin";
+  }
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[upload-audio] Starting...");
+    if (!isSameOrigin(request)) {
+      return NextResponse.json(
+        { error: "Cross-origin request rejected" },
+        { status: 403 }
+      );
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -16,10 +41,28 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error("[upload-audio] Auth failed:", authError?.message);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("[upload-audio] Authenticated as:", user.email);
+
+    // Rate limit: 10 uploads per 5 minutes per user. Audio transcription
+    // costs real money and Whisper's per-minute pricing makes abuse
+    // expensive fast.
+    const rl = rateLimit(
+      clientKey(request.headers, "upload-audio", user.id),
+      10,
+      5 * 60_000
+    );
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Try again shortly." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.ceil(rl.retryAfterMs / 1000).toString(),
+          },
+        }
+      );
+    }
 
     const formData = await request.formData();
     const fileEntry = formData.get("file");
@@ -27,7 +70,6 @@ export async function POST(request: NextRequest) {
     const patientId = formData.get("patientId") as string;
 
     if (!fileEntry || !(fileEntry instanceof File) || !visitId || !patientId) {
-      console.error("[upload-audio] Missing required fields");
       return NextResponse.json(
         { error: "File, visitId, and patientId are required" },
         { status: 400 }
@@ -35,20 +77,18 @@ export async function POST(request: NextRequest) {
     }
 
     const file = fileEntry;
-    console.log("[upload-audio] File received:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
 
-    // Validate consent
+    // Validate BOTH (a) recording consent and (b) AI-processing consent.
+    // AI-processing consent is required because the audio + transcript
+    // will be sent to a third-party AI vendor (OpenAI). This is a
+    // distinct authorization from consenting to be recorded.
     const { data: consent } = await supabase
       .from("patient_recording_consents")
-      .select("id")
+      .select("id, ai_processing_consent_given")
       .eq("patient_id", patientId)
       .eq("consent_given", true)
       .is("revoked_at", null)
-      .single();
+      .maybeSingle();
 
     if (!consent) {
       return NextResponse.json(
@@ -56,14 +96,22 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-    console.log("[upload-audio] Consent verified");
+    if (!consent.ai_processing_consent_given) {
+      return NextResponse.json(
+        {
+          error:
+            "Patient has not consented to AI processing of recordings (third-party vendor). Capture AI consent before uploading.",
+        },
+        { status: 403 }
+      );
+    }
 
     // Validate file type — strip codec suffix
     const baseMimeType = file.type.split(";")[0].trim();
     if (!AI_CONFIG.AUDIO.ALLOWED_MIME_TYPES.includes(baseMimeType)) {
       return NextResponse.json(
         {
-          error: `Invalid file type "${file.type}". Allowed: ${AI_CONFIG.AUDIO.ALLOWED_MIME_TYPES.join(", ")}`,
+          error: `Invalid file type "${baseMimeType}". Allowed: ${AI_CONFIG.AUDIO.ALLOWED_MIME_TYPES.join(", ")}`,
         },
         { status: 400 }
       );
@@ -85,13 +133,10 @@ export async function POST(request: NextRequest) {
     const storagePath = `${visitId}/${timestamp}_${safeFilename}`;
 
     // Convert to buffer for reliable upload
-    console.log("[upload-audio] Converting to buffer...");
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    console.log("[upload-audio] Buffer ready:", uint8Array.length, "bytes");
 
     // Upload to Supabase Storage
-    console.log("[upload-audio] Uploading to storage:", storagePath);
     const { error: uploadError } = await supabase.storage
       .from(AI_CONFIG.AUDIO.STORAGE_BUCKET)
       .upload(storagePath, uint8Array, {
@@ -101,16 +146,17 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("[upload-audio] Storage upload error:", uploadError);
+      console.error(
+        "[upload-audio] Storage upload error:",
+        uploadError.message
+      );
       return NextResponse.json(
         { error: `Failed to upload audio: ${uploadError.message}` },
         { status: 500 }
       );
     }
-    console.log("[upload-audio] Storage upload complete");
 
     // Create transcript record
-    console.log("[upload-audio] Creating transcript record...");
     const { data: transcript, error: dbError } = await supabase
       .from("visit_transcripts")
       .insert({
@@ -129,13 +175,12 @@ export async function POST(request: NextRequest) {
       await supabase.storage
         .from(AI_CONFIG.AUDIO.STORAGE_BUCKET)
         .remove([storagePath]);
-      console.error("[upload-audio] Transcript record error:", dbError);
+      console.error("[upload-audio] Transcript record error:", dbError.message);
       return NextResponse.json(
         { error: `Failed to create transcript record: ${dbError.message}` },
         { status: 500 }
       );
     }
-    console.log("[upload-audio] Transcript created:", transcript.id);
 
     // Link transcript to visit
     await supabase
@@ -146,10 +191,22 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", visitId);
 
-    console.log("[upload-audio] Complete — transcript:", transcript.id);
+    // PHI audit trail: record that audio for this visit was uploaded.
+    // Fire-and-forget; never blocks the response.
+    void auditPhiAccess({
+      action: "create",
+      table: "visit_transcripts",
+      recordId: transcript.id,
+      recordType: "visit_audio",
+      reason: `Audio upload for visit ${visitId}`,
+    });
+
     return NextResponse.json({ transcript });
   } catch (err) {
-    console.error("[upload-audio] Unhandled error:", err);
+    console.error(
+      "[upload-audio] Unhandled error:",
+      err instanceof Error ? err.message : "unknown"
+    );
     return NextResponse.json(
       { error: "Failed to upload audio recording" },
       { status: 500 }

@@ -186,6 +186,62 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          reason: string | null
+          record_id: string | null
+          record_type: string | null
+          table_name: string
+          tenant_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          reason?: string | null
+          record_id?: string | null
+          record_type?: string | null
+          table_name: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          reason?: string | null
+          record_id?: string | null
+          record_type?: string | null
+          table_name?: string
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billings: {
         Row: {
           cpt_codes: Json
@@ -1170,6 +1226,7 @@ export type Database = {
           id: string
           patient_id: string
           patient_signature_id: string | null
+          provider_signature_id: string | null
           witness_signature_id: string | null
         }
         Insert: {
@@ -1184,6 +1241,7 @@ export type Database = {
           id?: string
           patient_id: string
           patient_signature_id?: string | null
+          provider_signature_id?: string | null
           witness_signature_id?: string | null
         }
         Update: {
@@ -1198,6 +1256,7 @@ export type Database = {
           id?: string
           patient_id?: string
           patient_signature_id?: string | null
+          provider_signature_id?: string | null
           witness_signature_id?: string | null
         }
         Relationships: [
@@ -1211,6 +1270,13 @@ export type Database = {
           {
             foreignKeyName: "patient_consents_patient_signature_id_fkey"
             columns: ["patient_signature_id"]
+            isOneToOne: false
+            referencedRelation: "signatures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_consents_provider_signature_id_fkey"
+            columns: ["provider_signature_id"]
             isOneToOne: false
             referencedRelation: "signatures"
             referencedColumns: ["id"]
@@ -1407,6 +1473,11 @@ export type Database = {
       }
       patient_recording_consents: {
         Row: {
+          ai_processing_consent_given: boolean
+          ai_processing_consent_text: string | null
+          ai_processing_consented_at: string | null
+          ai_processing_signature_id: string | null
+          ai_vendor: string | null
           consent_given: boolean
           consent_text: string
           consent_version: string
@@ -1421,6 +1492,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_processing_consent_given?: boolean
+          ai_processing_consent_text?: string | null
+          ai_processing_consented_at?: string | null
+          ai_processing_signature_id?: string | null
+          ai_vendor?: string | null
           consent_given?: boolean
           consent_text: string
           consent_version?: string
@@ -1435,6 +1511,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_processing_consent_given?: boolean
+          ai_processing_consent_text?: string | null
+          ai_processing_consented_at?: string | null
+          ai_processing_signature_id?: string | null
+          ai_vendor?: string | null
           consent_given?: boolean
           consent_text?: string
           consent_version?: string
@@ -1449,6 +1530,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "patient_recording_consents_ai_processing_signature_id_fkey"
+            columns: ["ai_processing_signature_id"]
+            isOneToOne: false
+            referencedRelation: "signatures"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "patient_recording_consents_patient_id_fkey"
             columns: ["patient_id"]
@@ -1558,7 +1646,7 @@ export type Database = {
           uploaded_by: string
           url: string
           visit_id: string | null
-          wound_id: string
+          wound_id: string | null
         }
         Insert: {
           assessment_id?: string | null
@@ -1572,7 +1660,7 @@ export type Database = {
           uploaded_by: string
           url: string
           visit_id?: string | null
-          wound_id: string
+          wound_id?: string | null
         }
         Update: {
           assessment_id?: string | null
@@ -1586,7 +1674,7 @@ export type Database = {
           uploaded_by?: string
           url?: string
           visit_id?: string | null
-          wound_id?: string
+          wound_id?: string | null
         }
         Relationships: [
           {
@@ -3176,6 +3264,13 @@ export type Database = {
         Args: { cpt_code: string; user_credentials: string }
         Returns: boolean
       }
+      delete_expired_audio: {
+        Args: { retention_days?: number }
+        Returns: {
+          audio_url: string
+          deleted_transcript_id: string
+        }[]
+      }
       get_allowed_procedures: {
         Args: { user_credentials: string }
         Returns: {
@@ -3321,6 +3416,21 @@ export type Database = {
       is_visit_ready_for_signature: {
         Args: { p_visit_id: string }
         Returns: boolean
+      }
+      log_phi_access: {
+        Args: {
+          p_action: string
+          p_ip_address?: string
+          p_new_values?: Json
+          p_old_values?: Json
+          p_reason?: string
+          p_record_id?: string
+          p_record_type?: string
+          p_table_name: string
+          p_tenant_id?: string
+          p_user_agent?: string
+        }
+        Returns: string
       }
     }
     Enums: {

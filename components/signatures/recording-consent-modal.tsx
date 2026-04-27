@@ -24,6 +24,9 @@ import { createSignature } from "@/app/actions/signatures";
 import {
   RECORDING_CONSENT_TEXT,
   RECORDING_CONSENT_VERSION,
+  AI_PROCESSING_CONSENT_TEXT,
+  AI_PROCESSING_CONSENT_VERSION,
+  AI_PROCESSING_CONSENT_VENDOR,
 } from "@/lib/ai-config";
 import {
   AlertCircle,
@@ -53,6 +56,7 @@ export function RecordingConsentModal({
   const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [aiAgreed, setAiAgreed] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,11 +95,13 @@ export function RecordingConsentModal({
       }
 
       // Save the recording consent with the signature ID
-      // 365 days expiration (annual renewal)
+      // 365 days expiration (annual renewal). aiAgreed gates the
+      // separate third-party AI-processing consent (HIPAA / BAA).
       const result = await saveRecordingConsent(
         patientId,
         sigResult.data.id,
-        365
+        365,
+        aiAgreed
       );
 
       if (result.error) {
@@ -108,6 +114,7 @@ export function RecordingConsentModal({
       setIsOpen(false);
       setShowSignature(false);
       setAgreed(false);
+      setAiAgreed(false);
       router.refresh();
     } catch {
       setError("Failed to save recording consent");
@@ -124,6 +131,7 @@ export function RecordingConsentModal({
     setIsOpen(false);
     setShowSignature(false);
     setAgreed(false);
+    setAiAgreed(false);
     setError(null);
   };
 
@@ -217,18 +225,29 @@ export function RecordingConsentModal({
           </div>
           <div className="mt-4 border-t pt-3">
             <p className="text-xs text-zinc-500">
-              Consent Version: {RECORDING_CONSENT_VERSION}
+              Recording Consent Version: {RECORDING_CONSENT_VERSION}
+            </p>
+          </div>
+          <div className="mt-6 border-t pt-4 text-sm leading-relaxed whitespace-pre-wrap">
+            {AI_PROCESSING_CONSENT_TEXT}
+          </div>
+          <div className="mt-4 border-t pt-3">
+            <p className="text-xs text-zinc-500">
+              AI Processing Consent Version: {AI_PROCESSING_CONSENT_VERSION} ·
+              Vendor: {AI_PROCESSING_CONSENT_VENDOR}
             </p>
           </div>
         </ScrollArea>
 
-        {/* Agreement checkbox */}
+        {/* Agreement checkboxes */}
         <div className="space-y-4">
           <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/20">
             <p className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-100">
-              <strong>Voluntary:</strong> This consent is optional. Declining
-              will not affect the quality of care received. Clinicians will use
-              traditional manual documentation instead.
+              <strong>Voluntary:</strong> Both consents below are optional.
+              Declining will not affect the quality of care received. Without
+              recording consent, clinicians will use traditional manual
+              documentation. Recording without AI-processing consent is allowed
+              but the audio will not be uploaded for AI transcription.
             </p>
 
             <div className="flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-white p-4 dark:border-amber-700 dark:bg-gray-900">
@@ -244,6 +263,26 @@ export function RecordingConsentModal({
               >
                 I have read and understand the recording consent form, and I
                 agree to have my wound care visits audio recorded
+              </Label>
+            </div>
+
+            <div className="mt-3 flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-white p-4 dark:border-amber-700 dark:bg-gray-900">
+              <Checkbox
+                id="ai-processing-agree"
+                checked={aiAgreed}
+                onCheckedChange={(checked) => setAiAgreed(checked === true)}
+                className="mt-1 h-5 w-5 border-2"
+                disabled={!agreed}
+              />
+              <Label
+                htmlFor="ai-processing-agree"
+                className="cursor-pointer text-base leading-tight font-semibold text-gray-900 dark:text-gray-100"
+              >
+                I additionally consent to having my recordings and transcripts
+                processed by a third-party AI vendor (
+                {AI_PROCESSING_CONSENT_VENDOR}) under a Business Associate
+                Agreement, in order to generate draft clinical notes that my
+                care team will review.
               </Label>
             </div>
           </div>

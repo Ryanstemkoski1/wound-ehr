@@ -197,18 +197,21 @@ A fully custom, web-based EHR platform with wound-centric UI design, adaptive as
 | ------------------ | ---------------------------------------------------------------------------------------------- |
 | `user_preferences` | Per-user settings (PDF photo include/exclude, photo size, max photos, page size) with defaults |
 
-### Migrations (8 files)
+### Migrations (11 files)
 
-| File                                     | Purpose                                                                                    |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `00001_complete_schema.sql` (1881 lines) | Consolidated base schema: 25 tables, 80+ indexes, 17+ RPC functions, 17 triggers, full RLS |
-| `00027_ai_transcription.sql`             | `visit_transcripts` + `patient_recording_consents` tables; adds 4 AI columns to `visits`   |
-| `00028_fix_trigger_search_path.sql`      | Security fix: `search_path` on DEFINER auth triggers                                       |
-| `00029_treatment_wound_id.sql`           | Adds `wound_id` FK + treatment builder columns to `treatments`                             |
-| `00030_new_clinical_forms.sql`           | `debridement_assessments`, `patient_not_seen_reports`, `incident_reports` + RLS            |
-| `00031_consent_provider_signature.sql`   | Adds `provider_signature_id` to `patient_consents`                                         |
-| `00032_user_preferences.sql`             | `user_preferences` table for PDF printing preferences + RLS policies                       |
-| `00033_private_wound_photos.sql`         | HIPAA fix: makes `wound-photos` bucket private, replaces public policy with auth-only      |
+| File                                     | Purpose                                                                                                                                                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `00001_complete_schema.sql` (1881 lines) | Consolidated base schema: 25 tables, 80+ indexes, 17+ RPC functions, 17 triggers, full RLS                                                                                                                                                                                |
+| `00027_ai_transcription.sql`             | `visit_transcripts` + `patient_recording_consents` tables; adds 4 AI columns to `visits`                                                                                                                                                                                  |
+| `00028_fix_trigger_search_path.sql`      | Security fix: `search_path` on DEFINER auth triggers                                                                                                                                                                                                                      |
+| `00029_treatment_wound_id.sql`           | Adds `wound_id` FK + treatment builder columns to `treatments`                                                                                                                                                                                                            |
+| `00030_new_clinical_forms.sql`           | `debridement_assessments`, `patient_not_seen_reports`, `incident_reports` + RLS                                                                                                                                                                                           |
+| `00031_consent_provider_signature.sql`   | Adds `provider_signature_id` to `patient_consents`                                                                                                                                                                                                                        |
+| `00032_user_preferences.sql`             | `user_preferences` table for PDF printing preferences + RLS policies                                                                                                                                                                                                      |
+| `00033_private_wound_photos.sql`         | HIPAA fix: makes `wound-photos` bucket private, replaces public policy with auth-only                                                                                                                                                                                     |
+| `00034_critical_security_fixes.sql`      | Hardens `get_user_role_info` DEFINER, fixes `photos.wound_id` FK to ON DELETE SET NULL, adds `audit_logs` table + `log_phi_access()` RPC, adds 5 AI consent columns to `patient_recording_consents`                                                                       |
+| `00035_high_severity_hardening.sql`      | Adds `SET search_path` on 6 more DEFINER functions, restricts `procedure_scopes` SELECT by caller credentials, adds facility checks on grafting/skin_sweep UPDATE+DELETE, UNIQUE(visit_id) on 3 specialized assessment tables, `delete_expired_audio(retention_days)` RPC |
+| `00036_perf_indexes.sql`                 | Adds 8 missing FK / partial / covering indexes on signatures, consents, transcript retention scan, and RLS-checked `created_by` columns                                                                                                                                   |
 
 ### RPC Functions (20+)
 

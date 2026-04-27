@@ -6,10 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 const ADMIN_ROUTES = ["/dashboard/admin"];
 const TENANT_ADMIN_ROUTES = [
   "/dashboard/admin/facilities", // Only tenant admins can manage facilities
+  "/dashboard/admin/signatures", // Signature audit log (tenant-wide PHI access)
+  "/dashboard/admin/transcripts", // AI transcripts management (tenant-wide PHI)
 ];
 const SHARED_ADMIN_ROUTES = [
   "/dashboard/admin/users", // Both tenant_admin and facility_admin can manage users
   "/dashboard/admin/invites", // Both tenant_admin and facility_admin can access
+  "/dashboard/admin/inbox", // Office inbox — facility admins handle their own facility
 ];
 
 export async function proxy(request: NextRequest) {

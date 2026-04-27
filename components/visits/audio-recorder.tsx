@@ -48,6 +48,14 @@ type AudioRecorderProps = {
   onProcessingStarted?: (transcriptId: string) => void;
   /** Whether the visit is in an editable state */
   disabled?: boolean;
+  /**
+   * Whether the patient has granted third-party AI processing consent.
+   * Defaults to true so existing call sites are unaffected; pass false
+   * to disable the Start button and surface a consent-required message.
+   * The upload route also enforces this gate server-side (HIPAA defense
+   * in depth).
+   */
+  hasAiProcessingConsent?: boolean;
 };
 
 // =====================================================
@@ -174,6 +182,7 @@ export function AudioRecorder({
   patientId,
   onProcessingStarted,
   disabled = false,
+  hasAiProcessingConsent = true,
 }: AudioRecorderProps) {
   const router = useRouter();
   // Use the layout-level recording context instead of a local hook.
@@ -279,13 +288,29 @@ export function AudioRecorder({
 
           <Button
             onClick={handleStartRecording}
-            disabled={disabled || !recorder.isSupported}
+            disabled={
+              disabled || !recorder.isSupported || !hasAiProcessingConsent
+            }
             className="w-full gap-2 bg-red-600 text-white hover:bg-red-700"
             size="lg"
           >
             <Mic className="h-5 w-5" />
             Start Recording
           </Button>
+          {!hasAiProcessingConsent && (
+            <Alert
+              variant="destructive"
+              className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950/20 dark:text-amber-100"
+            >
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                AI processing consent has not been granted for this patient.
+                Recording is disabled because the audio cannot be uploaded for
+                AI transcription. Update the patient&apos;s recording consent to
+                enable.
+              </AlertDescription>
+            </Alert>
+          )}
           <p className="text-center text-xs text-zinc-500">
             Max {Math.floor(AI_CONFIG.AUDIO.MAX_DURATION_SECONDS / 60)} minutes
             • WebM/Opus format • Recording is encrypted and HIPAA-compliant

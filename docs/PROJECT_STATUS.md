@@ -1,6 +1,6 @@
 # Wound EHR — Project Status
 
-**Last Updated:** April 6, 2026
+**Last Updated:** April 27, 2026
 
 ---
 
@@ -25,6 +25,7 @@
 | 11.5.3 | In-app notifications (bell, polling, mark read)                                 | Complete | Apr 3, 2026  |
 | 11.5.4 | AI transcript admin, enhanced audio player, retention cleanup                   | Complete | Apr 3, 2026  |
 | 11.4.2 | Photo printing preferences (settings page + PDF integration)                    | Complete | Apr 6, 2026  |
+| 12     | Security audit & hardening (Critical + High + Medium)                           | Complete | Apr 27, 2026 |
 
 > Phase 11.2.2 (Clinical Summary PDFs) was dropped — client confirmed the implemented forms fulfill the requirement.
 
@@ -34,15 +35,15 @@
 
 | Metric                   | Count                        |
 | ------------------------ | ---------------------------- |
-| Database tables          | 31                           |
-| RLS policies             | 75+                          |
-| RPC functions            | 20+                          |
-| Database migrations      | 8                            |
+| Database tables          | 32                           |
+| RLS policies             | 80+                          |
+| RPC functions            | 22+                          |
+| Database migrations      | 11                           |
 | Route pages              | 43                           |
 | API routes               | 1                            |
 | Server action files      | 26 (~183 exported functions) |
 | React components         | 143 (126 Client / 17 Server) |
-| Library utility files    | 26                           |
+| Library utility files    | 30                           |
 | Custom hooks             | 9                            |
 | Supabase Storage buckets | 5                            |
 
@@ -53,6 +54,53 @@
 ### Phase 11.4.3: Advanced PDF Features (optional)
 
 - Watermark option, batch PDF export (ZIP)
+
+### Operational (client / DevOps action)
+
+- Apply migration `00036_perf_indexes.sql` and run `npm run db:types`
+- Patch `delete_expired_audio()` to allow `auth.uid() IS NULL` (cron context), then schedule pg_cron jobs: audio retention (daily 03:00), expired-invite cleanup (daily 03:15), stuck-transcript reaper (every 15 min), audit log retention (weekly)
+- Set `NEXT_PUBLIC_SUPABASE_URL` in production env (`next.config.ts` now derives the image hostname from it and throws at boot if missing)
+
+---
+
+## Recently Completed (Apr 27, 2026)
+
+### Phase 12: Security Audit & Hardening
+
+Comprehensive line-by-line audit identified 41 findings across Critical / High / Medium / Low. All Critical, High, and Medium items resolved.
+
+**Critical fixes (migration `00034_critical_security_fixes.sql`)**
+
+- Hardened `get_user_role_info()` SECURITY DEFINER (locked `search_path`, removed implicit privilege escalation paths)
+- Fixed `photos.wound_id` FK to `ON DELETE SET NULL` (was cascading and silently destroying photo records)
+- New `audit_logs` table + `log_phi_access()` RPC for HIPAA disclosure tracking
+- Added 5 AI-processing-consent columns to `patient_recording_consents` (separates AI consent from recording consent)
+
+**High-severity fixes (migration `00035_high_severity_hardening.sql`)**
+
+- `SET search_path = public` on 6 more SECURITY DEFINER functions
+- `procedure_scopes` SELECT restricted to caller's own credential level
+- Facility-scope checks added to grafting + skin-sweep UPDATE/DELETE policies
+- UNIQUE(visit_id) added to 3 specialized assessment tables (prevents duplicate-form race condition)
+- New `delete_expired_audio(retention_days INTEGER DEFAULT 90)` tenant-admin RPC
+
+**Performance (migration `00036_perf_indexes.sql`, pending apply)**
+
+- 8 missing FK / partial / covering indexes on signatures, consents, retention scan, and RLS-checked `created_by` columns
+
+**Application-layer hardening**
+
+- New helpers: [lib/audit-log.ts](../lib/audit-log.ts), [lib/rate-limit.ts](../lib/rate-limit.ts), [lib/image-sniff.ts](../lib/image-sniff.ts), [lib/validations/common.ts](../lib/validations/common.ts)
+- `auditPhiAccess()` wired into `getPatient`, `getVisit`, `getWound`, `getPhoto`, `getPhotos`, `getSignature`, `getVisitSignatures`, `getConsentDocumentUrl`, audio upload route, and login
+- Audio upload route ([app/api/upload-audio/route.ts](../app/api/upload-audio/route.ts)): same-origin CSRF check, per-user rate limit (10 / 5 min), AI-consent gate, sanitized error logs (no PHI)
+- Login ([app/actions/auth.ts](../app/actions/auth.ts)): per-IP rate limit (10 / 15 min), audit on success, fixed invite handling
+- Photo upload ([app/actions/photos.ts](../app/actions/photos.ts)): server-side magic-byte sniffing rejects mismatched / disallowed MIME types
+- UUID validation at action boundaries ([app/actions/treatments.ts](../app/actions/treatments.ts)) prevents Postgres error leakage
+- Service-role client ([lib/supabase/service.ts](../lib/supabase/service.ts)): comprehensive doc block listing allowed / forbidden uses + browser-context throw guard
+- `next.config.ts` derives Supabase image hostname from `NEXT_PUBLIC_SUPABASE_URL` (no more hardcoded project ID)
+- Admin tenant-scoping: `updateUserRole` enforces facility-scope check for `facility_admin` role assignments
+- AI consent UI: separate consent checkbox in `RecordingConsentModal`, status badge in `RecordingConsentStatus`, threaded into `AudioRecorder` (Start disabled until AI consent given)
+- New `revokeAiProcessingConsent(patientId)` server action
 
 ---
 

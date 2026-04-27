@@ -294,10 +294,13 @@ export async function inviteUser(formData: FormData) {
  */
 export async function updateUserRole(formData: FormData) {
   try {
-    await requireTenantAdmin();
+    // Allow either tenant_admin OR facility_admin to call; we re-check
+    // facility scope below for facility_admin callers.
+    await requireAdmin();
 
     const supabase = await createClient();
     const tenantId = await getUserTenantId();
+    const callerRole = await getUserRole();
 
     // Validate input
     const validatedFields = updateUserRoleSchema.safeParse({
@@ -320,6 +323,55 @@ export async function updateUserRole(formData: FormData) {
       return {
         error: "Facility is required for facility admin and user roles",
       };
+    }
+
+    // Facility-scope enforcement for facility_admin callers (A2):
+    // a facility_admin may only mutate users that share their facility,
+    // may never grant tenant_admin, and may not move a user to a
+    // different facility than their own.
+    if (callerRole?.role === "facility_admin") {
+      if (role === "tenant_admin") {
+        return {
+          error: "Facility admins cannot grant the tenant_admin role.",
+        };
+      }
+      if (!callerRole.facility_id || facilityId !== callerRole.facility_id) {
+        return {
+          error: "Facility admins can only assign users to their own facility.",
+        };
+      }
+      // Verify the *target* user is currently associated with the
+      // caller's facility, either via user_roles or user_facilities.
+      const { data: targetRole } = await supabase
+        .from("user_roles")
+        .select("id, role, facility_id, tenant_id")
+        .eq("user_id", userId)
+        .eq("tenant_id", tenantId!)
+        .maybeSingle();
+
+      const sameFacility = targetRole?.facility_id === callerRole.facility_id;
+
+      let inFacility = sameFacility;
+      if (!inFacility) {
+        const { data: targetFacility } = await supabase
+          .from("user_facilities")
+          .select("facility_id")
+          .eq("user_id", userId)
+          .eq("facility_id", callerRole.facility_id)
+          .maybeSingle();
+        inFacility = !!targetFacility;
+      }
+
+      if (!inFacility) {
+        return {
+          error: "Facility admins can only modify users in their facility.",
+        };
+      }
+      if (targetRole?.role === "tenant_admin") {
+        return {
+          error: "Facility admins cannot modify a tenant_admin.",
+        };
+      }
     }
 
     // Update user credentials in users table using service role to bypass RLS

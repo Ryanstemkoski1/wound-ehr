@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getUserRole, getUserCredentials } from "@/lib/rbac";
 import { canEditDemographics, canEditInsurance } from "@/lib/field-permissions";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Database types
 type DbWound = {
@@ -478,6 +479,14 @@ export async function getPatient(patientId: string) {
   if (!user) {
     return null;
   }
+
+  // Audit PHI access (fire-and-forget)
+  void auditPhiAccess({
+    action: "read",
+    table: "patients",
+    recordId: patientId,
+    recordType: "patient_chart",
+  });
 
   try {
     const { data: patient, error } = await supabase

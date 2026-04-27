@@ -4,6 +4,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { headers } from "next/headers";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Validation schemas
 const signUpSchema = z.object({
@@ -72,6 +75,22 @@ export async function signup(formData: FormData) {
 export async function login(formData: FormData) {
   const supabase = await createClient();
 
+  // Rate limit login attempts: 10 per 15 minutes per IP. Prevents
+  // credential stuffing / brute-force without locking real users out.
+  try {
+    const h = await headers();
+    const rl = rateLimit(clientKey(h, "login"), 10, 15 * 60_000);
+    if (!rl.allowed) {
+      return {
+        error: `Too many login attempts. Try again in ${Math.ceil(
+          rl.retryAfterMs / 1000
+        )}s.`,
+      };
+    }
+  } catch {
+    // headers() unavailable — skip rate limit rather than block login
+  }
+
   // Validate input
   const validatedFields = signInSchema.safeParse({
     email: formData.get("email"),
@@ -93,26 +112,26 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    // For invited users with unconfirmed emails, auto-confirm them
+    // For unconfirmed-email errors, surface a clearer message when an
+    // outstanding *valid* invite exists. NOTE: this branch does NOT
+    // auto-confirm the email (security: would bypass Supabase email
+    // verification). Operators must confirm via the admin client.
     if (error.message.includes("Email not confirmed")) {
-      // Check if this user was invited
-      const { data: invite } = await supabase
+      const { data: invites } = await supabase
         .from("user_invites")
-        .select("id")
+        .select("id, expires_at, accepted_at")
         .eq("email", email)
-        .single();
+        .is("accepted_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-      if (invite) {
-        // User was invited, so we should auto-confirm their email
-        return {
-          error:
-            "Your email needs to be confirmed. Please contact your administrator to confirm your account.",
-        };
-      }
+      const hasValidInvite = (invites?.length ?? 0) > 0;
 
       return {
-        error:
-          "Please confirm your email address before signing in. Check your inbox for a confirmation link.",
+        error: hasValidInvite
+          ? "Your email needs to be confirmed. Please contact your administrator to confirm your account."
+          : "Please confirm your email address before signing in. Check your inbox for a confirmation link.",
       };
     }
 
@@ -174,6 +193,17 @@ export async function login(formData: FormData) {
           "Your account has been removed from this organization. Please contact an administrator.",
       };
     }
+  }
+
+  // Audit successful login (HIPAA: track session start)
+  if (data.user) {
+    void auditPhiAccess({
+      action: "read",
+      table: "auth.users",
+      recordId: data.user.id,
+      recordType: "login",
+      reason: "User authenticated",
+    });
   }
 
   revalidatePath("/", "layout");

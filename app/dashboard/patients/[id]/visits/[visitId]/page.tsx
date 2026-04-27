@@ -105,6 +105,8 @@ export default async function VisitDetailPage({ params }: PageProps) {
 
   const billing = billingResult.success ? billingResult.billing : null;
   const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
+  const hasAiProcessingConsent =
+    !!recordingConsentResult.consent?.ai_processing_consent_given;
   const transcript = transcriptResult.transcript ?? null;
 
   const userName = userData && userData.length > 0 ? userData[0].name : "";
@@ -182,6 +184,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
             patientId={patientId}
             patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
             hasRecordingConsent={hasRecordingConsent}
+            hasAiProcessingConsent={hasAiProcessingConsent}
             hasTranscript={!!transcript}
             transcriptId={transcript?.id ?? null}
             transcriptStatus={
