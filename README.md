@@ -4,16 +4,6 @@ Modern Electronic Health Record (EHR) system designed for wound care management 
 
 ---
 
-## 📚 Documentation
-
-- **[README.md](./README.md)** (this file) - Quick start guide and tech stack overview
-- **[docs/SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)** - Complete system architecture, database schema, and technical decisions
-- **[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)** - Current status and what's remaining
-- **[docs/phase-11/](./docs/phase-11/)** - Phase 11 plan, AI research, test plan, user guide
-- **[.github/copilot-instructions.md](./.github/copilot-instructions.md)** - AI development guidelines and patterns
-
----
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -90,76 +80,6 @@ AI: `visit_transcripts`, `patient_recording_consents`
 
 **Schema:** `supabase/migrations/` (6 files: 00001, 00027–00031)
 **For detailed schema documentation, see [SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)**
-
----
-
-## 🎯 Key Features
-
-> **For complete feature list and implementation status, see [PROJECT_STATUS.md](./PROJECT_STATUS.md)**
-
-### Core Application (Phases 1-8) ✅
-
-- Multi-tenant RBAC (Tenant Admin, Facility Admin, User)
-- Patient & wound management with CRUD operations
-- Calendar with drag-and-drop scheduling
-- Multi-wound visit assessments with wound-centric UI
-- Photo upload/management with comparison view
-- PDF export (visit summaries, wound progress reports)
-- Billing system (CPT/ICD-10 codes, reports, CSV export)
-- Row Level Security for data isolation
-
-### Compliance & Signatures (Phase 9.1-9.3) ✅
-
-- Credentials-based roles (RN, LVN, MD, DO, PA, NP, CNA, Admin)
-- Electronic signatures with immutable audit trail
-- Initial consent workflow + Patient/Provider signatures
-- Visit status workflow: draft → ready → signed → submitted
-- Procedure restrictions (credential-based scope of practice)
-- Autosave protection (client + server-side drafts)
-- Visit addendums (post-signature notes)
-- Signature audit logs (compliance reporting)
-
-### Advanced Features (Phase 9.4) ✅
-
-- Patient document attachments (11 types with viewer)
-- RN/LVN skilled nursing assessment (17 clinical sections)
-- Grafting assessment (skin graft procedure documentation)
-- Skin sweep assessment (full-body skin inspection)
-- Patient page redesign (tab-based layout)
-
-### Phase 10 ✅
-
-- Note approval workflow (office review, corrections, locking)
-- Calendar clinician filtering (patient assignments)
-- Reporting by criteria (clinician/date/facility filters)
-- Role-based field access (view-only demographics for clinicians)
-- Data validation rules (treatment/tissue/measurement validation)
-- Performance optimization (database indexes, query optimization)
-
-### Phase 11.1: AI Clinical Note Generation ✅
-
-- ✅ OpenAI Whisper speech-to-text transcription
-- ✅ GPT-4 Turbo clinical note generation
-- ✅ Patient recording consent workflow with signature
-- ✅ Audio recording interface (waveform, pause/resume)
-- ✅ Clinician review and approval interface
-- ✅ Background processing with real-time status polling
-
-### Phase 11.6: Treatment Order Builder ✅
-
-- 4-tab sentence builder (Topical / Compression / Skin / Rash)
-- Auto-generated treatment order text per wound
-- Integrated into assessment forms and visit detail
-
-### Phase 11.7: Client Clinical Forms ✅
-
-- Arobella debridement assessment (4-tab form)
-- Patient not seen report (reason checkboxes + clinician signature)
-- Consent-to-treatment (multi-step with 3 signatures)
-- Photo/video consent modal
-- Incident report (workplace incident + employee signature)
-
-**Next:** Phase 11.2–11.5 (facility access control, mobile optimization, PDF enhancements, polish) — see [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)
 
 ---
 
