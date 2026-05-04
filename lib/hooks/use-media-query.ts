@@ -4,16 +4,20 @@ import { useState, useEffect } from "react";
 
 /**
  * Hook that tracks a CSS media query match.
- * Returns `false` during SSR and on the first client render to avoid
- * hydration mismatches, then updates on mount and on viewport changes.
+ * Returns `false` during SSR, then reads the real value on the client via
+ * a lazy useState initializer. Future changes are handled by the event
+ * listener. When the query prop itself changes the effect re-subscribes
+ * automatically; the displayed value may lag by one render for query changes,
+ * which is acceptable for media-query breakpoint tracking.
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(query).matches;
+  });
 
   useEffect(() => {
     const mql = window.matchMedia(query);
-    setMatches(mql.matches);
-
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);

@@ -2,6 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { auditPhiAccess } from "@/lib/audit-log";
+import { z } from "zod";
+import { assertUuid, ValidationError } from "@/lib/validations/common";
 
 // Type definitions
 export type DocumentType =
@@ -56,6 +59,31 @@ export async function uploadPatientDocument(formData: FormData) {
 
     if (!file || !patientId || !documentType) {
       throw new Error("Missing required fields");
+    }
+
+    // Validate IDs and enum values at the server boundary
+    try {
+      assertUuid(patientId, "patientId");
+    } catch (e) {
+      throw new Error(
+        e instanceof ValidationError ? e.message : "Invalid input"
+      );
+    }
+    const validDocumentTypes: DocumentType[] = [
+      "face_sheet",
+      "lab_results",
+      "radiology",
+      "insurance",
+      "referral",
+      "discharge_summary",
+      "medication_list",
+      "history_physical",
+      "progress_note",
+      "consent_form",
+      "other",
+    ];
+    if (!validDocumentTypes.includes(documentType)) {
+      throw new Error("Invalid document type");
     }
 
     // Get current user
@@ -133,6 +161,12 @@ export async function uploadPatientDocument(formData: FormData) {
     }
 
     revalidatePath(`/dashboard/patients/${patientId}`);
+    void auditPhiAccess({
+      action: "create",
+      table: "patient_documents",
+      recordId: document.id,
+      recordType: "patient_document",
+    });
     return { success: true, document };
   } catch (error) {
     console.error("Upload patient document error:", error);
@@ -266,6 +300,12 @@ export async function archivePatientDocument(documentId: string) {
       revalidatePath(`/dashboard/patients/${document.patient_id}`);
     }
 
+    void auditPhiAccess({
+      action: "delete",
+      table: "patient_documents",
+      recordId: documentId,
+      recordType: "patient_document",
+    });
     return { success: true };
   } catch (error) {
     console.error("Archive document error:", error);

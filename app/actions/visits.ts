@@ -8,6 +8,8 @@ import { getUserRole, getUserCredentials } from "@/lib/rbac";
 import { canEditVisit } from "@/lib/field-permissions";
 import { invalidateVisitPDFCache } from "@/app/actions/pdf-cached";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 
 // Validation schema
 const visitSchema = z.object({
@@ -431,6 +433,23 @@ export async function createVisit(formData: FormData) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Rate limit: 60 visit creations per hour per user (high-volume clinical use)
+  try {
+    const h = await headers();
+    const rl = rateLimit(
+      clientKey(h, "create-visit", user.id),
+      60,
+      60 * 60_000
+    );
+    if (!rl.allowed) {
+      return {
+        error: `Too many requests. Try again in ${Math.ceil(rl.retryAfterMs / 1000)}s.`,
+      };
+    }
+  } catch {
+    // headers() unavailable in some test contexts — skip
   }
 
   try {

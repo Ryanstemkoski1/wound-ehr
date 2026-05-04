@@ -129,7 +129,7 @@ function AcceptInviteContent() {
               router.push("/dashboard");
             }, 1500);
             return;
-          } catch (err) {
+          } catch {
             setError("Failed to accept invite automatically");
             setIsValidating(false);
             return;
@@ -147,7 +147,7 @@ function AcceptInviteContent() {
         form.setValue("email", invite.email);
 
         setIsValidating(false);
-      } catch (err) {
+      } catch {
         setError("Failed to validate invite");
         setIsValidating(false);
       }

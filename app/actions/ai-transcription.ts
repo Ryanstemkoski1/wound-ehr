@@ -4,6 +4,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { assertUuid, tryUuid, ValidationError } from "@/lib/validations/common";
 import {
   AI_CONFIG,
   RECORDING_CONSENT_TEXT,
@@ -58,6 +59,9 @@ export type ConsentResult = {
 export async function checkRecordingConsent(
   patientId: string
 ): Promise<ConsentResult> {
+  const uuidCheck = tryUuid(patientId);
+  if (!uuidCheck) return { error: "Invalid patientId" };
+
   try {
     const supabase = await createClient();
     const {
@@ -112,6 +116,11 @@ export async function saveRecordingConsent(
   expiresInDays?: number,
   aiProcessingConsentGiven: boolean = false
 ): Promise<ConsentResult> {
+  const uuidCheck = tryUuid(patientId);
+  if (!uuidCheck) return { error: "Invalid patientId" };
+  if (signatureId !== null && !tryUuid(signatureId))
+    return { error: "Invalid signatureId" };
+
   try {
     const supabase = await createClient();
     const {
@@ -302,6 +311,9 @@ export async function uploadVisitAudio(
       });
       return { error: "File, visitId, and patientId are required" };
     }
+
+    if (!tryUuid(visitId)) return { error: "Invalid visitId" };
+    if (!tryUuid(patientId)) return { error: "Invalid patientId" };
 
     const file = fileEntry;
     // Validate consent

@@ -91,7 +91,6 @@ export async function sendNoteToOffice(visitId: string) {
       recordType: "visit_sent_to_office",
     });
     revalidatePath("/dashboard/patients");
-    revalidatePath("/dashboard/visits");
     revalidatePath("/dashboard/admin/inbox");
 
     return { success: true, data };
@@ -283,7 +282,6 @@ export async function approveNote(visitId: string) {
     });
     revalidatePath("/dashboard/admin/inbox");
     revalidatePath("/dashboard/patients");
-    revalidatePath("/dashboard/visits");
 
     return { success: true, data };
   } catch (error) {
@@ -346,7 +344,6 @@ export async function voidNote(visitId: string, reason: string) {
     });
     revalidatePath("/dashboard/admin/inbox");
     revalidatePath("/dashboard/patients");
-    revalidatePath("/dashboard/visits");
 
     return { success: true, data };
   } catch (error) {
@@ -479,8 +476,9 @@ export async function getCorrectionsForClinician(userId: string) {
 
     const uniqueVisits = data?.reduce<CorrectionVisit[]>((acc, visit) => {
       if (!acc.find((v) => v.id === visit.id)) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { wound_notes, ...visitData } = visit;
+        // Omit the joined wound_notes from the returned visit shape
+        // (_wn prefix suppresses unused-vars lint for the join-only field)
+        const { wound_notes: _wn, ...visitData } = visit;
         acc.push(visitData as CorrectionVisit);
       }
       return acc;

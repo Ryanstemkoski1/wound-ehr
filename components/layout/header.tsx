@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { logout } from "@/app/actions/auth";
+import { clearAllUserAutosaveData } from "@/lib/autosave";
 import { Button } from "@/components/ui/button";
 import { User as UserIcon, LogOut, Menu } from "lucide-react";
 import { GlobalSearchDialog } from "@/components/layout/global-search-dialog";
@@ -29,6 +30,8 @@ export default function Header({
   const router = useRouter();
 
   async function handleLogout() {
+    // Clear PHI from localStorage before sign-out (shared-device safety)
+    clearAllUserAutosaveData(user.id);
     const result = await logout();
     if ("redirectTo" in result && result.redirectTo) {
       router.push(result.redirectTo);

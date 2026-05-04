@@ -7,6 +7,7 @@ import {
   canDownloadVisitPDF,
 } from "@/lib/rbac";
 import { getUserPreferences } from "@/app/actions/preferences";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 /**
  * Get comprehensive patient data for PDF generation
@@ -110,6 +111,12 @@ export async function getPatientDataForPDF(patientId: string) {
     );
 
     // Transform data to match PDF component props
+    void auditPhiAccess({
+      action: "read",
+      table: "patients",
+      recordId: patientId,
+      recordType: "patient_pdf",
+    });
     return {
       success: true as const,
       data: {
@@ -414,6 +421,12 @@ export async function getVisitDataForPDF(visitId: string) {
     }
 
     // Transform data to match PDF component props
+    void auditPhiAccess({
+      action: "read",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_pdf",
+    });
     return {
       success: true as const,
       data: {

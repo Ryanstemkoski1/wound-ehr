@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserRole, getUserCredentials } from "@/lib/rbac";
 import { canEditDemographics, canEditInsurance } from "@/lib/field-permissions";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 
 // Database types
 type DbWound = {
@@ -69,6 +71,23 @@ export async function createPatient(formData: FormData) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Rate limit: 30 patient creations per hour per user
+  try {
+    const h = await headers();
+    const rl = rateLimit(
+      clientKey(h, "create-patient", user.id),
+      30,
+      60 * 60_000
+    );
+    if (!rl.allowed) {
+      return {
+        error: `Too many requests. Try again in ${Math.ceil(rl.retryAfterMs / 1000)}s.`,
+      };
+    }
+  } catch {
+    // headers() unavailable in some test contexts — skip
   }
 
   // Validate basic fields

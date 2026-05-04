@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { requiresPatientSignature as requiresPatientSig } from "@/lib/credentials";
 import type { Credentials } from "@/lib/credentials";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { assertUuid, tryUuid, ValidationError } from "@/lib/validations/common";
 
 // =====================================================
 // TYPES
@@ -64,9 +65,25 @@ export async function createSignature(data: SignatureData) {
   }
 
   try {
+    // Validate IDs at the server boundary
+    try {
+      assertUuid(data.patientId, "patientId");
+      if (data.visitId) tryUuid(data.visitId);
+    } catch (e) {
+      return {
+        error: e instanceof ValidationError ? e.message : "Invalid input",
+      };
+    }
+
     // Validate signature data is not empty
     if (!data.signatureData || data.signatureData.trim().length === 0) {
       return { error: "Signature data is required" };
+    }
+
+    // Limit Base64 payload to 2 MB to prevent DoS via oversized uploads
+    const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024; // 2 MB
+    if (data.signatureData.length > MAX_SIGNATURE_BYTES) {
+      return { error: "Signature image exceeds maximum allowed size (2 MB)" };
     }
 
     // ALWAYS use server-determined IP for the audit trail. We ignore

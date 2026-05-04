@@ -99,6 +99,19 @@ export function getUserAutosaveKeys(userId: string): string[] {
 }
 
 /**
+ * Clear ALL autosave data for a user (call on logout to prevent PHI
+ * leaking to the next user of a shared device).
+ */
+export function clearAllUserAutosaveData(userId: string): void {
+  try {
+    const keys = getUserAutosaveKeys(userId);
+    keys.forEach((key) => clearAutosave(key));
+  } catch (error) {
+    console.error("Failed to clear user autosave data:", error);
+  }
+}
+
+/**
  * Format timestamp for display
  */
 export function formatAutosaveTime(timestamp: string): string {

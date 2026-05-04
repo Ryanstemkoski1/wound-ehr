@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { login } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,7 @@ function LoginForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4 flex justify-center">
-            <img src="/logo.svg" alt="WoundNote" width={200} height={60} />
+            <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
           </div>
           <CardTitle className="text-center text-2xl">Welcome back</CardTitle>
           <CardDescription className="text-center">
@@ -139,7 +140,12 @@ export default function LoginPage() {
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-1">
               <div className="mb-4 flex justify-center">
-                <img src="/logo.svg" alt="WoundNote" width={200} height={60} />
+                <Image
+                  src="/logo.svg"
+                  alt="WoundNote"
+                  width={200}
+                  height={60}
+                />
               </div>
               <CardTitle className="text-center text-2xl">Loading...</CardTitle>
             </CardHeader>

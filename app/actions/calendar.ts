@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Calendar event type for React Big Calendar
 export type CalendarEvent = {
@@ -217,7 +218,13 @@ export async function createVisitFromCalendar(
     }
 
     revalidatePath("/dashboard/calendar");
-    revalidatePath("/dashboard/visits");
+
+    void auditPhiAccess({
+      action: "create",
+      table: "visits",
+      recordId: visit.id,
+      recordType: "visit",
+    });
 
     return {
       success: true,
@@ -310,7 +317,6 @@ export async function rescheduleVisit(
     }
 
     revalidatePath("/dashboard/calendar");
-    revalidatePath("/dashboard/visits");
 
     return {
       success: true,

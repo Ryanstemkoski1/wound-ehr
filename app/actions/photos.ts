@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { assertUuid, tryUuid, ValidationError } from "@/lib/validations/common";
 
 // Update photo's assessment_id (used when finalizing drafts)
 export async function updatePhotoAssessmentId(
@@ -70,6 +71,16 @@ export async function uploadPhoto(formData: FormData) {
 
     if (!file || !woundId) {
       return { error: "File and woundId are required" };
+    }
+
+    try {
+      assertUuid(woundId, "woundId");
+      if (visitId) assertUuid(visitId, "visitId");
+      if (assessmentId) assertUuid(assessmentId, "assessmentId");
+    } catch (e) {
+      return {
+        error: e instanceof ValidationError ? e.message : "Invalid input",
+      };
     }
 
     // Validate file type (claimed Content-Type)
