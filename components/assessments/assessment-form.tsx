@@ -14,13 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import { Separator } from "@/components/ui/separator";
 import { createAssessment, updateAssessment } from "@/app/actions/assessments";
 import { createTreatment } from "@/app/actions/treatments";
@@ -321,462 +315,432 @@ export default function AssessmentForm({
       )}
 
       {/* Wound Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Wound</CardTitle>
-          <CardDescription>Choose which wound to assess</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={selectedWound}
-            onValueChange={setSelectedWound}
-            required
-            disabled={!!assessment}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a wound" />
-            </SelectTrigger>
-            <SelectContent>
-              {wounds.map((wound) => (
-                <SelectItem key={wound.id} value={wound.id}>
-                  {wound.woundNumber} - {wound.location}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="Select Wound"
+        description="Choose which wound to assess"
+      >
+        <Select
+          value={selectedWound}
+          onValueChange={setSelectedWound}
+          required
+          disabled={!!assessment}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a wound" />
+          </SelectTrigger>
+          <SelectContent>
+            {wounds.map((wound) => (
+              <SelectItem key={wound.id} value={wound.id}>
+                {wound.woundNumber} - {wound.location}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </CollapsibleCard>
 
       {/* Wound Classification */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Wound Classification</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="woundType">Wound Type</Label>
-              <Select
-                name="woundType"
-                value={woundType}
-                onValueChange={setWoundType}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {WOUND_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {showPressureStage && (
-              <div className="space-y-2">
-                <Label htmlFor="pressureStage">
-                  Pressure Stage <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  name="pressureStage"
-                  defaultValue={assessment?.pressureStage || ""}
-                  required={showPressureStage}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select stage" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRESSURE_STAGES.map((stage) => (
-                      <SelectItem key={stage} value={stage}>
-                        {stage}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+      <CollapsibleCard title="Wound Classification">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="woundType">Wound Type</Label>
+            <Select
+              name="woundType"
+              value={woundType}
+              onValueChange={setWoundType}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {WOUND_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          {showPressureStage && (
             <div className="space-y-2">
-              <Label htmlFor="healingStatus">Healing Status</Label>
-              <Select
-                name="healingStatus"
-                defaultValue={assessment?.healingStatus || ""}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {HEALING_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2 pt-8">
-              <Checkbox
-                id="atRiskReopening"
-                checked={atRiskReopening}
-                onCheckedChange={(checked) =>
-                  setAtRiskReopening(checked as boolean)
-                }
-              />
-              <Label htmlFor="atRiskReopening" className="text-sm font-normal">
-                At risk of reopening
+              <Label htmlFor="pressureStage">
+                Pressure Stage <span className="text-red-500">*</span>
               </Label>
+              <Select
+                name="pressureStage"
+                defaultValue={assessment?.pressureStage || ""}
+                required={showPressureStage}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select stage" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESSURE_STAGES.map((stage) => (
+                    <SelectItem key={stage} value={stage}>
+                      {stage}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          )}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="healingStatus">Healing Status</Label>
+            <Select
+              name="healingStatus"
+              defaultValue={assessment?.healingStatus || ""}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {HEALING_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex items-center space-x-2 pt-8">
+            <Checkbox
+              id="atRiskReopening"
+              checked={atRiskReopening}
+              onCheckedChange={(checked) =>
+                setAtRiskReopening(checked as boolean)
+              }
+            />
+            <Label htmlFor="atRiskReopening" className="text-sm font-normal">
+              At risk of reopening
+            </Label>
+          </div>
+        </div>
+      </CollapsibleCard>
 
       {/* Measurements */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Measurements (cm)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="space-y-2">
-              <Label htmlFor="length">Length</Label>
-              <Input
-                id="length"
-                name="length"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={length}
-                onChange={(e) => setLength(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="width">Width</Label>
-              <Input
-                id="width"
-                name="width"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={width}
-                onChange={(e) => setWidth(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="depth">Depth</Label>
-              <Input
-                id="depth"
-                name="depth"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={depth}
-                onChange={(e) => setDepth(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Area (calculated)</Label>
-              <Input
-                value={calculatedArea || "—"}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="undermining">Undermining</Label>
-              <Textarea
-                id="undermining"
-                name="undermining"
-                placeholder="Describe undermining measurements and locations..."
-                rows={2}
-                defaultValue={assessment?.undermining || ""}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tunneling">Tunneling</Label>
-              <Textarea
-                id="tunneling"
-                name="tunneling"
-                placeholder="Describe tunneling measurements and clock positions..."
-                rows={2}
-                defaultValue={assessment?.tunneling || ""}
-              />
-            </div>
-          </div>
-
-          {/* Measurement validation warning */}
-          {measurementValidation.warning && (
-            <div className="mt-4 flex items-start gap-2 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>{measurementValidation.warning}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tissue Composition */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tissue Composition (%)</CardTitle>
-          <CardDescription>Percentages must add up to 100%</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="epithelialPercent">Epithelial</Label>
-              <Input
-                id="epithelialPercent"
-                name="epithelialPercent"
-                type="number"
-                min="0"
-                max="100"
-                placeholder="0"
-                value={epithelialPercent}
-                onChange={(e) => setEpithelialPercent(e.target.value)}
-                className={
-                  tissueTotal > 0 && tissueTotal !== 100
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : ""
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="granulationPercent">Granulation</Label>
-              <Input
-                id="granulationPercent"
-                name="granulationPercent"
-                type="number"
-                min="0"
-                max="100"
-                placeholder="0"
-                value={granulationPercent}
-                onChange={(e) => setGranulationPercent(e.target.value)}
-                className={
-                  tissueTotal > 0 && tissueTotal !== 100
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : ""
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sloughPercent">Slough</Label>
-              <Input
-                id="sloughPercent"
-                name="sloughPercent"
-                type="number"
-                min="0"
-                max="100"
-                placeholder="0"
-                value={sloughPercent}
-                onChange={(e) => setSloughPercent(e.target.value)}
-                className={
-                  tissueTotal > 0 && tissueTotal !== 100
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : ""
-                }
-              />
-            </div>
-          </div>
-
-          {/* Tissue composition validation */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Total:</span>
-              <span
-                className={`text-sm font-bold ${
-                  tissueTotal === 0
-                    ? "text-muted-foreground"
-                    : tissueTotal === 100
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
-                }`}
-              >
-                {tissueTotal}%
-              </span>
-              {tissueTotal === 100 && (
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-              )}
-            </div>
-          </div>
-
-          {tissueValidation.error && tissueTotal > 0 && (
-            <div className="flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>{tissueValidation.error}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Wound Characteristics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Wound Characteristics</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="exudateAmount">Exudate Amount</Label>
-              <Select
-                name="exudateAmount"
-                value={exudateAmount}
-                onValueChange={setExudateAmount}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select amount" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EXUDATE_AMOUNTS.map((amount) => (
-                    <SelectItem key={amount} value={amount}>
-                      {amount}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="exudateType">Exudate Type</Label>
-              <Select
-                name="exudateType"
-                defaultValue={assessment?.exudateType || ""}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EXUDATE_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="odor">Odor</Label>
-              <Select name="odor" defaultValue={assessment?.odor || ""}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select odor level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ODOR_LEVELS.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="painLevel">Pain Level (0-10)</Label>
-              <Input
-                id="painLevel"
-                name="painLevel"
-                type="number"
-                min="0"
-                max="10"
-                placeholder="0"
-                defaultValue={assessment?.painLevel || ""}
-              />
-            </div>
+      <CollapsibleCard title="Measurements (cm)">
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="space-y-2">
+            <Label htmlFor="length">Length</Label>
+            <Input
+              id="length"
+              name="length"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={length}
+              onChange={(e) => setLength(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="periwoundCondition">Periwound Condition</Label>
-            <Textarea
-              id="periwoundCondition"
-              name="periwoundCondition"
-              placeholder="Describe the condition of skin surrounding the wound..."
-              rows={3}
-              defaultValue={assessment?.periwoundCondition || ""}
+            <Label htmlFor="width">Width</Label>
+            <Input
+              id="width"
+              name="width"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={width}
+              onChange={(e) => setWidth(e.target.value)}
             />
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="space-y-2">
+            <Label htmlFor="depth">Depth</Label>
+            <Input
+              id="depth"
+              name="depth"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={depth}
+              onChange={(e) => setDepth(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Area (calculated)</Label>
+            <Input
+              value={calculatedArea || "—"}
+              disabled
+              className="bg-muted"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="undermining">Undermining</Label>
+            <Textarea
+              id="undermining"
+              name="undermining"
+              placeholder="Describe undermining measurements and locations..."
+              rows={2}
+              defaultValue={assessment?.undermining || ""}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tunneling">Tunneling</Label>
+            <Textarea
+              id="tunneling"
+              name="tunneling"
+              placeholder="Describe tunneling measurements and clock positions..."
+              rows={2}
+              defaultValue={assessment?.tunneling || ""}
+            />
+          </div>
+        </div>
+
+        {/* Measurement validation warning */}
+        {measurementValidation.warning && (
+          <div className="mt-4 flex items-start gap-2 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{measurementValidation.warning}</p>
+          </div>
+        )}
+      </CollapsibleCard>
+
+      {/* Tissue Composition */}
+      <CollapsibleCard
+        title="Tissue Composition (%)"
+        description="Percentages must add up to 100%"
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="epithelialPercent">Epithelial</Label>
+            <Input
+              id="epithelialPercent"
+              name="epithelialPercent"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0"
+              value={epithelialPercent}
+              onChange={(e) => setEpithelialPercent(e.target.value)}
+              className={
+                tissueTotal > 0 && tissueTotal !== 100
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="granulationPercent">Granulation</Label>
+            <Input
+              id="granulationPercent"
+              name="granulationPercent"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0"
+              value={granulationPercent}
+              onChange={(e) => setGranulationPercent(e.target.value)}
+              className={
+                tissueTotal > 0 && tissueTotal !== 100
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sloughPercent">Slough</Label>
+            <Input
+              id="sloughPercent"
+              name="sloughPercent"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0"
+              value={sloughPercent}
+              onChange={(e) => setSloughPercent(e.target.value)}
+              className={
+                tissueTotal > 0 && tissueTotal !== 100
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }
+            />
+          </div>
+        </div>
+
+        {/* Tissue composition validation */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Total:</span>
+            <span
+              className={`text-sm font-bold ${
+                tissueTotal === 0
+                  ? "text-muted-foreground"
+                  : tissueTotal === 100
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {tissueTotal}%
+            </span>
+            {tissueTotal === 100 && (
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+            )}
+          </div>
+        </div>
+
+        {tissueValidation.error && tissueTotal > 0 && (
+          <div className="flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{tissueValidation.error}</p>
+          </div>
+        )}
+      </CollapsibleCard>
+
+      {/* Wound Characteristics */}
+      <CollapsibleCard title="Wound Characteristics">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="exudateAmount">Exudate Amount</Label>
+            <Select
+              name="exudateAmount"
+              value={exudateAmount}
+              onValueChange={setExudateAmount}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select amount" />
+              </SelectTrigger>
+              <SelectContent>
+                {EXUDATE_AMOUNTS.map((amount) => (
+                  <SelectItem key={amount} value={amount}>
+                    {amount}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="exudateType">Exudate Type</Label>
+            <Select
+              name="exudateType"
+              defaultValue={assessment?.exudateType || ""}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {EXUDATE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="odor">Odor</Label>
+            <Select name="odor" defaultValue={assessment?.odor || ""}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select odor level" />
+              </SelectTrigger>
+              <SelectContent>
+                {ODOR_LEVELS.map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="painLevel">Pain Level (0-10)</Label>
+            <Input
+              id="painLevel"
+              name="painLevel"
+              type="number"
+              min="0"
+              max="10"
+              placeholder="0"
+              defaultValue={assessment?.painLevel || ""}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="periwoundCondition">Periwound Condition</Label>
+          <Textarea
+            id="periwoundCondition"
+            name="periwoundCondition"
+            placeholder="Describe the condition of skin surrounding the wound..."
+            rows={3}
+            defaultValue={assessment?.periwoundCondition || ""}
+          />
+        </div>
+      </CollapsibleCard>
 
       {/* Infection Signs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Signs of Infection</CardTitle>
-          <CardDescription>Check all that apply</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            {INFECTION_SIGNS_OPTIONS.map((sign) => (
-              <div key={sign} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`infection-${sign}`}
-                  checked={infectionSigns.includes(sign)}
-                  onCheckedChange={() => handleInfectionSignToggle(sign)}
-                />
-                <Label
-                  htmlFor={`infection-${sign}`}
-                  className="text-sm font-normal"
-                >
-                  {sign}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="Signs of Infection"
+        description="Check all that apply"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          {INFECTION_SIGNS_OPTIONS.map((sign) => (
+            <div key={sign} className="flex items-center space-x-2">
+              <Checkbox
+                id={`infection-${sign}`}
+                checked={infectionSigns.includes(sign)}
+                onCheckedChange={() => handleInfectionSignToggle(sign)}
+              />
+              <Label
+                htmlFor={`infection-${sign}`}
+                className="text-sm font-normal"
+              >
+                {sign}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </CollapsibleCard>
 
       {/* Location Confirmation (First Assessment Only) */}
       {isFirstAssessment && currentWound && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Location Confirmation</CardTitle>
-            <CardDescription>
-              Confirm wound location before creating first assessment
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="locationConfirmation"
-                checked={locationConfirmed}
-                onCheckedChange={(checked) =>
-                  setLocationConfirmed(checked as boolean)
-                }
-              />
-              <Label
-                htmlFor="locationConfirmation"
-                className="text-sm leading-relaxed font-normal"
-              >
-                I confirm this wound (#{currentWound.woundNumber}) is located on
-                the{" "}
-                <span className="font-semibold">{currentWound.location}</span>
-              </Label>
+        <CollapsibleCard
+          title="Location Confirmation"
+          description="Confirm wound location before creating first assessment"
+        >
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="locationConfirmation"
+              checked={locationConfirmed}
+              onCheckedChange={(checked) =>
+                setLocationConfirmed(checked as boolean)
+              }
+            />
+            <Label
+              htmlFor="locationConfirmation"
+              className="text-sm leading-relaxed font-normal"
+            >
+              I confirm this wound (#{currentWound.woundNumber}) is located on
+              the <span className="font-semibold">{currentWound.location}</span>
+            </Label>
+          </div>
+          {!locationValidation.valid && (
+            <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>{locationValidation.error}</p>
             </div>
-            {!locationValidation.valid && (
-              <div className="mt-3 flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>{locationValidation.error}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </CollapsibleCard>
       )}
 
       {/* Treatment Order Builder */}
@@ -788,20 +752,15 @@ export default function AssessmentForm({
       />
 
       {/* Assessment Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Assessment Notes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            id="assessmentNotes"
-            name="assessmentNotes"
-            placeholder="Additional clinical observations, treatment recommendations, etc..."
-            rows={6}
-            defaultValue={assessment?.assessmentNotes || ""}
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard title="Assessment Notes">
+        <Textarea
+          id="assessmentNotes"
+          name="assessmentNotes"
+          placeholder="Additional clinical observations, treatment recommendations, etc..."
+          rows={6}
+          defaultValue={assessment?.assessmentNotes || ""}
+        />
+      </CollapsibleCard>
 
       <Separator />
 

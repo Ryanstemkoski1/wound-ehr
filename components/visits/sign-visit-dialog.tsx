@@ -12,6 +12,8 @@ import {
 import { SignaturePad } from "@/components/signatures/signature-pad";
 import { signVisit } from "@/app/actions/signatures";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { AlertCircle, FileCheck } from "lucide-react";
 
 type SignVisitDialogProps = {
@@ -32,6 +34,17 @@ export function SignVisitDialog({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attested, setAttested] = useState(false);
+
+  // Reset attestation each time the dialog re-opens so the clinician
+  // must re-affirm rather than ride a stale checkbox state.
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setAttested(false);
+      setError(null);
+    }
+    onOpenChange(next);
+  };
 
   const handleSaveSignature = async (
     signatureData: string,
@@ -60,12 +73,12 @@ export function SignVisitDialog({
 
   const handleCancel = () => {
     if (!isSubmitting) {
-      onOpenChange(false);
+      handleOpenChange(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -96,14 +109,39 @@ export function SignVisitDialog({
           </div>
         </div>
 
-        <SignaturePad
-          onSave={handleSaveSignature}
-          onCancel={handleCancel}
-          signerName={userName}
-          title="Provider Signature"
-          description="Sign to certify this visit documentation"
-          certificationText="By signing, I certify that I have reviewed all assessments and documentation for this visit, and that the information provided is accurate, complete, and represents the care delivered."
-        />
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20">
+          <Checkbox
+            id="attestation"
+            checked={attested}
+            onCheckedChange={(checked) => setAttested(checked === true)}
+            disabled={isSubmitting}
+            className="mt-0.5"
+          />
+          <Label
+            htmlFor="attestation"
+            className="text-sm leading-snug font-normal text-amber-900 dark:text-amber-100"
+          >
+            I attest that the documentation is true, accurate, and complete;
+            that I personally performed (or directly supervised) the services
+            described; and that the record reflects the care delivered to this
+            patient.
+          </Label>
+        </div>
+
+        {attested ? (
+          <SignaturePad
+            onSave={handleSaveSignature}
+            onCancel={handleCancel}
+            signerName={userName}
+            title="Provider Signature"
+            description="Sign to certify this visit documentation"
+            certificationText="By signing, I certify that I have reviewed all assessments and documentation for this visit, and that the information provided is accurate, complete, and represents the care delivered."
+          />
+        ) : (
+          <p className="rounded-md border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            Check the attestation above to enable the signature pad.
+          </p>
+        )}
       </DialogContent>
     </Dialog>
   );

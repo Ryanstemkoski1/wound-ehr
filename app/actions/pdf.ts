@@ -490,6 +490,87 @@ export async function getVisitDataForPDF(visitId: string) {
 }
 
 /**
+ * R-068 Full Clinical Note PDF — same as getVisitDataForPDF but extends
+ * assessments with all tissue-composition and clinical fields required for
+ * a comprehensive encounter note.
+ */
+export async function getVisitDataForFullPDF(visitId: string) {
+  // Re-use the base data fetch for all common fields
+  const base = await getVisitDataForPDF(visitId);
+  if (!base.success) return base;
+
+  try {
+    const supabase = await createClient();
+
+    // Fetch extended assessment columns not included in summary PDF
+    const { data: extAssessments } = await supabase
+      .from("assessments")
+      .select(
+        "id, granulation_percent, slough_percent, epithelial_percent, " +
+          "periwound_condition, pressure_stage, infection_signs, " +
+          "at_risk_reopening, exudate_type, assessment_notes, wound_type"
+      )
+      .eq("visit_id", visitId);
+
+    // Fetch full treatment orders for each wound
+    const { data: treatmentsData } = await supabase
+      .from("treatments")
+      .select(
+        "wound_id, generated_order_text, treatment_orders, cleanser, " +
+          "primary_dressings, secondary_dressings, frequency_days, prn, " +
+          "debridement, compression, moisture_management, antimicrobials, " +
+          "advanced_therapies, special_instructions, npwt_pressure, npwt_frequency"
+      )
+      .eq("visit_id", visitId);
+
+    // Build lookup by assessment id for the extended fields
+    type ExtRow = { id: string; [key: string]: unknown };
+    const extById: Record<string, ExtRow> = {};
+    for (const row of (extAssessments ?? []) as unknown as ExtRow[]) {
+      extById[row.id] = row;
+    }
+
+    // Merge extended fields into each assessment
+    const enrichedAssessments = base.data.assessments.map((a) => ({
+      ...a,
+      granulationPercent:
+        (extById[a.id]?.granulation_percent as number | null) ?? null,
+      sloughPercent: (extById[a.id]?.slough_percent as number | null) ?? null,
+      epithelialPercent:
+        (extById[a.id]?.epithelial_percent as number | null) ?? null,
+      periwoundCondition:
+        (extById[a.id]?.periwound_condition as string | null) ?? null,
+      pressureStage: (extById[a.id]?.pressure_stage as string | null) ?? null,
+      infectionSigns:
+        (extById[a.id]?.infection_signs as string[] | null) ?? null,
+      atRiskReopening:
+        (extById[a.id]?.at_risk_reopening as boolean | null) ?? null,
+      exudateType: (extById[a.id]?.exudate_type as string | null) ?? null,
+      assessmentNotes:
+        (extById[a.id]?.assessment_notes as string | null) ?? null,
+      woundType: (extById[a.id]?.wound_type as string | null) ?? null,
+    }));
+
+    return {
+      success: true as const,
+      data: {
+        ...base.data,
+        assessments: enrichedAssessments,
+        treatments: (treatmentsData ?? []) as unknown as Array<
+          Record<string, unknown>
+        >,
+      },
+    };
+  } catch (error) {
+    console.error("getVisitDataForFullPDF error:", error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Failed to load data",
+    };
+  }
+}
+
+/**
  * Get complete wound data for PDF generation
  * @param woundId - ID of the wound
  * @returns Wound data or error

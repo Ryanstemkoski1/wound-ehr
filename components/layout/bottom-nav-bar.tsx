@@ -2,33 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Activity,
-  MoreHorizontal,
-} from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const bottomNavItems = [
-  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Patients", href: "/dashboard/patients", icon: Users },
-  { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  { name: "Wounds", href: "/dashboard/wounds", icon: Activity },
-  { name: "More", href: "#more", icon: MoreHorizontal },
-];
+import type { Surface } from "@/lib/surface";
+import { getBottomNav } from "@/lib/navigation";
 
 type BottomNavBarProps = {
+  surface: Surface;
   onMoreClick?: () => void;
 };
 
 /**
- * Fixed bottom navigation bar shown only on mobile (<768px via Tailwind).
- * Provides one-tap access to the 5 most-used sections.
+ * Fixed bottom navigation bar shown only on mobile (<md via Tailwind).
+ * Items are surface-aware so a clinician on phone sees clinical destinations
+ * and an office user sees ops destinations.
  */
-export function BottomNavBar({ onMoreClick }: BottomNavBarProps) {
+export function BottomNavBar({ surface, onMoreClick }: BottomNavBarProps) {
   const pathname = usePathname();
+  const items = getBottomNav(surface);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -42,26 +33,10 @@ export function BottomNavBar({ onMoreClick }: BottomNavBarProps) {
       aria-label="Mobile navigation"
     >
       <div className="flex items-center justify-around px-1">
-        {bottomNavItems.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
-          const active = item.href !== "#more" && isActive(item.href);
-          const isMore = item.href === "#more";
-
-          return isMore ? (
-            <button
-              key={item.name}
-              type="button"
-              onClick={onMoreClick}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors",
-                "text-zinc-500 active:text-teal-600 dark:text-zinc-400 dark:active:text-teal-400"
-              )}
-              aria-label="Open menu"
-            >
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              {item.name}
-            </button>
-          ) : (
+          const active = isActive(item.href);
+          return (
             <Link
               key={item.name}
               href={item.href}
@@ -78,6 +53,18 @@ export function BottomNavBar({ onMoreClick }: BottomNavBarProps) {
             </Link>
           );
         })}
+        <button
+          type="button"
+          onClick={onMoreClick}
+          className={cn(
+            "flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors",
+            "text-zinc-500 active:text-teal-600 dark:text-zinc-400 dark:active:text-teal-400"
+          )}
+          aria-label="Open menu"
+        >
+          <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+          More
+        </button>
       </div>
     </nav>
   );

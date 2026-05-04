@@ -53,6 +53,12 @@ const patientSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zip: z.string().optional(),
+  homeHealthAgencyId: z
+    .preprocess(
+      (v) => (v === "none" || v === "" ? null : v),
+      z.string().uuid().nullable()
+    )
+    .optional(),
 });
 
 export async function createPatient(formData: FormData) {
@@ -79,6 +85,7 @@ export async function createPatient(formData: FormData) {
     city: formData.get("city"),
     state: formData.get("state"),
     zip: formData.get("zip"),
+    homeHealthAgencyId: formData.get("homeHealthAgencyId"),
   });
 
   if (!validatedFields.success) {
@@ -144,6 +151,7 @@ export async function createPatient(formData: FormData) {
         city: data.city || null,
         state: data.state || null,
         zip: data.zip || null,
+        home_health_agency_id: data.homeHealthAgencyId || null,
         insurance_info: insuranceInfo,
         emergency_contact: emergencyContactData,
         allergies: allergiesData,
@@ -212,6 +220,7 @@ export async function updatePatient(patientId: string, formData: FormData) {
     city: formData.get("city"),
     state: formData.get("state"),
     zip: formData.get("zip"),
+    homeHealthAgencyId: formData.get("homeHealthAgencyId"),
   });
 
   if (!validatedFields.success) {
@@ -336,6 +345,7 @@ export async function updatePatient(patientId: string, formData: FormData) {
         city: data.city || null,
         state: data.state || null,
         zip: data.zip || null,
+        home_health_agency_id: data.homeHealthAgencyId || null,
         insurance_info: insuranceInfo,
         emergency_contact: emergencyContactData,
         allergies: allergiesData,
@@ -649,4 +659,63 @@ export async function getPatient(patientId: string) {
     console.error("Failed to fetch patient:", error);
     return null;
   }
+}
+
+/**
+ * Lightweight typeahead for the New Encounter modal (R-063). Returns up
+ * to 10 active patients matching the query (≥2 chars) with the minimum
+ * fields needed to confirm identity + auto-fill the visit's facility.
+ * RLS scopes results to the caller's tenant + facility access.
+ */
+export type EncounterPatientHit = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  mrn: string;
+  dob: string | null;
+  facilityId: string | null;
+  facilityName: string | null;
+};
+
+export async function searchPatientsForEncounter(
+  query: string
+): Promise<EncounterPatientHit[]> {
+  const trimmed = (query ?? "").trim();
+  if (trimmed.length < 2) return [];
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const sanitized = trimmed.replace(/[%_\\(),.*]/g, "");
+  if (!sanitized) return [];
+
+  const { data, error } = await supabase
+    .from("patients")
+    .select(
+      "id, first_name, last_name, mrn, dob, facility_id, facility:facilities(id, name)"
+    )
+    .eq("is_active", true)
+    .or(
+      `first_name.ilike.%${sanitized}%,last_name.ilike.%${sanitized}%,mrn.ilike.%${sanitized}%`
+    )
+    .order("last_name", { ascending: true })
+    .limit(10);
+
+  if (error || !data) return [];
+
+  return data.map((p) => {
+    const facility = Array.isArray(p.facility) ? p.facility[0] : p.facility;
+    return {
+      id: p.id,
+      firstName: p.first_name,
+      lastName: p.last_name,
+      mrn: p.mrn,
+      dob: p.dob ?? null,
+      facilityId: p.facility_id ?? null,
+      facilityName: facility?.name ?? null,
+    };
+  });
 }

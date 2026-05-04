@@ -6,7 +6,7 @@ import { isAdmin } from "@/lib/rbac";
 import { SignatureAuditClient } from "@/components/admin/signature-audit-client";
 
 export const metadata: Metadata = {
-  title: "Signature Audit Logs | Wound EHR",
+  title: "Signature Audit Logs | WoundNote",
   description: "Electronic signature audit trail and compliance reporting",
 };
 

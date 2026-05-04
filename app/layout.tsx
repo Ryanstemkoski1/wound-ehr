@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Nunito } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Wound EHR - Electronic Health Records for Wound Care",
+  title: "WoundNote — Wound Care EHR",
   description:
-    "Modern electronic health record system designed specifically for wound care management and treatment tracking.",
+    "WoundNote by The Wound Well Co. — modern wound care documentation and clinical management.",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml", sizes: "any" }],
     apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
@@ -30,9 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${nunito.variable} antialiased`}>
         {children}
         <Toaster richColors position="top-right" />
       </body>

@@ -4,6 +4,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { validateBillingCodes } from "@/lib/procedures";
+import { auditPhiAccess } from "@/lib/audit-log";
+
+// Billing status type (mirrors the DB enum added in migration 00045)
+export type BillingStatus = "draft" | "ready" | "submitted" | "paid" | "denied";
+
+const BILLING_STATUSES: BillingStatus[] = [
+  "draft",
+  "ready",
+  "submitted",
+  "paid",
+  "denied",
+];
 
 // Validation schemas
 const billingSchema = z.object({
@@ -77,6 +89,12 @@ export async function createBilling(data: BillingInput) {
       throw error;
     }
 
+    void auditPhiAccess({
+      action: "create",
+      table: "billings",
+      recordId: billing.id,
+      recordType: "billing_record",
+    });
     revalidatePath(
       `/dashboard/patients/${validated.patientId}/visits/${validated.visitId}`
     );
@@ -159,6 +177,12 @@ export async function updateBilling(
       throw error;
     }
 
+    void auditPhiAccess({
+      action: "update",
+      table: "billings",
+      recordId: billingId,
+      recordType: "billing_record",
+    });
     revalidatePath(
       `/dashboard/patients/${billing.visit.patient_id}/visits/${billing.visit_id}`
     );
@@ -230,7 +254,21 @@ export async function getBillingForVisit(visitId: string) {
       throw error;
     }
 
-    return { success: true as const, billing };
+    if (!billing) return { success: true as const, billing: null };
+
+    return {
+      success: true as const,
+      billing: {
+        ...billing,
+        billingStatus: (billing.billing_status ?? "draft") as BillingStatus,
+        submittedAt: billing.submitted_at ?? null,
+        claimNumber: billing.claim_number ?? null,
+        cptCodes: (billing.cpt_codes ?? []) as string[],
+        icd10Codes: (billing.icd10_codes ?? []) as string[],
+        modifiers: (billing.modifiers ?? []) as string[],
+        units: (billing.units ?? {}) as Record<string, number>,
+      },
+    };
   } catch (error) {
     console.error("Failed to get billing:", error);
     return {
@@ -343,6 +381,9 @@ export async function getAllBilling(filters?: {
         modifiers: b.modifiers ?? [],
         timeSpent: !!b.time_spent,
         notes: b.notes ?? null,
+        billingStatus: (b.billing_status ?? "draft") as BillingStatus,
+        submittedAt: b.submitted_at ?? null,
+        claimNumber: b.claim_number ?? null,
         createdAt: b.created_at ? new Date(b.created_at) : new Date(),
         visit: visit
           ? {
@@ -379,4 +420,135 @@ export async function getAllBilling(filters?: {
       error: error instanceof Error ? error.message : "Failed to get billings",
     };
   }
+}
+
+/**
+ * Phase 4 — Mark a billing record as "ready" (ops staff pre-flight check)
+ * or transition through any status in the defined lifecycle. Only ops
+ * admins should call setBillingStatus; submitBilling is the canonical path
+ * for electronic submission.
+ */
+export async function setBillingStatus(
+  billingId: string,
+  status: BillingStatus,
+  claimNumber?: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!BILLING_STATUSES.includes(status)) {
+    return { success: false, error: "Invalid billing status." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  // Fetch existing record to get revalidation paths
+  const { data: existing, error: fetchErr } = await supabase
+    .from("billings")
+    .select("id, visit_id, patient_id")
+    .eq("id", billingId)
+    .maybeSingle();
+
+  if (fetchErr || !existing) {
+    return { success: false, error: "Billing record not found" };
+  }
+
+  const updatePayload: Record<string, unknown> = {
+    billing_status: status,
+    updated_at: new Date().toISOString(),
+  };
+  if (claimNumber !== undefined) updatePayload.claim_number = claimNumber;
+
+  const { error: updateErr } = await supabase
+    .from("billings")
+    .update(updatePayload)
+    .eq("id", billingId);
+
+  if (updateErr) {
+    console.error("Failed to update billing status:", updateErr);
+    return { success: false, error: "Failed to update billing status" };
+  }
+
+  void auditPhiAccess({
+    action: "update",
+    table: "billings",
+    recordId: billingId,
+    recordType: "billing_status_change",
+    reason: `Status set to ${status}`,
+  });
+  revalidatePath(
+    `/dashboard/patients/${existing.patient_id}/visits/${existing.visit_id}`
+  );
+  revalidatePath("/dashboard/billing");
+  return { success: true };
+}
+
+/**
+ * Phase 4 — Transition a "ready" billing record to "submitted" and record
+ * the submission timestamp. Blocks if the record is already submitted, paid,
+ * or denied, or if it has no CPT codes.
+ */
+export async function submitBillingRecord(
+  billingId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: billing, error: fetchErr } = await supabase
+    .from("billings")
+    .select("id, visit_id, patient_id, billing_status, cpt_codes")
+    .eq("id", billingId)
+    .maybeSingle();
+
+  if (fetchErr || !billing) {
+    return { success: false, error: "Billing record not found" };
+  }
+
+  const lockedStatuses: BillingStatus[] = ["submitted", "paid", "denied"];
+  if (lockedStatuses.includes(billing.billing_status as BillingStatus)) {
+    return {
+      success: false,
+      error: `Billing is already ${billing.billing_status} — cannot re-submit.`,
+    };
+  }
+
+  const cptCodes = Array.isArray(billing.cpt_codes)
+    ? (billing.cpt_codes as string[])
+    : [];
+  if (cptCodes.length === 0) {
+    return {
+      success: false,
+      error: "Add at least one CPT code before submitting.",
+    };
+  }
+
+  const { error: updateErr } = await supabase
+    .from("billings")
+    .update({
+      billing_status: "submitted",
+      submitted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", billingId);
+
+  if (updateErr) {
+    console.error("Failed to submit billing:", updateErr);
+    return { success: false, error: "Failed to submit billing record" };
+  }
+
+  void auditPhiAccess({
+    action: "update",
+    table: "billings",
+    recordId: billingId,
+    recordType: "billing_submission",
+  });
+  revalidatePath(
+    `/dashboard/patients/${billing.patient_id}/visits/${billing.visit_id}`
+  );
+  revalidatePath("/dashboard/billing");
+  return { success: true };
 }

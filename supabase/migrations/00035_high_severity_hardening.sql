@@ -143,6 +143,7 @@ $$;
 -- =====================================================
 
 DROP POLICY IF EXISTS "Users can view procedure scopes" ON public.procedure_scopes;
+DROP POLICY IF EXISTS "Users can view procedure scopes for their credentials" ON public.procedure_scopes;
 
 CREATE POLICY "Users can view procedure scopes for their credentials"
   ON public.procedure_scopes FOR SELECT
@@ -169,6 +170,7 @@ CREATE POLICY "Users can view procedure scopes for their credentials"
 -- =====================================================
 
 DROP POLICY IF EXISTS "Users can update grafting assessments" ON public.grafting_assessments;
+DROP POLICY IF EXISTS "Users can update grafting assessments in their facility" ON public.grafting_assessments;
 CREATE POLICY "Users can update grafting assessments in their facility"
   ON public.grafting_assessments FOR UPDATE
   USING (
@@ -185,6 +187,7 @@ CREATE POLICY "Users can update grafting assessments in their facility"
   );
 
 DROP POLICY IF EXISTS "Users can delete grafting assessments" ON public.grafting_assessments;
+DROP POLICY IF EXISTS "Users can delete grafting assessments in their facility" ON public.grafting_assessments;
 CREATE POLICY "Users can delete grafting assessments in their facility"
   ON public.grafting_assessments FOR DELETE
   USING (
@@ -195,6 +198,7 @@ CREATE POLICY "Users can delete grafting assessments in their facility"
   );
 
 DROP POLICY IF EXISTS "Users can update skin sweep assessments" ON public.skin_sweep_assessments;
+DROP POLICY IF EXISTS "Users can update skin sweep assessments in their facility" ON public.skin_sweep_assessments;
 CREATE POLICY "Users can update skin sweep assessments in their facility"
   ON public.skin_sweep_assessments FOR UPDATE
   USING (
@@ -211,6 +215,7 @@ CREATE POLICY "Users can update skin sweep assessments in their facility"
   );
 
 DROP POLICY IF EXISTS "Users can delete skin sweep assessments" ON public.skin_sweep_assessments;
+DROP POLICY IF EXISTS "Users can delete skin sweep assessments in their facility" ON public.skin_sweep_assessments;
 CREATE POLICY "Users can delete skin sweep assessments in their facility"
   ON public.skin_sweep_assessments FOR DELETE
   USING (

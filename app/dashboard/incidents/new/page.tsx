@@ -19,10 +19,10 @@ export default async function IncidentReportPage() {
     redirect("/login");
   }
 
-  // Get user profile
+  // Get user profile (users table has name + credentials, not first_name/last_name/role)
   const { data: profile } = await supabase
     .from("users")
-    .select("first_name, last_name, role")
+    .select("name, credentials")
     .eq("id", user.id)
     .single();
 
@@ -34,28 +34,26 @@ export default async function IncidentReportPage() {
     .limit(1)
     .single();
 
-  const employeeName = profile
-    ? `${profile.first_name} ${profile.last_name}`
-    : "";
-  const employeeRole = profile?.role || "";
+  const employeeName = profile?.name || "";
+  const employeeRole = profile?.credentials || "";
   const facilityId = facilityAssoc?.facility_id || "";
 
   return (
     <div className="space-y-6">
       <DynamicBreadcrumbs
         customSegments={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Incident Report" },
+          { label: "Incidents", href: "/dashboard/incidents" },
+          { label: "New Report" },
         ]}
       />
 
       <div className="flex items-center gap-4">
         <Link
-          href="/dashboard"
+          href="/dashboard/incidents"
           className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          Back to Incidents
         </Link>
       </div>
 

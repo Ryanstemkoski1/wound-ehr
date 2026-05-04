@@ -6,8 +6,18 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 // Validation schema for facility
+const FACILITY_TYPES = [
+  "snf",
+  "alf",
+  "home_health",
+  "outpatient",
+  "hospital",
+  "other",
+] as const;
+
 const facilitySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  facility_type: z.enum(FACILITY_TYPES).default("snf"),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -32,6 +42,7 @@ export async function createFacility(formData: FormData) {
   // Validate input
   const validatedFields = facilitySchema.safeParse({
     name: formData.get("name"),
+    facility_type: formData.get("facility_type") || "snf",
     address: formData.get("address"),
     city: formData.get("city"),
     state: formData.get("state"),
@@ -57,6 +68,7 @@ export async function createFacility(formData: FormData) {
       .from("facilities")
       .insert({
         name: data.name,
+        facility_type: data.facility_type,
         address: data.address || null,
         city: data.city || null,
         state: data.state || null,
@@ -108,6 +120,7 @@ export async function updateFacility(facilityId: string, formData: FormData) {
   // Validate input
   const validatedFields = facilitySchema.safeParse({
     name: formData.get("name"),
+    facility_type: formData.get("facility_type") || "snf",
     address: formData.get("address"),
     city: formData.get("city"),
     state: formData.get("state"),
@@ -145,6 +158,7 @@ export async function updateFacility(facilityId: string, formData: FormData) {
       .from("facilities")
       .update({
         name: data.name,
+        facility_type: data.facility_type,
         address: data.address || null,
         city: data.city || null,
         state: data.state || null,

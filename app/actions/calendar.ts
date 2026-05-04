@@ -32,6 +32,9 @@ const createVisitFromCalendarSchema = z.object({
   visitDate: z.date(),
   visitType: z.string().default("routine"),
   location: z.string().optional(),
+  serviceLocationId: z.string().uuid().optional().nullable(),
+  clinicianId: z.string().uuid().optional().nullable(),
+  durationMinutes: z.number().int().min(5).max(480).default(30),
   notes: z.string().optional(),
 });
 
@@ -177,13 +180,23 @@ export async function createVisitFromCalendar(
     }
 
     // Visits table doesn't have facility_id - it gets facility through patient relationship
+    const scheduledStart = validated.visitDate;
+    const scheduledEnd = new Date(
+      scheduledStart.getTime() + validated.durationMinutes * 60 * 1000
+    );
+
     const { data: visit, error } = await supabase
       .from("visits")
       .insert({
         patient_id: validated.patientId,
-        visit_date: validated.visitDate.toISOString(),
+        visit_date: scheduledStart.toISOString(),
         visit_type: validated.visitType,
         location: validated.location || null,
+        service_location_id: validated.serviceLocationId || null,
+        clinician_id: validated.clinicianId || null,
+        scheduled_start_at: scheduledStart.toISOString(),
+        scheduled_end_at: scheduledEnd.toISOString(),
+        duration_minutes: validated.durationMinutes,
         status: "incomplete",
         additional_notes: validated.notes || null,
       })

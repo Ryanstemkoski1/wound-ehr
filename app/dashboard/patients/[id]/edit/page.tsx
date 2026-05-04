@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PatientForm from "@/components/patients/patient-form";
 import { getUserRole, getUserCredentials } from "@/lib/rbac";
+import { listHomeHealthAgencies } from "@/app/actions/home-health-agencies";
 
 type Params = Promise<{ id: string }>;
 
@@ -61,6 +62,7 @@ export default async function EditPatientPage({ params }: { params: Params }) {
   // Type-cast JSONB fields for the form
   const patientData = {
     ...patient,
+    homeHealthAgencyId: patient.home_health_agency_id ?? null,
     allergies: patient.allergies as string[] | null,
     medical_history: patient.medical_history as string[] | null,
     insurance_info: patient.insurance_info as {
@@ -78,10 +80,16 @@ export default async function EditPatientPage({ params }: { params: Params }) {
     } | null,
   };
 
+  const hhaResult = await listHomeHealthAgencies();
+  const homeHealthAgencies = hhaResult.success
+    ? (hhaResult.data ?? []).map((h) => ({ id: h.id, name: h.name }))
+    : [];
+
   return (
     <PatientForm
       patient={patientData}
       facilities={facilities}
+      homeHealthAgencies={homeHealthAgencies}
       userCredentials={credentials}
       userRole={role?.role || null}
     />

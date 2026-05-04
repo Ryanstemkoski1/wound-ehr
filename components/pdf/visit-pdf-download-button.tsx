@@ -6,7 +6,8 @@ import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { pdf } from "@react-pdf/renderer";
 import VisitSummaryPDF from "@/components/pdf/visit-summary-pdf";
-import { getVisitDataForPDF } from "@/app/actions/pdf";
+import VisitFullNotePDF from "@/components/pdf/visit-full-note-pdf";
+import { getVisitDataForPDF, getVisitDataForFullPDF } from "@/app/actions/pdf";
 import { checkCachedVisitPDF, cacheVisitPDF } from "@/app/actions/pdf-cached";
 
 type VisitPDFDownloadButtonProps = {
@@ -15,6 +16,7 @@ type VisitPDFDownloadButtonProps = {
   patientName: string;
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
+  format?: "summary" | "full";
 };
 
 export default function VisitPDFDownloadButton({
@@ -23,32 +25,36 @@ export default function VisitPDFDownloadButton({
   patientName,
   variant = "outline",
   size = "default",
+  format = "summary",
 }: VisitPDFDownloadButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownload = async () => {
     setIsGenerating(true);
     try {
-      // 1. Check if cached PDF exists (80-95% faster)
-      const cacheCheck = await checkCachedVisitPDF(visitId);
+      // For full notes, skip cache — always fresh
+      if (format === "summary") {
+        // 1. Check if cached PDF exists (80-95% faster)
+        const cacheCheck = await checkCachedVisitPDF(visitId);
 
-      if (cacheCheck.success && cacheCheck.isCached && cacheCheck.url) {
-        // Download from cache (direct signed URL)
-        const link = document.createElement("a");
-        link.href = cacheCheck.url;
-        link.download = `visit-summary-${patientName.replace(/\s+/g, "-")}-${new Date(visitDate).toLocaleDateString().replace(/\//g, "-")}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        toast.success("PDF downloaded (cached)");
-        setIsGenerating(false);
-        return;
+        if (cacheCheck.success && cacheCheck.isCached && cacheCheck.url) {
+          const link = document.createElement("a");
+          link.href = cacheCheck.url;
+          link.download = `visit-summary-${patientName.replace(/\s+/g, "-")}-${new Date(visitDate).toLocaleDateString().replace(/\//g, "-")}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success("PDF downloaded (cached)");
+          setIsGenerating(false);
+          return;
+        }
       }
 
-      // 2. Cache miss - generate PDF client-side
-      // Fetch data from server
-      const result = await getVisitDataForPDF(visitId);
+      // Fetch data
+      const result =
+        format === "full"
+          ? await getVisitDataForFullPDF(visitId)
+          : await getVisitDataForPDF(visitId);
 
       if (!result.success) {
         toast.error(result.error);
@@ -56,23 +62,40 @@ export default function VisitPDFDownloadButton({
       }
 
       // Generate PDF
-      const blob = await pdf(<VisitSummaryPDF data={result.data} />).toBlob();
+      const element =
+        format === "full" ? (
+          <VisitFullNotePDF
+            data={result.data as Parameters<typeof VisitFullNotePDF>[0]["data"]}
+          />
+        ) : (
+          <VisitSummaryPDF data={result.data} />
+        );
+      const blob = await pdf(element).toBlob();
 
-      // Create download link
+      const safeName = patientName.replace(/\s+/g, "-");
+      const safeDate = new Date(visitDate)
+        .toLocaleDateString()
+        .replace(/\//g, "-");
+      const filename =
+        format === "full"
+          ? `visit-full-note-${safeName}-${safeDate}.pdf`
+          : `visit-summary-${safeName}-${safeDate}.pdf`;
+
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `visit-summary-${patientName.replace(/\s+/g, "-")}-${new Date(visitDate).toLocaleDateString().replace(/\//g, "-")}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      // 3. Cache the generated PDF for future use (async, don't wait)
-      cacheVisitPDF(visitId, blob).catch((error) => {
-        console.error("Failed to cache PDF:", error);
-        // Silent fail - don't interrupt user flow
-      });
+      // Cache only summary PDFs
+      if (format === "summary") {
+        cacheVisitPDF(visitId, blob).catch((error) => {
+          console.error("Failed to cache PDF:", error);
+        });
+      }
 
       toast.success("PDF downloaded successfully");
     } catch (error) {
@@ -98,7 +121,7 @@ export default function VisitPDFDownloadButton({
       ) : (
         <>
           <FileDown className="mr-2 h-4 w-4" />
-          Download Visit Summary
+          {format === "full" ? "Full Note PDF" : "Summary PDF"}
         </>
       )}
     </Button>

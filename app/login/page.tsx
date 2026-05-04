@@ -49,11 +49,11 @@ function LoginForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4 flex justify-center">
-            <img src="/logo.svg" alt="Wound EHR" width={200} height={60} />
+            <img src="/logo.svg" alt="WoundNote" width={200} height={60} />
           </div>
           <CardTitle className="text-center text-2xl">Welcome back</CardTitle>
           <CardDescription className="text-center">
-            Sign in to your Wound EHR account
+            Sign in to WoundNote
           </CardDescription>
         </CardHeader>
         <form action={handleSubmit}>
@@ -139,7 +139,7 @@ export default function LoginPage() {
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-1">
               <div className="mb-4 flex justify-center">
-                <img src="/logo.svg" alt="Wound EHR" width={200} height={60} />
+                <img src="/logo.svg" alt="WoundNote" width={200} height={60} />
               </div>
               <CardTitle className="text-center text-2xl">Loading...</CardTitle>
             </CardHeader>

@@ -29,11 +29,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PatientDeleteButton } from "@/components/patients/patient-delete-button";
-import VisitCard from "@/components/visits/visit-card";
+import { VisitLogClient } from "@/components/visits/visit-log-client";
 import PatientPDFDownloadButton from "@/components/pdf/patient-pdf-download-button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import { WoundsListClient } from "@/components/wounds/wounds-list-client";
-import { ConsentBanner } from "@/components/patients/consent-banner";
+import { ConsentBanner } from "@/components/consents/consent-banner";
 import { ConsentStatusCard } from "@/components/patients/consent-status-card";
 import { PatientDocumentsTab } from "@/components/patients/patient-documents-tab";
 import { ClinicianAssignment } from "@/components/patients/clinician-assignment";
@@ -135,13 +135,8 @@ export default async function PatientDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Consent Warning - Shows banner if no consent exists */}
-      {!hasConsent && (
-        <ConsentBanner
-          patientId={id}
-          patientName={`${patient.firstName} ${patient.lastName}`}
-        />
-      )}
+      {/* Consent Banner — server-side, renders nothing when consent is on file */}
+      <ConsentBanner patientId={id} />
 
       {/* Breadcrumbs */}
       <DynamicBreadcrumbs
@@ -526,32 +521,25 @@ export default async function PatientDetailPage({
             </p>
           </div>
           {patient.visits.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {patient.visits.map(
-                (visit: {
-                  id: string;
-                  visitDate: Date;
-                  visitType: string;
-                  location: string | null;
-                  status: string;
-                  followUpType: string | null;
-                  followUpDate: Date | null;
-                }) => (
-                  <VisitCard
-                    key={visit.id}
-                    visit={visit}
-                    patientId={patient.id}
-                    restricted={
-                      !canViewVisitDetails(
-                        userRole?.role || null,
-                        userCredentials,
-                        visit.status
-                      )
-                    }
-                  />
+            <VisitLogClient
+              visits={patient.visits}
+              patientId={patient.id}
+              patientName={`${patient.firstName} ${patient.lastName}`}
+              restrictedVisitIds={
+                new Set(
+                  patient.visits
+                    .filter(
+                      (visit: { id: string; status: string }) =>
+                        !canViewVisitDetails(
+                          userRole?.role || null,
+                          userCredentials,
+                          visit.status
+                        )
+                    )
+                    .map((v: { id: string }) => v.id)
                 )
-              )}
-            </div>
+              }
+            />
           ) : (
             <Card>
               <CardContent className="py-12 text-center">

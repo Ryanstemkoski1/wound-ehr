@@ -15,6 +15,7 @@ type FacilityFormProps = {
   facility?: {
     id: string;
     name: string;
+    facility_type?: string | null;
     address?: string | null;
     city?: string | null;
     state?: string | null;
@@ -26,6 +27,15 @@ type FacilityFormProps = {
     notes?: string | null;
   };
 };
+
+const FACILITY_TYPE_OPTIONS = [
+  { value: "snf", label: "Skilled Nursing Facility (SNF)" },
+  { value: "alf", label: "Assisted Living (ALF)" },
+  { value: "home_health", label: "Home Health" },
+  { value: "outpatient", label: "Outpatient Clinic" },
+  { value: "hospital", label: "Hospital" },
+  { value: "other", label: "Other" },
+];
 
 export default function FacilityForm({ facility }: FacilityFormProps) {
   const [error, setError] = useState("");
@@ -83,17 +93,37 @@ export default function FacilityForm({ facility }: FacilityFormProps) {
 
             {/* Basic Information */}
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Facility Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  defaultValue={facility?.name}
-                  required
-                  placeholder="e.g., Sunrise Nursing Home"
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    Facility Name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={facility?.name}
+                    required
+                    placeholder="e.g., Sunrise Nursing Home"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="facility_type">
+                    Facility Type <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="facility_type"
+                    name="facility_type"
+                    defaultValue={facility?.facility_type || "snf"}
+                    required
+                    className="flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300"
+                  >
+                    {FACILITY_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

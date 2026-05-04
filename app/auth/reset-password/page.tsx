@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
             <div className="mb-4 flex justify-center">
-              <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
+              <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
             </div>
             <CardTitle className="text-center text-2xl">
               Invalid Reset Link
@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4 flex justify-center">
-            <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
+            <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
           </div>
           <div className="flex justify-center">
             <div className="rounded-full bg-teal-50 p-3 dark:bg-teal-950">

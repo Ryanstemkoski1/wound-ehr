@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // =====================================================
 // TYPES
@@ -83,6 +84,12 @@ export async function sendNoteToOffice(visitId: string) {
 
     if (error) throw error;
 
+    void auditPhiAccess({
+      action: "update",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_sent_to_office",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath("/dashboard/visits");
     revalidatePath("/dashboard/admin/inbox");
@@ -155,6 +162,13 @@ export async function requestCorrection(visitId: string, notes: string) {
 
     if (error) throw error;
 
+    void auditPhiAccess({
+      action: "update",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_correction_request",
+      reason: notes,
+    });
     revalidatePath("/dashboard/admin/inbox");
     revalidatePath("/dashboard/patients");
 
@@ -261,6 +275,12 @@ export async function approveNote(visitId: string) {
 
     if (error) throw error;
 
+    void auditPhiAccess({
+      action: "update",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_approved",
+    });
     revalidatePath("/dashboard/admin/inbox");
     revalidatePath("/dashboard/patients");
     revalidatePath("/dashboard/visits");
@@ -317,6 +337,13 @@ export async function voidNote(visitId: string, reason: string) {
 
     if (error) throw error;
 
+    void auditPhiAccess({
+      action: "delete",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_voided",
+      reason: reason,
+    });
     revalidatePath("/dashboard/admin/inbox");
     revalidatePath("/dashboard/patients");
     revalidatePath("/dashboard/visits");

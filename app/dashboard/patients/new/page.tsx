@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PatientForm from "@/components/patients/patient-form";
 import { getUserRole, getUserCredentials } from "@/lib/rbac";
+import { listHomeHealthAgencies } from "@/app/actions/home-health-agencies";
 
 export default async function NewPatientPage() {
   const supabase = await createClient();
@@ -39,9 +40,15 @@ export default async function NewPatientPage() {
     redirect("/dashboard");
   }
 
+  const hhaResult = await listHomeHealthAgencies();
+  const homeHealthAgencies = hhaResult.success
+    ? (hhaResult.data ?? []).map((h) => ({ id: h.id, name: h.name }))
+    : [];
+
   return (
     <PatientForm
       facilities={facilities}
+      homeHealthAgencies={homeHealthAgencies}
       userCredentials={credentials}
       userRole={role?.role || null}
     />

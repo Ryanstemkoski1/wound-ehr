@@ -21,15 +21,27 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Save, Loader2, Check, ImageIcon, FileText, Ruler } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  Check,
+  ImageIcon,
+  FileText,
+  Ruler,
+  Globe,
+  Building2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   savePDFPreferences,
   type PDFPreferences,
 } from "@/app/actions/preferences";
 
+type Facility = { id: string; name: string };
+
 type Props = {
   initialPreferences: PDFPreferences;
+  facilities?: Facility[];
 };
 
 const photoSizeDescriptions: Record<PDFPreferences["pdf_photo_size"], string> =
@@ -39,7 +51,27 @@ const photoSizeDescriptions: Record<PDFPreferences["pdf_photo_size"], string> =
     large: "Full detail — 220pt height, best for clinical review",
   };
 
-export default function SettingsClient({ initialPreferences }: Props) {
+// Common IANA timezone identifiers with human-readable labels
+const IANA_TIMEZONES = [
+  { value: "America/New_York", label: "Eastern Time (ET)" },
+  { value: "America/Chicago", label: "Central Time (CT)" },
+  { value: "America/Denver", label: "Mountain Time (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
+  { value: "Pacific/Honolulu", label: "Hawaii Time (HT)" },
+  { value: "America/Phoenix", label: "Arizona (no DST)" },
+  { value: "America/Puerto_Rico", label: "Puerto Rico (AST)" },
+  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+  { value: "Europe/London", label: "London (GMT/BST)" },
+  { value: "Europe/Paris", label: "Central European (CET)" },
+  { value: "Asia/Manila", label: "Philippines (PHT)" },
+  { value: "Australia/Sydney", label: "Sydney (AEST)" },
+] as const;
+
+export default function SettingsClient({
+  initialPreferences,
+  facilities = [],
+}: Props) {
   const [prefs, setPrefs] = useState<PDFPreferences>(initialPreferences);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -57,7 +89,9 @@ export default function SettingsClient({ initialPreferences }: Props) {
     prefs.pdf_photo_size !== initialPreferences.pdf_photo_size ||
     prefs.pdf_max_photos_per_assessment !==
       initialPreferences.pdf_max_photos_per_assessment ||
-    prefs.pdf_page_size !== initialPreferences.pdf_page_size;
+    prefs.pdf_page_size !== initialPreferences.pdf_page_size ||
+    prefs.timezone !== initialPreferences.timezone ||
+    prefs.default_facility_id !== initialPreferences.default_facility_id;
 
   const handleSave = async () => {
     setSaving(true);
@@ -79,7 +113,83 @@ export default function SettingsClient({ initialPreferences }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      {/* PDF Photo Preferences */}
+      {/* General Preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            General
+          </CardTitle>
+          <CardDescription>Display and workspace defaults</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Timezone */}
+          <div className="space-y-2">
+            <Label htmlFor="timezone" className="text-sm font-medium">
+              Timezone
+            </Label>
+            <Select
+              value={prefs.timezone ?? ""}
+              onValueChange={(tz) =>
+                setPrefs((p) => ({ ...p, timezone: tz || undefined }))
+              }
+            >
+              <SelectTrigger id="timezone" className="w-full">
+                <SelectValue placeholder="Select your timezone" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {IANA_TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-xs">
+              Used to display visit dates and times in your local time
+            </p>
+          </div>
+
+          {/* Default facility */}
+          {facilities.length > 0 && (
+            <div className="space-y-2">
+              <Label
+                htmlFor="default-facility"
+                className="flex items-center gap-1.5 text-sm font-medium"
+              >
+                <Building2 className="h-3.5 w-3.5" />
+                Default Facility
+              </Label>
+              <Select
+                value={prefs.default_facility_id ?? ""}
+                onValueChange={(fid) =>
+                  setPrefs((p) => ({
+                    ...p,
+                    default_facility_id: fid || undefined,
+                  }))
+                }
+              >
+                <SelectTrigger id="default-facility" className="w-full">
+                  <SelectValue placeholder="No default (show all facilities)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">
+                    No default (show all facilities)
+                  </SelectItem>
+                  {facilities.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-xs">
+                Pre-selected when creating new patients or visits
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

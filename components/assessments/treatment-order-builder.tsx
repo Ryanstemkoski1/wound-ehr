@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { DressingPicker } from "./dressing-picker";
 import { AlertCircle, FileText, Stethoscope } from "lucide-react";
 import {
   type TreatmentTab,
@@ -70,17 +71,6 @@ export default function TreatmentOrderBuilder({
 }: TreatmentOrderBuilderProps) {
   // Generated order text (live preview)
   const generatedOrder = useMemo(() => buildOrderText(value), [value]);
-
-  // Grouped topical treatments by category for the select
-  const groupedTopicals = useMemo(() => {
-    const groups: Record<string, typeof TOPICAL_TREATMENTS> = {};
-    TOPICAL_TREATMENTS.forEach((t) => {
-      const cat = t.category || "Other";
-      if (!groups[cat]) groups[cat] = [];
-      groups[cat].push(t);
-    });
-    return groups;
-  }, []);
 
   // Grouped moisture treatments by category
   const groupedMoisture = useMemo(() => {
@@ -251,33 +241,19 @@ export default function TreatmentOrderBuilder({
       {/* Primary Treatment (grouped) */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">Primary Treatment *</Label>
-        <Select
+        <DressingPicker
           value={value.topical.primaryTreatment}
-          onValueChange={(v) => {
+          onChange={(v) => {
             updateTopical("primaryTreatment", v);
             // Clear type box when treatment changes
             if (v !== value.topical.primaryTreatment) {
               updateTopical("primaryTreatmentType", "");
             }
           }}
+          options={TOPICAL_TREATMENTS}
+          placeholder="Select treatment…"
           disabled={disabled}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select treatment..." />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(groupedTopicals).map(([category, items]) => (
-              <SelectGroup key={category}>
-                <SelectLabel>{category}</SelectLabel>
-                {items.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
+        />
       </div>
 
       {/* Primary Treatment Type Box (conditional) */}
@@ -322,31 +298,17 @@ export default function TreatmentOrderBuilder({
         {(value.topical.secondaryTreatment ||
           !value.topical.secondaryTreatment) && (
           <div className="space-y-3 pl-6">
-            <Select
-              value={value.topical.secondaryTreatment || "none"}
-              onValueChange={(v) => {
-                updateTopical("secondaryTreatment", v === "none" ? "" : v);
+            <DressingPicker
+              value={value.topical.secondaryTreatment || ""}
+              onChange={(v) => {
+                updateTopical("secondaryTreatment", v);
                 updateTopical("secondaryTreatmentType", "");
               }}
+              options={TOPICAL_TREATMENTS}
+              placeholder="None"
+              allowNone
               disabled={disabled}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {Object.entries(groupedTopicals).map(([category, items]) => (
-                  <SelectGroup key={category}>
-                    <SelectLabel>{category}</SelectLabel>
-                    {items.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+            />
 
             {selectedSecondaryOption?.hasTypeBox &&
               value.topical.secondaryTreatment && (

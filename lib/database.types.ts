@@ -244,6 +244,8 @@ export type Database = {
       }
       billings: {
         Row: {
+          billing_status: Database["public"]["Enums"]["billing_status"]
+          claim_number: string | null
           cpt_codes: Json
           created_at: string | null
           icd10_codes: Json
@@ -251,11 +253,15 @@ export type Database = {
           modifiers: Json | null
           notes: string | null
           patient_id: string
+          submitted_at: string | null
           time_spent: boolean | null
+          units: Json | null
           updated_at: string | null
           visit_id: string
         }
         Insert: {
+          billing_status?: Database["public"]["Enums"]["billing_status"]
+          claim_number?: string | null
           cpt_codes: Json
           created_at?: string | null
           icd10_codes: Json
@@ -263,11 +269,15 @@ export type Database = {
           modifiers?: Json | null
           notes?: string | null
           patient_id: string
+          submitted_at?: string | null
           time_spent?: boolean | null
+          units?: Json | null
           updated_at?: string | null
           visit_id: string
         }
         Update: {
+          billing_status?: Database["public"]["Enums"]["billing_status"]
+          claim_number?: string | null
           cpt_codes?: Json
           created_at?: string | null
           icd10_codes?: Json
@@ -275,11 +285,20 @@ export type Database = {
           modifiers?: Json | null
           notes?: string | null
           patient_id?: string
+          submitted_at?: string | null
           time_spent?: boolean | null
+          units?: Json | null
           updated_at?: string | null
           visit_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "billings_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
           {
             foreignKeyName: "billings_patient_id_fkey"
             columns: ["patient_id"]
@@ -514,6 +533,13 @@ export type Database = {
             foreignKeyName: "debridement_assessments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "debridement_assessments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -533,6 +559,7 @@ export type Database = {
           contact_person: string | null
           created_at: string | null
           email: string | null
+          facility_type: string
           fax: string | null
           id: string
           is_active: boolean | null
@@ -550,6 +577,7 @@ export type Database = {
           contact_person?: string | null
           created_at?: string | null
           email?: string | null
+          facility_type?: string
           fax?: string | null
           id?: string
           is_active?: boolean | null
@@ -567,6 +595,7 @@ export type Database = {
           contact_person?: string | null
           created_at?: string | null
           email?: string | null
+          facility_type?: string
           fax?: string | null
           id?: string
           is_active?: boolean | null
@@ -780,6 +809,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "facilities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grafting_assessments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
           },
           {
             foreignKeyName: "grafting_assessments_patient_id_fkey"
@@ -1072,7 +1108,76 @@ export type Database = {
             foreignKeyName: "gtube_procedures_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "gtube_procedures_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_health_agencies: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          fax: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          npi: string | null
+          phone: string | null
+          state: string | null
+          tenant_id: string
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          fax?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          npi?: string | null
+          phone?: string | null
+          state?: string | null
+          tenant_id: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          fax?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          npi?: string | null
+          phone?: string | null
+          state?: string | null
+          tenant_id?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_health_agencies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1157,6 +1262,13 @@ export type Database = {
             foreignKeyName: "incident_reports_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "incident_reports_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -1204,6 +1316,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "patient_clinicians_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
           {
             foreignKeyName: "patient_clinicians_patient_id_fkey"
             columns: ["patient_id"]
@@ -1260,6 +1379,13 @@ export type Database = {
           witness_signature_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "patient_consents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
           {
             foreignKeyName: "patient_consents_patient_id_fkey"
             columns: ["patient_id"]
@@ -1349,6 +1475,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
           },
           {
             foreignKeyName: "patient_documents_patient_id_fkey"
@@ -1459,6 +1592,13 @@ export type Database = {
             foreignKeyName: "patient_not_seen_reports_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "patient_not_seen_reports_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -1541,6 +1681,13 @@ export type Database = {
             foreignKeyName: "patient_recording_consents_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: true
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "patient_recording_consents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -1566,6 +1713,7 @@ export type Database = {
           facility_id: string
           first_name: string
           gender: string | null
+          home_health_agency_id: string | null
           id: string
           insurance_info: Json | null
           is_active: boolean | null
@@ -1589,6 +1737,7 @@ export type Database = {
           facility_id: string
           first_name: string
           gender?: string | null
+          home_health_agency_id?: string | null
           id?: string
           insurance_info?: Json | null
           is_active?: boolean | null
@@ -1612,6 +1761,7 @@ export type Database = {
           facility_id?: string
           first_name?: string
           gender?: string | null
+          home_health_agency_id?: string | null
           id?: string
           insurance_info?: Json | null
           is_active?: boolean | null
@@ -1629,6 +1779,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_home_health_agency_id_fkey"
+            columns: ["home_health_agency_id"]
+            isOneToOne: false
+            referencedRelation: "home_health_agencies"
             referencedColumns: ["id"]
           },
         ]
@@ -1733,6 +1890,47 @@ export type Database = {
         }
         Relationships: []
       }
+      service_locations: {
+        Row: {
+          created_at: string
+          description: string | null
+          facility_id: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          facility_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          facility_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_locations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signatures: {
         Row: {
           created_at: string | null
@@ -1777,6 +1975,13 @@ export type Database = {
           visit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "signatures_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
           {
             foreignKeyName: "signatures_patient_id_fkey"
             columns: ["patient_id"]
@@ -2299,6 +2504,13 @@ export type Database = {
             foreignKeyName: "skilled_nursing_assessments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "skilled_nursing_assessments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -2608,6 +2820,13 @@ export type Database = {
             foreignKeyName: "skin_sweep_assessments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "skin_sweep_assessments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -2616,6 +2835,41 @@ export type Database = {
             columns: ["visit_id"]
             isOneToOne: false
             referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_features: {
+        Row: {
+          enabled: boolean
+          flag: string
+          payload: Json | null
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          flag: string
+          payload?: Json | null
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          flag?: string
+          payload?: Json | null
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_features_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -3040,19 +3294,27 @@ export type Database = {
           clinician_notes_manual: string | null
           correction_notes: Json | null
           created_at: string | null
+          duration_minutes: number | null
+          em_documentation: Json | null
           follow_up_date: string | null
           follow_up_notes: string | null
           follow_up_type: string | null
           has_ai_transcript: boolean | null
           id: string
           location: string | null
+          no_show_at: string | null
+          no_show_reason: string | null
+          no_show_recorded_by: string | null
           number_of_addenda: number | null
           patient_id: string
           patient_signature_id: string | null
           primary_clinician_id: string | null
           provider_signature_id: string | null
           requires_patient_signature: boolean | null
+          scheduled_end_at: string | null
+          scheduled_start_at: string | null
           sent_to_office_at: string | null
+          service_location_id: string | null
           status: string | null
           time_spent: boolean | null
           updated_at: string | null
@@ -3075,19 +3337,27 @@ export type Database = {
           clinician_notes_manual?: string | null
           correction_notes?: Json | null
           created_at?: string | null
+          duration_minutes?: number | null
+          em_documentation?: Json | null
           follow_up_date?: string | null
           follow_up_notes?: string | null
           follow_up_type?: string | null
           has_ai_transcript?: boolean | null
           id?: string
           location?: string | null
+          no_show_at?: string | null
+          no_show_reason?: string | null
+          no_show_recorded_by?: string | null
           number_of_addenda?: number | null
           patient_id: string
           patient_signature_id?: string | null
           primary_clinician_id?: string | null
           provider_signature_id?: string | null
           requires_patient_signature?: boolean | null
+          scheduled_end_at?: string | null
+          scheduled_start_at?: string | null
           sent_to_office_at?: string | null
+          service_location_id?: string | null
           status?: string | null
           time_spent?: boolean | null
           updated_at?: string | null
@@ -3110,19 +3380,27 @@ export type Database = {
           clinician_notes_manual?: string | null
           correction_notes?: Json | null
           created_at?: string | null
+          duration_minutes?: number | null
+          em_documentation?: Json | null
           follow_up_date?: string | null
           follow_up_notes?: string | null
           follow_up_type?: string | null
           has_ai_transcript?: boolean | null
           id?: string
           location?: string | null
+          no_show_at?: string | null
+          no_show_reason?: string | null
+          no_show_recorded_by?: string | null
           number_of_addenda?: number | null
           patient_id?: string
           patient_signature_id?: string | null
           primary_clinician_id?: string | null
           provider_signature_id?: string | null
           requires_patient_signature?: boolean | null
+          scheduled_end_at?: string | null
+          scheduled_start_at?: string | null
           sent_to_office_at?: string | null
+          service_location_id?: string | null
           status?: string | null
           time_spent?: boolean | null
           updated_at?: string | null
@@ -3144,6 +3422,13 @@ export type Database = {
             foreignKeyName: "visits_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "visits_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -3159,6 +3444,13 @@ export type Database = {
             columns: ["provider_signature_id"]
             isOneToOne: false
             referencedRelation: "signatures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_service_location_id_fkey"
+            columns: ["service_location_id"]
+            isOneToOne: false
+            referencedRelation: "service_locations"
             referencedColumns: ["id"]
           },
         ]
@@ -3250,6 +3542,13 @@ export type Database = {
             foreignKeyName: "wounds_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "wounds_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
@@ -3257,7 +3556,34 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      patient_consent_status: {
+        Row: {
+          consent_id: string | null
+          consented_at: string | null
+          days_since_consent: number | null
+          document_url: string | null
+          facility_id: string | null
+          patient_id: string | null
+          patient_signature_id: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_consents_patient_signature_id_fkey"
+            columns: ["patient_signature_id"]
+            isOneToOne: false
+            referencedRelation: "signatures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_perform_procedure: {
@@ -3434,7 +3760,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      billing_status: "draft" | "ready" | "submitted" | "paid" | "denied"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3564,6 +3890,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      billing_status: ["draft", "ready", "submitted", "paid", "denied"],
+    },
   },
 } as const

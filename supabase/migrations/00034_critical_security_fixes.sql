@@ -127,6 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action_created
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Append-only: anyone authenticated can INSERT a row about themselves
+DROP POLICY IF EXISTS "Authenticated users can insert their own audit rows" ON public.audit_logs;
 CREATE POLICY "Authenticated users can insert their own audit rows"
   ON public.audit_logs FOR INSERT
   WITH CHECK (
@@ -135,6 +136,7 @@ CREATE POLICY "Authenticated users can insert their own audit rows"
   );
 
 -- Read access: only tenant admins of the audit row's tenant
+DROP POLICY IF EXISTS "Tenant admins can read audit rows for their tenant" ON public.audit_logs;
 CREATE POLICY "Tenant admins can read audit rows for their tenant"
   ON public.audit_logs FOR SELECT
   USING (

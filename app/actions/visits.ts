@@ -57,6 +57,173 @@ const visitSchema = z.object({
     .transform((val) => val || undefined),
 });
 
+/**
+ * Returns the count of today's visits that are not yet signed/submitted
+ * for the currently authenticated clinician.
+ */
+export async function getTodayUnsignedCount(): Promise<number> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+  const { count } = await supabase
+    .from("visits")
+    .select("id", { count: "exact", head: true })
+    .eq("clinician_id", user.id)
+    .eq("visit_date", today)
+    .not("status", "in", '("signed","submitted")');
+
+  return count ?? 0;
+}
+
+/**
+ * Returns dashboard stats scoped to the current clinician for the Clinical surface.
+ */
+export async function getClinicalDashboardStats(): Promise<{
+  visitsTodayOwn: number;
+  unsignedToday: number;
+  visitsThisWeekOwn: number;
+  recentOwnVisits: Array<{
+    id: string;
+    visit_date: string;
+    status: string;
+    patient_id: string;
+    patient_name: string;
+  }>;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return {
+      visitsTodayOwn: 0,
+      unsignedToday: 0,
+      visitsThisWeekOwn: 0,
+      recentOwnVisits: [],
+    };
+
+  const today = new Date().toISOString().split("T")[0];
+  const dow = new Date().getDay(); // 0=Sun
+  const weekStartDate = new Date();
+  weekStartDate.setDate(weekStartDate.getDate() - dow);
+  const weekStart = weekStartDate.toISOString().split("T")[0];
+
+  const [todayResult, unsignedResult, weekResult, recentResult] =
+    await Promise.all([
+      supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .eq("clinician_id", user.id)
+        .eq("visit_date", today),
+      supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .eq("clinician_id", user.id)
+        .eq("visit_date", today)
+        .not("status", "in", '("signed","submitted")'),
+      supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .eq("clinician_id", user.id)
+        .gte("visit_date", weekStart),
+      supabase
+        .from("visits")
+        .select(
+          "id, visit_date, status, patient_id, patients!inner(first_name, last_name)"
+        )
+        .eq("clinician_id", user.id)
+        .order("visit_date", { ascending: false })
+        .limit(5),
+    ]);
+
+  const recentOwnVisits = (recentResult.data ?? []).map((v) => {
+    const p = Array.isArray(v.patients) ? v.patients[0] : v.patients;
+    const patient = p as { first_name: string; last_name: string } | null;
+    return {
+      id: v.id,
+      visit_date: v.visit_date,
+      status: v.status ?? "draft",
+      patient_id: v.patient_id ?? "",
+      patient_name: patient
+        ? `${patient.first_name} ${patient.last_name}`
+        : "Unknown Patient",
+    };
+  });
+
+  return {
+    visitsTodayOwn: todayResult.count ?? 0,
+    unsignedToday: unsignedResult.count ?? 0,
+    visitsThisWeekOwn: weekResult.count ?? 0,
+    recentOwnVisits,
+  };
+}
+
+/**
+ * Returns dashboard stats for the Admin/Operations surface.
+ * Scoped to the admin's accessible facilities.
+ */
+export async function getAdminDashboardStats(facilityIds: string[]): Promise<{
+  visitsTodayAll: number;
+  unsignedTodayAll: number;
+  pendingInboxCount: number;
+  billingReadyCount: number;
+}> {
+  const empty = {
+    visitsTodayAll: 0,
+    unsignedTodayAll: 0,
+    pendingInboxCount: 0,
+    billingReadyCount: 0,
+  };
+  if (facilityIds.length === 0) return empty;
+
+  const supabase = await createClient();
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data: patients } = await supabase
+    .from("patients")
+    .select("id")
+    .in("facility_id", facilityIds);
+  const patientIds = patients?.map((p) => p.id) ?? [];
+  if (patientIds.length === 0) return empty;
+
+  const [todayResult, unsignedResult, inboxResult, billingResult] =
+    await Promise.all([
+      supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .in("patient_id", patientIds)
+        .eq("visit_date", today),
+      supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .in("patient_id", patientIds)
+        .eq("visit_date", today)
+        .not("status", "in", '("signed","submitted")'),
+      supabase
+        .from("visits")
+        .select("id", { count: "exact", head: true })
+        .in("patient_id", patientIds)
+        .eq("status", "sent_to_office"),
+      supabase
+        .from("billings")
+        .select("id", { count: "exact", head: true })
+        .in("patient_id", patientIds)
+        .eq("billing_status", "ready"),
+    ]);
+
+  return {
+    visitsTodayAll: todayResult.count ?? 0,
+    unsignedTodayAll: unsignedResult.count ?? 0,
+    pendingInboxCount: inboxResult.count ?? 0,
+    billingReadyCount: billingResult.count ?? 0,
+  };
+}
+
 // Get all visits for a patient
 export async function getVisits(patientId: string) {
   const supabase = await createClient();
@@ -228,6 +395,10 @@ export async function getVisit(visitId: string) {
         followUpNotes: visit.follow_up_notes,
         timeSpent: visit.time_spent,
         additionalNotes: visit.additional_notes,
+        emDocumentation: visit.em_documentation as Record<
+          string,
+          string
+        > | null,
         createdAt: visit.created_at,
         updatedAt: visit.updated_at,
         patient: {
@@ -333,6 +504,12 @@ export async function createVisit(formData: FormData) {
       };
     }
 
+    void auditPhiAccess({
+      action: "create",
+      table: "visits",
+      recordId: visit.id,
+      recordType: "visit_record",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${validated.patientId}`);
     return { success: true as const, visit };
@@ -442,6 +619,12 @@ export async function updateVisit(visitId: string, formData: FormData) {
       throw updateError;
     }
 
+    void auditPhiAccess({
+      action: "update",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_record",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${existingVisit.patient_id}`);
     revalidatePath(`/dashboard/visits/${visitId}`);
@@ -496,6 +679,12 @@ export async function deleteVisit(visitId: string) {
       throw deleteError;
     }
 
+    void auditPhiAccess({
+      action: "delete",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_record",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${visit.patient_id}`);
     return { success: true };
@@ -560,6 +749,144 @@ export async function markVisitComplete(visitId: string) {
     console.error("Failed to mark visit as completed:", error);
     return { error: "Failed to mark visit as completed" };
   }
+}
+
+// Mark visit as no-show
+// Records reason, timestamp, and user; transitions to "no_show" status
+export async function setVisitNoShow(
+  visitId: string,
+  reason: string
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  const trimmed = reason?.trim() ?? "";
+  if (trimmed.length < 3) {
+    return { error: "Please provide a reason (at least 3 characters)." };
+  }
+  if (trimmed.length > 500) {
+    return { error: "Reason must be 500 characters or fewer." };
+  }
+
+  try {
+    const { data: visit, error: visitError } = await supabase
+      .from("visits")
+      .select("id, patient_id, status")
+      .eq("id", visitId)
+      .maybeSingle();
+
+    if (visitError || !visit) {
+      return { error: "Visit not found or access denied" };
+    }
+
+    // Allow no-show only from non-finalized scheduled-ish statuses
+    const allowed = ["scheduled", "incomplete", "in_progress", "draft"];
+    if (!allowed.includes(visit.status || "")) {
+      return {
+        error: `Cannot mark as no-show — current status is "${visit.status}".`,
+      };
+    }
+
+    const { error: updateError } = await supabase
+      .from("visits")
+      .update({
+        status: "no_show",
+        no_show_reason: trimmed,
+        no_show_at: new Date().toISOString(),
+        no_show_recorded_by: user.id,
+      })
+      .eq("id", visitId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    void auditPhiAccess({
+      action: "update",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_no_show",
+    });
+    revalidatePath("/dashboard/patients");
+    revalidatePath(`/dashboard/patients/${visit.patient_id}`);
+    revalidatePath(`/dashboard/visits/${visitId}`);
+    revalidatePath("/dashboard/calendar");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to mark visit as no-show:", error);
+    return { error: "Failed to mark visit as no-show" };
+  }
+}
+
+// Phase 3 R-065 — Persist E/M sub-section narratives (vitals, CC/HPI,
+// ROS, PE) on the visit. Caller must own the visit (RLS enforces) and
+// the visit must not be locked (signed/submitted). Empty-string fields
+// are stripped; if everything is empty we store NULL.
+const emDocumentationSchema = z.object({
+  vitals: z.string().max(5000).optional(),
+  cc_hpi: z.string().max(20000).optional(),
+  ros: z.string().max(20000).optional(),
+  pe: z.string().max(20000).optional(),
+});
+
+export async function updateVisitEmDocumentation(
+  visitId: string,
+  em: z.infer<typeof emDocumentationSchema>
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const parsed = emDocumentationSchema.safeParse(em);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  // Fetch status + patient_id for lock check + revalidation
+  const { data: visit, error: fetchErr } = await supabase
+    .from("visits")
+    .select("id, patient_id, status")
+    .eq("id", visitId)
+    .maybeSingle();
+  if (fetchErr || !visit) return { error: "Visit not found" };
+
+  if (visit.status === "signed" || visit.status === "submitted") {
+    return { error: "Visit is locked — use an addendum instead." };
+  }
+
+  // Strip empty strings; collapse to NULL when everything is blank
+  const cleaned: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed.data)) {
+    if (typeof v === "string" && v.trim().length > 0) cleaned[k] = v;
+  }
+  const payload = Object.keys(cleaned).length > 0 ? cleaned : null;
+
+  const { error: updateErr } = await supabase
+    .from("visits")
+    .update({ em_documentation: payload })
+    .eq("id", visitId);
+
+  if (updateErr) {
+    console.error("Failed to update E/M documentation:", updateErr);
+    return { error: "Failed to save E/M documentation" };
+  }
+
+  void auditPhiAccess({
+    action: "update",
+    table: "visits",
+    recordId: visitId,
+    recordType: "visit_em_documentation",
+  });
+  revalidatePath(`/dashboard/patients/${visit.patient_id}/visits/${visitId}`);
+  return { success: true };
 }
 
 // Server-side autosave for visit drafts
@@ -823,4 +1150,204 @@ export async function getVisitsForQuickAssessment(patientId: string) {
     console.error("Failed to fetch visits for quick assessment:", error);
     return [];
   }
+}
+
+/**
+ * R-067 Copy Forward — returns the completed assessments + treatments from a
+ * prior signed/submitted visit so the caller can pre-populate a new visit.
+ *
+ * Returns only the data needed to stamp into Insert payloads; ids and
+ * timestamps are stripped so the destination visit gets fresh rows.
+ */
+export async function getCopyForwardData(sourceVisitId: string): Promise<{
+  success: boolean;
+  error?: string;
+  assessments?: Array<Record<string, unknown>>;
+  treatments?: Array<Record<string, unknown>>;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: visit, error: visitErr } = await supabase
+    .from("visits")
+    .select("id, patient_id, status")
+    .eq("id", sourceVisitId)
+    .maybeSingle();
+
+  if (visitErr || !visit) return { success: false, error: "Visit not found" };
+
+  const [{ data: assessments }, { data: treatments }] = await Promise.all([
+    supabase
+      .from("assessments")
+      .select(
+        "wound_id, wound_type, length, width, depth, area, " +
+          "granulation_percent, slough_percent, epithelial_percent, " +
+          "exudate_amount, exudate_type, odor, pain_level, periwound_condition, " +
+          "pressure_stage, tunneling, undermining, healing_status, " +
+          "infection_signs, at_risk_reopening, assessment_notes"
+      )
+      .eq("visit_id", sourceVisitId),
+    supabase
+      .from("treatments")
+      .select(
+        "wound_id, treatment_tab, cleanser, primary_dressings, secondary_dressings, " +
+          "secondary_treatment, coverage, frequency_days, prn, " +
+          "debridement, compression, moisture_management, antimicrobials, " +
+          "advanced_therapies, preventive_orders, npwt_pressure, npwt_frequency, " +
+          "chair_cushion_type, special_instructions, treatment_orders"
+      )
+      .eq("visit_id", sourceVisitId),
+  ]);
+
+  return {
+    success: true,
+    assessments: (assessments ?? []) as unknown as Array<
+      Record<string, unknown>
+    >,
+    treatments: (treatments ?? []) as unknown as Array<Record<string, unknown>>,
+  };
+}
+
+/**
+ * R-067 Copy Forward — copies assessments and treatments from a prior visit
+ * into the target (current) draft visit. Existing assessments on the target
+ * visit for the same wound are skipped (no overwrite) to protect in-progress
+ * work. Returns counts of rows created.
+ */
+export async function copyForwardToVisit(
+  sourceVisitId: string,
+  targetVisitId: string
+): Promise<{
+  success: boolean;
+  error?: string;
+  assessmentsCopied?: number;
+  treatmentsCopied?: number;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  // Target visit must be a draft (editable)
+  const { data: targetVisit, error: tvErr } = await supabase
+    .from("visits")
+    .select("id, patient_id, status")
+    .eq("id", targetVisitId)
+    .maybeSingle();
+
+  if (tvErr || !targetVisit) {
+    return { success: false, error: "Target visit not found" };
+  }
+
+  const lockedStatuses = ["signed", "submitted"];
+  if (lockedStatuses.includes(targetVisit.status ?? "")) {
+    return {
+      success: false,
+      error: "Cannot copy forward into a signed or submitted visit.",
+    };
+  }
+
+  // Fetch source data
+  const copyResult = await getCopyForwardData(sourceVisitId);
+  if (!copyResult.success) return copyResult;
+
+  const { assessments = [], treatments = [] } = copyResult;
+
+  if (assessments.length === 0 && treatments.length === 0) {
+    return {
+      success: false,
+      error: "Source visit has no assessments to copy.",
+    };
+  }
+
+  // Check which wounds already have assessments on the target visit
+  const { data: existingAssessments } = await supabase
+    .from("assessments")
+    .select("wound_id")
+    .eq("visit_id", targetVisitId);
+
+  const alreadyAssessed = new Set(
+    (existingAssessments ?? []).map((a) => a.wound_id)
+  );
+
+  // Insert assessments (skip wounds already assessed on target)
+  const assessmentInserts = assessments
+    .filter((a) => a.wound_id && !alreadyAssessed.has(a.wound_id as string))
+    .map((a) => ({
+      ...a,
+      visit_id: targetVisitId,
+      id: undefined,
+      created_at: undefined,
+      updated_at: undefined,
+    }));
+
+  let assessmentsCopied = 0;
+  if (assessmentInserts.length > 0) {
+    const { error: aErr } = await supabase
+      .from("assessments")
+      .insert(
+        assessmentInserts as Parameters<
+          ReturnType<typeof supabase.from>["insert"]
+        >[0]
+      );
+    if (aErr) {
+      console.error("Copy forward assessments error:", aErr);
+      return { success: false, error: "Failed to copy assessments" };
+    }
+    assessmentsCopied = assessmentInserts.length;
+  }
+
+  // Check which wounds already have treatments on the target visit
+  const { data: existingTreatments } = await supabase
+    .from("treatments")
+    .select("wound_id")
+    .eq("visit_id", targetVisitId);
+
+  const alreadyTreated = new Set(
+    (existingTreatments ?? []).map((t) => t.wound_id).filter(Boolean)
+  );
+
+  const treatmentInserts = treatments
+    .filter((t) => !t.wound_id || !alreadyTreated.has(t.wound_id as string))
+    .map((t) => ({
+      ...t,
+      visit_id: targetVisitId,
+      id: undefined,
+      created_at: undefined,
+      updated_at: undefined,
+      generated_order_text: null,
+    }));
+
+  let treatmentsCopied = 0;
+  if (treatmentInserts.length > 0) {
+    const { error: tErr } = await supabase
+      .from("treatments")
+      .insert(
+        treatmentInserts as Parameters<
+          ReturnType<typeof supabase.from>["insert"]
+        >[0]
+      );
+    if (tErr) {
+      console.error("Copy forward treatments error:", tErr);
+      return { success: false, error: "Failed to copy treatments" };
+    }
+    treatmentsCopied = treatmentInserts.length;
+  }
+
+  void auditPhiAccess({
+    action: "create",
+    table: "visits",
+    recordId: targetVisitId,
+    recordType: "visit_copy_forward",
+    reason: `Copy forward from visit ${sourceVisitId}`,
+  });
+  revalidatePath(
+    `/dashboard/patients/${targetVisit.patient_id}/visits/${targetVisitId}`
+  );
+
+  return { success: true, assessmentsCopied, treatmentsCopied };
 }

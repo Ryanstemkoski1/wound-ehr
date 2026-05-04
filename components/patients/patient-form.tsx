@@ -107,15 +107,22 @@ type Patient = {
   city: string | null;
   state: string | null;
   zip: string | null;
+  homeHealthAgencyId?: string | null;
   insuranceInfo: InsuranceInfo | null;
   emergencyContact: EmergencyContact | null;
   allergies: string[] | null;
   medicalHistory: string[] | null;
 };
 
+type HomeHealthAgencyOption = {
+  id: string;
+  name: string;
+};
+
 type PatientFormProps = {
   patient?: Patient;
   facilities: Facility[];
+  homeHealthAgencies?: HomeHealthAgencyOption[];
   userCredentials: Credentials | null;
   userRole: UserRole | null;
 };
@@ -123,6 +130,7 @@ type PatientFormProps = {
 export default function PatientForm({
   patient,
   facilities,
+  homeHealthAgencies = [],
   userCredentials,
   userRole,
 }: PatientFormProps) {
@@ -330,6 +338,33 @@ export default function PatientForm({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {homeHealthAgencies.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="homeHealthAgencyId">
+                      Home Health Agency
+                      <span className="text-muted-foreground ml-2 text-xs font-normal">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Select
+                      name="homeHealthAgencyId"
+                      defaultValue={patient?.homeHealthAgencyId ?? "none"}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select agency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {homeHealthAgencies.map((hha) => (
+                          <SelectItem key={hha.id} value={hha.id}>
+                            {hha.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">

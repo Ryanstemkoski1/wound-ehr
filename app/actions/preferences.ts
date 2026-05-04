@@ -12,6 +12,9 @@ export type PDFPreferences = {
   pdf_photo_size: "small" | "medium" | "large";
   pdf_max_photos_per_assessment: number;
   pdf_page_size: "letter" | "a4";
+  // General preferences stored in the JSONB `preferences` column
+  timezone?: string;
+  default_facility_id?: string;
 };
 
 export type UserPreferences = PDFPreferences & {
@@ -54,7 +57,7 @@ export async function getUserPreferences(): Promise<{
     const { data, error } = await supabase
       .from("user_preferences")
       .select(
-        "pdf_include_photos, pdf_photo_size, pdf_max_photos_per_assessment, pdf_page_size"
+        "pdf_include_photos, pdf_photo_size, pdf_max_photos_per_assessment, pdf_page_size, preferences"
       )
       .eq("user_id", user.id)
       .maybeSingle();
@@ -63,20 +66,27 @@ export async function getUserPreferences(): Promise<{
       return { error: "Failed to load preferences" };
     }
 
-    // Return saved preferences or defaults
+    if (!data) return { preferences: DEFAULT_PDF_PREFERENCES };
+
+    // Merge typed columns + JSONB general preferences
+    const jsonbPrefs = (data.preferences ?? {}) as Record<string, unknown>;
     return {
-      preferences: data
-        ? {
-            pdf_include_photos: data.pdf_include_photos,
-            pdf_photo_size:
-              data.pdf_photo_size as PDFPreferences["pdf_photo_size"],
-            pdf_max_photos_per_assessment: data.pdf_max_photos_per_assessment,
-            pdf_page_size:
-              data.pdf_page_size as PDFPreferences["pdf_page_size"],
-          }
-        : DEFAULT_PDF_PREFERENCES,
+      preferences: {
+        pdf_include_photos: data.pdf_include_photos,
+        pdf_photo_size: data.pdf_photo_size as PDFPreferences["pdf_photo_size"],
+        pdf_max_photos_per_assessment: data.pdf_max_photos_per_assessment,
+        pdf_page_size: data.pdf_page_size as PDFPreferences["pdf_page_size"],
+        timezone:
+          typeof jsonbPrefs.timezone === "string"
+            ? jsonbPrefs.timezone
+            : undefined,
+        default_facility_id:
+          typeof jsonbPrefs.default_facility_id === "string"
+            ? jsonbPrefs.default_facility_id
+            : undefined,
+      },
     };
-  } catch (err) {
+  } catch {
     return { error: "Failed to load preferences" };
   }
 }
@@ -116,6 +126,12 @@ export async function savePDFPreferences(
       return { error: "Max photos must be 1-6" };
     }
 
+    // Build the JSONB general preferences patch
+    const jsonbUpdate: Record<string, unknown> = {};
+    if (prefs.timezone !== undefined) jsonbUpdate.timezone = prefs.timezone;
+    if (prefs.default_facility_id !== undefined)
+      jsonbUpdate.default_facility_id = prefs.default_facility_id;
+
     const { error } = await supabase.from("user_preferences").upsert(
       {
         user_id: user.id,
@@ -123,6 +139,9 @@ export async function savePDFPreferences(
         pdf_photo_size: prefs.pdf_photo_size,
         pdf_max_photos_per_assessment: prefs.pdf_max_photos_per_assessment,
         pdf_page_size: prefs.pdf_page_size,
+        ...(Object.keys(jsonbUpdate).length > 0
+          ? { preferences: jsonbUpdate }
+          : {}),
       },
       { onConflict: "user_id" }
     );
@@ -133,7 +152,7 @@ export async function savePDFPreferences(
 
     revalidatePath("/dashboard/settings");
     return { success: true };
-  } catch (err) {
+  } catch {
     return { error: "Failed to save preferences" };
   }
 }

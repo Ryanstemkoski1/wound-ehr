@@ -10,9 +10,9 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           {/* Left: Branding */}
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <span className="text-foreground font-semibold">Wound EHR</span>
+            <span className="text-foreground font-semibold">WoundNote</span>
             <span>•</span>
-            <span>Advanced Wound Care Management</span>
+            <span>by The Wound Well Co.</span>
           </div>
 
           {/* Center: Links */}

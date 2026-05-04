@@ -16,6 +16,11 @@ import {
   Building2,
   Shield,
   UserPlus,
+  ClipboardCheck,
+  ClipboardList,
+  DollarSign,
+  Inbox,
+  HeartPulse,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -23,6 +28,13 @@ import { LazyDashboardCharts } from "@/components/dashboard/lazy-dashboard-chart
 import { getUserRole } from "@/lib/rbac";
 import { getCorrectionsForClinician } from "@/app/actions/approval-workflow";
 import { CorrectionBanner } from "@/components/dashboard/correction-banner";
+import { getActiveSurface } from "@/lib/surface";
+import { getUserCredentials } from "@/lib/rbac";
+import {
+  getClinicalDashboardStats,
+  getAdminDashboardStats,
+} from "@/app/actions/visits";
+import { Badge } from "@/components/ui/badge";
 
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
@@ -40,6 +52,26 @@ export default async function DashboardPage() {
 
   // Get user role for admin features
   const userRole = await getUserRole();
+
+  // Resolve active surface (clinical vs admin/ops)
+  const credentials = await getUserCredentials();
+  const activeSurface =
+    (await getActiveSurface(userRole?.role ?? null, credentials)) ?? "clinical";
+  const isAdminSurface = activeSurface === "admin";
+
+  // Surface-specific stats (non-blocking)
+  let clinicalStats: Awaited<ReturnType<typeof getClinicalDashboardStats>> = {
+    visitsTodayOwn: 0,
+    unsignedToday: 0,
+    visitsThisWeekOwn: 0,
+    recentOwnVisits: [],
+  };
+  let adminStats: Awaited<ReturnType<typeof getAdminDashboardStats>> = {
+    visitsTodayAll: 0,
+    unsignedTodayAll: 0,
+    pendingInboxCount: 0,
+    billingReadyCount: 0,
+  };
 
   // Get admin stats if user is tenant admin (parallel)
   let totalUsers = 0;
@@ -74,8 +106,6 @@ export default async function DashboardPage() {
   // Get stats across all user's facilities with error handling
   let totalPatients = 0;
   let activeWounds = 0;
-  let visitsThisMonth = 0;
-  let pendingVisits = 0;
   let recentVisits: {
     id: string;
     visit_date: string;
@@ -105,6 +135,17 @@ export default async function DashboardPage() {
       .eq("user_id", user.id);
 
     const facilityIds = userFacilities?.map((uf) => uf.facility_id) || [];
+
+    // Fetch surface-specific stats in parallel (non-blocking)
+    try {
+      if (isAdminSurface) {
+        adminStats = await getAdminDashboardStats(facilityIds);
+      } else {
+        clinicalStats = await getClinicalDashboardStats();
+      }
+    } catch {
+      // Surface stats unavailable — non-critical
+    }
 
     if (facilityIds.length === 0) {
       // User has no facilities, show empty dashboard
@@ -156,8 +197,8 @@ export default async function DashboardPage() {
 
         const [
           woundsCountResult,
-          visitsCountResult,
-          pendingCountResult,
+          ,
+          ,
           recentVisitsResult,
           woundsResult,
           ...monthlyVisitResults
@@ -206,8 +247,6 @@ export default async function DashboardPage() {
         ]);
 
         activeWounds = woundsCountResult.count || 0;
-        visitsThisMonth = visitsCountResult.count || 0;
-        pendingVisits = pendingCountResult.count || 0;
         recentVisits = recentVisitsResult.data || [];
 
         // Process wound status distribution
@@ -281,52 +320,99 @@ export default async function DashboardPage() {
     })
   );
 
-  const stats = [
-    {
-      title: "Total Patients",
-      value: totalPatients.toString(),
-      icon: Users,
-      description: "Active patients",
-      color: "teal",
-      gradient: "from-teal-500 to-teal-600",
-      iconBg: "bg-teal-500/10",
-      iconColor: "text-teal-600 dark:text-teal-400",
-      href: "/dashboard/patients",
-    },
-    {
-      title: "Active Wounds",
-      value: activeWounds.toString(),
-      icon: Activity,
-      description: "Currently being tracked",
-      color: "amber",
-      gradient: "from-amber-500 to-orange-500",
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-600 dark:text-amber-400",
-      href: "/dashboard/wounds",
-    },
-    {
-      title: "Visits This Month",
-      value: visitsThisMonth.toString(),
-      icon: Calendar,
-      description: "Completed visits",
-      color: "blue",
-      gradient: "from-blue-500 to-cyan-500",
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      href: "/dashboard/calendar",
-    },
-    {
-      title: "Pending Visits",
-      value: pendingVisits.toString(),
-      icon: FileText,
-      description: "Incomplete documentation",
-      color: "purple",
-      gradient: "from-purple-500 to-pink-500",
-      iconBg: "bg-purple-500/10",
-      iconColor: "text-purple-600 dark:text-purple-400",
-      href: "/dashboard/calendar",
-    },
-  ];
+  const stats = isAdminSurface
+    ? [
+        {
+          title: "Total Patients",
+          value: totalPatients.toString(),
+          icon: Users,
+          description: "Active patients across facilities",
+          color: "teal",
+          gradient: "from-teal-500 to-teal-600",
+          iconBg: "bg-teal-500/10",
+          iconColor: "text-teal-600 dark:text-teal-400",
+          href: "/dashboard/patients",
+        },
+        {
+          title: "Visits Today",
+          value: adminStats.visitsTodayAll.toString(),
+          icon: Calendar,
+          description: "All clinicians today",
+          color: "blue",
+          gradient: "from-blue-500 to-cyan-500",
+          iconBg: "bg-blue-500/10",
+          iconColor: "text-blue-600 dark:text-blue-400",
+          href: "/dashboard/calendar",
+        },
+        {
+          title: "Unsigned Today",
+          value: adminStats.unsignedTodayAll.toString(),
+          icon: ClipboardList,
+          description: "Pending signatures today",
+          color: "amber",
+          gradient: "from-amber-500 to-orange-500",
+          iconBg: "bg-amber-500/10",
+          iconColor: "text-amber-600 dark:text-amber-400",
+          href: "/dashboard/calendar",
+        },
+        {
+          title: "Office Inbox",
+          value: adminStats.pendingInboxCount.toString(),
+          icon: Inbox,
+          description: "Notes awaiting review",
+          color: "purple",
+          gradient: "from-purple-500 to-pink-500",
+          iconBg: "bg-purple-500/10",
+          iconColor: "text-purple-600 dark:text-purple-400",
+          href: "/dashboard/admin",
+        },
+      ]
+    : [
+        {
+          title: "My Visits Today",
+          value: clinicalStats.visitsTodayOwn.toString(),
+          icon: Calendar,
+          description: "Visits scheduled for today",
+          color: "teal",
+          gradient: "from-teal-500 to-teal-600",
+          iconBg: "bg-teal-500/10",
+          iconColor: "text-teal-600 dark:text-teal-400",
+          href: "/dashboard/calendar",
+        },
+        {
+          title: "Unsigned Today",
+          value: clinicalStats.unsignedToday.toString(),
+          icon: ClipboardList,
+          description: "Need your signature today",
+          color: "amber",
+          gradient: "from-amber-500 to-orange-500",
+          iconBg: "bg-amber-500/10",
+          iconColor: "text-amber-600 dark:text-amber-400",
+          href: "/dashboard/calendar",
+        },
+        {
+          title: "Corrections Pending",
+          value: correctionsCount.toString(),
+          icon: ClipboardCheck,
+          description: "Notes requiring correction",
+          color: "purple",
+          gradient: "from-purple-500 to-pink-500",
+          iconBg: "bg-purple-500/10",
+          iconColor: "text-purple-600 dark:text-purple-400",
+          href: "/dashboard/corrections",
+        },
+        {
+          title: "Active Wounds",
+          value: activeWounds.toString(),
+          icon: HeartPulse,
+          description: "Currently being tracked",
+          color: "blue",
+          gradient: "from-blue-500 to-cyan-500",
+          iconBg: "bg-blue-500/10",
+          iconColor: "text-blue-600 dark:text-blue-400",
+          href: "/dashboard/wounds",
+        },
+      ];
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -515,68 +601,113 @@ export default async function DashboardPage() {
         healingData={healingTrends}
       />
 
-      {/* Recent Activity */}
+      {/* Recent Activity — surface-specific */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Visits</CardTitle>
-            <CardDescription>Last 5 patient visits</CardDescription>
+            <CardTitle>
+              {isAdminSurface ? "Recent Visits" : "My Recent Visits"}
+            </CardTitle>
+            <CardDescription>
+              {isAdminSurface
+                ? "Last 5 visits across all clinicians"
+                : "Your last 5 patient visits"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {recentVisits.length === 0 ? (
+            {isAdminSurface ? (
+              /* Admin: all clinicians recent visits */
+              recentVisits.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No recent visits
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {recentVisits.map(
+                    (visit: {
+                      id: string;
+                      visit_date: string;
+                      visit_type: string;
+                      status: string;
+                      patient: {
+                        id: string;
+                        first_name: string;
+                        last_name: string;
+                      };
+                    }) => {
+                      const patient = Array.isArray(visit.patient)
+                        ? visit.patient[0]
+                        : visit.patient;
+                      return (
+                        <Link
+                          key={visit.id}
+                          href={`/dashboard/patients/${patient.id}/visits/${visit.id}`}
+                          className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+                          aria-label={`View visit for ${patient.first_name} ${patient.last_name}`}
+                        >
+                          <div>
+                            <p className="font-medium">
+                              {patient.first_name} {patient.last_name}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              {format(
+                                new Date(visit.visit_date),
+                                "MMM dd, yyyy"
+                              )}{" "}
+                              • {visit.visit_type}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              visit.status === "signed" ||
+                              visit.status === "submitted"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {visit.status}
+                          </Badge>
+                        </Link>
+                      );
+                    }
+                  )}
+                </div>
+              )
+            ) : /* Clinical: own recent visits */
+            clinicalStats.recentOwnVisits.length === 0 ? (
               <p className="text-muted-foreground text-sm">No recent visits</p>
             ) : (
               <div className="space-y-4">
-                {recentVisits.map(
-                  (visit: {
-                    id: string;
-                    visit_date: string;
-                    visit_type: string;
-                    status: string;
-                    patient: {
-                      id: string;
-                      first_name: string;
-                      last_name: string;
-                    };
-                  }) => {
-                    const patient = Array.isArray(visit.patient)
-                      ? visit.patient[0]
-                      : visit.patient;
-                    return (
-                      <Link
-                        key={visit.id}
-                        href={`/dashboard/patients/${patient.id}/visits/${visit.id}`}
-                        className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
-                        aria-label={`View visit for ${patient.first_name} ${patient.last_name} on ${format(new Date(visit.visit_date), "MMM dd, yyyy")}, status: ${visit.status}`}
-                      >
-                        <div>
-                          <p className="font-medium">
-                            {patient.first_name} {patient.last_name}
-                          </p>
-                          <p className="text-muted-foreground text-sm">
-                            {format(new Date(visit.visit_date), "MMM dd, yyyy")}{" "}
-                            • {visit.visit_type}
-                          </p>
-                        </div>
-                        <div>
-                          {visit.status === "incomplete" ? (
-                            <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                              <AlertCircle
-                                className="h-3 w-3"
-                                aria-hidden="true"
-                              />
-                              Incomplete
-                            </span>
-                          ) : (
-                            <span className="text-xs text-green-600 dark:text-green-400">
-                              Complete
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  }
-                )}
+                {clinicalStats.recentOwnVisits.map((visit) => (
+                  <Link
+                    key={visit.id}
+                    href={`/dashboard/patients/${visit.patient_id}/visits/${visit.id}`}
+                    className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+                    aria-label={`View visit for ${visit.patient_name}`}
+                  >
+                    <div>
+                      <p className="font-medium">{visit.patient_name}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {format(new Date(visit.visit_date), "MMM dd, yyyy")}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
+                        visit.status === "signed" ||
+                        visit.status === "submitted"
+                          ? "default"
+                          : visit.status === "draft" ||
+                              visit.status === "incomplete"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {visit.status}
+                    </Badge>
+                  </Link>
+                ))}
               </div>
             )}
           </CardContent>
@@ -588,45 +719,133 @@ export default async function DashboardPage() {
             <CardDescription>Common tasks</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Link
-              href="/dashboard/patients/new"
-              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
-              aria-label="Add New Patient - Register a new patient"
-            >
-              <Users className="h-5 w-5 text-teal-600" aria-hidden="true" />
-              <div>
-                <p className="font-medium">Add New Patient</p>
-                <p className="text-muted-foreground text-xs">
-                  Register a new patient
-                </p>
-              </div>
-            </Link>
-            <Link
-              href="/dashboard/calendar"
-              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
-              aria-label="Schedule Visit - Book an appointment"
-            >
-              <Calendar className="h-5 w-5 text-teal-600" aria-hidden="true" />
-              <div>
-                <p className="font-medium">Schedule Visit</p>
-                <p className="text-muted-foreground text-xs">
-                  Book an appointment
-                </p>
-              </div>
-            </Link>
-            <Link
-              href="/dashboard/billing"
-              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
-              aria-label="View Billing - Access billing reports"
-            >
-              <FileText className="h-5 w-5 text-teal-600" aria-hidden="true" />
-              <div>
-                <p className="font-medium">View Billing</p>
-                <p className="text-muted-foreground text-xs">
-                  Access billing reports
-                </p>
-              </div>
-            </Link>
+            {isAdminSurface ? (
+              <>
+                <Link
+                  href="/dashboard/admin"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="Review Office Inbox"
+                >
+                  <Inbox className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  <div>
+                    <p className="font-medium">Office Inbox</p>
+                    <p className="text-muted-foreground text-xs">
+                      Review notes sent for approval
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/billing"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="Review Billing"
+                >
+                  <DollarSign
+                    className="h-5 w-5 text-teal-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="font-medium">Billing</p>
+                    <p className="text-muted-foreground text-xs">
+                      Process billing records
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/patients"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="View Patients"
+                >
+                  <Users className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  <div>
+                    <p className="font-medium">Patients</p>
+                    <p className="text-muted-foreground text-xs">
+                      View and manage patient roster
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/reports"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="Reports"
+                >
+                  <Activity
+                    className="h-5 w-5 text-teal-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="font-medium">Reports</p>
+                    <p className="text-muted-foreground text-xs">
+                      Visit logs and analytics
+                    </p>
+                  </div>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/dashboard/calendar"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="View Today's Schedule"
+                >
+                  <Calendar
+                    className="h-5 w-5 text-teal-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="font-medium">Today&apos;s Schedule</p>
+                    <p className="text-muted-foreground text-xs">
+                      {clinicalStats.visitsTodayOwn} visits today ·{" "}
+                      {clinicalStats.unsignedToday} unsigned
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/patients/new"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="Add New Patient"
+                >
+                  <Users className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  <div>
+                    <p className="font-medium">Add New Patient</p>
+                    <p className="text-muted-foreground text-xs">
+                      Register a new patient
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/wounds"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="Active Wounds"
+                >
+                  <HeartPulse
+                    className="h-5 w-5 text-teal-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="font-medium">Active Wounds</p>
+                    <p className="text-muted-foreground text-xs">
+                      Track wound progress
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/billing"
+                  className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
+                  aria-label="View Billing"
+                >
+                  <FileText
+                    className="h-5 w-5 text-teal-600"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="font-medium">View Billing</p>
+                    <p className="text-muted-foreground text-xs">
+                      Access billing reports
+                    </p>
+                  </div>
+                </Link>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

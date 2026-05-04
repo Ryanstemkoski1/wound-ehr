@@ -13,7 +13,14 @@ const SHARED_ADMIN_ROUTES = [
   "/dashboard/admin/users", // Both tenant_admin and facility_admin can manage users
   "/dashboard/admin/invites", // Both tenant_admin and facility_admin can access
   "/dashboard/admin/inbox", // Office inbox — facility admins handle their own facility
+  "/dashboard/admin/agencies", // Home Health Agencies — both admin tiers can curate
 ];
+
+// Operations-surface-only routes. A clinician with no admin entitlement
+// (i.e. not tenant_admin / facility_admin and not holding the "Admin"
+// credential) should never reach these — even via a stale link or bookmark.
+// See docs/PROJECT_PLAN.md §7.1 (R-007, R-008).
+const ADMIN_SURFACE_ROUTES = ["/dashboard/billing", "/dashboard/reports"];
 
 export async function proxy(request: NextRequest) {
   // Update Supabase session
@@ -22,7 +29,12 @@ export async function proxy(request: NextRequest) {
   // Check if accessing admin routes
   const pathname = request.nextUrl.pathname;
 
-  if (ADMIN_ROUTES.some((route) => pathname.startsWith(route))) {
+  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+  const isAdminSurfaceRoute = ADMIN_SURFACE_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (isAdminRoute || isAdminSurfaceRoute) {
     const supabase = await createClient();
 
     const {
@@ -48,28 +60,60 @@ export async function proxy(request: NextRequest) {
     }
 
     const userRole = userRoleData[0];
+    const roleName: string = userRole.role;
 
-    // Check if user has required role for specific routes
-    // Tenant admin only routes
-    if (
-      TENANT_ADMIN_ROUTES.some((route) => pathname.startsWith(route)) &&
-      userRole.role !== "tenant_admin"
-    ) {
-      // Insufficient permissions
+    // Look up the user's credential to compute admin entitlement.
+    // (Credentials live on `users`, not `user_roles`.)
+    let credentials: string | null = null;
+    if (isAdminSurfaceRoute) {
+      const { data: userRow } = await supabase
+        .from("users")
+        .select("credentials")
+        .eq("id", user.id)
+        .single();
+      credentials = (userRow?.credentials as string | null) ?? null;
+    }
+
+    const hasAdminEntitlement =
+      roleName === "tenant_admin" ||
+      roleName === "facility_admin" ||
+      credentials === "Admin";
+
+    // Operations-surface routes (billing, reports): require admin entitlement.
+    if (isAdminSurfaceRoute && !hasAdminEntitlement) {
       return NextResponse.redirect(
         new URL("/dashboard?error=insufficient_permissions", request.url)
       );
     }
 
-    // Shared admin routes (both tenant_admin and facility_admin)
-    if (
-      SHARED_ADMIN_ROUTES.some((route) => pathname.startsWith(route)) &&
-      userRole.role !== "tenant_admin" &&
-      userRole.role !== "facility_admin"
-    ) {
-      return NextResponse.redirect(
-        new URL("/dashboard?error=insufficient_permissions", request.url)
-      );
+    if (isAdminRoute) {
+      // Tenant admin only routes
+      if (
+        TENANT_ADMIN_ROUTES.some((route) => pathname.startsWith(route)) &&
+        roleName !== "tenant_admin"
+      ) {
+        return NextResponse.redirect(
+          new URL("/dashboard?error=insufficient_permissions", request.url)
+        );
+      }
+
+      // Shared admin routes (both tenant_admin and facility_admin)
+      if (
+        SHARED_ADMIN_ROUTES.some((route) => pathname.startsWith(route)) &&
+        roleName !== "tenant_admin" &&
+        roleName !== "facility_admin"
+      ) {
+        return NextResponse.redirect(
+          new URL("/dashboard?error=insufficient_permissions", request.url)
+        );
+      }
+
+      // Catch-all: anyone hitting /dashboard/admin/** must have an admin role.
+      if (roleName !== "tenant_admin" && roleName !== "facility_admin") {
+        return NextResponse.redirect(
+          new URL("/dashboard?error=insufficient_permissions", request.url)
+        );
+      }
     }
   }
 

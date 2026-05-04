@@ -31,6 +31,24 @@ import {
 import { Download, FileText } from "lucide-react";
 import Link from "next/link";
 
+type BillingStatus = "draft" | "ready" | "submitted" | "paid" | "denied";
+
+const STATUS_LABELS: Record<BillingStatus, string> = {
+  draft: "Draft",
+  ready: "Ready",
+  submitted: "Submitted",
+  paid: "Paid",
+  denied: "Denied",
+};
+
+const STATUS_BADGE_CLASS: Record<BillingStatus, string> = {
+  draft: "bg-zinc-100 text-zinc-700 border-zinc-300",
+  ready: "bg-blue-100 text-blue-700 border-blue-300",
+  submitted: "bg-amber-100 text-amber-700 border-amber-300",
+  paid: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  denied: "bg-red-100 text-red-700 border-red-300",
+};
+
 type BillingRecord = {
   id: string;
   cptCodes: unknown;
@@ -38,6 +56,9 @@ type BillingRecord = {
   modifiers: unknown;
   timeSpent: boolean;
   notes: string | null;
+  billingStatus?: BillingStatus;
+  submittedAt?: string | null;
+  claimNumber?: string | null;
   createdAt: Date;
   visit: {
     id: string;
@@ -69,12 +90,19 @@ type Props = {
 export function BillingReportsClient({ initialBillings, facilities }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFacility, setSelectedFacility] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
   // Filter billings
   const filteredBillings = useMemo(() => {
     return initialBillings.filter((billing) => {
+      // Status filter
+      if (selectedStatus !== "all") {
+        const billingStatus = billing.billingStatus ?? "draft";
+        if (billingStatus !== selectedStatus) return false;
+      }
+
       // Facility filter
       if (
         selectedFacility !== "all" &&
@@ -107,7 +135,14 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
 
       return true;
     });
-  }, [initialBillings, selectedFacility, startDate, endDate, searchQuery]);
+  }, [
+    initialBillings,
+    selectedFacility,
+    selectedStatus,
+    startDate,
+    endDate,
+    searchQuery,
+  ]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -233,7 +268,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-2">
               <Label htmlFor="search">Search Patient</Label>
               <Input
@@ -242,6 +277,23 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {(Object.keys(STATUS_LABELS) as BillingStatus[]).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {STATUS_LABELS[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -291,6 +343,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedFacility("all");
+                setSelectedStatus("all");
                 setStartDate("");
                 setEndDate("");
               }}
@@ -337,6 +390,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                       <TableHead>Patient</TableHead>
                       <TableHead>MRN</TableHead>
                       <TableHead>Facility</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>CPT Codes</TableHead>
                       <TableHead>ICD-10 Codes</TableHead>
                       <TableHead>Modifiers</TableHead>
@@ -365,6 +419,20 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                         <TableCell>{billing.patient.mrn}</TableCell>
                         <TableCell className="whitespace-nowrap">
                           {billing.patient.facility?.name || "No Facility"}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const s = (billing.billingStatus ??
+                              "draft") as BillingStatus;
+                            return (
+                              <Badge
+                                variant="outline"
+                                className={STATUS_BADGE_CLASS[s]}
+                              >
+                                {STATUS_LABELS[s]}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">

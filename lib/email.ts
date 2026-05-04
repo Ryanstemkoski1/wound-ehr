@@ -37,7 +37,7 @@ export async function sendInviteEmail({
         ? "Facility Administrator"
         : "User";
 
-  const subject = `You've been invited to Wound EHR`;
+  const subject = `You've been invited to WoundNote`;
 
   const htmlBody = `
     <!DOCTYPE html>
@@ -48,15 +48,15 @@ export async function sendInviteEmail({
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Wound EHR</h1>
-          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Electronic Health Record System</p>
+          <h1 style="color: white; margin: 0; font-size: 28px;">WoundNote</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">by The Wound Well Co.</p>
         </div>
         
         <div style="background: #fff; padding: 40px 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
           <h2 style="color: #0d9488; margin-top: 0;">You've Been Invited! 🎉</h2>
           
           <p style="font-size: 16px; color: #4b5563;">
-            <strong>${invitedBy}</strong> has invited you to join Wound EHR as a <strong>${roleLabel}</strong>.
+            <strong>${invitedBy}</strong> has invited you to join WoundNote as a <strong>${roleLabel}</strong>.
           </p>
           
           ${facilityName ? `<p style="font-size: 16px; color: #4b5563;">Facility: <strong>${facilityName}</strong></p>` : ""}
@@ -90,16 +90,16 @@ export async function sendInviteEmail({
         </div>
         
         <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} Wound EHR. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} WoundNote by The Wound Well Co. All rights reserved.</p>
         </div>
       </body>
     </html>
   `;
 
   const textBody = `
-You've Been Invited to Wound EHR!
+You've Been Invited to WoundNote!
 
-${invitedBy} has invited you to join Wound EHR as a ${roleLabel}.
+${invitedBy} has invited you to join WoundNote as a ${roleLabel}.
 ${facilityName ? `Facility: ${facilityName}\n` : ""}
 Click the link below to accept your invitation and create your account:
 
@@ -109,7 +109,7 @@ This invitation will expire in 7 days.
 
 If you didn't expect this invitation, you can safely ignore this email.
 
-© ${new Date().getFullYear()} Wound EHR. All rights reserved.
+© ${new Date().getFullYear()} WoundNote by The Wound Well Co. All rights reserved.
   `.trim();
 
   try {

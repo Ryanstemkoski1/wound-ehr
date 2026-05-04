@@ -35,7 +35,7 @@ function SignupContent() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4 flex justify-center">
-            <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
+            <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
           </div>
           <CardTitle className="text-center text-2xl">
             Registration Disabled
@@ -90,7 +90,7 @@ export default function SignupPage() {
               <div className="mb-4 flex justify-center">
                 <Image
                   src="/logo.svg"
-                  alt="Wound EHR"
+                  alt="WoundNote"
                   width={200}
                   height={60}
                 />
@@ -147,7 +147,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="mb-4 flex justify-center">
-            <Image src="/logo.svg" alt="Wound EHR" width={200} height={60} />
+            <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
           </div>
           <CardTitle className="text-center text-2xl">
             {inviteToken ? "Accept Invitation" : "Create an account"}
@@ -155,7 +155,7 @@ export default function SignupPage() {
           <CardDescription className="text-center">
             {inviteToken
               ? "You've been invited to join an organization"
-              : "Get started with Wound EHR"}
+              : "Get started with WoundNote"}
           </CardDescription>
         </CardHeader>
         <form action={handleSubmit}>

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Validation schema
 const assessmentSchema = z.object({
@@ -270,6 +271,12 @@ export async function createAssessment(formData: FormData) {
 
     if (createError) throw createError;
 
+    void auditPhiAccess({
+      action: "create",
+      table: "assessments",
+      recordId: newAssessment?.id,
+      recordType: "wound_assessment",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${visit.patient_id}`);
     revalidatePath(
@@ -406,6 +413,12 @@ export async function updateAssessment(
 
     if (updateError) throw updateError;
 
+    void auditPhiAccess({
+      action: "update",
+      table: "assessments",
+      recordId: assessmentId,
+      recordType: "wound_assessment",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath(
       `/dashboard/patients/${existingAssessment.visit.patient.id}`
@@ -467,6 +480,12 @@ export async function deleteAssessment(assessmentId: string) {
 
     if (deleteError) throw deleteError;
 
+    void auditPhiAccess({
+      action: "delete",
+      table: "assessments",
+      recordId: assessmentId,
+      recordType: "wound_assessment",
+    });
     revalidatePath("/dashboard/patients");
     revalidatePath(`/dashboard/patients/${assessment.visit.patient.id}`);
     revalidatePath(

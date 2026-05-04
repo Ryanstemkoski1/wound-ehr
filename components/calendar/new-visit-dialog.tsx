@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,8 +34,12 @@ import {
   createVisitFromCalendar,
 } from "@/app/actions/calendar";
 import { getUserFacilities } from "@/app/actions/facilities";
+import { listServiceLocations } from "@/app/actions/service-locations";
+import { getAvailableClinicians } from "@/app/actions/patient-clinicians";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+const NONE_VALUE = "__none__";
 
 const newVisitSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
@@ -43,6 +47,9 @@ const newVisitSchema = z.object({
   visitDate: z.string(),
   visitTime: z.string(),
   visitType: z.string(),
+  serviceLocationId: z.string().optional(),
+  clinicianId: z.string().optional(),
+  durationMinutes: z.number().int().min(5).max(480),
   location: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -54,6 +61,13 @@ type NewVisitDialogProps = {
   onOpenChange: (open: boolean) => void;
   initialDate?: Date;
   onSuccess?: () => void;
+};
+
+type ServiceLocationOpt = { id: string; name: string };
+type ClinicianOpt = {
+  id: string;
+  name: string | null;
+  credentials: string | null;
 };
 
 export default function NewVisitDialog({
@@ -68,6 +82,10 @@ export default function NewVisitDialog({
   const [patients, setPatients] = useState<
     Array<{ id: string; first_name: string; last_name: string; mrn: string }>
   >([]);
+  const [serviceLocations, setServiceLocations] = useState<
+    ServiceLocationOpt[]
+  >([]);
+  const [clinicians, setClinicians] = useState<ClinicianOpt[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewVisitFormData>({
@@ -80,12 +98,15 @@ export default function NewVisitDialog({
         : format(new Date(), "yyyy-MM-dd"),
       visitTime: initialDate ? format(initialDate, "HH:mm") : "09:00",
       visitType: "in_person",
+      serviceLocationId: NONE_VALUE,
+      clinicianId: NONE_VALUE,
+      durationMinutes: 30,
       location: "",
       notes: "",
     },
   });
 
-  // Reset form when dialog opens
+  // Reset form when dialog opens with a new initial date
   useEffect(() => {
     if (open && initialDate) {
       form.setValue("visitDate", format(initialDate, "yyyy-MM-dd"));
@@ -102,26 +123,61 @@ export default function NewVisitDialog({
     loadFacilities();
   }, []);
 
-  // Load patients when facility changes
-  useEffect(() => {
-    async function loadPatients() {
-      const facilityId = form.watch("facilityId");
-      if (facilityId) {
-        const result = await getPatientsForCalendar(facilityId);
-        if (result.success && result.patients) {
-          setPatients(result.patients);
-        }
+  const facilityId = form.watch("facilityId");
+
+  // Load patients, service locations, and clinicians whenever facility changes
+  const loadFacilityScopedData = useCallback(
+    async (fid: string) => {
+      if (!fid) {
+        setPatients([]);
+        setServiceLocations([]);
+        setClinicians([]);
+        return;
+      }
+      const [patientsRes, locationsRes, cliniciansRes] = await Promise.all([
+        getPatientsForCalendar(fid),
+        listServiceLocations(fid),
+        getAvailableClinicians(fid),
+      ]);
+
+      if (patientsRes.success && patientsRes.patients) {
+        setPatients(patientsRes.patients);
       } else {
         setPatients([]);
       }
-    }
-    loadPatients();
-  }, [form.watch("facilityId")]); // eslint-disable-line react-hooks/exhaustive-deps
+
+      setServiceLocations(
+        locationsRes.success && locationsRes.data
+          ? locationsRes.data.map((l) => ({ id: l.id, name: l.name }))
+          : []
+      );
+
+      setClinicians(
+        cliniciansRes.success && cliniciansRes.data
+          ? cliniciansRes.data.map((c) => ({
+              id: c.id,
+              name: c.name ?? null,
+              credentials:
+                (c as { credentials?: string | null }).credentials ?? null,
+            }))
+          : []
+      );
+
+      // Reset facility-scoped selections so we don't keep a stale id
+      form.setValue("serviceLocationId", NONE_VALUE);
+      form.setValue("clinicianId", NONE_VALUE);
+      form.setValue("patientId", "");
+    },
+    [form]
+  );
+
+  useEffect(() => {
+    loadFacilityScopedData(facilityId);
+  }, [facilityId, loadFacilityScopedData]);
 
   const onSubmit = async (data: NewVisitFormData) => {
     setIsSubmitting(true);
     try {
-      // Combine date and time
       const visitDateTime = new Date(`${data.visitDate}T${data.visitTime}`);
 
       const result = await createVisitFromCalendar({
@@ -129,6 +185,15 @@ export default function NewVisitDialog({
         visitDate: visitDateTime,
         visitType: data.visitType,
         location: data.location,
+        serviceLocationId:
+          data.serviceLocationId && data.serviceLocationId !== NONE_VALUE
+            ? data.serviceLocationId
+            : null,
+        clinicianId:
+          data.clinicianId && data.clinicianId !== NONE_VALUE
+            ? data.clinicianId
+            : null,
+        durationMinutes: data.durationMinutes,
         notes: data.notes,
       });
 
@@ -152,7 +217,7 @@ export default function NewVisitDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Schedule New Visit</DialogTitle>
           <DialogDescription>
@@ -198,7 +263,7 @@ export default function NewVisitDialog({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={!form.watch("facilityId")}
+                    disabled={!facilityId}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -219,8 +284,40 @@ export default function NewVisitDialog({
               )}
             />
 
-            {/* Date and Time */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Clinician */}
+            <FormField
+              control={form.control}
+              name="clinicianId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Clinician (optional)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || NONE_VALUE}
+                    disabled={!facilityId}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select clinician" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={NONE_VALUE}>Unassigned</SelectItem>
+                      {clinicians.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name || c.id}
+                          {c.credentials ? ` (${c.credentials})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Date / Time / Duration */}
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="visitDate"
@@ -248,40 +345,108 @@ export default function NewVisitDialog({
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="durationMinutes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duration (min)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={5}
+                        max={480}
+                        step={5}
+                        value={field.value ?? 30}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === "" ? 0 : Number(e.target.value)
+                          )
+                        }
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {/* Visit Type */}
-            <FormField
-              control={form.control}
-              name="visitType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Visit Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select visit type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="in_person">In-Person</SelectItem>
-                      <SelectItem value="telemed">Telemedicine</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Visit Type + Service Location */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="visitType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visit Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select visit type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="in_person">In-Person</SelectItem>
+                        <SelectItem value="telemed">Telemedicine</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Location */}
+              <FormField
+                control={form.control}
+                name="serviceLocationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Location</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || NONE_VALUE}
+                      disabled={!facilityId || serviceLocations.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              serviceLocations.length === 0
+                                ? "No locations configured"
+                                : "Select location"
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={NONE_VALUE}>
+                          Not specified
+                        </SelectItem>
+                        {serviceLocations.map((sl) => (
+                          <SelectItem key={sl.id} value={sl.id}>
+                            {sl.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Free-text location (legacy / additional detail) */}
             <FormField
               control={form.control}
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location (optional)</FormLabel>
+                  <FormLabel>Location detail (optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Room 101" {...field} />
+                    <Input placeholder="e.g., Room 101, Bed 3" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

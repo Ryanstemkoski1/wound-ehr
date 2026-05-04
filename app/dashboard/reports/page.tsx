@@ -27,12 +27,11 @@ export default async function ReportsPage() {
     .select("id, name")
     .order("name");
 
-  // Fetch clinicians (users who have conducted visits)
+  // Fetch clinicians — users table has `name` (not first_name/last_name)
   const { data: clinicians } = await supabase
     .from("users")
-    .select("id, first_name, last_name, credentials, role")
-    .in("role", ["admin", "clinician"])
-    .order("last_name");
+    .select("id, name, credentials, email")
+    .order("name");
 
   // Fetch patients for medical records requests
   const { data: patients } = await supabase
@@ -55,7 +54,7 @@ export default async function ReportsPage() {
         clinicians={
           clinicians?.map((c) => ({
             id: c.id,
-            name: `${c.last_name}, ${c.first_name}`,
+            name: c.name || c.email || "Unknown",
             credentials: c.credentials || undefined,
           })) || []
         }

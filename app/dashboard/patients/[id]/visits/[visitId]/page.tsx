@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getVisit } from "@/app/actions/visits";
+import { getVisit, getVisitsForQuickAssessment } from "@/app/actions/visits";
 import { getBillingForVisit } from "@/app/actions/billing";
 import { getTreatmentsByVisit } from "@/app/actions/treatments";
 import {
@@ -17,7 +17,6 @@ import {
   MapPin,
   FileText,
   Edit,
-  DollarSign,
   Stethoscope,
 } from "lucide-react";
 import Link from "next/link";
@@ -39,7 +38,15 @@ import {
   getVisitDebridementAssessments,
   getVisitNotSeenReport,
 } from "@/app/actions/new-forms";
-
+import { isTenantFeatureEnabled } from "@/lib/features";
+import { VisitTopbarPill } from "@/components/visits/visit-topbar-pill";
+import { WoundRail } from "@/components/wounds/wound-rail";
+import { SignedBar } from "@/components/visits/signed-bar";
+import { LockedOverlay } from "@/components/visits/locked-overlay";
+import { EmSubSections } from "@/components/visits/em-sub-sections";
+import { VisitBillingPanel } from "@/components/billing/visit-billing-panel";
+import type { BillingStatus } from "@/app/actions/billing";
+import { CopyForwardDialog } from "@/components/visits/copy-forward-dialog";
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
 
@@ -93,6 +100,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
     debridementAssessments,
     notSeenReport,
     { data: userData },
+    priorVisits,
   ] = await Promise.all([
     getBillingForVisit(visitId),
     getTreatmentsByVisit(visitId),
@@ -101,9 +109,23 @@ export default async function VisitDetailPage({ params }: PageProps) {
     getVisitDebridementAssessments(visitId),
     getVisitNotSeenReport(visitId),
     supabase.rpc("get_current_user_credentials"),
+    getVisitsForQuickAssessment(patientId),
   ]);
 
-  const billing = billingResult.success ? billingResult.billing : null;
+  // Phase 3 — opt-in WoundNote UX (R-060/061/062/064). Off by default.
+  const clinicalUxV2 = await isTenantFeatureEnabled("clinical_ux_v2");
+
+  const billing =
+    billingResult.success && billingResult.billing
+      ? {
+          ...billingResult.billing,
+          billingStatus: (billingResult.billing.billingStatus ??
+            "draft") as BillingStatus,
+          cptCodes: billingResult.billing.cptCodes as string[],
+          icd10Codes: billingResult.billing.icd10Codes as string[],
+          modifiers: billingResult.billing.modifiers as string[],
+        }
+      : null;
   const hasRecordingConsent = recordingConsentResult.hasConsent ?? false;
   const hasAiProcessingConsent =
     !!recordingConsentResult.consent?.ai_processing_consent_given;
@@ -128,6 +150,27 @@ export default async function VisitDetailPage({ params }: PageProps) {
           { label: "Visit Details" },
         ]}
       />
+
+      {/* Phase 3 (clinical_ux_v2) — patient topbar pill + locked-state bar */}
+      {clinicalUxV2 && (
+        <>
+          <VisitTopbarPill
+            patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+            mrn={visit.patient.mrn}
+            dob={visit.patient.dob}
+            facilityName={visit.patient.facility?.name ?? null}
+            visitDate={visit.visitDate}
+            clinicianName={visit.clinicianName}
+            clinicianCredentials={visit.clinicianCredentials}
+          />
+          <SignedBar
+            visitId={visitId}
+            visitStatus={visit.status || "draft"}
+            signedBy={visit.clinicianName}
+            signedAt={visit.updatedAt}
+          />
+        </>
+      )}
 
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -158,16 +201,32 @@ export default async function VisitDetailPage({ params }: PageProps) {
             visitId={visitId}
             visitDate={visit.visitDate}
             patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+            format="summary"
           />
+          {(visit.status === "signed" || visit.status === "submitted") && (
+            <VisitPDFDownloadButton
+              visitId={visitId}
+              visitDate={visit.visitDate}
+              patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+              format="full"
+            />
+          )}
           {visit.status !== "signed" && visit.status !== "submitted" && (
-            <Link
-              href={`/dashboard/patients/${patientId}/visits/${visitId}/edit`}
-            >
-              <Button variant="outline" className="gap-2">
-                <Edit className="h-4 w-4" />
-                Edit Visit
-              </Button>
-            </Link>
+            <>
+              <CopyForwardDialog
+                targetVisitId={visitId}
+                patientId={patientId}
+                priorVisits={priorVisits}
+              />
+              <Link
+                href={`/dashboard/patients/${patientId}/visits/${visitId}/edit`}
+              >
+                <Button variant="outline" className="gap-2">
+                  <Edit className="h-4 w-4" />
+                  Edit Visit
+                </Button>
+              </Link>
+            </>
           )}
           <Badge variant={statusVariant} className="h-fit">
             {visit.status}
@@ -175,588 +234,566 @@ export default async function VisitDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Visit Information */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* AI Documentation Status */}
-          <VisitAIStatusCard
-            visitId={visitId}
-            patientId={patientId}
-            patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
-            hasRecordingConsent={hasRecordingConsent}
-            hasAiProcessingConsent={hasAiProcessingConsent}
-            hasTranscript={!!transcript}
-            transcriptId={transcript?.id ?? null}
-            transcriptStatus={
-              (transcript?.processing_status as
-                | "pending"
-                | "processing"
-                | "completed"
-                | "failed"
-                | "deleted") ?? null
-            }
-            aiNoteApproved={!!transcript?.clinician_approved_at}
-            visitStatus={visit.status || "draft"}
-          />
+      <div
+        className={
+          clinicalUxV2 ? "grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]" : ""
+        }
+      >
+        {clinicalUxV2 && (
+          <WoundRail patientId={patientId} currentVisitId={visitId} />
+        )}
 
-          {/* AI Note Review Panel — shown when transcript is completed */}
-          {transcript &&
-            (transcript.processing_status === "completed" ||
-              !!transcript.clinician_approved_at) && (
-              <AIReviewPanel
-                transcript={{
-                  id: transcript.id,
-                  visit_id: transcript.visit_id,
-                  transcript_raw: transcript.transcript_raw ?? null,
-                  transcript_clinical: transcript.transcript_clinical ?? null,
-                  final_note: transcript.final_note ?? null,
-                  clinician_edited: transcript.clinician_edited ?? false,
-                  clinician_approved_at:
-                    transcript.clinician_approved_at ?? null,
-                  approved_by: transcript.approved_by ?? null,
-                  audio_duration_seconds:
-                    transcript.audio_duration_seconds ?? null,
-                  audio_filename: transcript.audio_filename ?? null,
-                  audio_url: transcript.audio_url ?? null,
-                  cost_transcription: transcript.cost_transcription ?? null,
-                  cost_llm: transcript.cost_llm ?? null,
-                  processing_status: transcript.processing_status,
-                  transcript_metadata:
-                    (transcript.transcript_metadata as Record<
-                      string,
-                      unknown
-                    >) ?? null,
-                  error_message: transcript.error_message ?? null,
-                }}
-                visitId={visitId}
-                isEditable={
-                  visit.status !== "signed" && visit.status !== "submitted"
-                }
-              />
-            )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Visit Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="text-muted-foreground h-4 w-4" />
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Date
-                    </p>
-                    <p className="font-medium">
-                      {new Date(visit.visitDate).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Clock className="text-muted-foreground h-4 w-4" />
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Time
-                    </p>
-                    <p className="font-medium">
-                      {new Date(visit.visitDate).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Visit Type
-                  </p>
-                  <p className="font-medium">
-                    {visit.visitType === "in_person"
-                      ? "In-Person"
-                      : "Telemedicine"}
-                  </p>
-                </div>
-
-                {visit.location && (
-                  <div className="flex items-start gap-2">
-                    <MapPin className="text-muted-foreground mt-0.5 h-4 w-4" />
-                    <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Location
-                      </p>
-                      <p className="font-medium">{visit.location}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {visit.timeSpent && (
-                <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
-                  <p className="text-sm text-blue-800 dark:text-blue-300">
-                    ⏱️ 45+ minutes spent on this visit
-                  </p>
-                </div>
-              )}
-
-              {visit.additionalNotes && (
-                <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Additional Notes
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap">
-                    {visit.additionalNotes}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Billing Information */}
-          {billing && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Billing & Documentation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {Array.isArray(billing.cptCodes) &&
-                  billing.cptCodes.length > 0 && (
-                    <div>
-                      <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        CPT Codes
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(billing.cptCodes as string[]).map((code) => (
-                          <Badge key={code} variant="outline">
-                            {code}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {Array.isArray(billing.icd10Codes) &&
-                  billing.icd10Codes.length > 0 && (
-                    <div>
-                      <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        ICD-10 Codes
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(billing.icd10Codes as string[]).map((code) => (
-                          <Badge key={code} variant="outline">
-                            {code}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {Array.isArray(billing.modifiers) &&
-                  billing.modifiers.length > 0 && (
-                    <div>
-                      <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        Modifiers
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(billing.modifiers as string[]).map((modifier) => (
-                          <Badge key={modifier} variant="secondary">
-                            {modifier}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {billing.timeSpent && (
-                  <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
-                    <p className="text-sm text-blue-800 dark:text-blue-300">
-                      ⏱️ Time-based billing applicable (45+ minutes)
-                    </p>
-                  </div>
-                )}
-
-                {billing.notes && (
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Billing Notes
-                    </p>
-                    <p className="mt-1 text-sm whitespace-pre-wrap">
-                      {billing.notes}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        <LockedOverlay
+          locked={
+            clinicalUxV2 &&
+            (visit.status === "signed" || visit.status === "submitted")
+          }
+        >
+          {clinicalUxV2 && (
+            <EmSubSections
+              visitId={visitId}
+              initial={
+                (visit.emDocumentation as {
+                  vitals?: string;
+                  cc_hpi?: string;
+                  ros?: string;
+                  pe?: string;
+                } | null) ?? null
+              }
+              readOnly={
+                visit.status === "signed" || visit.status === "submitted"
+              }
+            />
           )}
-
-          {/* Treatment Orders */}
-          {treatments.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5" />
-                  Treatment Orders
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {treatments.map(
-                  (treatment: {
-                    id: string;
-                    wound_id: string | null;
-                    treatment_tab: string | null;
-                    generated_order_text: string | null;
-                    treatment_orders: string | null;
-                    wound?: {
-                      wound_number: string;
-                      location: string;
-                      wound_type: string;
-                    } | null;
-                  }) => (
-                    <div
-                      key={treatment.id}
-                      className="space-y-2 rounded-lg border p-3"
-                    >
-                      {treatment.wound && (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            Wound #{treatment.wound.wound_number}
-                          </Badge>
-                          <span className="text-muted-foreground text-xs">
-                            {treatment.wound.location}
-                          </span>
-                        </div>
-                      )}
-                      {treatment.treatment_tab && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs capitalize"
-                        >
-                          {treatment.treatment_tab.replace(/_/g, " ")}
-                        </Badge>
-                      )}
-                      <p className="text-sm leading-relaxed">
-                        {treatment.generated_order_text ||
-                          treatment.treatment_orders ||
-                          "No order text generated"}
-                      </p>
-                    </div>
-                  )
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {visit.followUpType && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Follow-Up Plan
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Type
-                  </p>
-                  <p className="font-medium capitalize">{visit.followUpType}</p>
-                </div>
-
-                {visit.followUpDate && (
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Scheduled Date
-                    </p>
-                    <p className="font-medium">
-                      {new Date(visit.followUpDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-
-                {visit.followUpNotes && (
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Notes
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap">
-                      {visit.followUpNotes}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Debridement Assessments */}
-          {debridementAssessments.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  ⚡ Debridement Assessments
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {debridementAssessments.map(
-                  (da: {
-                    id: string;
-                    wound_location: string | null;
-                    wound_type: string | null;
-                    pre_size_length: number | null;
-                    pre_size_width: number | null;
-                    pre_size_depth: number | null;
-                    post_size_length: number | null;
-                    post_size_width: number | null;
-                    area_debrided: number | null;
-                    goals_of_care: string[] | null;
-                    created_at: string;
-                  }) => (
-                    <div
-                      key={da.id}
-                      className="space-y-2 rounded-lg border p-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {da.wound_location || "Location not specified"}
-                          </Badge>
-                          {da.wound_type && (
-                            <Badge
-                              variant="secondary"
-                              className="text-xs capitalize"
-                            >
-                              {da.wound_type}
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-xs text-zinc-500">
-                          {new Date(da.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <span className="text-zinc-500">Pre-size: </span>
-                          {da.pre_size_length && da.pre_size_width
-                            ? `${da.pre_size_length}×${da.pre_size_width}${da.pre_size_depth ? `×${da.pre_size_depth}` : ""} cm`
-                            : "—"}
-                        </div>
-                        <div>
-                          <span className="text-zinc-500">Post-size: </span>
-                          {da.post_size_length && da.post_size_width
-                            ? `${da.post_size_length}×${da.post_size_width} cm`
-                            : "—"}
-                        </div>
-                        <div>
-                          <span className="text-zinc-500">Area debrided: </span>
-                          {da.area_debrided ? `${da.area_debrided} cm²` : "—"}
-                        </div>
-                      </div>
-                      {da.goals_of_care && da.goals_of_care.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {da.goals_of_care.map((g) => (
-                            <Badge
-                              key={g}
-                              variant="secondary"
-                              className="text-xs capitalize"
-                            >
-                              {g.replace(/_/g, " ")}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Patient Not Seen Report */}
-          {notSeenReport && (
-            <Card className="border-amber-200 dark:border-amber-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                  🚫 Patient Not Seen
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <span className="text-sm text-zinc-500">Reason: </span>
-                  <span className="text-sm font-medium capitalize">
-                    {((notSeenReport.reason as string) || "").replace(
-                      /_/g,
-                      " "
-                    )}
-                  </span>
-                </div>
-                {notSeenReport.pertinent_notes && (
-                  <div>
-                    <span className="text-sm text-zinc-500">Notes: </span>
-                    <span className="text-sm">
-                      {notSeenReport.pertinent_notes as string}
-                    </span>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {notSeenReport.follow_up_rescheduled && (
-                    <Badge variant="outline" className="text-xs">
-                      Rescheduled
-                      {notSeenReport.follow_up_new_date
-                        ? ` — ${new Date(notSeenReport.follow_up_new_date as string).toLocaleDateString()}`
-                        : ""}
-                    </Badge>
-                  )}
-                  {notSeenReport.facility_notified && (
-                    <Badge variant="outline" className="text-xs">
-                      Facility Notified
-                    </Badge>
-                  )}
-                  {notSeenReport.family_notified && (
-                    <Badge variant="outline" className="text-xs">
-                      Family Notified
-                    </Badge>
-                  )}
-                  {notSeenReport.referral_source_notified && (
-                    <Badge variant="outline" className="text-xs">
-                      Referral Source Notified
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Signature Workflow & Assessments */}
-        <div className="space-y-6">
-          {/* Signature Workflow */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Visit Status & Signatures</CardTitle>
-                <AddAddendumDialog
-                  visitId={visitId}
-                  visitStatus={visit.status}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <VisitSignatureWorkflow
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Visit Information */}
+            <div className="space-y-6 lg:col-span-2">
+              {/* AI Documentation Status */}
+              <VisitAIStatusCard
                 visitId={visitId}
                 patientId={patientId}
                 patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
-                currentStatus={
-                  (visit.status || "draft") as
-                    | "draft"
-                    | "ready_for_signature"
-                    | "signed"
-                    | "submitted"
+                hasRecordingConsent={hasRecordingConsent}
+                hasAiProcessingConsent={hasAiProcessingConsent}
+                hasTranscript={!!transcript}
+                transcriptId={transcript?.id ?? null}
+                transcriptStatus={
+                  (transcript?.processing_status as
+                    | "pending"
+                    | "processing"
+                    | "completed"
+                    | "failed"
+                    | "deleted") ?? null
                 }
-                requiresPatientSignature={
-                  visit.requiresPatientSignature || false
-                }
-                providerSignatureId={visit.providerSignatureId || null}
-                patientSignatureId={visit.patientSignatureId || null}
-                userName={userName}
-                userCredentials={userCredentials}
+                aiNoteApproved={!!transcript?.clinician_approved_at}
+                visitStatus={visit.status || "draft"}
               />
-            </CardContent>
-          </Card>
 
-          {/* Addendums (post-signature notes) */}
-          <VisitAddendums visitId={visitId} />
+              {/* AI Note Review Panel — shown when transcript is completed */}
+              {transcript &&
+                (transcript.processing_status === "completed" ||
+                  !!transcript.clinician_approved_at) && (
+                  <AIReviewPanel
+                    transcript={{
+                      id: transcript.id,
+                      visit_id: transcript.visit_id,
+                      transcript_raw: transcript.transcript_raw ?? null,
+                      transcript_clinical:
+                        transcript.transcript_clinical ?? null,
+                      final_note: transcript.final_note ?? null,
+                      clinician_edited: transcript.clinician_edited ?? false,
+                      clinician_approved_at:
+                        transcript.clinician_approved_at ?? null,
+                      approved_by: transcript.approved_by ?? null,
+                      audio_duration_seconds:
+                        transcript.audio_duration_seconds ?? null,
+                      audio_filename: transcript.audio_filename ?? null,
+                      audio_url: transcript.audio_url ?? null,
+                      cost_transcription: transcript.cost_transcription ?? null,
+                      cost_llm: transcript.cost_llm ?? null,
+                      processing_status: transcript.processing_status,
+                      transcript_metadata:
+                        (transcript.transcript_metadata as Record<
+                          string,
+                          unknown
+                        >) ?? null,
+                      error_message: transcript.error_message ?? null,
+                    }}
+                    visitId={visitId}
+                    isEditable={
+                      visit.status !== "signed" && visit.status !== "submitted"
+                    }
+                  />
+                )}
 
-          {/* Assessments */}
-          <Card>
-            <CardHeader>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Wound Assessments (This Visit)</CardTitle>
-                  {visit.status !== "signed" &&
-                    visit.status !== "submitted" && (
-                      <NewAssessmentButton
-                        patientId={patientId}
-                        visitId={visitId}
-                      />
-                    )}
-                </div>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Assessments documented during this visit on{" "}
-                  {new Date(visit.visitDate).toLocaleDateString()}. Click an
-                  assessment to edit details.
-                </p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {visit.assessments.length > 0 ? (
-                <div className="space-y-3">
-                  {visit.assessments.map(
-                    (assessment: {
-                      id: string;
-                      woundId: string;
-                      wound: { woundNumber: string; location: string };
-                      healingStatus: string | null;
-                      length: number | null;
-                      width: number | null;
-                      depth: number | null;
-                      area: number | null;
-                      createdAt: Date;
-                    }) => (
-                      <AssessmentCard
-                        key={assessment.id}
-                        assessment={{
-                          ...assessment,
-                          length: assessment.length,
-                          width: assessment.width,
-                          depth: assessment.depth,
-                          area: assessment.area,
-                        }}
-                        patientId={patientId}
-                        visitId={visitId}
-                      />
-                    )
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-4 rounded-full bg-linear-to-br from-blue-100 to-teal-100 p-6 dark:from-blue-900/30 dark:to-teal-900/30">
-                    <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Visit Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="text-muted-foreground h-4 w-4" />
+                      <div>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Date
+                        </p>
+                        <p className="font-medium">
+                          {new Date(visit.visitDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Clock className="text-muted-foreground h-4 w-4" />
+                      <div>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Time
+                        </p>
+                        <p className="font-medium">
+                          {new Date(visit.visitDate).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="mb-2 text-xl font-bold">Ready to Document?</h3>
-                  <p className="mb-6 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-                    Click the <strong>&quot;Add Assessment&quot;</strong> button
-                    at the top of this page to document wound conditions,
-                    measurements, and treatment plans.
-                  </p>
-                  {visit.status !== "signed" &&
-                    visit.status !== "submitted" && (
-                      <div className="flex flex-col items-center gap-3">
-                        <NewAssessmentButton
-                          patientId={patientId}
-                          visitId={visitId}
-                          variant="default"
-                          size="lg"
-                        />
-                        <p className="text-xs text-zinc-500">
-                          Choose from 7 assessment types after clicking
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Visit Type
+                      </p>
+                      <p className="font-medium">
+                        {visit.visitType === "in_person"
+                          ? "In-Person"
+                          : "Telemedicine"}
+                      </p>
+                    </div>
+
+                    {visit.location && (
+                      <div className="flex items-start gap-2">
+                        <MapPin className="text-muted-foreground mt-0.5 h-4 w-4" />
+                        <div>
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                            Location
+                          </p>
+                          <p className="font-medium">{visit.location}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {visit.timeSpent && (
+                    <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                      <p className="text-sm text-blue-800 dark:text-blue-300">
+                        ⏱️ 45+ minutes spent on this visit
+                      </p>
+                    </div>
+                  )}
+
+                  {visit.additionalNotes && (
+                    <div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Additional Notes
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {visit.additionalNotes}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Billing Information */}
+              <VisitBillingPanel
+                visitId={visitId}
+                patientId={patientId}
+                billing={billing}
+                locked={
+                  visit.status === "signed" || visit.status === "submitted"
+                }
+              />
+
+              {/* Treatment Orders */}
+              {treatments.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Stethoscope className="h-5 w-5" />
+                      Treatment Orders
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {treatments.map(
+                      (treatment: {
+                        id: string;
+                        wound_id: string | null;
+                        treatment_tab: string | null;
+                        generated_order_text: string | null;
+                        treatment_orders: string | null;
+                        wound?: {
+                          wound_number: string;
+                          location: string;
+                          wound_type: string;
+                        } | null;
+                      }) => (
+                        <div
+                          key={treatment.id}
+                          className="space-y-2 rounded-lg border p-3"
+                        >
+                          {treatment.wound && (
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                Wound #{treatment.wound.wound_number}
+                              </Badge>
+                              <span className="text-muted-foreground text-xs">
+                                {treatment.wound.location}
+                              </span>
+                            </div>
+                          )}
+                          {treatment.treatment_tab && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs capitalize"
+                            >
+                              {treatment.treatment_tab.replace(/_/g, " ")}
+                            </Badge>
+                          )}
+                          <p className="text-sm leading-relaxed">
+                            {treatment.generated_order_text ||
+                              treatment.treatment_orders ||
+                              "No order text generated"}
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {visit.followUpType && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Follow-Up Plan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Type
+                      </p>
+                      <p className="font-medium capitalize">
+                        {visit.followUpType}
+                      </p>
+                    </div>
+
+                    {visit.followUpDate && (
+                      <div>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Scheduled Date
+                        </p>
+                        <p className="font-medium">
+                          {new Date(visit.followUpDate).toLocaleDateString()}
                         </p>
                       </div>
                     )}
-                </div>
+
+                    {visit.followUpNotes && (
+                      <div>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Notes
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap">
+                          {visit.followUpNotes}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
-        </div>
+
+              {/* Debridement Assessments */}
+              {debridementAssessments.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      ⚡ Debridement Assessments
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {debridementAssessments.map(
+                      (da: {
+                        id: string;
+                        wound_location: string | null;
+                        wound_type: string | null;
+                        pre_size_length: number | null;
+                        pre_size_width: number | null;
+                        pre_size_depth: number | null;
+                        post_size_length: number | null;
+                        post_size_width: number | null;
+                        area_debrided: number | null;
+                        goals_of_care: string[] | null;
+                        created_at: string;
+                      }) => (
+                        <div
+                          key={da.id}
+                          className="space-y-2 rounded-lg border p-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {da.wound_location || "Location not specified"}
+                              </Badge>
+                              {da.wound_type && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs capitalize"
+                                >
+                                  {da.wound_type}
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-zinc-500">
+                              {new Date(da.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-sm">
+                            <div>
+                              <span className="text-zinc-500">Pre-size: </span>
+                              {da.pre_size_length && da.pre_size_width
+                                ? `${da.pre_size_length}×${da.pre_size_width}${da.pre_size_depth ? `×${da.pre_size_depth}` : ""} cm`
+                                : "—"}
+                            </div>
+                            <div>
+                              <span className="text-zinc-500">Post-size: </span>
+                              {da.post_size_length && da.post_size_width
+                                ? `${da.post_size_length}×${da.post_size_width} cm`
+                                : "—"}
+                            </div>
+                            <div>
+                              <span className="text-zinc-500">
+                                Area debrided:{" "}
+                              </span>
+                              {da.area_debrided
+                                ? `${da.area_debrided} cm²`
+                                : "—"}
+                            </div>
+                          </div>
+                          {da.goals_of_care && da.goals_of_care.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {da.goals_of_care.map((g) => (
+                                <Badge
+                                  key={g}
+                                  variant="secondary"
+                                  className="text-xs capitalize"
+                                >
+                                  {g.replace(/_/g, " ")}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Patient Not Seen Report */}
+              {notSeenReport && (
+                <Card className="border-amber-200 dark:border-amber-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                      🚫 Patient Not Seen
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <span className="text-sm text-zinc-500">Reason: </span>
+                      <span className="text-sm font-medium capitalize">
+                        {((notSeenReport.reason as string) || "").replace(
+                          /_/g,
+                          " "
+                        )}
+                      </span>
+                    </div>
+                    {notSeenReport.pertinent_notes && (
+                      <div>
+                        <span className="text-sm text-zinc-500">Notes: </span>
+                        <span className="text-sm">
+                          {notSeenReport.pertinent_notes as string}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {notSeenReport.follow_up_rescheduled && (
+                        <Badge variant="outline" className="text-xs">
+                          Rescheduled
+                          {notSeenReport.follow_up_new_date
+                            ? ` — ${new Date(notSeenReport.follow_up_new_date as string).toLocaleDateString()}`
+                            : ""}
+                        </Badge>
+                      )}
+                      {notSeenReport.facility_notified && (
+                        <Badge variant="outline" className="text-xs">
+                          Facility Notified
+                        </Badge>
+                      )}
+                      {notSeenReport.family_notified && (
+                        <Badge variant="outline" className="text-xs">
+                          Family Notified
+                        </Badge>
+                      )}
+                      {notSeenReport.referral_source_notified && (
+                        <Badge variant="outline" className="text-xs">
+                          Referral Source Notified
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Signature Workflow & Assessments */}
+            <div className="space-y-6">
+              {/* Signature Workflow */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Visit Status & Signatures</CardTitle>
+                    <AddAddendumDialog
+                      visitId={visitId}
+                      visitStatus={visit.status}
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <VisitSignatureWorkflow
+                    visitId={visitId}
+                    patientId={patientId}
+                    patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+                    currentStatus={
+                      (visit.status || "draft") as
+                        | "draft"
+                        | "ready_for_signature"
+                        | "signed"
+                        | "submitted"
+                    }
+                    requiresPatientSignature={
+                      visit.requiresPatientSignature || false
+                    }
+                    providerSignatureId={visit.providerSignatureId || null}
+                    patientSignatureId={visit.patientSignatureId || null}
+                    userName={userName}
+                    userCredentials={userCredentials}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Addendums (post-signature notes) */}
+              <VisitAddendums visitId={visitId} />
+
+              {/* Assessments */}
+              <Card>
+                <CardHeader>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Wound Assessments (This Visit)</CardTitle>
+                      {visit.status !== "signed" &&
+                        visit.status !== "submitted" && (
+                          <NewAssessmentButton
+                            patientId={patientId}
+                            visitId={visitId}
+                          />
+                        )}
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Assessments documented during this visit on{" "}
+                      {new Date(visit.visitDate).toLocaleDateString()}. Click an
+                      assessment to edit details.
+                    </p>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {visit.assessments.length > 0 ? (
+                    <div className="space-y-3">
+                      {visit.assessments.map(
+                        (assessment: {
+                          id: string;
+                          woundId: string;
+                          wound: { woundNumber: string; location: string };
+                          healingStatus: string | null;
+                          length: number | null;
+                          width: number | null;
+                          depth: number | null;
+                          area: number | null;
+                          createdAt: Date;
+                        }) => (
+                          <AssessmentCard
+                            key={assessment.id}
+                            assessment={{
+                              ...assessment,
+                              length: assessment.length,
+                              width: assessment.width,
+                              depth: assessment.depth,
+                              area: assessment.area,
+                            }}
+                            patientId={patientId}
+                            visitId={visitId}
+                          />
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="mb-4 rounded-full bg-linear-to-br from-blue-100 to-teal-100 p-6 dark:from-blue-900/30 dark:to-teal-900/30">
+                        <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <h3 className="mb-2 text-xl font-bold">
+                        Ready to Document?
+                      </h3>
+                      <p className="mb-6 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
+                        Click the <strong>&quot;Add Assessment&quot;</strong>{" "}
+                        button at the top of this page to document wound
+                        conditions, measurements, and treatment plans.
+                      </p>
+                      {visit.status !== "signed" &&
+                        visit.status !== "submitted" && (
+                          <div className="flex flex-col items-center gap-3">
+                            <NewAssessmentButton
+                              patientId={patientId}
+                              visitId={visitId}
+                              variant="default"
+                              size="lg"
+                            />
+                            <p className="text-xs text-zinc-500">
+                              Choose from 7 assessment types after clicking
+                            </p>
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </LockedOverlay>
       </div>
     </div>
   );
