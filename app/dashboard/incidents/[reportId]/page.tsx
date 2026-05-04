@@ -4,9 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getIncidentReport } from "@/app/actions/new-forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
-import { AlertTriangle, ArrowLeft, Calendar, MapPin, User } from "lucide-react";
+import { AlertTriangle, Calendar, MapPin, User } from "lucide-react";
 import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -50,22 +49,15 @@ export default async function IncidentDetailPage({
         ]}
       />
 
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/incidents">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Incidents
-          </Link>
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="page-hero flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-amber-100 p-3 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:ring-amber-800">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <div className="rounded-xl bg-amber-100 p-3 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:ring-amber-800">
+            <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Incident Report</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Incident Report
+            </h1>
             <p className="text-muted-foreground text-sm">
               {format(new Date(incident.report_date), "MMMM d, yyyy")}
               {incident.report_time &&

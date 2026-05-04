@@ -53,7 +53,7 @@ export function WoundSwitcher({
           </div>
           <div className="bg-secondary flex h-2 w-32 overflow-hidden rounded-full">
             <div
-              className="bg-teal-600 transition-all"
+              className="bg-primary transition-all"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>
@@ -71,10 +71,10 @@ export function WoundSwitcher({
                 <TabsTrigger
                   key={wound.id}
                   value={wound.id}
-                  className="relative flex items-center justify-center gap-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+                  className="relative flex items-center justify-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white"
                 >
                   {isCompleted && (
-                    <Check className="h-4 w-4 text-teal-600 data-[state=active]:text-white" />
+                    <Check className="h-4 w-4 text-primary data-[state=active]:text-white" />
                   )}
                   <div className="flex flex-col items-start">
                     <span className="font-semibold">
@@ -104,7 +104,7 @@ export function WoundSwitcher({
         </div>
         <div className="bg-secondary flex h-2 overflow-hidden rounded-full">
           <div
-            className="bg-teal-600 transition-all"
+            className="bg-primary transition-all"
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
@@ -126,13 +126,13 @@ export function WoundSwitcher({
                 variant={isActive ? "default" : "ghost"}
                 className={cn(
                   "w-full justify-start gap-3 text-left",
-                  isActive && "bg-teal-600 hover:bg-teal-700"
+                  isActive && "bg-primary hover:bg-primary"
                 )}
                 onClick={() => onWoundChange(wound.id)}
               >
                 <div className="flex items-center gap-2">
                   {isCompleted ? (
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white">
                       <Check className="h-4 w-4" />
                     </div>
                   ) : (

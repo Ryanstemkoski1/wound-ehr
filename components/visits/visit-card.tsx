@@ -67,7 +67,7 @@ export default function VisitCard({
                 />
               </div>
               <div>
-                <CardTitle className="text-lg font-bold text-zinc-700 dark:text-zinc-300">
+                <CardTitle className="text-foreground text-lg font-bold">
                   {new Date(visit.visitDate).toLocaleDateString("en-US", {
                     weekday: "short",
                     year: "numeric",
@@ -106,12 +106,12 @@ export default function VisitCard({
   const iconBg = isCompleted
     ? "bg-linear-to-br from-green-500/10 to-emerald-500/10 ring-1 ring-green-500/20"
     : isCancelled
-      ? "bg-linear-to-br from-gray-500/10 to-zinc-500/10 ring-1 ring-gray-500/20"
+      ? "bg-muted/50 ring-1 ring-border"
       : "bg-linear-to-br from-blue-500/10 to-cyan-500/10 ring-1 ring-blue-500/20";
   const iconColor = isCompleted
     ? "text-green-600 dark:text-green-400"
     : isCancelled
-      ? "text-gray-600 dark:text-gray-400"
+      ? "text-muted-foreground"
       : "text-blue-600 dark:text-blue-400";
 
   return (
@@ -119,7 +119,7 @@ export default function VisitCard({
       className={`hover-lift group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md ${statusColor}`}
     >
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-linear-to-br from-zinc-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-zinc-900/50" />
+      <div className="from-muted/50 absolute inset-0 bg-linear-to-br to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
       <CardHeader className="relative">
         <div className="flex items-start justify-between">
@@ -136,7 +136,7 @@ export default function VisitCard({
               <CardTitle className="text-lg font-bold">
                 <Link
                   href={`/dashboard/patients/${patientId}/visits/${visit.id}`}
-                  className="transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+                  className="hover:text-primary transition-colors"
                 >
                   {new Date(visit.visitDate).toLocaleDateString("en-US", {
                     weekday: "short",
@@ -160,9 +160,12 @@ export default function VisitCard({
         </div>
       </CardHeader>
       <CardContent className="relative space-y-2.5">
-        <div className="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-900/50">
-          <Clock className="h-4 w-4 text-zinc-400" aria-hidden="true" />
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="bg-muted/30 dark:bg-muted/20 flex items-center gap-2 rounded-lg px-3 py-2 text-sm">
+          <Clock
+            className="text-muted-foreground/60 h-4 w-4"
+            aria-hidden="true"
+          />
+          <span className="text-foreground font-medium">
             {new Date(visit.visitDate).toLocaleTimeString("en-US", {
               hour: "numeric",
               minute: "2-digit",
@@ -170,8 +173,11 @@ export default function VisitCard({
           </span>
         </div>
         {visit.location && (
-          <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <MapPin className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <MapPin
+              className="text-muted-foreground/60 h-4 w-4"
+              aria-hidden="true"
+            />
             <span>{visit.location}</span>
           </div>
         )}

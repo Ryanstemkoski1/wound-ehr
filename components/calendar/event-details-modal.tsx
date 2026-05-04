@@ -49,12 +49,12 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLORS = {
-  scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  scheduled: "bg-primary/10 text-primary",
   "in-progress":
     "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
   completed:
     "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  cancelled: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+  cancelled: "bg-muted text-muted-foreground",
   "no-show": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
 
@@ -114,7 +114,7 @@ export function EventDetailsModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-teal-600" />
+            <Calendar className="text-primary h-5 w-5" />
             Visit Details
           </DialogTitle>
           <DialogDescription>
@@ -124,13 +124,13 @@ export function EventDetailsModal({
 
         <div className="space-y-4 py-4">
           {/* Patient Info */}
-          <div className="flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <User className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+          <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card flex items-start gap-3 rounded-lg border p-4">
+            <User className="text-muted-foreground h-5 w-5" />
             <div className="flex-1">
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              <p className="text-foreground font-medium">
                 {event.resource.patientName}
               </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-muted-foreground text-sm">
                 Patient ID: {event.resource.patientId.substring(0, 8)}...
               </p>
             </div>
@@ -139,19 +139,19 @@ export function EventDetailsModal({
 
           {/* Date & Time */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-              <Calendar className="h-4 w-4 text-zinc-500" />
+            <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card flex items-center gap-2 rounded-lg border p-3">
+              <Calendar className="text-muted-foreground h-4 w-4" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Date</p>
+                <p className="text-muted-foreground text-xs">Date</p>
                 <p className="text-sm font-medium">
                   {format(event.start, "MMM dd, yyyy")}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-              <Clock className="h-4 w-4 text-zinc-500" />
+            <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card flex items-center gap-2 rounded-lg border p-3">
+              <Clock className="text-muted-foreground h-4 w-4" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Time</p>
+                <p className="text-muted-foreground text-xs">Time</p>
                 <p className="text-sm font-medium">
                   {format(event.start, "h:mm a")}
                 </p>
@@ -161,12 +161,10 @@ export function EventDetailsModal({
 
           {/* Facility */}
           {event.resource.facilityName && (
-            <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-              <Building2 className="h-4 w-4 text-zinc-500" />
+            <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card flex items-center gap-2 rounded-lg border p-3">
+              <Building2 className="text-muted-foreground h-4 w-4" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Facility
-                </p>
+                <p className="text-muted-foreground text-xs">Facility</p>
                 <p className="text-sm font-medium">
                   {event.resource.facilityName}
                 </p>
@@ -176,13 +174,11 @@ export function EventDetailsModal({
 
           {/* Wound Count */}
           {event.resource.woundCount > 0 && (
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card rounded-lg border p-3">
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-zinc-500" />
+                <MapPin className="text-muted-foreground h-4 w-4" />
                 <div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Wounds
-                  </p>
+                  <p className="text-muted-foreground text-xs">Wounds</p>
                   <p className="text-sm font-medium">
                     {event.resource.woundCount}{" "}
                     {event.resource.woundCount === 1 ? "wound" : "wounds"} to
@@ -194,8 +190,8 @@ export function EventDetailsModal({
           )}
 
           {/* Status Change */}
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <label className="mb-2 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card rounded-lg border p-3">
+            <label className="text-muted-foreground mb-2 block text-xs font-medium">
               Change Status
             </label>
             <Select

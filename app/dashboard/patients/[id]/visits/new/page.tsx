@@ -79,9 +79,9 @@ export default async function NewVisitPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">New Visit</h1>
-        <p className="text-muted-foreground">
+      <div className="page-hero mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">New Visit</h1>
+        <p className="text-muted-foreground mt-1">
           Patient: {patient.first_name} {patient.last_name} ({facility?.name})
         </p>
       </div>

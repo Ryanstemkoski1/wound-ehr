@@ -71,7 +71,7 @@ function AudioLevelBar({ level }: { level: number }) {
       {Array.from({ length: bars }).map((_, i) => {
         const isActive = i < activeBars;
         const barHeight = ((i + 1) / bars) * 100;
-        let color = "bg-teal-500";
+        let color = "bg-primary";
         if (i > bars * 0.7) color = "bg-amber-500";
         if (i > bars * 0.9) color = "bg-red-500";
 
@@ -79,7 +79,7 @@ function AudioLevelBar({ level }: { level: number }) {
           <div
             key={i}
             className={`w-1.5 rounded-sm transition-all duration-75 ${
-              isActive ? color : "bg-zinc-200 dark:bg-zinc-700"
+              isActive ? color : "bg-border"
             }`}
             style={{ height: `${barHeight}%` }}
           />
@@ -168,7 +168,7 @@ function WaveformVisualizer({
       ref={canvasRef}
       width={400}
       height={64}
-      className="h-16 w-full rounded-md border bg-zinc-50 dark:bg-zinc-900"
+      className="bg-muted/30 h-16 w-full rounded-md border"
     />
   );
 }
@@ -240,15 +240,15 @@ export function AudioRecorder({
   // Idle state — show start button
   if (recorder.state === "idle" && uploadState === "idle") {
     return (
-      <Card className="border-teal-200 bg-teal-50/30 dark:border-teal-800 dark:bg-teal-950/10">
+      <Card className="border-primary/30 bg-primary/5">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Mic className="h-5 w-5 text-teal-600" />
-            <CardTitle className="text-base text-teal-900 dark:text-teal-100">
+            <Mic className="text-primary h-5 w-5" />
+            <CardTitle className="text-foreground text-base">
               AI Audio Recording
             </CardTitle>
           </div>
-          <CardDescription className="text-teal-700 dark:text-teal-300">
+          <CardDescription className="text-muted-foreground">
             Record the visit conversation for AI-powered clinical note
             generation
           </CardDescription>
@@ -257,7 +257,7 @@ export function AudioRecorder({
           {/* Microphone selector */}
           {recorder.devices.length > 1 && (
             <div className="flex items-center gap-2">
-              <Volume2 className="h-4 w-4 text-zinc-500" />
+              <Volume2 className="text-muted-foreground h-4 w-4" />
               <Select
                 value={recorder.selectedDeviceId || ""}
                 onValueChange={recorder.selectDevice}
@@ -311,7 +311,7 @@ export function AudioRecorder({
               </AlertDescription>
             </Alert>
           )}
-          <p className="text-center text-xs text-zinc-500">
+          <p className="text-muted-foreground text-center text-xs">
             Max {Math.floor(AI_CONFIG.AUDIO.MAX_DURATION_SECONDS / 60)} minutes
             • WebM/Opus format • Recording is encrypted and HIPAA-compliant
           </p>
@@ -393,9 +393,9 @@ export function AudioRecorder({
 
           {/* Level meter */}
           <div className="flex items-center gap-3">
-            <Volume2 className="h-4 w-4 shrink-0 text-zinc-500" />
+            <Volume2 className="text-muted-foreground h-4 w-4 shrink-0" />
             <AudioLevelBar level={recorder.audioLevel} />
-            <span className="w-12 text-right text-xs text-zinc-500 tabular-nums">
+            <span className="text-muted-foreground w-12 text-right text-xs tabular-nums">
               {Math.round(recorder.audioLevel * 100)}%
             </span>
           </div>
@@ -415,7 +415,7 @@ export function AudioRecorder({
           {/* Duration progress bar */}
           <Progress
             value={durationPercent}
-            className={`h-1 ${isDurationWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-teal-500"}`}
+            className={`h-1 ${isDurationWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-primary"}`}
           />
 
           {/* Controls */}
@@ -445,7 +445,7 @@ export function AudioRecorder({
             <Button
               size="lg"
               onClick={recorder.stopRecording}
-              className="gap-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="bg-card hover:bg-muted dark:bg-muted dark:text-foreground dark:hover:bg-muted gap-2 text-white"
             >
               <Square className="h-4 w-4" />
               Stop Recording
@@ -463,7 +463,7 @@ export function AudioRecorder({
           </div>
 
           {/* Navigation safe notice */}
-          <p className="text-center text-xs text-teal-600 dark:text-teal-400">
+          <p className="text-primary text-center text-xs">
             You can safely navigate to other pages — your recording will
             continue in the background.
           </p>
@@ -475,12 +475,12 @@ export function AudioRecorder({
   // Completed state — review & upload
   if (recorder.state === "completed" && uploadState === "idle") {
     return (
-      <Card className="border-teal-200 bg-teal-50/30 dark:border-teal-800 dark:bg-teal-950/10">
+      <Card className="border-primary/30 bg-primary/5">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-teal-600" />
-              <CardTitle className="text-base text-teal-900 dark:text-teal-100">
+              <CheckCircle className="text-primary h-5 w-5" />
+              <CardTitle className="text-foreground text-base">
                 Recording Complete
               </CardTitle>
             </div>
@@ -524,7 +524,7 @@ export function AudioRecorder({
             </Button>
           </div>
 
-          <p className="text-center text-xs text-zinc-500">
+          <p className="text-muted-foreground text-center text-xs">
             Audio will be securely uploaded and processed by OpenAI Whisper +
             GPT-4 for clinical note generation
           </p>
@@ -545,30 +545,30 @@ export function AudioRecorder({
           : "Generating clinical note with GPT-4...";
 
     return (
-      <Card className="border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-950/10">
+      <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             {uploadState === "uploading" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              <Loader2 className="text-primary h-5 w-5 animate-spin" />
             ) : (
-              <BrainCircuit className="h-5 w-5 animate-pulse text-blue-600" />
+              <BrainCircuit className="text-primary h-5 w-5 animate-pulse" />
             )}
-            <CardTitle className="text-base text-blue-900 dark:text-blue-100">
+            <CardTitle className="text-foreground text-base">
               {uploadState === "uploading"
                 ? "Uploading Audio..."
                 : "AI Processing..."}
             </CardTitle>
           </div>
-          <CardDescription className="text-blue-700 dark:text-blue-300">
+          <CardDescription className="text-muted-foreground">
             {statusMessage}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Progress
             value={uploadProgress}
-            className="[&>div]:bg-blue-500 [&>div]:transition-all [&>div]:duration-300"
+            className="[&>div]:bg-primary [&>div]:transition-all [&>div]:duration-300"
           />
-          <p className="text-center text-xs text-teal-600 dark:text-teal-400">
+          <p className="text-primary text-center text-xs">
             {uploadProgress}% — You can safely navigate away. Upload and
             processing will continue in the background.
           </p>
@@ -658,8 +658,8 @@ export function AudioRecorder({
   return (
     <Card>
       <CardContent className="flex items-center justify-center gap-2 py-8">
-        <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+        <p className="text-muted-foreground text-sm">
           {recorder.state === "requesting-permission"
             ? "Requesting microphone access..."
             : "Finalizing recording..."}

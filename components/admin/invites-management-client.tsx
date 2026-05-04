@@ -174,7 +174,7 @@ export function InvitesManagementClient({
         );
       case "facility_admin":
         return (
-          <Badge className="gap-1 bg-blue-600">
+          <Badge className="bg-primary gap-1">
             <Building2 className="h-3 w-3" />
             Facility Admin
           </Badge>
@@ -213,8 +213,8 @@ export function InvitesManagementClient({
         </CardHeader>
         <CardContent>
           {invites.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500">
-              <Mail className="mx-auto h-12 w-12 text-zinc-400" />
+            <div className="text-muted-foreground py-12 text-center">
+              <Mail className="text-muted-foreground/60 mx-auto h-12 w-12" />
               <p className="mt-2">No pending invites</p>
               <Button
                 onClick={() => setShowInviteDialog(true)}
@@ -248,15 +248,17 @@ export function InvitesManagementClient({
                       <TableCell>
                         {invite.facility ? (
                           <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-zinc-400" />
+                            <Building2 className="text-muted-foreground/60 h-4 w-4" />
                             {invite.facility.name}
                           </div>
                         ) : (
-                          <span className="text-zinc-400">All Facilities</span>
+                          <span className="text-muted-foreground/60">
+                            All Facilities
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        <div className="text-muted-foreground dark:text-muted-foreground/60 flex items-center gap-2 text-sm">
                           <Clock className="h-4 w-4" />
                           {formatDistanceToNow(new Date(invite.created_at), {
                             addSuffix: true,
@@ -264,7 +266,7 @@ export function InvitesManagementClient({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                        <div className="text-muted-foreground dark:text-muted-foreground/60 text-sm">
                           {formatDistanceToNow(new Date(invite.expires_at), {
                             addSuffix: true,
                           })}
@@ -293,7 +295,7 @@ export function InvitesManagementClient({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                            className="hover:bg-destructive/10 hover:text-destructive dark:text-destructive gap-2 text-red-600"
                             onClick={() => handleCancelInvite(invite.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -378,7 +380,7 @@ export function InvitesManagementClient({
                     )}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-zinc-500">
+                <p className="text-muted-foreground text-xs">
                   Determines clinical scope and signature requirements
                 </p>
               </div>

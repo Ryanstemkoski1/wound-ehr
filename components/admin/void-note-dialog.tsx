@@ -75,7 +75,7 @@ export function VoidNoteDialog({
       <DialogContent className="sm:max-w-[525px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
+            <DialogTitle className="text-destructive flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
               Void Note
             </DialogTitle>
@@ -87,11 +87,11 @@ export function VoidNoteDialog({
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-              <p className="text-sm font-medium text-destructive">
-                ⚠️ Warning: This action cannot be undone
+            <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
+              <p className="text-destructive text-sm font-medium">
+                Warning: This action cannot be undone
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Voiding will mark this note as invalid. It will be visible for
                 audit purposes but cannot be edited or restored.
               </p>
@@ -108,7 +108,7 @@ export function VoidNoteDialog({
                 required
                 className="resize-none"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 This reason will be saved in the audit trail and cannot be
                 changed.
               </p>
@@ -124,11 +124,7 @@ export function VoidNoteDialog({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="destructive"
-              disabled={isLoading}
-            >
+            <Button type="submit" variant="destructive" disabled={isLoading}>
               {isLoading ? "Voiding..." : "Void Note"}
             </Button>
           </DialogFooter>

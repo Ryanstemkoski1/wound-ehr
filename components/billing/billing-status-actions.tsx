@@ -16,13 +16,11 @@ const STATUS_BADGE: Record<
 > = {
   draft: {
     label: "Draft",
-    className:
-      "bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300",
+    className: "bg-muted text-muted-foreground border-border",
   },
   ready: {
     label: "Ready",
-    className:
-      "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300",
+    className: "bg-primary/10 text-primary border-primary/30",
   },
   submitted: {
     label: "Submitted",

@@ -59,9 +59,9 @@ export default async function EditVisitPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Edit Visit</h1>
-        <p className="text-muted-foreground">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">Edit Visit</h1>
+        <p className="text-muted-foreground mt-1">
           Patient: {visit.patient.firstName} {visit.patient.lastName}
           {visit.patient.facility && ` (${visit.patient.facility.name})`}
         </p>

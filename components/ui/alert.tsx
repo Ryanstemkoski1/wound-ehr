@@ -4,13 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  "relative w-full rounded-xl border px-4 py-3.5 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default: "bg-muted/50 text-card-foreground border-border/60",
         destructive:
-          "text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+          "text-destructive bg-destructive/8 border-destructive/25 [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+        success:
+          "text-green-800 bg-green-50 border-green-200/70 dark:text-green-300 dark:bg-green-950/30 dark:border-green-800/40 [&>svg]:text-green-500",
+        warning:
+          "text-amber-800 bg-amber-50/80 border-amber-200/70 dark:text-amber-300 dark:bg-amber-950/30 dark:border-amber-800/40 [&>svg]:text-amber-500",
+        info: "text-primary bg-primary/5 border-primary/20 [&>svg]:text-primary",
       },
     },
     defaultVariants: {

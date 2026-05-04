@@ -341,7 +341,7 @@ export default function SettingsClient({
       </Card>
 
       {/* Save bar */}
-      <div className="flex items-center justify-between rounded-lg border bg-zinc-50 px-4 py-3 dark:bg-zinc-900">
+      <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-4 py-3 dark:bg-card">
         <div className="text-sm">
           {error && <span className="text-red-500">{error}</span>}
           {saved && (

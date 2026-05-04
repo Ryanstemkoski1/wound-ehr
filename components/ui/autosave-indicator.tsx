@@ -29,8 +29,7 @@ export default function AutosaveIndicator({
       <div
         className={cn(
           "fixed right-4 bottom-20 z-40 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium shadow-md transition-all duration-300 md:right-6 md:bottom-6",
-          status === "saving" &&
-            "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+          status === "saving" && "border-primary/20 bg-primary/5 text-primary",
           status === "saved" &&
             "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300",
           status === "error" &&

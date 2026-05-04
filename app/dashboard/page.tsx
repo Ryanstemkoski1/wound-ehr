@@ -329,8 +329,8 @@ export default async function DashboardPage() {
           description: "Active patients across facilities",
           color: "teal",
           gradient: "from-teal-500 to-teal-600",
-          iconBg: "bg-teal-500/10",
-          iconColor: "text-teal-600 dark:text-teal-400",
+          iconBg: "bg-primary/10",
+          iconColor: "text-primary",
           href: "/dashboard/patients",
         },
         {
@@ -375,8 +375,8 @@ export default async function DashboardPage() {
           description: "Visits scheduled for today",
           color: "teal",
           gradient: "from-teal-500 to-teal-600",
-          iconBg: "bg-teal-500/10",
-          iconColor: "text-teal-600 dark:text-teal-400",
+          iconBg: "bg-primary/10",
+          iconColor: "text-primary",
           href: "/dashboard/calendar",
         },
         {
@@ -420,16 +420,13 @@ export default async function DashboardPage() {
       <CorrectionBanner count={correctionsCount} />
 
       {/* Header with gradient */}
-      <div className="from-primary/10 via-background to-accent/5 shadow-soft relative overflow-hidden rounded-xl bg-linear-to-br p-8">
+      <div className="page-hero">
         <div className="relative z-10">
           <h1 className="gradient-text text-3xl font-bold">Dashboard</h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+          <p className="text-muted-foreground mt-2">
             Welcome back, {user.user_metadata?.name || user.email}
           </p>
         </div>
-        {/* Decorative circles */}
-        <div className="bg-primary/5 absolute -top-16 -right-16 h-64 w-64 rounded-full blur-3xl" />
-        <div className="bg-accent/5 absolute -bottom-12 -left-12 h-48 w-48 rounded-full blur-2xl" />
       </div>
 
       {hasError && (
@@ -503,13 +500,13 @@ export default async function DashboardPage() {
 
       {/* Admin Panel for Tenant Admins */}
       {userRole?.role === "tenant_admin" && (
-        <Card className="animate-slide-in border-purple-200 bg-linear-to-br from-purple-50 to-purple-100/50 dark:border-purple-800 dark:from-purple-950/30 dark:to-purple-900/20">
+        <Card className="animate-slide-in border-primary/20 bg-primary/[0.03]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-purple-900 dark:text-purple-300">
-              <Shield className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="text-primary h-5 w-5" />
               Admin Panel
             </CardTitle>
-            <CardDescription className="text-purple-700 dark:text-purple-400">
+            <CardDescription>
               Manage users, facilities, and invitations
             </CardDescription>
           </CardHeader>
@@ -517,24 +514,20 @@ export default async function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <Link
                 href="/dashboard/admin/users"
-                className="group flex flex-col gap-3 rounded-lg border border-purple-200 bg-white p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-800 dark:bg-purple-950/50 dark:hover:border-purple-600"
+                className="group border-border/60 bg-background hover:border-primary/40 flex flex-col gap-3 rounded-xl border p-4 transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/50">
-                    <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="bg-primary/10 rounded-lg p-2">
+                    <Users className="text-primary h-5 w-5" />
                   </div>
-                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                    {totalUsers}
-                  </span>
+                  <span className="text-2xl font-bold">{totalUsers}</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-purple-900 dark:text-purple-200">
-                    User Management
-                  </p>
-                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                  <p className="font-semibold">User Management</p>
+                  <p className="text-muted-foreground text-sm">
                     View and manage user accounts
                   </p>
-                  <span className="mt-2 inline-block text-xs text-purple-600 group-hover:underline dark:text-purple-400">
+                  <span className="text-primary mt-2 inline-block text-xs group-hover:underline">
                     Manage →
                   </span>
                 </div>
@@ -542,24 +535,20 @@ export default async function DashboardPage() {
 
               <Link
                 href="/dashboard/admin/facilities"
-                className="group flex flex-col gap-3 rounded-lg border border-purple-200 bg-white p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-800 dark:bg-purple-950/50 dark:hover:border-purple-600"
+                className="group border-border/60 bg-background hover:border-primary/40 flex flex-col gap-3 rounded-xl border p-4 transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/50">
-                    <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="bg-primary/10 rounded-lg p-2">
+                    <Building2 className="text-primary h-5 w-5" />
                   </div>
-                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                    {totalFacilities}
-                  </span>
+                  <span className="text-2xl font-bold">{totalFacilities}</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-purple-900 dark:text-purple-200">
-                    Facilities
-                  </p>
-                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                  <p className="font-semibold">Facilities</p>
+                  <p className="text-muted-foreground text-sm">
                     Configure facility settings
                   </p>
-                  <span className="mt-2 inline-block text-xs text-purple-600 group-hover:underline dark:text-purple-400">
+                  <span className="text-primary mt-2 inline-block text-xs group-hover:underline">
                     Manage →
                   </span>
                 </div>
@@ -567,24 +556,20 @@ export default async function DashboardPage() {
 
               <Link
                 href="/dashboard/admin/invites"
-                className="group flex flex-col gap-3 rounded-lg border border-purple-200 bg-white p-4 transition-all hover:border-purple-400 hover:shadow-md dark:border-purple-800 dark:bg-purple-950/50 dark:hover:border-purple-600"
+                className="group border-border/60 bg-background hover:border-primary/40 flex flex-col gap-3 rounded-xl border p-4 transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/50">
-                    <UserPlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="bg-primary/10 rounded-lg p-2">
+                    <UserPlus className="text-primary h-5 w-5" />
                   </div>
-                  <span className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                    {pendingInvites}
-                  </span>
+                  <span className="text-2xl font-bold">{pendingInvites}</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-purple-900 dark:text-purple-200">
-                    User Invites
-                  </p>
-                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                  <p className="font-semibold">User Invites</p>
+                  <p className="text-muted-foreground text-sm">
                     Invite new users to organization
                   </p>
-                  <span className="mt-2 inline-block text-xs text-purple-600 group-hover:underline dark:text-purple-400">
+                  <span className="text-primary mt-2 inline-block text-xs group-hover:underline">
                     Manage →
                   </span>
                 </div>
@@ -642,7 +627,7 @@ export default async function DashboardPage() {
                         <Link
                           key={visit.id}
                           href={`/dashboard/patients/${patient.id}/visits/${visit.id}`}
-                          className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+                          className="hover:bg-accent border-border/60 flex items-center justify-between rounded-xl border p-3 transition-colors"
                           aria-label={`View visit for ${patient.first_name} ${patient.last_name}`}
                         >
                           <div>
@@ -683,7 +668,7 @@ export default async function DashboardPage() {
                   <Link
                     key={visit.id}
                     href={`/dashboard/patients/${visit.patient_id}/visits/${visit.id}`}
-                    className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+                    className="hover:bg-accent border-border/60 flex items-center justify-between rounded-xl border p-3 transition-colors"
                     aria-label={`View visit for ${visit.patient_name}`}
                   >
                     <div>
@@ -726,7 +711,7 @@ export default async function DashboardPage() {
                   className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
                   aria-label="Review Office Inbox"
                 >
-                  <Inbox className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  <Inbox className="text-primary h-5 w-5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Office Inbox</p>
                     <p className="text-muted-foreground text-xs">
@@ -740,7 +725,7 @@ export default async function DashboardPage() {
                   aria-label="Review Billing"
                 >
                   <DollarSign
-                    className="h-5 w-5 text-teal-600"
+                    className="text-primary h-5 w-5"
                     aria-hidden="true"
                   />
                   <div>
@@ -755,7 +740,7 @@ export default async function DashboardPage() {
                   className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
                   aria-label="View Patients"
                 >
-                  <Users className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  <Users className="text-primary h-5 w-5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Patients</p>
                     <p className="text-muted-foreground text-xs">
@@ -769,7 +754,7 @@ export default async function DashboardPage() {
                   aria-label="Reports"
                 >
                   <Activity
-                    className="h-5 w-5 text-teal-600"
+                    className="text-primary h-5 w-5"
                     aria-hidden="true"
                   />
                   <div>
@@ -788,7 +773,7 @@ export default async function DashboardPage() {
                   aria-label="View Today's Schedule"
                 >
                   <Calendar
-                    className="h-5 w-5 text-teal-600"
+                    className="text-primary h-5 w-5"
                     aria-hidden="true"
                   />
                   <div>
@@ -804,7 +789,7 @@ export default async function DashboardPage() {
                   className="hover:bg-accent flex items-center gap-3 rounded-lg border p-3 transition-colors"
                   aria-label="Add New Patient"
                 >
-                  <Users className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                  <Users className="text-primary h-5 w-5" aria-hidden="true" />
                   <div>
                     <p className="font-medium">Add New Patient</p>
                     <p className="text-muted-foreground text-xs">
@@ -818,7 +803,7 @@ export default async function DashboardPage() {
                   aria-label="Active Wounds"
                 >
                   <HeartPulse
-                    className="h-5 w-5 text-teal-600"
+                    className="text-primary h-5 w-5"
                     aria-hidden="true"
                   />
                   <div>
@@ -834,7 +819,7 @@ export default async function DashboardPage() {
                   aria-label="View Billing"
                 >
                   <FileText
-                    className="h-5 w-5 text-teal-600"
+                    className="text-primary h-5 w-5"
                     aria-hidden="true"
                   />
                   <div>

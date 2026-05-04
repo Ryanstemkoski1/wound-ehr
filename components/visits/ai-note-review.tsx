@@ -144,7 +144,7 @@ function FormattedNoteView({ note }: { note: string }) {
   const sections = parseNoteSections(note);
 
   if (sections.length <= 1) {
-    // No sections detected — render as plain text
+    // No sections detected ΓÇö render as plain text
     return (
       <div className="text-sm leading-relaxed whitespace-pre-wrap">{note}</div>
     );
@@ -155,13 +155,13 @@ function FormattedNoteView({ note }: { note: string }) {
       {sections.map((section, idx) => (
         <div key={idx}>
           {section.heading && (
-            <h4 className="mb-1 text-sm font-bold tracking-wide text-teal-700 uppercase dark:text-teal-400">
+            <h4 className="mb-1 text-sm font-bold tracking-wide text-primary uppercase dark:text-primary">
               {section.heading}
             </h4>
           )}
-          <div className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">
+          <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
             {section.content || (
-              <span className="text-zinc-400 italic">Not documented</span>
+              <span className="text-muted-foreground/60 italic">Not documented</span>
             )}
           </div>
           {idx < sections.length - 1 && <Separator className="mt-3" />}
@@ -262,7 +262,7 @@ function TranscriptAudioPlayer({
   const progress = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
 
   return (
-    <div className="overflow-hidden rounded-md border bg-zinc-50 dark:bg-zinc-900">
+    <div className="overflow-hidden rounded-md border bg-muted/30">
       {/* Top row: controls + filename */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Button
@@ -292,9 +292,9 @@ function TranscriptAudioPlayer({
           className="text-muted-foreground hover:text-foreground shrink-0 rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors"
           title="Playback speed"
         >
-          {playbackRate}×
+          {playbackRate}├ù
         </button>
-        <Volume2 className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+        <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
       </div>
 
       {/* Progress bar */}
@@ -303,22 +303,22 @@ function TranscriptAudioPlayer({
           <div
             ref={progressRef}
             onClick={handleSeek}
-            className="group relative h-1.5 cursor-pointer rounded-full bg-zinc-200 dark:bg-zinc-700"
+            className="group relative h-1.5 cursor-pointer rounded-full bg-muted dark:bg-muted"
             role="progressbar"
             aria-valuenow={currentTime}
             aria-valuemax={audioDuration}
           >
             <div
-              className="h-full rounded-full bg-teal-500 transition-[width] duration-150"
+              className="h-full rounded-full bg-primary/50 transition-[width] duration-150"
               style={{ width: `${progress}%` }}
             />
             {/* Scrub handle */}
             <div
-              className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-teal-600 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+              className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-primary opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
               style={{ left: `calc(${progress}% - 6px)` }}
             />
           </div>
-          <div className="mt-1 flex justify-between text-[0.6rem] text-zinc-400">
+          <div className="mt-1 flex justify-between text-[0.6rem] text-muted-foreground/60">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(audioDuration)}</span>
           </div>
@@ -372,7 +372,7 @@ function SimpleDiffView({
     <div className="overflow-x-auto rounded-md border text-xs">
       <table className="w-full">
         <thead>
-          <tr className="border-b bg-zinc-100 text-zinc-500 dark:bg-zinc-800">
+          <tr className="border-b bg-muted text-muted-foreground dark:bg-muted">
             <th className="px-3 py-1.5 text-left font-medium">AI Original</th>
             <th className="px-3 py-1.5 text-left font-medium">Your Edits</th>
           </tr>
@@ -395,7 +395,7 @@ function SimpleDiffView({
                     isDifferent && origLine && !editLine
                       ? "bg-red-50 text-red-700 line-through dark:bg-red-950/30 dark:text-red-400"
                       : isDifferent
-                        ? "text-zinc-500"
+                        ? "text-muted-foreground"
                         : ""
                   }`}
                 >
@@ -406,7 +406,7 @@ function SimpleDiffView({
                     isDifferent && editLine && !origLine
                       ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
                       : isDifferent
-                        ? "font-medium text-teal-700 dark:text-teal-400"
+                        ? "font-medium text-primary"
                         : ""
                   }`}
                 >
@@ -579,7 +579,7 @@ export function AIReviewPanel({
 
           {/* Metadata footer */}
           <Separator />
-          <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             {transcript.audio_duration_seconds && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -612,13 +612,13 @@ export function AIReviewPanel({
   // RENDER: REVIEW STATE (not yet approved)
   // -----------------------------------------------
   return (
-    <Card className="border-teal-200 dark:border-teal-800">
+    <Card className="border-primary/30">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="h-5 w-5 text-teal-600" />
+            <BrainCircuit className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">
-              AI Clinical Note — Review Required
+              AI Clinical Note ΓÇö Review Required
             </CardTitle>
           </div>
           <div className="flex items-center gap-1">
@@ -699,7 +699,7 @@ export function AIReviewPanel({
           <TabsContent value="edit" className="mt-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Edit the note below. Changes are tracked.
                 </p>
                 {wasEdited && (
@@ -723,7 +723,7 @@ export function AIReviewPanel({
               {wasEdited && (
                 <Badge variant="secondary" className="text-xs">
                   <Edit3 className="mr-1 h-3 w-3" />
-                  Edited — changes will be tracked
+                  Edited ΓÇö changes will be tracked
                 </Badge>
               )}
             </div>
@@ -731,13 +731,13 @@ export function AIReviewPanel({
 
           {/* Raw Transcript */}
           <TabsContent value="transcript" className="mt-3">
-            <ScrollArea className="rounded-md border bg-zinc-50 p-4 dark:bg-zinc-900">
+            <ScrollArea className="rounded-md border bg-muted/30 p-4 dark:bg-card">
               {rawTranscript ? (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                   {rawTranscript}
                 </p>
               ) : (
-                <p className="text-zinc-500 italic">
+                <p className="text-muted-foreground italic">
                   Raw transcript not available.
                 </p>
               )}
@@ -753,7 +753,7 @@ export function AIReviewPanel({
         </Tabs>
 
         {/* Metadata */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
           {transcript.audio_duration_seconds && (
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

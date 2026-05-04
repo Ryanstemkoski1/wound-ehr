@@ -52,7 +52,7 @@ export function PersistentRecorderBar() {
   const isDone = uploadState === "done";
 
   return (
-    <div className="sticky top-0 z-50 border-b border-teal-300 bg-teal-50 px-4 py-2 shadow-sm dark:border-teal-800 dark:bg-teal-950/80">
+    <div className="border-primary/30 bg-primary/5 sticky top-0 z-50 border-b px-4 py-2 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         {/* Left: status info */}
         <div className="flex items-center gap-3">
@@ -66,15 +66,15 @@ export function PersistentRecorderBar() {
           {recorder.state === "paused" && (
             <Pause className="h-4 w-4 shrink-0 text-amber-600" />
           )}
-          {isCompleted && <Mic className="h-4 w-4 shrink-0 text-teal-600" />}
+          {isCompleted && <Mic className="text-primary h-4 w-4 shrink-0" />}
           {isUploading &&
             (uploadState === "uploading" ? (
-              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-600" />
+              <Loader2 className="text-primary h-4 w-4 shrink-0 animate-spin" />
             ) : (
-              <BrainCircuit className="h-4 w-4 shrink-0 animate-pulse text-blue-600" />
+              <BrainCircuit className="text-primary h-4 w-4 shrink-0 animate-pulse" />
             ))}
 
-          <span className="text-sm font-medium text-teal-900 dark:text-teal-100">
+          <span className="text-foreground text-sm font-medium">
             {isRecording && "Recording in progress"}
             {isCompleted && "Recording ready to upload"}
             {uploadState === "uploading" && "Uploading audio..."}
@@ -88,7 +88,7 @@ export function PersistentRecorderBar() {
             <div className="flex items-center gap-2">
               <Badge
                 variant="outline"
-                className="border-teal-300 font-mono text-xs tabular-nums dark:border-teal-700"
+                className="border-primary/40 font-mono text-xs tabular-nums"
               >
                 {formatDuration(recorder.duration)}
               </Badge>
@@ -105,9 +105,9 @@ export function PersistentRecorderBar() {
             <div className="flex w-32 items-center gap-2">
               <Progress
                 value={uploadProgress}
-                className="h-1.5 [&>div]:bg-blue-500"
+                className="[&>div]:bg-primary h-1.5"
               />
-              <span className="text-xs text-blue-600 tabular-nums dark:text-blue-400">
+              <span className="text-primary text-xs tabular-nums">
                 {uploadProgress}%
               </span>
             </div>
@@ -122,7 +122,7 @@ export function PersistentRecorderBar() {
               variant="outline"
               size="sm"
               onClick={recorder.pauseRecording}
-              className="h-7 gap-1 border-teal-300 text-xs dark:border-teal-700"
+              className="border-primary/30 dark:border-primary/30 h-7 gap-1 text-xs"
             >
               <Pause className="h-3 w-3" />
               Pause
@@ -133,7 +133,7 @@ export function PersistentRecorderBar() {
               variant="outline"
               size="sm"
               onClick={recorder.resumeRecording}
-              className="h-7 gap-1 border-teal-300 text-xs dark:border-teal-700"
+              className="border-primary/30 dark:border-primary/30 h-7 gap-1 text-xs"
             >
               <Play className="h-3 w-3" />
               Resume
@@ -144,7 +144,7 @@ export function PersistentRecorderBar() {
               variant="outline"
               size="sm"
               onClick={recorder.stopRecording}
-              className="h-7 gap-1 border-zinc-400 text-xs"
+              className="border-border h-7 gap-1 text-xs"
             >
               <Square className="h-3 w-3" />
               Stop

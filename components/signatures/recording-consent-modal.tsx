@@ -139,7 +139,7 @@ export function RecordingConsentModal({
     <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-teal-600" />
+          <ShieldCheck className="text-primary h-5 w-5" />
           Sign Recording Consent
         </DialogTitle>
         <DialogDescription>
@@ -170,7 +170,7 @@ export function RecordingConsentModal({
     <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <Mic className="h-5 w-5 text-teal-600" />
+          <Mic className="text-primary h-5 w-5" />
           Audio Recording Consent
         </DialogTitle>
         <DialogDescription>
@@ -182,36 +182,36 @@ export function RecordingConsentModal({
       <div className="space-y-4">
         {/* Key points summary */}
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-800 dark:bg-teal-950/20">
-            <Mic className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+          <div className="border-primary/30 bg-primary/5/50 dark:border-primary/30 dark:bg-primary/5/20 flex items-start gap-2 rounded-lg border p-3">
+            <Mic className="text-primary mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-teal-900 dark:text-teal-100">
+              <p className="text-foreground text-foreground text-xs font-semibold">
                 What
               </p>
-              <p className="text-xs text-teal-700 dark:text-teal-300">
+              <p className="text-primary text-primary text-xs">
                 Visits will be audio recorded and transcribed using
                 HIPAA-compliant AI
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-800 dark:bg-teal-950/20">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+          <div className="border-primary/30 bg-primary/5/50 dark:border-primary/30 dark:bg-primary/5/20 flex items-start gap-2 rounded-lg border p-3">
+            <ShieldCheck className="text-primary mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-teal-900 dark:text-teal-100">
+              <p className="text-foreground text-foreground text-xs font-semibold">
                 Security
               </p>
-              <p className="text-xs text-teal-700 dark:text-teal-300">
+              <p className="text-primary text-primary text-xs">
                 Recordings stored securely, only accessible to care team
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50/50 p-3 dark:border-teal-800 dark:bg-teal-950/20">
-            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+          <div className="border-primary/30 bg-primary/5/50 dark:border-primary/30 dark:bg-primary/5/20 flex items-start gap-2 rounded-lg border p-3">
+            <Clock className="text-primary mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-teal-900 dark:text-teal-100">
+              <p className="text-foreground text-foreground text-xs font-semibold">
                 Retention
               </p>
-              <p className="text-xs text-teal-700 dark:text-teal-300">
+              <p className="text-primary text-primary text-xs">
                 Audio deleted after 90 days. Transcripts kept as medical record.
               </p>
             </div>
@@ -224,7 +224,7 @@ export function RecordingConsentModal({
             {RECORDING_CONSENT_TEXT}
           </div>
           <div className="mt-4 border-t pt-3">
-            <p className="text-xs text-zinc-500">
+            <p className="text-muted-foreground text-xs">
               Recording Consent Version: {RECORDING_CONSENT_VERSION}
             </p>
           </div>
@@ -232,7 +232,7 @@ export function RecordingConsentModal({
             {AI_PROCESSING_CONSENT_TEXT}
           </div>
           <div className="mt-4 border-t pt-3">
-            <p className="text-xs text-zinc-500">
+            <p className="text-muted-foreground text-xs">
               AI Processing Consent Version: {AI_PROCESSING_CONSENT_VERSION} ·
               Vendor: {AI_PROCESSING_CONSENT_VENDOR}
             </p>
@@ -250,7 +250,7 @@ export function RecordingConsentModal({
               but the audio will not be uploaded for AI transcription.
             </p>
 
-            <div className="flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-white p-4 dark:border-amber-700 dark:bg-gray-900">
+            <div className="bg-card flex items-start space-x-3 rounded-md border-2 border-amber-300 p-4 dark:border-amber-700">
               <Checkbox
                 id="recording-agree"
                 checked={agreed}
@@ -259,14 +259,14 @@ export function RecordingConsentModal({
               />
               <Label
                 htmlFor="recording-agree"
-                className="cursor-pointer text-base leading-tight font-semibold text-gray-900 dark:text-gray-100"
+                className="text-foreground cursor-pointer text-base leading-tight font-semibold"
               >
                 I have read and understand the recording consent form, and I
                 agree to have my wound care visits audio recorded
               </Label>
             </div>
 
-            <div className="mt-3 flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-white p-4 dark:border-amber-700 dark:bg-gray-900">
+            <div className="bg-card mt-3 flex items-start space-x-3 rounded-md border-2 border-amber-300 p-4 dark:border-amber-700">
               <Checkbox
                 id="ai-processing-agree"
                 checked={aiAgreed}
@@ -276,7 +276,7 @@ export function RecordingConsentModal({
               />
               <Label
                 htmlFor="ai-processing-agree"
-                className="cursor-pointer text-base leading-tight font-semibold text-gray-900 dark:text-gray-100"
+                className="text-foreground cursor-pointer text-base leading-tight font-semibold"
               >
                 I additionally consent to having my recordings and transcripts
                 processed by a third-party AI vendor (

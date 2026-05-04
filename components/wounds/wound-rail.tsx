@@ -14,7 +14,7 @@ type WoundRailProps = {
 const WOUND_STATUS_DOT: Record<string, string> = {
   active: "bg-red-500",
   improving: "bg-amber-500",
-  stable: "bg-blue-500",
+  stable: "bg-primary",
   healed: "bg-emerald-500",
 };
 

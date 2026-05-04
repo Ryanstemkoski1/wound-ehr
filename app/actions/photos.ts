@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { auditPhiAccess } from "@/lib/audit-log";
-import { assertUuid, tryUuid, ValidationError } from "@/lib/validations/common";
+import { assertUuid, ValidationError } from "@/lib/validations/common";
 
 // Update photo's assessment_id (used when finalizing drafts)
 export async function updatePhotoAssessmentId(

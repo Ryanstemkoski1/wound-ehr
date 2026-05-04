@@ -961,7 +961,7 @@ export default function MultiWoundAssessmentForm({
 
           <div className="flex items-center gap-4">
             {isCurrentAssessmentComplete && (
-              <div className="flex items-center gap-2 text-sm text-teal-600">
+              <div className="flex items-center gap-2 text-sm text-primary">
                 <Check className="h-4 w-4" />
                 <span>Current assessment complete</span>
               </div>

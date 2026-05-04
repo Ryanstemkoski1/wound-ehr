@@ -71,14 +71,14 @@ export function ConsentStatusCard({
         </CardHeader>
         {hasDocument && (
           <CardContent>
-            <div className="flex items-center justify-between rounded-lg border bg-white p-3 dark:bg-gray-900">
+            <div className="border-border/60 bg-card flex items-center justify-between rounded-lg border p-3">
               <div className="flex items-center gap-3">
-                <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                <FileText className="text-muted-foreground h-5 w-5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-foreground text-sm font-medium">
                     {consentData.consent_document_name}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-muted-foreground text-xs">
                     Scanned consent document
                   </p>
                 </div>

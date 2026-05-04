@@ -18,15 +18,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const typeColors: Record<Notification["type"], string> = {
-  correction_requested:
-    "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  correction_requested: "bg-destructive/10 text-destructive",
   note_approved:
-    "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-  ai_note_ready:
-    "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  patient_assigned:
-    "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
-  general: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+    "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300",
+  ai_note_ready: "bg-primary/10 text-primary",
+  patient_assigned: "bg-primary/10 text-primary",
+  general: "bg-muted text-muted-foreground",
 };
 
 async function loadNotifications(
@@ -162,7 +159,7 @@ export function NotificationBell() {
               <span
                 className={cn(
                   "mt-0.5 flex h-2 w-2 shrink-0 rounded-full",
-                  n.read ? "bg-transparent" : "bg-teal-500"
+                  n.read ? "bg-transparent" : "bg-primary"
                 )}
               />
               <div className="min-w-0 flex-1">

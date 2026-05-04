@@ -56,7 +56,7 @@ export function VisitAddendums({ visitId }: VisitAddendumsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <ScrollText className="h-5 w-5 text-gray-600" />
+        <ScrollText className="h-5 w-5 text-muted-foreground" />
         <h3 className="text-lg font-semibold">Addendums</h3>
         <Badge variant="secondary">{addendums.length}</Badge>
       </div>
@@ -92,7 +92,7 @@ export function VisitAddendums({ visitId }: VisitAddendumsProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                <p className="text-sm whitespace-pre-wrap text-foreground/80">
                   {addendum.note}
                 </p>
               </CardContent>

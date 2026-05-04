@@ -477,7 +477,7 @@ export async function getCorrectionsForClinician(userId: string) {
     const uniqueVisits = data?.reduce<CorrectionVisit[]>((acc, visit) => {
       if (!acc.find((v) => v.id === visit.id)) {
         // Omit the joined wound_notes from the returned visit shape
-        // (_wn prefix suppresses unused-vars lint for the join-only field)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { wound_notes: _wn, ...visitData } = visit;
         acc.push(visitData as CorrectionVisit);
       }

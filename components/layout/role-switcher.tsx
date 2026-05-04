@@ -64,7 +64,7 @@ export function RoleSwitcher({ active, entitlements }: RoleSwitcherProps) {
             "gap-2",
             active === "admin"
               ? "border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-900 dark:text-purple-300"
-              : "border-teal-200 text-teal-700 hover:bg-teal-50 dark:border-teal-900 dark:text-teal-300"
+              : "border-primary/30 text-primary hover:bg-primary/10"
           )}
           aria-label={`Switch surface (currently ${SURFACE_LABELS[active]})`}
         >
@@ -89,7 +89,7 @@ export function RoleSwitcher({ active, entitlements }: RoleSwitcherProps) {
               <Icon
                 className={cn(
                   "mt-0.5 h-4 w-4 shrink-0",
-                  s === "admin" ? "text-purple-600" : "text-teal-600"
+                  s === "admin" ? "text-purple-600" : "text-primary"
                 )}
                 aria-hidden="true"
               />
@@ -100,7 +100,7 @@ export function RoleSwitcher({ active, entitlements }: RoleSwitcherProps) {
                   </span>
                   {isActive && (
                     <Check
-                      className="h-4 w-4 text-zinc-500"
+                      className="text-muted-foreground h-4 w-4"
                       aria-hidden="true"
                     />
                   )}

@@ -9,13 +9,6 @@ import { createClient } from "@/lib/supabase/client";
 import { signup } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Form,
   FormControl,
   FormField,
@@ -212,214 +205,215 @@ function AcceptInviteContent() {
 
   if (isValidating) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-              Validating invitation...
-            </p>
-          </CardContent>
-        </Card>
+      <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+        <div className="flex flex-col items-center gap-4 py-8">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-[3px] border-t-transparent" />
+          <p className="text-muted-foreground text-sm">
+            Validating invitation…
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error && !inviteData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <XCircle className="h-6 w-6 text-red-600" />
-              <CardTitle>Invalid Invitation</CardTitle>
+      <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[22rem] space-y-8">
+          <div className="space-y-3 text-center">
+            <div className="bg-destructive/10 ring-destructive/20 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ring-1">
+              <XCircle className="text-destructive h-7 w-7" />
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold tracking-tight">
+                Invalid Invitation
+              </h2>
+              <p className="text-muted-foreground text-sm">{error}</p>
             </div>
-            <div className="text-center">
-              <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Please contact your administrator for a new invitation.
-              </p>
-              <Link href="/login">
-                <Button variant="outline">Go to Login</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+          <p className="text-muted-foreground text-center text-sm">
+            Please contact your administrator for a new invitation.
+          </p>
+          <Link href="/login">
+            <Button variant="outline" className="h-11 w-full">
+              Go to Login
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-6 w-6 text-green-600" />
-              <CardTitle>Invitation Accepted!</CardTitle>
-            </div>
-            <CardDescription>
-              Your role and credentials have been updated
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950/20">
-              <p className="text-sm text-green-800 dark:text-green-200">
-                Your account has been updated with the new role and credentials.
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Redirecting to dashboard...
-              </p>
-              <Loader2 className="mx-auto mt-2 h-5 w-5 animate-spin text-teal-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[22rem] space-y-6 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10 ring-1 ring-green-500/20">
+            <CheckCircle2 className="h-7 w-7 text-green-500" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">
+              Invitation Accepted!
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Your role and credentials have been updated.
+            </p>
+          </div>
+          <div className="text-muted-foreground flex flex-col items-center gap-2 text-sm">
+            <div className="border-primary h-5 w-5 animate-spin rounded-full border-[3px] border-t-transparent" />
+            Redirecting to dashboard…
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Accept Invitation</CardTitle>
-          <CardDescription>
-            Create your account to join the team
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {inviteData && (
-            <div className="mb-6 rounded-lg bg-teal-50 p-4 dark:bg-teal-950/20">
-              <div className="flex items-start gap-3">
-                <Mail className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium text-teal-900 dark:text-teal-100">
-                    You&apos;ve been invited as{" "}
-                    <strong>{getRoleLabel(inviteData.role)}</strong>
-                  </p>
-                  {inviteData.facilityName && (
-                    <p className="text-xs text-teal-700 dark:text-teal-300">
-                      Facility: {inviteData.facilityName}
-                    </p>
-                  )}
-                  <p className="text-xs text-teal-600 dark:text-teal-400">
-                    Email: {inviteData.email}
-                  </p>
-                </div>
-              </div>
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-[24rem] space-y-8">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight">
+            Accept Invitation
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Create your account to join the team.
+          </p>
+        </div>
+
+        {inviteData && (
+          <div className="border-primary/20 bg-primary/5 flex items-start gap-3 rounded-xl border px-4 py-3">
+            <Mail className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+            <div className="space-y-0.5 text-sm">
+              <p className="text-foreground font-medium">
+                Invited as <strong>{getRoleLabel(inviteData.role)}</strong>
+              </p>
+              {inviteData.facilityName && (
+                <p className="text-muted-foreground">
+                  Facility: {inviteData.facilityName}
+                </p>
+              )}
+              <p className="text-muted-foreground">{inviteData.email}</p>
             </div>
-          )}
-
-          {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-            </div>
-          )}
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="john@example.com"
-                        {...field}
-                        disabled
-                        className="bg-zinc-100 dark:bg-zinc-900"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
-                  </>
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-          </Form>
-
-          <div className="mt-4 text-center text-sm">
-            <span className="text-zinc-600 dark:text-zinc-400">
-              Already have an account?{" "}
-            </span>
-            <Link
-              href="/login"
-              className="font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
-            >
-              Log in
-            </Link>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="border-destructive/30 bg-destructive/8 text-destructive flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
+          >
+            <XCircle className="h-4 w-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">
+                    Full Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" className="h-11" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="john@example.com"
+                      {...field}
+                      disabled
+                      className="bg-muted/40 h-11"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">
+                    Password
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      className="h-11"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">
+                    Confirm Password
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      className="h-11"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="h-11 w-full font-semibold"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating Account…
+                </span>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+          </form>
+        </Form>
+
+        <p className="text-muted-foreground text-center text-sm">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-primary font-medium hover:underline"
+          >
+            Log in
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
@@ -428,15 +422,11 @@ export default function AcceptInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-          <Card className="w-full max-w-md">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
-              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Loading...
-              </p>
-            </CardContent>
-          </Card>
+        <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+          <div className="flex flex-col items-center gap-4">
+            <div className="border-primary h-8 w-8 animate-spin rounded-full border-[3px] border-t-transparent" />
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          </div>
         </div>
       }
     >

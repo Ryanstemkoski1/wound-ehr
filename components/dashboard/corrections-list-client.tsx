@@ -45,12 +45,14 @@ export function CorrectionsListClient({
 
   if (corrections.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <CheckCircle2 className="mb-4 h-12 w-12 text-green-500" />
-          <p className="text-lg font-medium">No corrections needed!</p>
-          <p className="text-muted-foreground text-sm">
-            All your notes are up to date
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 rounded-full bg-green-100 p-5 dark:bg-green-900/30">
+            <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+          </div>
+          <p className="text-lg font-semibold">All caught up!</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            No corrections needed — all your notes are up to date
           </p>
         </CardContent>
       </Card>
@@ -60,7 +62,10 @@ export function CorrectionsListClient({
   return (
     <div className="space-y-4">
       {corrections.map((visit) => (
-        <Card key={visit.id}>
+        <Card
+          key={visit.id}
+          className="border-destructive/40 border-l-destructive border-l-4 transition-all hover:shadow-md"
+        >
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>

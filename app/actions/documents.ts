@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { auditPhiAccess } from "@/lib/audit-log";
-import { z } from "zod";
 import { assertUuid, ValidationError } from "@/lib/validations/common";
 
 // Type definitions

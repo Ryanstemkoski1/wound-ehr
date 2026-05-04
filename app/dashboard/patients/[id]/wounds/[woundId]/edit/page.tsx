@@ -29,9 +29,9 @@ export default async function EditWoundPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Edit Wound</h1>
-        <p className="text-muted-foreground">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">Edit Wound</h1>
+        <p className="text-muted-foreground mt-1">
           Patient: {wound.patient.firstName} {wound.patient.lastName}
           {wound.patient.facility && ` (${wound.patient.facility.name})`}
         </p>

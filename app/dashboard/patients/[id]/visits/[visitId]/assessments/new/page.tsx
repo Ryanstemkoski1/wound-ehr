@@ -78,9 +78,11 @@ export default async function NewAssessmentPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">New Wound Assessment</h1>
-        <p className="text-muted-foreground">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">
+          New Wound Assessment
+        </h1>
+        <p className="text-muted-foreground mt-1">
           Patient: {patient.first_name} {patient.last_name} • Visit:{" "}
           {new Date(visit.visit_date).toLocaleDateString()}
         </p>

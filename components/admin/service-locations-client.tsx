@@ -92,7 +92,7 @@ export function ServiceLocationsClient({
         </CardHeader>
         <CardContent>
           {active.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500">
+            <div className="py-12 text-center text-muted-foreground">
               <MapPin className="mx-auto mb-3 h-10 w-10 opacity-50" />
               <p>No service locations yet.</p>
               <Button onClick={() => setCreating(true)} className="mt-4 gap-2">
@@ -114,7 +114,7 @@ export function ServiceLocationsClient({
       {inactive.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-zinc-500">Inactive</CardTitle>
+            <CardTitle className="text-muted-foreground">Inactive</CardTitle>
             <CardDescription>
               {inactive.length} inactive location
               {inactive.length !== 1 ? "s" : ""}
@@ -176,7 +176,7 @@ function LocationTable({
       <TableBody>
         {locations.map((l) => (
           <TableRow key={l.id}>
-            <TableCell className="text-sm text-zinc-500">
+            <TableCell className="text-sm text-muted-foreground">
               {l.sort_order}
             </TableCell>
             <TableCell className="font-medium">
@@ -187,7 +187,7 @@ function LocationTable({
                 </Badge>
               )}
             </TableCell>
-            <TableCell className="text-sm text-zinc-600">
+            <TableCell className="text-sm text-muted-foreground">
               {l.description || "—"}
             </TableCell>
             <TableCell className="text-right">
@@ -293,7 +293,7 @@ function LocationDialog({
               max={9999}
               defaultValue={location?.sort_order ?? 0}
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Lower numbers appear first in dropdowns.
             </p>
           </div>
@@ -305,7 +305,7 @@ function LocationDialog({
                 id="is_active"
                 name="is_active"
                 defaultChecked={location.is_active}
-                className="h-4 w-4 rounded border-zinc-300"
+                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="is_active" className="font-normal">
                 Active

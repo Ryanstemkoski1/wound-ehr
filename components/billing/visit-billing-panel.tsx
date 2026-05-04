@@ -140,9 +140,9 @@ export async function VisitBillingPanel({
         )}
 
         {billing.timeSpent && (
-          <div className="rounded-md bg-blue-50 p-2.5 dark:bg-blue-900/20">
-            <p className="text-xs text-blue-800 dark:text-blue-300">
-              ⏱ Time-based billing applicable (45+ min)
+          <div className="bg-primary/5 rounded-md p-2.5">
+            <p className="text-primary/80 text-xs">
+              Time-based billing applicable (45+ min)
             </p>
           </div>
         )}

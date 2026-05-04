@@ -187,8 +187,29 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+
+  /* Thin themed scrollbars */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
   }
 
   /* Enhanced typography hierarchy */
@@ -478,5 +499,84 @@
       linear-gradient(#fff 0 0);
     mask-composite: exclude;
     pointer-events: none;
+  }
+
+  /* ─── Page-level layout helpers ─────────────────────────────────────────── */
+
+  /* Standard hero banner used on listing pages */
+  .page-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    padding: 1.75rem 2rem;
+    background: linear-gradient(
+      135deg,
+      oklch(from var(--primary) l c h / 0.08) 0%,
+      oklch(from var(--background) l c h / 1) 50%,
+      oklch(from var(--accent) l c h / 0.04) 100%
+    );
+    box-shadow:
+      0 1px 3px oklch(from var(--foreground) l c h / 0.06),
+      0 4px 12px oklch(from var(--foreground) l c h / 0.04),
+      inset 0 1px 0 oklch(from var(--card) l c h / 0.8);
+  }
+
+  .page-hero::before {
+    content: "";
+    position: absolute;
+    top: -4rem;
+    right: -4rem;
+    width: 14rem;
+    height: 14rem;
+    border-radius: 50%;
+    background: oklch(from var(--primary) l c h / 0.06);
+    filter: blur(2.5rem);
+    pointer-events: none;
+  }
+
+  .page-hero::after {
+    content: "";
+    position: absolute;
+    bottom: -3rem;
+    left: -3rem;
+    width: 10rem;
+    height: 10rem;
+    border-radius: 50%;
+    background: oklch(from var(--accent) l c h / 0.05);
+    filter: blur(2rem);
+    pointer-events: none;
+  }
+
+  /* Sidebar left-bar active indicator */
+  .nav-item-active {
+    background: linear-gradient(
+      to right,
+      oklch(from var(--sidebar-primary) l c h / 0.22) 0%,
+      oklch(from var(--sidebar-primary) l c h / 0.06) 60%,
+      transparent 100%
+    );
+    border-left: 2.5px solid var(--sidebar-primary);
+    color: var(--sidebar-primary);
+    font-weight: 600;
+    padding-left: calc(0.75rem - 2.5px);
+  }
+
+  /* Glass card variant for elevated surfaces */
+  .card-glass {
+    background: oklch(from var(--card) l c h / 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid oklch(from var(--border) l c h / 0.6);
+  }
+
+  /* Divider with gradient fade */
+  .divider-gradient {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--border),
+      transparent
+    );
   }
 }

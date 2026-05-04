@@ -44,10 +44,10 @@ export default async function AdminFacilitiesPage() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="page-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Facilities</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
+          <p className="text-muted-foreground mt-1">
             Manage facilities in your organization
           </p>
         </div>
@@ -69,7 +69,7 @@ export default async function AdminFacilitiesPage() {
         </CardHeader>
         <CardContent>
           {facilities.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500">
+            <div className="text-muted-foreground py-12 text-center">
               <p>No facilities found</p>
               <Link href="/dashboard/admin/facilities/new">
                 <Button className="mt-4 gap-2">
@@ -98,7 +98,7 @@ export default async function AdminFacilitiesPage() {
                       </TableCell>
                       <TableCell>
                         {facility.address && (
-                          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                          <div className="text-muted-foreground text-sm">
                             {facility.address}
                             {facility.city && `, ${facility.city}`}
                             {facility.state && `, ${facility.state}`}
@@ -110,7 +110,7 @@ export default async function AdminFacilitiesPage() {
                         <div className="text-sm">
                           {facility.phone && <div>{facility.phone}</div>}
                           {facility.email && (
-                            <div className="text-zinc-600 dark:text-zinc-400">
+                            <div className="text-muted-foreground">
                               {facility.email}
                             </div>
                           )}

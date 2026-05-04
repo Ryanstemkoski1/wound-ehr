@@ -177,7 +177,7 @@ export function UsersManagementClient({
         );
       case "facility_admin":
         return (
-          <Badge className="gap-1 bg-blue-600">
+          <Badge className="bg-primary gap-1">
             <Building2 className="h-3 w-3" />
             Facility Admin
           </Badge>
@@ -219,8 +219,8 @@ export function UsersManagementClient({
         </CardHeader>
         <CardContent>
           {users.length === 0 ? (
-            <div className="py-12 text-center text-zinc-500">
-              <User className="mx-auto h-12 w-12 text-zinc-400" />
+            <div className="text-muted-foreground py-12 text-center">
+              <User className="text-muted-foreground/60 mx-auto h-12 w-12" />
               <p className="mt-2">No users found</p>
             </div>
           ) : (
@@ -244,14 +244,16 @@ export function UsersManagementClient({
                         {user.users?.name ? (
                           <span className="font-medium">{user.users.name}</span>
                         ) : (
-                          <span className="text-zinc-400 italic">
+                          <span className="text-muted-foreground italic">
                             No name set
                           </span>
                         )}
                       </TableCell>
                       <TableCell>
                         {user.users?.email || (
-                          <span className="text-zinc-400 italic">No email</span>
+                          <span className="text-muted-foreground italic">
+                            No email
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
@@ -262,17 +264,21 @@ export function UsersManagementClient({
                             {CREDENTIALS_SHORT_LABELS[user.users.credentials]}
                           </Badge>
                         ) : (
-                          <span className="text-zinc-400 italic">Not set</span>
+                          <span className="text-muted-foreground italic">
+                            Not set
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
                         {user.facility ? (
                           <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-zinc-400" />
+                            <Building2 className="text-muted-foreground/60 h-4 w-4" />
                             {user.facility.name}
                           </div>
                         ) : (
-                          <span className="text-zinc-400">All Facilities</span>
+                          <span className="text-muted-foreground/60">
+                            All Facilities
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -293,7 +299,7 @@ export function UsersManagementClient({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                              className="hover:bg-destructive/10 hover:text-destructive dark:text-destructive gap-2 text-red-600"
                               onClick={() => setUserToDelete(user)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -414,7 +420,7 @@ export function UsersManagementClient({
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-muted-foreground text-xs">
                     Required for Facility Admin and User roles
                   </p>
                 </div>

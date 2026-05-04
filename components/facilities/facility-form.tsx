@@ -69,11 +69,11 @@ export default function FacilityForm({ facility }: FacilityFormProps) {
             Back
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">
+        <div className="page-hero flex-1">
+          <h1 className="text-3xl font-bold tracking-tight">
             {isEdit ? "Edit Facility" : "Add Facility"}
           </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="text-muted-foreground mt-1">
             {isEdit ? "Update facility information" : "Create a new facility"}
           </p>
         </div>
@@ -115,7 +115,7 @@ export default function FacilityForm({ facility }: FacilityFormProps) {
                     name="facility_type"
                     defaultValue={facility?.facility_type || "snf"}
                     required
-                    className="flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300"
+                    className="border-border bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {FACILITY_TYPE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>

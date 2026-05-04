@@ -38,7 +38,7 @@ export default function Sidebar({
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-zinc-900/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={onMobileClose}
           aria-hidden="true"
         />
@@ -53,20 +53,22 @@ export default function Sidebar({
         role="navigation"
       >
         {/* Header / Logo */}
-        <div className="flex h-16 items-center justify-between px-5">
+        <div className="border-sidebar-border/40 flex h-16 items-center justify-between border-b bg-gradient-to-b from-white/[0.06] to-transparent px-5">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2.5"
             onClick={handleLinkClick}
           >
-            <Image
-              src="/icon.svg"
-              alt="WoundNote"
-              width={28}
-              height={28}
-              priority
-            />
-            <span className="text-sidebar-foreground text-base font-semibold">
+            <div className="bg-sidebar-primary/20 ring-sidebar-primary/30 flex h-8 w-8 items-center justify-center rounded-lg ring-1">
+              <Image
+                src="/icon.svg"
+                alt="WoundNote"
+                width={20}
+                height={20}
+                priority
+              />
+            </div>
+            <span className="text-sidebar-foreground text-[0.9rem] font-bold tracking-tight">
               WoundNote
             </span>
           </Link>
@@ -108,10 +110,10 @@ export default function Sidebar({
                   href="/dashboard/calendar"
                   onClick={handleLinkClick}
                   className={cn(
-                    "flex items-center justify-between rounded-full py-1.5 pr-3 pl-3 text-sm transition-colors",
+                    "flex items-center justify-between rounded-lg py-1.5 pr-3 text-sm transition-all duration-150",
                     pathname.startsWith("/dashboard/calendar")
-                      ? "text-sidebar-primary bg-white/15 font-semibold"
-                      : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/8"
+                      ? "nav-item-active"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground pl-3 hover:bg-white/10"
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -134,10 +136,10 @@ export default function Sidebar({
                   href="/dashboard/patients"
                   onClick={handleLinkClick}
                   className={cn(
-                    "flex items-center gap-2 rounded-full py-1.5 pr-3 pl-3 text-sm transition-colors",
+                    "flex items-center gap-2 rounded-lg py-1.5 pr-3 text-sm transition-all duration-150",
                     pathname === "/dashboard/patients"
-                      ? "text-sidebar-primary bg-white/15 font-semibold"
-                      : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/8"
+                      ? "nav-item-active"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground pl-3 hover:bg-white/10"
                   )}
                 >
                   <PackageOpen
@@ -171,10 +173,10 @@ export default function Sidebar({
                   onClick={handleLinkClick}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg py-2 pr-3 text-sm font-medium transition-all duration-150",
                     isActive
-                      ? "text-sidebar-primary bg-white/15 font-semibold"
-                      : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/8"
+                      ? "nav-item-active"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground pl-3 hover:bg-white/10"
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -199,10 +201,10 @@ export default function Sidebar({
                       onClick={handleLinkClick}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "flex items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                        "flex items-center gap-3 rounded-lg py-2 pr-3 text-sm font-medium transition-all duration-150",
                         isActive
-                          ? "bg-purple-500/20 font-semibold text-purple-300"
-                          : "text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/8"
+                          ? "nav-item-active"
+                          : "text-sidebar-foreground/70 hover:text-sidebar-foreground pl-3 hover:bg-white/10"
                       )}
                     >
                       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -216,9 +218,9 @@ export default function Sidebar({
         </div>
 
         {/* Footer */}
-        <div className="border-sidebar-border border-t px-4 py-3">
-          <p className="text-sidebar-foreground/40 text-[10px]">
-            WoundNote v1.0
+        <div className="border-sidebar-border/40 border-t px-4 py-3">
+          <p className="text-sidebar-foreground/35 text-[10px] tracking-wide">
+            WoundNote · v1.0
           </p>
         </div>
       </nav>

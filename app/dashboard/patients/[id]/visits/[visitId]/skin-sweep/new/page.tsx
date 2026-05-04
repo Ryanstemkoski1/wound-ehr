@@ -59,7 +59,7 @@ export default async function NewSkinSweepAssessmentPage({ params }: PageProps) 
       <div className="flex items-center gap-4">
         <Link
           href={`/dashboard/patients/${patientId}/visits/${visitId}`}
-          className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground dark:text-muted-foreground/60 dark:hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Visit

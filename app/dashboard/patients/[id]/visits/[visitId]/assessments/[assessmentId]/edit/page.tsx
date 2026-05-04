@@ -97,9 +97,11 @@ export default async function EditAssessmentPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="space-y-2">
+      <div className="page-hero space-y-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">Edit Wound Assessment</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Edit Wound Assessment
+          </h1>
           <Badge variant="secondary">Editing Mode</Badge>
         </div>
         <p className="text-muted-foreground">
@@ -107,9 +109,9 @@ export default async function EditAssessmentPage({ params }: PageProps) {
           {assessment.visit.patient.lastName} • Visit:{" "}
           {new Date(assessment.visit.visitDate).toLocaleDateString()}
         </p>
-        <p className="text-sm text-blue-600 dark:text-blue-400">
-          💡 Modify any field below and click &quot;Update Assessment&quot; to
-          save changes
+        <p className="text-primary/80 bg-primary/5 border-primary/20 w-fit rounded-lg border px-3 py-1.5 text-sm">
+          Modify any field below and click &quot;Update Assessment&quot; to save
+          changes
         </p>
       </div>
       <AssessmentForm

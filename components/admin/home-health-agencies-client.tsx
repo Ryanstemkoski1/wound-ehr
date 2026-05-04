@@ -102,7 +102,7 @@ export function HomeHealthAgenciesClient({ initialAgencies }: Props) {
       {inactive.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-zinc-500">Inactive</CardTitle>
+            <CardTitle className="text-muted-foreground">Inactive</CardTitle>
             <CardDescription>
               {inactive.length} inactive agenc
               {inactive.length !== 1 ? "ies" : "y"}
@@ -140,7 +140,7 @@ export function HomeHealthAgenciesClient({ initialAgencies }: Props) {
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="py-12 text-center text-zinc-500">
+    <div className="py-12 text-center text-muted-foreground">
       <Building2 className="mx-auto mb-3 h-10 w-10 opacity-50" />
       <p>No home health agencies yet.</p>
       <Button onClick={onAdd} className="mt-4 gap-2">
@@ -184,13 +184,13 @@ function AgencyTable({
                 </Badge>
               )}
             </TableCell>
-            <TableCell className="text-sm text-zinc-600">
+            <TableCell className="text-sm text-muted-foreground">
               {a.npi || "—"}
             </TableCell>
-            <TableCell className="text-sm text-zinc-600">
+            <TableCell className="text-sm text-muted-foreground">
               {a.phone || "—"}
             </TableCell>
-            <TableCell className="text-sm text-zinc-600">
+            <TableCell className="text-sm text-muted-foreground">
               {[a.city, a.state].filter(Boolean).join(", ") || "—"}
             </TableCell>
             <TableCell className="text-right">

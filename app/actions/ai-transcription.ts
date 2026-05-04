@@ -4,7 +4,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { assertUuid, tryUuid, ValidationError } from "@/lib/validations/common";
+import { tryUuid } from "@/lib/validations/common";
 import {
   AI_CONFIG,
   RECORDING_CONSENT_TEXT,

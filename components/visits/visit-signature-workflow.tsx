@@ -135,14 +135,14 @@ export function VisitSignatureWorkflow({
 
       {/* Signature Displays */}
       {providerSignatureId && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="border-border/60 bg-background rounded-lg border p-4">
           <h3 className="mb-2 text-sm font-semibold">Provider Signature</h3>
           <SignatureDisplay signatureId={providerSignatureId} />
         </div>
       )}
 
       {patientSignatureId && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="border-border/60 bg-background rounded-lg border p-4">
           <h3 className="mb-2 text-sm font-semibold">Patient Signature</h3>
           <SignatureDisplay signatureId={patientSignatureId} />
         </div>

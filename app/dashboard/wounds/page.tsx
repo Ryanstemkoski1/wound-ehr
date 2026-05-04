@@ -52,8 +52,10 @@ export default async function WoundsPage() {
   if (patientIds.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Wound Management</h1>
+        <div className="page-hero">
+          <h1 className="gradient-text text-2xl font-bold tracking-tight sm:text-3xl">
+            Wound Management
+          </h1>
           <p className="text-muted-foreground mt-1">
             Monitor and manage all active wounds across your patients
           </p>
@@ -123,15 +125,17 @@ export default async function WoundsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Wound Management</h1>
+      <div className="page-hero">
+        <h1 className="gradient-text text-2xl font-bold tracking-tight sm:text-3xl">
+          Wound Management
+        </h1>
         <p className="text-muted-foreground mt-1">
           Monitor and manage all active wounds across your patients
         </p>
-        <p className="text-sm text-blue-600 dark:text-blue-400">
-          💡 <strong>Quick Tip:</strong> Click &quot;View Wound&quot; to see
-          full history and add assessments, or click &quot;Patient&quot; to
-          access patient records
+        <p className="text-primary/80 bg-primary/5 border-primary/20 mt-3 rounded-lg border px-3 py-2 text-sm">
+          <strong>Quick Tip:</strong> Click &quot;View Wound&quot; to see full
+          history and add assessments, or click &quot;Patient&quot; to access
+          patient records
         </p>
       </div>
 

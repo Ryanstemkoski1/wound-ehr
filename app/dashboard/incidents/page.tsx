@@ -37,7 +37,7 @@ export default async function IncidentsPage() {
     <div className="space-y-6">
       <DynamicBreadcrumbs customSegments={[{ label: "Incidents" }]} />
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="page-hero flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">Incident Reports</h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -47,7 +47,7 @@ export default async function IncidentsPage() {
         </div>
         <Button asChild>
           <Link href="/dashboard/incidents/new">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             New Incident
           </Link>
         </Button>
@@ -78,12 +78,12 @@ export default async function IncidentsPage() {
           {incidents.map((incident) => (
             <Card
               key={incident.id}
-              className="group transition-shadow hover:shadow-md"
+              className="group border-border/60 hover:border-primary/30 transition-all hover:shadow-md"
             >
               <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className="rounded-lg bg-amber-100 p-2.5 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:ring-amber-800">
+                    <div className="rounded-xl bg-amber-100 p-2.5 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:ring-amber-800">
                       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>

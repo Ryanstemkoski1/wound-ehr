@@ -1,83 +1,85 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 
 export default function ConfirmEmailPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="mb-4 flex justify-center">
-            <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+      <div className="mb-10">
+        <Image
+          src="/logo.svg"
+          alt="WoundNote"
+          width={160}
+          height={48}
+          priority
+        />
+      </div>
+
+      <div className="w-full max-w-[22rem] space-y-8">
+        <div className="space-y-3 text-center">
+          <div className="bg-primary/10 ring-primary/20 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ring-1">
+            <Mail className="text-primary h-7 w-7" />
           </div>
-          <div className="flex justify-center">
-            <div className="rounded-full bg-teal-50 p-3 dark:bg-teal-950">
-              <Mail className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">
+              Check your email
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              We&apos;ve sent you a confirmation link.
+            </p>
+          </div>
+        </div>
+
+        <div className="border-border/60 bg-muted/40 text-muted-foreground rounded-xl border px-4 py-4 text-sm">
+          Please click the link in the email to verify your account and complete
+          the signup process.
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            Next steps
+          </p>
+          {[
+            "Check your email inbox",
+            "Click the confirmation link",
+            "Return here and sign in",
+          ].map((step, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="bg-primary/10 text-primary flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold">
+                {i + 1}
+              </div>
+              <span className="text-muted-foreground text-sm">{step}</span>
             </div>
-          </div>
-          <CardTitle className="text-center text-2xl">
-            Check your email
-          </CardTitle>
-          <CardDescription className="text-center">
-            We&apos;ve sent you a confirmation link
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              We sent a confirmation link to your email address. Please click
-              the link in the email to verify your account and complete the
-              signup process.
-            </p>
-          </div>
+          ))}
+        </div>
 
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Next steps:</h4>
-            <ol className="list-inside list-decimal space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-              <li>Check your email inbox</li>
-              <li>Click the confirmation link</li>
-              <li>Return here and sign in</li>
-            </ol>
-          </div>
+        <div className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300">
+          <strong>Didn&apos;t receive it?</strong> Check your spam folder or{" "}
+          <Link
+            href="/auth/resend"
+            className="font-medium underline underline-offset-2 hover:no-underline"
+          >
+            resend confirmation
+          </Link>
+          .
+        </div>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Didn&apos;t receive the email?</strong> Check your spam
-              folder or{" "}
-              <Link
-                href="/auth/resend"
-                className="font-medium underline hover:no-underline"
-              >
-                resend confirmation email
-              </Link>
-              .
-            </p>
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button className="w-full" asChild>
+        <div className="space-y-3">
+          <Button className="h-11 w-full font-semibold" asChild>
             <Link href="/login">Go to Login</Link>
           </Button>
-          <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-muted-foreground text-center text-sm">
             Already confirmed?{" "}
             <Link
               href="/login"
-              className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400"
+              className="text-primary font-medium hover:underline"
             >
               Sign in
             </Link>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -572,9 +572,9 @@ export default function TreatmentOrderBuilder({
 
       {/* Description preview */}
       {value.compressionNpwt.selectedType && (
-        <div className="flex gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-950">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-          <p className="text-blue-800 dark:text-blue-300">
+        <div className="border-primary/20 bg-primary/5 flex gap-2 rounded-md border p-3 text-sm">
+          <AlertCircle className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+          <p className="text-primary/80">
             {
               COMPRESSION_TYPE_OPTIONS.find(
                 (o) => o.value === value.compressionNpwt.selectedType

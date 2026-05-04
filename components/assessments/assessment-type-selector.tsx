@@ -60,9 +60,9 @@ export default function AssessmentTypeSelector({
           <DialogDescription className="text-base">
             Select the form that matches what you need to document during this
             visit.
-            <span className="mt-1 block text-sm text-blue-600 dark:text-blue-400">
-              💡 <strong>Most common:</strong> Use &quot;Standard
-              Assessment&quot; for regular wound documentation
+            <span className="text-primary/80 bg-primary/5 border-primary/20 mt-1 block rounded-lg border px-2 py-1 text-sm">
+              <strong>Most common:</strong> Use &quot;Standard Assessment&quot;
+              for regular wound documentation
             </span>
           </DialogDescription>
         </DialogHeader>
