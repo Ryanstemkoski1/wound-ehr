@@ -112,8 +112,8 @@ export function VisitLogClient({
     <div className="space-y-4">
       {/* Batch print toolbar */}
       {printableVisits.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-zinc-50 px-4 py-2 dark:bg-zinc-900">
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <div className="bg-muted/30 dark:bg-card flex flex-wrap items-center gap-2 rounded-lg border px-4 py-2">
+          <span className="text-muted-foreground text-sm font-medium">
             Batch Print:
           </span>
           <Button
@@ -174,7 +174,7 @@ export function VisitLogClient({
                   className={`absolute top-3 left-3 z-10 rounded p-0.5 transition-colors ${
                     isChecked
                       ? "bg-primary text-primary-foreground"
-                      : "bg-white/80 text-zinc-500 ring-1 ring-zinc-300 dark:bg-zinc-800/80"
+                      : "text-muted-foreground ring-border dark:bg-muted/80 bg-white/80 ring-1"
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();

@@ -148,7 +148,7 @@ export function PatientSignatureDialog({
               onChange={(e) => setSignerName(e.target.value)}
               autoFocus
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Enter the patient&apos;s name or the name of their authorized
               representative
             </p>
@@ -166,7 +166,7 @@ export function PatientSignatureDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="rounded-md border border-zinc-300 px-4 py-2 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-md border border-border px-4 py-2 hover:bg-muted disabled:opacity-50 dark:border-border dark:hover:bg-muted"
             >
               Cancel
             </button>

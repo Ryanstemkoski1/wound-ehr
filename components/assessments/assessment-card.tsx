@@ -61,7 +61,7 @@ export default function AssessmentCard({
                 <CardTitle className="text-lg text-primary hover:underline">
                   {assessment.wound.woundNumber}
                 </CardTitle>
-                <Edit2 className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-primary" />
+                <Edit2 className="h-4 w-4 text-muted-foreground/60 transition-colors group-hover:text-primary" />
               </div>
               <CardDescription>{assessment.wound.location}</CardDescription>
             </div>

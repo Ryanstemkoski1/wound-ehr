@@ -6,6 +6,19 @@
 //
 // Buckets are keyed by an arbitrary string (typically IP + route). The
 // bucket holds `limit` tokens and refills at `limit / windowMs` per ms.
+//
+// ── Scaling to Redis ────────────────────────────────────────────────────────
+// When UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set, replace the
+// `rateLimit` function body with @upstash/ratelimit:
+//
+//   import { Ratelimit } from "@upstash/ratelimit";
+//   import { Redis } from "@upstash/redis";
+//   const redis = Redis.fromEnv();
+//   const rl = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(limit, `${windowMs}ms`) });
+//   const { success, remaining, reset } = await rl.limit(key);
+//
+// The `RateLimitResult` shape is compatible — just set `retryAfterMs = reset - Date.now()`.
+// ────────────────────────────────────────────────────────────────────────────
 
 type Bucket = {
   tokens: number;

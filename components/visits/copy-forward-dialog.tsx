@@ -141,11 +141,11 @@ export function CopyForwardDialog({ targetVisitId, priorVisits }: Props) {
           </div>
 
           {selectedVisit && (
-            <div className="rounded-lg border bg-zinc-50 px-4 py-3 text-sm dark:bg-zinc-900">
+            <div className="border-border/60 bg-muted/30 rounded-lg border px-4 py-3 text-sm">
               <p className="text-muted-foreground mb-1 font-medium">
                 What will be copied:
               </p>
-              <ul className="list-inside list-disc space-y-0.5 text-zinc-700 dark:text-zinc-300">
+              <ul className="text-foreground list-inside list-disc space-y-0.5">
                 <li>
                   {selectedVisit.assessmentCount} wound assessment
                   {selectedVisit.assessmentCount !== 1 ? "s" : ""}{" "}

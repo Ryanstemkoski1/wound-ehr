@@ -173,17 +173,17 @@ export default async function VisitDetailPage({ params }: PageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="page-hero flex items-start justify-between">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Visit Details</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-3xl font-bold tracking-tight">Visit Details</h1>
+          <p className="text-muted-foreground mt-1">
             {visit.patient.firstName} {visit.patient.lastName}
             {visit.patient.facility && ` • ${visit.patient.facility.name}`}
           </p>
           {visit.status !== "signed" && visit.status !== "submitted" && (
-            <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-              💡 <strong>Need to document a wound?</strong> Click &quot;Add
-              Assessment&quot; above to get started
+            <p className="text-primary/80 bg-primary/5 border-primary/20 mt-2 w-fit rounded-lg border px-3 py-1.5 text-sm">
+              <strong>Tip:</strong> Click &quot;Add Assessment&quot; to document
+              a wound
             </p>
           )}
         </div>
@@ -335,9 +335,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                     <div className="flex items-center gap-2">
                       <Calendar className="text-muted-foreground h-4 w-4" />
                       <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Date
-                        </p>
+                        <p className="text-muted-foreground text-sm">Date</p>
                         <p className="font-medium">
                           {new Date(visit.visitDate).toLocaleDateString(
                             "en-US",
@@ -355,9 +353,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                     <div className="flex items-center gap-2">
                       <Clock className="text-muted-foreground h-4 w-4" />
                       <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Time
-                        </p>
+                        <p className="text-muted-foreground text-sm">Time</p>
                         <p className="font-medium">
                           {new Date(visit.visitDate).toLocaleTimeString(
                             "en-US",
@@ -373,7 +369,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="text-muted-foreground text-sm">
                         Visit Type
                       </p>
                       <p className="font-medium">
@@ -387,7 +383,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                       <div className="flex items-start gap-2">
                         <MapPin className="text-muted-foreground mt-0.5 h-4 w-4" />
                         <div>
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          <p className="text-muted-foreground text-sm">
                             Location
                           </p>
                           <p className="font-medium">{visit.location}</p>
@@ -397,16 +393,16 @@ export default async function VisitDetailPage({ params }: PageProps) {
                   </div>
 
                   {visit.timeSpent && (
-                    <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
-                      <p className="text-sm text-blue-800 dark:text-blue-300">
-                        ⏱️ 45+ minutes spent on this visit
+                    <div className="bg-primary/5 rounded-md p-3">
+                      <p className="text-primary/80 text-sm">
+                        45+ minutes spent on this visit
                       </p>
                     </div>
                   )}
 
                   {visit.additionalNotes && (
                     <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="text-muted-foreground text-sm">
                         Additional Notes
                       </p>
                       <p className="mt-1 whitespace-pre-wrap">
@@ -494,9 +490,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Type
-                      </p>
+                      <p className="text-muted-foreground text-sm">Type</p>
                       <p className="font-medium capitalize">
                         {visit.followUpType}
                       </p>
@@ -504,7 +498,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
 
                     {visit.followUpDate && (
                       <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="text-muted-foreground text-sm">
                           Scheduled Date
                         </p>
                         <p className="font-medium">
@@ -515,9 +509,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
 
                     {visit.followUpNotes && (
                       <div>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                          Notes
-                        </p>
+                        <p className="text-muted-foreground text-sm">Notes</p>
                         <p className="mt-1 whitespace-pre-wrap">
                           {visit.followUpNotes}
                         </p>
@@ -532,7 +524,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      ⚡ Debridement Assessments
+                      Debridement Assessments
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -568,25 +560,29 @@ export default async function VisitDetailPage({ params }: PageProps) {
                                 </Badge>
                               )}
                             </div>
-                            <span className="text-xs text-zinc-500">
+                            <span className="text-muted-foreground text-xs">
                               {new Date(da.created_at).toLocaleDateString()}
                             </span>
                           </div>
                           <div className="grid grid-cols-3 gap-2 text-sm">
                             <div>
-                              <span className="text-zinc-500">Pre-size: </span>
+                              <span className="text-muted-foreground">
+                                Pre-size:{" "}
+                              </span>
                               {da.pre_size_length && da.pre_size_width
                                 ? `${da.pre_size_length}×${da.pre_size_width}${da.pre_size_depth ? `×${da.pre_size_depth}` : ""} cm`
                                 : "—"}
                             </div>
                             <div>
-                              <span className="text-zinc-500">Post-size: </span>
+                              <span className="text-muted-foreground">
+                                Post-size:{" "}
+                              </span>
                               {da.post_size_length && da.post_size_width
                                 ? `${da.post_size_length}×${da.post_size_width} cm`
                                 : "—"}
                             </div>
                             <div>
-                              <span className="text-zinc-500">
+                              <span className="text-muted-foreground">
                                 Area debrided:{" "}
                               </span>
                               {da.area_debrided
@@ -619,12 +615,14 @@ export default async function VisitDetailPage({ params }: PageProps) {
                 <Card className="border-amber-200 dark:border-amber-800">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                      🚫 Patient Not Seen
+                      Patient Not Seen
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div>
-                      <span className="text-sm text-zinc-500">Reason: </span>
+                      <span className="text-muted-foreground text-sm">
+                        Reason:{" "}
+                      </span>
                       <span className="text-sm font-medium capitalize">
                         {((notSeenReport.reason as string) || "").replace(
                           /_/g,
@@ -634,7 +632,9 @@ export default async function VisitDetailPage({ params }: PageProps) {
                     </div>
                     {notSeenReport.pertinent_notes && (
                       <div>
-                        <span className="text-sm text-zinc-500">Notes: </span>
+                        <span className="text-muted-foreground text-sm">
+                          Notes:{" "}
+                        </span>
                         <span className="text-sm">
                           {notSeenReport.pertinent_notes as string}
                         </span>
@@ -723,7 +723,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                           />
                         )}
                     </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-sm">
                       Assessments documented during this visit on{" "}
                       {new Date(visit.visitDate).toLocaleDateString()}. Click an
                       assessment to edit details.
@@ -762,13 +762,13 @@ export default async function VisitDetailPage({ params }: PageProps) {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="mb-4 rounded-full bg-linear-to-br from-blue-100 to-teal-100 p-6 dark:from-blue-900/30 dark:to-teal-900/30">
-                        <FileText className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                      <div className="bg-primary/10 mb-4 rounded-full p-6">
+                        <FileText className="text-primary h-12 w-12" />
                       </div>
                       <h3 className="mb-2 text-xl font-bold">
                         Ready to Document?
                       </h3>
-                      <p className="mb-6 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="text-muted-foreground mb-6 max-w-md text-sm">
                         Click the <strong>&quot;Add Assessment&quot;</strong>{" "}
                         button at the top of this page to document wound
                         conditions, measurements, and treatment plans.
@@ -782,7 +782,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                               variant="default"
                               size="lg"
                             />
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-muted-foreground text-xs">
                               Choose from 7 assessment types after clicking
                             </p>
                           </div>

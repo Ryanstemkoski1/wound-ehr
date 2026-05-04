@@ -145,7 +145,7 @@ export function PhotoVideoConsentModal({
 
       {!showSignature ? (
         <div className="space-y-4">
-          <div className="rounded-lg border bg-zinc-50 p-3 dark:bg-zinc-900">
+          <div className="rounded-lg border bg-muted/30 p-3 dark:bg-card">
             <p className="text-sm font-medium">Patient: {patientName}</p>
           </div>
 
@@ -202,7 +202,7 @@ export function PhotoVideoConsentModal({
             certificationText="I authorize the use of my photographs and recordings for the purposes stated above."
           />
           {isSubmitting && (
-            <p className="text-center text-sm text-zinc-500">
+            <p className="text-center text-sm text-muted-foreground">
               Saving consent...
             </p>
           )}

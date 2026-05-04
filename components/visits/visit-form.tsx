@@ -151,7 +151,7 @@ export default function VisitForm({
   };
 
   // Client-side autosave hook (localStorage)
-  const { loadSavedData, clearSavedData, saveNow, saveStatus } = useAutosave({
+  const { loadSavedData, clearSavedData, saveNow } = useAutosave({
     formType: "visit",
     entityId: visit?.id || patientId,
     userId,

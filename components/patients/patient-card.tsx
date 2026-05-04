@@ -32,26 +32,23 @@ export default function PatientCard({ patient }: { patient: Patient }) {
       aria-label={`View details for patient ${patient.firstName} ${patient.lastName}, MRN ${patient.mrn}`}
       className="group"
     >
-      <Card className="hover-lift group relative overflow-hidden border-l-4 border-l-teal-500 transition-all duration-300 hover:shadow-lg">
+      <Card className="hover-lift group border-l-primary relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-lg">
         {/* Gradient background overlay */}
-        <div className="absolute inset-0 bg-linear-to-br from-teal-500/2 to-blue-500/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <div className="from-primary/3 to-primary/5 absolute inset-0 bg-linear-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
         <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-3">
           <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-linear-to-br from-teal-500/10 to-teal-600/10 p-3 ring-1 ring-teal-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:ring-teal-500/30">
-              <User
-                className="h-5 w-5 text-teal-600 dark:text-teal-400"
-                aria-hidden="true"
-              />
+            <div className="bg-primary/10 ring-primary/20 group-hover:ring-primary/30 rounded-xl p-3 ring-1 transition-transform duration-300 group-hover:scale-110">
+              <User className="text-primary h-5 w-5" aria-hidden="true" />
             </div>
             <div className="flex-1">
-              <CardTitle className="text-lg font-bold tracking-tight transition-colors group-hover:text-teal-600 dark:group-hover:text-teal-400">
+              <CardTitle className="group-hover:text-primary text-lg font-bold tracking-tight transition-colors">
                 {patient.lastName}, {patient.firstName}
               </CardTitle>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Badge
                   variant="outline"
-                  className="border-teal-200 text-xs font-medium dark:border-teal-800"
+                  className="border-primary/30 text-xs font-medium"
                 >
                   MRN: {patient.mrn}
                 </Badge>
@@ -66,27 +63,36 @@ export default function PatientCard({ patient }: { patient: Patient }) {
         </CardHeader>
 
         <CardContent className="relative space-y-3">
-          <div className="flex items-center gap-3 rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-900/50">
-            <Calendar className="h-4 w-4 text-zinc-400" aria-hidden="true" />
-            <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
+          <div className="bg-muted/50 flex items-center gap-3 rounded-lg px-3 py-2 text-sm">
+            <Calendar
+              className="text-muted-foreground h-4 w-4"
+              aria-hidden="true"
+            />
+            <div className="text-foreground flex items-center gap-2">
               <span className="font-semibold">{age} years old</span>
-              <span className="text-zinc-400">•</span>
-              <span className="text-zinc-500 dark:text-zinc-400">
+              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">
                 {new Date(patient.dob).toLocaleDateString()}
               </span>
             </div>
           </div>
 
           {patient.phone && (
-            <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <Phone className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <Phone
+                className="text-muted-foreground/60 h-4 w-4"
+                aria-hidden="true"
+              />
               <span>{patient.phone}</span>
             </div>
           )}
 
           {patient.facility && (
-            <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <Building2 className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <Building2
+                className="text-muted-foreground/60 h-4 w-4"
+                aria-hidden="true"
+              />
               <span className="font-medium">{patient.facility.name}</span>
             </div>
           )}

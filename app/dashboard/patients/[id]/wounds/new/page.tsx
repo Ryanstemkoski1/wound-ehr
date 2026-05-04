@@ -49,9 +49,9 @@ export default async function NewWoundPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Add New Wound</h1>
-        <p className="text-muted-foreground">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">Add New Wound</h1>
+        <p className="text-muted-foreground mt-1">
           Patient: {patient.first_name} {patient.last_name} ({facility?.name})
         </p>
       </div>

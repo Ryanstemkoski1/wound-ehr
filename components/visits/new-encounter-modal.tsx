@@ -125,7 +125,7 @@ export function NewEncounterModal() {
         <div className="space-y-4">
           {/* Patient search / selected patient pill */}
           {selected ? (
-            <div className="flex items-start justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="border-border/60 bg-muted/30 flex items-start justify-between gap-3 rounded-md border p-3">
               <div className="flex items-start gap-3">
                 <div className="bg-primary/10 text-primary rounded-full p-2">
                   <User className="h-4 w-4" />
@@ -134,14 +134,14 @@ export function NewEncounterModal() {
                   <p className="text-sm font-medium">
                     {selected.lastName}, {selected.firstName}
                   </p>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  <p className="text-muted-foreground text-xs">
                     MRN {selected.mrn}
                     {selected.dob
                       ? ` · DOB ${new Date(selected.dob).toLocaleDateString()}`
                       : ""}
                   </p>
                   {selected.facilityName && (
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                    <p className="text-muted-foreground mt-1 text-xs">
                       Facility: {selected.facilityName}
                     </p>
                   )}
@@ -163,7 +163,7 @@ export function NewEncounterModal() {
             <div className="space-y-2">
               <Label htmlFor="encounter-patient-search">Patient</Label>
               <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Search className="text-muted-foreground/60 pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2" />
                 <Input
                   id="encounter-patient-search"
                   autoFocus
@@ -175,29 +175,29 @@ export function NewEncounterModal() {
                 />
               </div>
               {query.trim().length >= 2 && (
-                <div className="max-h-60 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800">
+                <div className="border-border/60 max-h-60 overflow-y-auto rounded-md border">
                   {searching ? (
-                    <div className="flex items-center justify-center gap-2 p-4 text-sm text-zinc-500">
+                    <div className="text-muted-foreground flex items-center justify-center gap-2 p-4 text-sm">
                       <Loader2 className="h-4 w-4 animate-spin" /> Searching…
                     </div>
                   ) : results.length === 0 ? (
-                    <p className="p-4 text-center text-sm text-zinc-500">
+                    <p className="text-muted-foreground p-4 text-center text-sm">
                       No patients match that search.
                     </p>
                   ) : (
-                    <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <ul className="divide-border/60 divide-y">
                       {results.map((p) => (
                         <li key={p.id}>
                           <button
                             type="button"
                             onClick={() => setSelected(p)}
-                            className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none dark:hover:bg-zinc-900 dark:focus:bg-zinc-900"
+                            className="hover:bg-muted/30 focus:bg-muted/30 dark:hover:bg-card dark:focus:bg-card flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm focus:outline-none"
                           >
                             <span>
                               <span className="font-medium">
                                 {p.lastName}, {p.firstName}
                               </span>
-                              <span className="block text-xs text-zinc-500">
+                              <span className="text-muted-foreground block text-xs">
                                 MRN {p.mrn}
                                 {p.dob
                                   ? ` · DOB ${new Date(p.dob).toLocaleDateString()}`
@@ -205,7 +205,7 @@ export function NewEncounterModal() {
                               </span>
                             </span>
                             {p.facilityName && (
-                              <span className="text-xs text-zinc-500">
+                              <span className="text-muted-foreground text-xs">
                                 {p.facilityName}
                               </span>
                             )}

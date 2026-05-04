@@ -212,7 +212,7 @@ export function ConsentDialog({
                   visits.
                 </p>
 
-                <div className="flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-white p-4 dark:border-amber-700 dark:bg-gray-900">
+                <div className="flex items-start space-x-3 rounded-md border-2 border-amber-300 bg-card p-4 dark:border-amber-700">
                   <Checkbox
                     id="agree"
                     checked={agreed}
@@ -221,7 +221,7 @@ export function ConsentDialog({
                   />
                   <Label
                     htmlFor="agree"
-                    className="cursor-pointer text-base leading-tight font-semibold text-gray-900 dark:text-gray-100"
+                    className="cursor-pointer text-base leading-tight font-semibold text-foreground"
                   >
                     I have read and understand the consent form above, and I
                     agree to receive wound care treatment

@@ -387,7 +387,7 @@ export default function BillingFormWithCredentials({
                             {details?.description || code}
                             {isRestricted && (
                               <span className="text-destructive mt-1 block font-semibold">
-                                ⚠️ Restricted - Requires{" "}
+                                Restricted - Requires{" "}
                                 {restrictedCodesMap
                                   .get(code)
                                   ?.requiredCredentials.join(", ")}

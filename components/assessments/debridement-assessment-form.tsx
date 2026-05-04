@@ -293,7 +293,7 @@ export default function DebridementAssessmentForm({
                         valueAsNumber: true,
                       })}
                     />
-                    <span className="text-sm text-zinc-500">years</span>
+                    <span className="text-sm text-muted-foreground">years</span>
                     <Input
                       type="number"
                       placeholder="Mo"
@@ -302,7 +302,7 @@ export default function DebridementAssessmentForm({
                         valueAsNumber: true,
                       })}
                     />
-                    <span className="text-sm text-zinc-500">months</span>
+                    <span className="text-sm text-muted-foreground">months</span>
                     <Input
                       type="number"
                       placeholder="Wk"
@@ -311,7 +311,7 @@ export default function DebridementAssessmentForm({
                         valueAsNumber: true,
                       })}
                     />
-                    <span className="text-sm text-zinc-500">weeks</span>
+                    <span className="text-sm text-muted-foreground">weeks</span>
                   </div>
                 </div>
               </div>
@@ -391,7 +391,7 @@ export default function DebridementAssessmentForm({
                     className="w-24"
                     {...register("preSizeDepth", { valueAsNumber: true })}
                   />
-                  <span className="text-sm text-zinc-500">cm</span>
+                  <span className="text-sm text-muted-foreground">cm</span>
                 </div>
               </div>
 
@@ -428,13 +428,13 @@ export default function DebridementAssessmentForm({
                       className="w-20"
                       {...register("tunnelingCm", { valueAsNumber: true })}
                     />
-                    <span className="text-sm text-zinc-500">cm @</span>
+                    <span className="text-sm text-muted-foreground">cm @</span>
                     <Input
                       placeholder="o'clock"
                       className="w-24"
                       {...register("tunnelingClockPosition")}
                     />
-                    <span className="text-sm text-zinc-500">o&apos;clock</span>
+                    <span className="text-sm text-muted-foreground">o&apos;clock</span>
                   </div>
                 )}
               </div>
@@ -444,7 +444,7 @@ export default function DebridementAssessmentForm({
                 <Label>Wound Bed Composition (%)</Label>
                 <div className="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
                   <div>
-                    <Label className="text-xs text-zinc-500">Granulation</Label>
+                    <Label className="text-xs text-muted-foreground">Granulation</Label>
                     <Input
                       type="number"
                       min={0}
@@ -456,7 +456,7 @@ export default function DebridementAssessmentForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">Fibrotic</Label>
+                    <Label className="text-xs text-muted-foreground">Fibrotic</Label>
                     <Input
                       type="number"
                       min={0}
@@ -468,7 +468,7 @@ export default function DebridementAssessmentForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">Slough</Label>
+                    <Label className="text-xs text-muted-foreground">Slough</Label>
                     <Input
                       type="number"
                       min={0}
@@ -480,7 +480,7 @@ export default function DebridementAssessmentForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">Eschar</Label>
+                    <Label className="text-xs text-muted-foreground">Eschar</Label>
                     <Input
                       type="number"
                       min={0}
@@ -623,25 +623,25 @@ export default function DebridementAssessmentForm({
                     className="w-24"
                     {...register("postSizeDepth", { valueAsNumber: true })}
                   />
-                  <span className="text-sm text-zinc-500">cm</span>
+                  <span className="text-sm text-muted-foreground">cm</span>
                 </div>
               </div>
 
               {/* Device Settings (pre-filled, read-only defaults) */}
-              <div className="rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-900">
-                <p className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <div className="rounded-lg border bg-muted/30 p-4 dark:bg-card">
+                <p className="mb-3 text-sm font-medium text-foreground">
                   Device / Method
                 </p>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div>
-                    <Label className="text-xs text-zinc-500">Method</Label>
+                    <Label className="text-xs text-muted-foreground">Method</Label>
                     <p className="text-sm">
                       Ultrasonic non-contact low-frequency debridement (Arobella
                       Qoustic Wound Therapy System)
                     </p>
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">
+                    <Label className="text-xs text-muted-foreground">
                       Frequency / Instrument
                     </Label>
                     <p className="text-sm">
@@ -808,7 +808,7 @@ export default function DebridementAssessmentForm({
                 <Label>Wound Bed Composition Post-Debridement (%)</Label>
                 <div className="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
                   <div>
-                    <Label className="text-xs text-zinc-500">Granulation</Label>
+                    <Label className="text-xs text-muted-foreground">Granulation</Label>
                     <Input
                       type="number"
                       min={0}
@@ -820,7 +820,7 @@ export default function DebridementAssessmentForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">Fibrotic</Label>
+                    <Label className="text-xs text-muted-foreground">Fibrotic</Label>
                     <Input
                       type="number"
                       min={0}
@@ -832,7 +832,7 @@ export default function DebridementAssessmentForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">Slough</Label>
+                    <Label className="text-xs text-muted-foreground">Slough</Label>
                     <Input
                       type="number"
                       min={0}
@@ -844,7 +844,7 @@ export default function DebridementAssessmentForm({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-500">Eschar</Label>
+                    <Label className="text-xs text-muted-foreground">Eschar</Label>
                     <Input
                       type="number"
                       min={0}
@@ -866,7 +866,7 @@ export default function DebridementAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Procedure Notes</CardTitle>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Pre-filled with standard Arobella procedure language. Edit as
                 needed.
               </p>
@@ -948,7 +948,7 @@ export default function DebridementAssessmentForm({
                       valueAsNumber: true,
                     })}
                   />
-                  <span className="text-sm text-zinc-500">days</span>
+                  <span className="text-sm text-muted-foreground">days</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Label className="shrink-0">Dressing changes every</Label>
@@ -959,7 +959,7 @@ export default function DebridementAssessmentForm({
                       valueAsNumber: true,
                     })}
                   />
-                  <span className="text-sm text-zinc-500">days</span>
+                  <span className="text-sm text-muted-foreground">days</span>
                 </div>
               </div>
 

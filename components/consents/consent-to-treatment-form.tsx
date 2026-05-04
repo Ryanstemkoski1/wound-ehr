@@ -205,15 +205,15 @@ export default function ConsentToTreatmentForm({
       <Card>
         <CardContent className="grid grid-cols-1 gap-4 pt-6 md:grid-cols-3">
           <div>
-            <Label className="text-xs text-zinc-500">Patient</Label>
+            <Label className="text-muted-foreground text-xs">Patient</Label>
             <p className="font-medium">{patientName}</p>
           </div>
           <div>
-            <Label className="text-xs text-zinc-500">Provider</Label>
+            <Label className="text-muted-foreground text-xs">Provider</Label>
             <p className="font-medium">{providerName}</p>
           </div>
           <div>
-            <Label className="text-xs text-zinc-500">Facility</Label>
+            <Label className="text-muted-foreground text-xs">Facility</Label>
             <p className="font-medium">{facilityName}</p>
           </div>
         </CardContent>
@@ -224,7 +224,7 @@ export default function ConsentToTreatmentForm({
         <Card>
           <CardHeader>
             <CardTitle>Select Procedures</CardTitle>
-            <p className="text-sm text-zinc-500">
+            <p className="text-muted-foreground text-sm">
               Select the procedures the patient is consenting to:
             </p>
           </CardHeader>
@@ -241,7 +241,9 @@ export default function ConsentToTreatmentForm({
                   <Label htmlFor={`proc-${proc.value}`} className="font-medium">
                     {proc.label}
                   </Label>
-                  <p className="text-sm text-zinc-500">{proc.description}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {proc.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -259,7 +261,7 @@ export default function ConsentToTreatmentForm({
               area affecting a dialysis access site.
             </div>
 
-            <div className="rounded-lg border bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-950/30 dark:text-blue-300">
+            <div className="border-primary/20 bg-primary/5 text-primary/80 rounded-lg border p-3 text-sm">
               <strong>Topical Anaesthesia:</strong> Often a topical sprayed-on
               anaesthetic agent (benzocaine 20%) is used with any of the above
               procedures.
@@ -363,7 +365,7 @@ export default function ConsentToTreatmentForm({
         <Card>
           <CardHeader>
             <CardTitle>Witness Signature (Optional)</CardTitle>
-            <p className="text-sm text-zinc-500">
+            <p className="text-muted-foreground text-sm">
               Required for verbal consent. Skip if not applicable.
             </p>
           </CardHeader>

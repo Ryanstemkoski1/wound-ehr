@@ -198,8 +198,8 @@ export function WoundsListClient({ wounds, patientId }: WoundsListClientProps) {
           ))}
         </div>
       ) : (
-        <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <div className="border-border/60 bg-muted/30 space-y-3 rounded-lg border p-8 text-center">
+          <p className="text-muted-foreground text-sm">
             {filterBy === "all"
               ? "No wounds recorded"
               : filterBy === "active"

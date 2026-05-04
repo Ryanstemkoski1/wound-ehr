@@ -70,7 +70,7 @@ const statusConfig: Record<
   processing: {
     label: "Processing",
     icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
-    variant: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
+    variant: "bg-primary/10 text-primary",
   },
   completed: {
     label: "Completed",
@@ -86,7 +86,7 @@ const statusConfig: Record<
   deleted: {
     label: "Audio Deleted",
     icon: <Trash2 className="h-3.5 w-3.5" />,
-    variant: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+    variant: "bg-muted text-muted-foreground",
   },
 };
 

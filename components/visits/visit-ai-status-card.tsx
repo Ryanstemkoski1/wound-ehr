@@ -58,16 +58,14 @@ const statusConfig: Record<
       "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/20",
   },
   processing: {
-    icon: <BrainCircuit className="h-4 w-4 animate-pulse text-blue-500" />,
+    icon: <BrainCircuit className="text-primary h-4 w-4 animate-pulse" />,
     label: "AI Processing...",
-    color:
-      "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/20",
+    color: "border-primary/30 bg-primary/5",
   },
   completed: {
-    icon: <FileCheck className="h-4 w-4 text-teal-600" />,
+    icon: <FileCheck className="text-primary h-4 w-4" />,
     label: "AI Note Ready",
-    color:
-      "border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-950/20",
+    color: "border-primary/30 bg-primary/5",
   },
   failed: {
     icon: <XCircle className="h-4 w-4 text-red-500" />,
@@ -75,10 +73,9 @@ const statusConfig: Record<
     color: "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/20",
   },
   deleted: {
-    icon: <MicOff className="h-4 w-4 text-zinc-400" />,
+    icon: <MicOff className="text-muted-foreground/60 h-4 w-4" />,
     label: "Audio Deleted",
-    color:
-      "border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/50",
+    color: "border-border bg-muted/30",
   },
 };
 
@@ -129,10 +126,10 @@ export function VisitAIStatusCard({
   // No recording consent — prompt to obtain it
   if (!hasRecordingConsent) {
     return (
-      <Card className="border-zinc-200 dark:border-zinc-700">
+      <Card className="border-border/60">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <MicOff className="h-5 w-5 text-zinc-400" />
+            <MicOff className="text-muted-foreground/60 h-5 w-5" />
             <CardTitle className="text-base">AI Documentation</CardTitle>
           </div>
           <CardDescription>
@@ -163,10 +160,10 @@ export function VisitAIStatusCard({
     }
 
     return (
-      <Card className="border-zinc-200 dark:border-zinc-700">
+      <Card className="border-border/60">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <MicOff className="h-5 w-5 text-zinc-400" />
+            <MicOff className="text-muted-foreground/60 h-5 w-5" />
             <CardTitle className="text-base">AI Documentation</CardTitle>
           </div>
           <CardDescription>
@@ -186,7 +183,7 @@ export function VisitAIStatusCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="h-5 w-5 text-teal-600" />
+            <BrainCircuit className="text-primary h-5 w-5" />
             <CardTitle className="text-base">AI Documentation</CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -223,12 +220,12 @@ export function VisitAIStatusCard({
         )}
         {currentStatus === "processing" && (
           <div className="space-y-2">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
+            <p className="text-primary/80 text-sm">
               OpenAI is transcribing and generating the clinical note. This
               typically takes 30-60 seconds.
             </p>
             {polling.elapsedSeconds > 0 && (
-              <p className="text-xs text-blue-500">
+              <p className="text-primary/60 text-xs">
                 {polling.progress ||
                   `Processing for ${polling.elapsedSeconds}s...`}
               </p>

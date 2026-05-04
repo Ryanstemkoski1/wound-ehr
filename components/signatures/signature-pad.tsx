@@ -137,7 +137,7 @@ export function SignaturePad({
           <TabsContent value="draw" className="space-y-4">
             <div
               ref={containerRef}
-              className="rounded-lg border-2 border-zinc-300 bg-white dark:bg-zinc-950"
+              className="border-border bg-background rounded-lg border-2"
               style={{ height: canvasHeight }}
             >
               <SignatureCanvas
@@ -166,7 +166,7 @@ export function SignaturePad({
                 <Eraser className="h-4 w-4" />
                 Clear
               </Button>
-              <p className="text-xs text-zinc-500">
+              <p className="text-muted-foreground text-xs">
                 Use your mouse, finger, or stylus to sign
               </p>
             </div>
@@ -186,7 +186,7 @@ export function SignaturePad({
             </div>
 
             {typedName.trim().length > 0 && (
-              <div className="flex min-h-[200px] items-center justify-center rounded-lg border-2 border-zinc-300 bg-white p-8 dark:bg-zinc-950">
+              <div className="border-border bg-background flex min-h-[200px] items-center justify-center rounded-lg border-2 p-8">
                 <p
                   className="text-center text-5xl"
                   style={{ fontFamily: "'Brush Script MT', cursive" }}
@@ -196,17 +196,15 @@ export function SignaturePad({
               </div>
             )}
 
-            <p className="text-xs text-zinc-500">
+            <p className="text-muted-foreground text-xs">
               Your typed name will be used as your signature
             </p>
           </TabsContent>
         </Tabs>
 
         {certificationText && (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {certificationText}
-            </p>
+          <div className="border-border/60 bg-muted/30 dark:border-border dark:bg-card rounded-lg border p-4">
+            <p className="text-foreground text-sm">{certificationText}</p>
           </div>
         )}
 

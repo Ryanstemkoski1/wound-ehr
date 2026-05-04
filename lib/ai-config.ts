@@ -28,6 +28,8 @@ export const AI_CONFIG = {
   },
 
   // Cost tracking (per OpenAI pricing as of March 2026)
+  // NOTE: These prices may be outdated. Verify against https://openai.com/pricing
+  // before using for billing calculations.
   PRICING: {
     WHISPER_PER_MINUTE: 0.006, // $0.006 per minute
     GPT4_PER_1K_TOKENS: 0.03, // Approximate (input + output)

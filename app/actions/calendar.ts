@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // Calendar event type for React Big Calendar
 export type CalendarEvent = {
@@ -217,7 +218,13 @@ export async function createVisitFromCalendar(
     }
 
     revalidatePath("/dashboard/calendar");
-    revalidatePath("/dashboard/visits");
+
+    void auditPhiAccess({
+      action: "create",
+      table: "visits",
+      recordId: visit.id,
+      recordType: "visit",
+    });
 
     return {
       success: true,
@@ -249,12 +256,14 @@ const FINALIZED_STATUSES = [
   "sent_to_office",
 ];
 
-// Valid status transitions for calendar status changes
+// Valid status transitions for calendar status changes.
+// Status values match the CHECK constraint on visits.status (00001 line 95) —
+// hyphen form is canonical for "in-progress" and "no-show".
 const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
-  scheduled: ["in_progress", "cancelled", "no_show"],
-  incomplete: ["in_progress", "cancelled", "no_show"],
-  in_progress: ["completed", "cancelled"],
-  draft: ["in_progress", "completed", "cancelled"],
+  scheduled: ["in-progress", "cancelled", "no-show"],
+  incomplete: ["in-progress", "cancelled", "no-show"],
+  "in-progress": ["completed", "cancelled"],
+  draft: ["in-progress", "completed", "cancelled"],
   completed: ["draft"],
   needs_correction: ["draft"],
 };
@@ -310,7 +319,6 @@ export async function rescheduleVisit(
     }
 
     revalidatePath("/dashboard/calendar");
-    revalidatePath("/dashboard/visits");
 
     return {
       success: true,

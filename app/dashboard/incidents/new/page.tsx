@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
-import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 import { DynamicBreadcrumbs } from "@/components/ui/dynamic-breadcrumbs";
 import IncidentReportForm from "@/components/forms/incident-report-form";
 
@@ -47,27 +46,22 @@ export default async function IncidentReportPage() {
         ]}
       />
 
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/incidents"
-          className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Incidents
-        </Link>
+      <div className="page-hero flex items-start gap-4">
+        <div className="rounded-xl bg-amber-100 p-3 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:ring-amber-800">
+          <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            New Incident Report
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Document workplace incidents, near-misses, or safety concerns.
+          </p>
+        </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Incident Report
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Document any workplace incident, near-miss, or safety concern.
-          </p>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <IncidentReportForm
             facilityId={facilityId}
             userId={user.id}
