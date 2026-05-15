@@ -122,6 +122,7 @@ If you didn't expect this invitation, you can safely ignore this email.
         html: htmlBody,
         text: textBody,
       });
+      console.log(`✅ Invite email sent via Resend to ${to}`);
     } else {
       // Fallback: Log to console (dev mode)
       // In production without Resend, you could use Supabase's email API

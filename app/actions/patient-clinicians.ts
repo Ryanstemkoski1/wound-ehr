@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { auditPhiAccess } from "@/lib/audit-log";
 
 // =====================================================
 // ASSIGN CLINICIAN TO PATIENT
@@ -67,13 +66,6 @@ export async function assignClinician(
       revalidatePath("/dashboard/patients");
       revalidatePath("/dashboard/calendar");
 
-      void auditPhiAccess({
-        action: "update",
-        table: "patient_clinicians",
-        recordId: patientId,
-        recordType: "clinician_assignment",
-      });
-
       return { success: true, data };
     }
 
@@ -94,13 +86,6 @@ export async function assignClinician(
     revalidatePath(`/dashboard/patients/${patientId}`);
     revalidatePath("/dashboard/patients");
     revalidatePath("/dashboard/calendar");
-
-    void auditPhiAccess({
-      action: "create",
-      table: "patient_clinicians",
-      recordId: patientId,
-      recordType: "clinician_assignment",
-    });
 
     return { success: true, data };
   } catch (error) {

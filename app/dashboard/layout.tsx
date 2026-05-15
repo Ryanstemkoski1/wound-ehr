@@ -2,8 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardLayoutClient } from "@/components/layout/dashboard-layout-client";
 import { getUserRole, getUserCredentials, type UserRole } from "@/lib/rbac";
-import { getSurfaceEntitlements, type Surface } from "@/lib/surface";
-import { getActiveSurface } from "@/lib/surface-server";
+import {
+  getActiveSurface,
+  getSurfaceEntitlements,
+  type Surface,
+} from "@/lib/surface";
 import { isTenantFeatureEnabled } from "@/lib/features";
 import { getTodayUnsignedCount } from "@/app/actions/visits";
 

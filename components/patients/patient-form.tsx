@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -258,11 +258,11 @@ export default function PatientForm({
             Back
           </Button>
         </Link>
-        <div className="page-hero flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">
+        <div>
+          <h1 className="text-3xl font-bold">
             {isEdit ? "Edit Patient" : "Add Patient"}
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-zinc-600 dark:text-zinc-400">
             {isEdit
               ? "Update patient information"
               : "Create a new patient record"}
@@ -951,13 +951,13 @@ export default function PatientForm({
                     {medicalHistory.map((condition, index) => (
                       <div
                         key={index}
-                        className="bg-primary/10 border-primary/20 flex items-center gap-2 rounded-lg border px-3 py-1 text-sm"
+                        className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-1 text-sm dark:bg-blue-950"
                       >
                         <span>{condition}</span>
                         <button
                           type="button"
                           onClick={() => removeCondition(index)}
-                          className="text-primary hover:text-primary/70"
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
                         >
                           <X className="h-3 w-3" />
                         </button>

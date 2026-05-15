@@ -191,6 +191,12 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
           type: recorder.audioBlob.type,
         });
 
+        console.log("[RecordingContext] File ready:", {
+          name: filename,
+          type: recorder.audioBlob.type,
+          size: recorder.audioBlob.size,
+        });
+
         const formData = new FormData();
         formData.append("file", file);
         formData.append("visitId", session.visitId);
@@ -199,6 +205,7 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
         // Animate progress 5→55% during upload
         startProgressSimulation(5, 55, 15000);
 
+        console.log("[RecordingContext] Calling /api/upload-audio...");
         const response = await fetch("/api/upload-audio", {
           method: "POST",
           body: formData,
@@ -207,6 +214,11 @@ export function RecordingProvider({ children }: { children: ReactNode }) {
         stopProgressSimulation();
 
         const uploadResult = await response.json();
+        console.log(
+          "[RecordingContext] Upload response:",
+          response.status,
+          uploadResult
+        );
 
         if (!response.ok || uploadResult.error || !uploadResult.transcript) {
           setUploadState("error");

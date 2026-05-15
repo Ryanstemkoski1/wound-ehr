@@ -2,8 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { auditPhiAccess } from "@/lib/audit-log";
-import { assertUuid, ValidationError } from "@/lib/validations/common";
 
 // ============================================================================
 // TYPES
@@ -314,17 +312,6 @@ export async function createSkilledNursingAssessment(
   data: SkilledNursingAssessmentData,
   wounds: SkilledNursingWoundData[]
 ) {
-  try {
-    assertUuid(data.visitId, "visitId");
-    assertUuid(data.patientId, "patientId");
-    assertUuid(data.facilityId, "facilityId");
-  } catch (e) {
-    return {
-      success: false,
-      error: e instanceof ValidationError ? e.message : "Invalid input",
-    };
-  }
-
   const supabase = await createClient();
 
   try {
@@ -535,12 +522,6 @@ export async function createSkilledNursingAssessment(
     revalidatePath(`/dashboard/patients/${data.patientId}`);
     revalidatePath(`/dashboard/visits/${data.visitId}`);
 
-    void auditPhiAccess({
-      action: "create",
-      table: "skilled_nursing_assessments",
-      recordId: assessment.id,
-      recordType: "skilled_nursing_assessment",
-    });
     return { success: true, assessmentId: assessment.id };
   } catch (error) {
     console.error("Error creating skilled nursing assessment:", error);
@@ -597,16 +578,6 @@ export async function getVisitSkilledNursingAssessments(visitId: string) {
 // ============================================================================
 
 export async function createGTubeProcedure(data: GTubeProcedureData) {
-  try {
-    assertUuid(data.patientId, "patientId");
-    assertUuid(data.facilityId, "facilityId");
-  } catch (e) {
-    return {
-      success: false,
-      error: e instanceof ValidationError ? e.message : "Invalid input",
-    };
-  }
-
   const supabase = await createClient();
 
   try {
@@ -721,12 +692,6 @@ export async function createGTubeProcedure(data: GTubeProcedureData) {
 
     revalidatePath(`/dashboard/patients/${data.patientId}`);
 
-    void auditPhiAccess({
-      action: "create",
-      table: "gtube_procedures",
-      recordId: procedure.id,
-      recordType: "gtube_procedure",
-    });
     return { success: true, procedureId: procedure.id };
   } catch (error) {
     console.error("Error creating G-tube procedure:", error);
@@ -861,16 +826,6 @@ export type GraftingAssessmentData = {
 };
 
 export async function createGraftingAssessment(data: GraftingAssessmentData) {
-  try {
-    assertUuid(data.visitId, "visitId");
-    assertUuid(data.patientId, "patientId");
-    if (data.facilityId) assertUuid(data.facilityId, "facilityId");
-  } catch (e) {
-    return {
-      error: e instanceof ValidationError ? e.message : "Invalid input",
-    };
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -946,12 +901,6 @@ export async function createGraftingAssessment(data: GraftingAssessmentData) {
       `/dashboard/patients/${data.patientId}/visits/${data.visitId}`
     );
 
-    void auditPhiAccess({
-      action: "create",
-      table: "grafting_assessments",
-      recordId: result.id,
-      recordType: "grafting_assessment",
-    });
     return { success: true, data: result };
   } catch (error) {
     console.error("Error creating grafting assessment:", error);
@@ -1069,16 +1018,6 @@ export type SkinSweepAssessmentData = {
 };
 
 export async function createSkinSweepAssessment(data: SkinSweepAssessmentData) {
-  try {
-    assertUuid(data.visitId, "visitId");
-    assertUuid(data.patientId, "patientId");
-    if (data.facilityId) assertUuid(data.facilityId, "facilityId");
-  } catch (e) {
-    return {
-      error: e instanceof ValidationError ? e.message : "Invalid input",
-    };
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -1157,12 +1096,6 @@ export async function createSkinSweepAssessment(data: SkinSweepAssessmentData) {
       `/dashboard/patients/${data.patientId}/visits/${data.visitId}`
     );
 
-    void auditPhiAccess({
-      action: "create",
-      table: "skin_sweep_assessments",
-      recordId: result.id,
-      recordType: "skin_sweep_assessment",
-    });
     return { success: true, data: result };
   } catch (error) {
     console.error("Error creating skin sweep assessment:", error);

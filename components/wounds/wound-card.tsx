@@ -128,21 +128,21 @@ export default function WoundCard({
       ? "border-l-amber-500"
       : wound.status === "healed"
         ? "border-l-green-500"
-        : "border-l-border";
+        : "border-l-zinc-400";
 
   const iconBg =
     wound.status === "active"
       ? "bg-linear-to-br from-amber-500/10 to-orange-500/10 ring-1 ring-amber-500/20"
       : wound.status === "healed"
         ? "bg-linear-to-br from-green-500/10 to-emerald-500/10 ring-1 ring-green-500/20"
-        : "bg-muted/50 ring-1 ring-border";
+        : "bg-zinc-100 dark:bg-zinc-800";
 
   const iconColor =
     wound.status === "active"
       ? "text-amber-600 dark:text-amber-400"
       : wound.status === "healed"
         ? "text-green-600 dark:text-green-400"
-        : "text-muted-foreground";
+        : "text-zinc-500";
 
   const daysSinceOnset = Math.floor(
     (new Date().getTime() - new Date(wound.onsetDate).getTime()) /
@@ -154,7 +154,7 @@ export default function WoundCard({
       className={`hover-lift group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md ${statusColor}`}
     >
       {/* Subtle gradient overlay */}
-      <div className="from-background/50 absolute inset-0 bg-linear-to-br to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-linear-to-br from-zinc-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-zinc-900/50" />
 
       <CardHeader className="relative">
         <div className="flex items-start justify-between">
@@ -168,7 +168,7 @@ export default function WoundCard({
               <CardTitle className="text-lg font-bold">
                 <Link
                   href={`/dashboard/patients/${patientId}/wounds/${wound.id}`}
-                  className="hover:text-primary transition-colors"
+                  className="transition-colors hover:text-teal-600 dark:hover:text-teal-400"
                 >
                   {wound.woundNumber}
                 </Link>
@@ -187,34 +187,25 @@ export default function WoundCard({
         </div>
       </CardHeader>
       <CardContent className="relative space-y-3">
-        <div className="bg-muted/50 flex items-center gap-2 rounded-lg px-3 py-2 text-sm">
-          <MapPin
-            className="text-muted-foreground/60 h-4 w-4"
-            aria-hidden="true"
-          />
-          <span className="text-foreground font-medium">
+        <div className="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-900/50">
+          <MapPin className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">
             {LOCATION_LABELS[wound.location] || wound.location}
           </span>
         </div>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Calendar
-            className="text-muted-foreground/60 h-4 w-4"
-            aria-hidden="true"
-          />
+        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <Calendar className="h-4 w-4 text-zinc-400" aria-hidden="true" />
           <span>Onset: {new Date(wound.onsetDate).toLocaleDateString()}</span>
         </div>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Activity
-            className="text-muted-foreground/60 h-4 w-4"
-            aria-hidden="true"
-          />
+        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <Activity className="h-4 w-4 text-zinc-400" aria-hidden="true" />
           <span className="font-semibold">{daysSinceOnset} days old</span>
         </div>
 
         {latestMeasurements && (
-          <div className="border-border/60 bg-card rounded-lg border p-3">
+          <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              <div className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
                 Latest Measurements
               </div>
               <Badge variant="outline" className="text-xs">
@@ -223,7 +214,9 @@ export default function WoundCard({
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Length:</span>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  Length:
+                </span>
                 <div className="flex items-center gap-1 font-medium">
                   <span>{latestMeasurements.length} cm</span>
                   {latestMeasurements.healing_status === "improving" && (
@@ -238,14 +231,16 @@ export default function WoundCard({
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Width:</span>
+                <span className="text-zinc-600 dark:text-zinc-400">Width:</span>
                 <span className="font-medium">
                   {latestMeasurements.width} cm
                 </span>
               </div>
               {latestMeasurements.depth && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Depth:</span>
+                  <span className="text-zinc-600 dark:text-zinc-400">
+                    Depth:
+                  </span>
                   <span className="font-medium">
                     {latestMeasurements.depth} cm
                   </span>
@@ -253,7 +248,9 @@ export default function WoundCard({
               )}
               {latestMeasurements.area && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Area:</span>
+                  <span className="text-zinc-600 dark:text-zinc-400">
+                    Area:
+                  </span>
                   <span className="font-medium">
                     {latestMeasurements.area} cm²
                   </span>
@@ -264,8 +261,8 @@ export default function WoundCard({
         )}
 
         {latestPhoto && (
-          <div className="border-border/60 bg-card rounded-lg border p-3">
-            <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+          <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mb-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
               Latest Photo
             </div>
             <div className="relative h-32 w-full overflow-hidden rounded-md">
@@ -281,9 +278,9 @@ export default function WoundCard({
         )}
 
         {recentVisits && recentVisits.length > 0 && (
-          <div className="border-border/60 bg-card rounded-lg border p-3">
+          <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              <div className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
                 Recent Visits
               </div>
               <Badge variant="outline" className="text-xs">
@@ -295,7 +292,7 @@ export default function WoundCard({
                 <Link
                   key={visit.id}
                   href={`/dashboard/patients/${patientId}/visits/${visit.id}`}
-                  className="group/visit hover:bg-muted flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors"
+                  className="group/visit flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   <span className="text-primary font-medium group-hover/visit:underline">
                     {new Date(visit.visit_date).toLocaleDateString()}
@@ -335,9 +332,9 @@ export default function WoundCard({
         {/* Notes Section */}
         <div className="space-y-3">
           {notes && notes.length > 0 && (
-            <div className="border-border/60 bg-card rounded-lg border p-3">
+            <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
+                <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
                   <MessageSquare className="h-3.5 w-3.5" />
                   <span>Notes ({notes.length})</span>
                 </div>
@@ -346,10 +343,12 @@ export default function WoundCard({
                 {notes.slice(0, 2).map((note) => (
                   <div
                     key={note.id}
-                    className="bg-muted/50 rounded-md p-2 text-sm"
+                    className="rounded-md bg-zinc-50 p-2 text-sm dark:bg-zinc-900/50"
                   >
-                    <p className="text-foreground">{note.note}</p>
-                    <p className="text-muted-foreground mt-1 text-xs">
+                    <p className="text-zinc-700 dark:text-zinc-300">
+                      {note.note}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
                       {formatDistanceToNow(new Date(note.created_at), {
                         addSuffix: true,
                       })}
@@ -375,7 +374,7 @@ export default function WoundCard({
           )}
 
           {/* Add Note Section */}
-          <div className="border-border/60 bg-muted/30 rounded-lg border p-3">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
             <Button
               variant="ghost"
               size="sm"

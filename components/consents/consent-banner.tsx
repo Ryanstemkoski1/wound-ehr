@@ -33,7 +33,7 @@ export async function ConsentBanner({
 
   const variant = status.status;
   const { Icon, title, body, ctaLabel, color } = COPY[variant];
-  const ctaHref = `/dashboard/patients/${patientId}/consent`;
+  const ctaHref = `/dashboard/patients/${patientId}/consents/new`;
 
   return (
     <div

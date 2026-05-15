@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createServiceClient } from "@/lib/supabase/service";
 import {
   requireTenantAdmin,
   requireAdmin,
@@ -14,8 +13,6 @@ import {
 } from "@/lib/rbac";
 import crypto from "crypto";
 import { sendInviteEmail } from "@/lib/email";
-import { rateLimit, clientKey } from "@/lib/rate-limit";
-import { headers } from "next/headers";
 
 // =====================================================
 // VALIDATION SCHEMAS
@@ -114,6 +111,7 @@ export async function getTenantUsers() {
     }
 
     // Use service role to bypass RLS for admin queries
+    const { createServiceClient } = await import("@/lib/supabase/service");
     const serviceClient = createServiceClient();
 
     const { data: usersData, error: usersError } = await serviceClient
@@ -163,23 +161,6 @@ export async function inviteUser(formData: FormData) {
 
     if (!currentUser) {
       return { error: "Unauthorized" };
-    }
-
-    // Rate limit: 20 invite sends per hour per admin (prevents invite spam)
-    try {
-      const h = await headers();
-      const rl = rateLimit(
-        clientKey(h, "invite-user", currentUser.id),
-        20,
-        60 * 60_000
-      );
-      if (!rl.allowed) {
-        return {
-          error: `Too many invite requests. Try again in ${Math.ceil(rl.retryAfterMs / 1000)}s.`,
-        };
-      }
-    } catch {
-      // headers() unavailable — skip
     }
 
     const currentRole = await getUserRole();
@@ -292,8 +273,8 @@ export async function inviteUser(formData: FormData) {
       // Continue even if email fails - invite still created
     }
 
-    revalidatePath("/dashboard/admin/invites");
-    revalidatePath("/dashboard/admin/users");
+    revalidatePath("/admin/invites");
+    revalidatePath("/admin/users");
 
     return {
       success: true,
@@ -394,6 +375,7 @@ export async function updateUserRole(formData: FormData) {
     }
 
     // Update user credentials in users table using service role to bypass RLS
+    const { createServiceClient } = await import("@/lib/supabase/service");
     const serviceClient = createServiceClient();
     const { error: updateUserError } = await serviceClient
       .from("users")
@@ -421,7 +403,7 @@ export async function updateUserRole(formData: FormData) {
       return { error: "Failed to update user role" };
     }
 
-    revalidatePath("/dashboard/admin/users");
+    revalidatePath("/admin/users");
 
     return { success: true, message: "User role updated successfully" };
   } catch (error) {
@@ -477,8 +459,8 @@ export async function removeUserFromTenant(userId: string) {
       // from the auth.users foreign key relationship
     }
 
-    revalidatePath("/dashboard/admin/users");
-    revalidatePath("/dashboard/admin");
+    revalidatePath("/admin/users");
+    revalidatePath("/admin");
 
     return {
       success: true,
@@ -547,7 +529,7 @@ export async function cancelInvite(inviteId: string) {
 
     if (error) throw error;
 
-    revalidatePath("/dashboard/admin/invites");
+    revalidatePath("/admin/invites");
 
     return { success: true, message: "Invite cancelled" };
   } catch (error) {
@@ -593,6 +575,7 @@ export async function acceptInvite(inviteToken: string) {
     }
 
     // Update user credentials in users table using service role to bypass RLS
+    const { createServiceClient } = await import("@/lib/supabase/service");
     const serviceClient = createServiceClient();
     const { error: updateUserError } = await serviceClient
       .from("users")

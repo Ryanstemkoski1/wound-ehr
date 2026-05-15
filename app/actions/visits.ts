@@ -8,8 +8,6 @@ import { getUserRole, getUserCredentials } from "@/lib/rbac";
 import { canEditVisit } from "@/lib/field-permissions";
 import { invalidateVisitPDFCache } from "@/app/actions/pdf-cached";
 import { auditPhiAccess } from "@/lib/audit-log";
-import { rateLimit, clientKey } from "@/lib/rate-limit";
-import { headers } from "next/headers";
 
 // Validation schema
 const visitSchema = z.object({
@@ -435,23 +433,6 @@ export async function createVisit(formData: FormData) {
     return { error: "Unauthorized" };
   }
 
-  // Rate limit: 60 visit creations per hour per user (high-volume clinical use)
-  try {
-    const h = await headers();
-    const rl = rateLimit(
-      clientKey(h, "create-visit", user.id),
-      60,
-      60 * 60_000
-    );
-    if (!rl.allowed) {
-      return {
-        error: `Too many requests. Try again in ${Math.ceil(rl.retryAfterMs / 1000)}s.`,
-      };
-    }
-  } catch {
-    // headers() unavailable in some test contexts — skip
-  }
-
   try {
     const data = {
       patientId: formData.get("patientId") as string,
@@ -740,7 +721,7 @@ export async function markVisitComplete(visitId: string) {
     const completableStatuses = [
       "scheduled",
       "incomplete",
-      "in-progress",
+      "in_progress",
       "draft",
     ];
     if (!completableStatuses.includes(visit.status || "")) {
@@ -771,9 +752,7 @@ export async function markVisitComplete(visitId: string) {
 }
 
 // Mark visit as no-show
-// Records reason, timestamp, and user; transitions to "no-show" status.
-// Status value matches the CHECK constraint on visits.status (see migration
-// 00001 line 95) — hyphen form is canonical.
+// Records reason, timestamp, and user; transitions to "no_show" status
 export async function setVisitNoShow(
   visitId: string,
   reason: string
@@ -807,7 +786,7 @@ export async function setVisitNoShow(
     }
 
     // Allow no-show only from non-finalized scheduled-ish statuses
-    const allowed = ["scheduled", "incomplete", "in-progress", "draft"];
+    const allowed = ["scheduled", "incomplete", "in_progress", "draft"];
     if (!allowed.includes(visit.status || "")) {
       return {
         error: `Cannot mark as no-show — current status is "${visit.status}".`,
@@ -817,7 +796,7 @@ export async function setVisitNoShow(
     const { error: updateError } = await supabase
       .from("visits")
       .update({
-        status: "no-show",
+        status: "no_show",
         no_show_reason: trimmed,
         no_show_at: new Date().toISOString(),
         no_show_recorded_by: user.id,

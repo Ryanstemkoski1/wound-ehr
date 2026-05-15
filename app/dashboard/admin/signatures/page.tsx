@@ -20,11 +20,11 @@ export default async function SignatureAuditPage() {
 
   return (
     <div className="space-y-6">
-      <div className="page-hero">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Signature Audit Logs
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-2">
           Comprehensive audit trail of all electronic signatures for compliance
           reporting
         </p>

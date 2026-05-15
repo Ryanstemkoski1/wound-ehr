@@ -98,15 +98,13 @@ export function SignVisitDialog({
           </Alert>
         )}
 
-        <div className="border-primary/20 bg-primary/5 mb-4 rounded-lg border p-4">
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
           <div className="space-y-2 text-sm">
-            <p className="text-foreground font-medium">
+            <p className="font-medium text-blue-900 dark:text-blue-100">
               Provider Certification
             </p>
-            <p className="text-muted-foreground">
-              Signing as:{" "}
-              <strong className="text-foreground">{userName}</strong> (
-              {userCredentials})
+            <p className="text-blue-800 dark:text-blue-200">
+              Signing as: <strong>{userName}</strong> ({userCredentials})
             </p>
           </div>
         </div>
@@ -140,7 +138,7 @@ export function SignVisitDialog({
             certificationText="By signing, I certify that I have reviewed all assessments and documentation for this visit, and that the information provided is accurate, complete, and represents the care delivered."
           />
         ) : (
-          <p className="border-border text-muted-foreground dark:border-border dark:text-muted-foreground/60 rounded-md border border-dashed p-6 text-center text-sm">
+          <p className="rounded-md border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             Check the attestation above to enable the signature pad.
           </p>
         )}

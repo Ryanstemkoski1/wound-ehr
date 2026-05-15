@@ -21,8 +21,7 @@ const STATUS_CONFIG = {
     label: "Draft",
     icon: FileEdit,
     variant: "secondary" as const,
-    className:
-      "bg-muted text-foreground dark:bg-muted dark:text-muted-foreground/80",
+    className: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
   },
   ready_for_signature: {
     label: "Ready to Sign",
@@ -35,7 +34,8 @@ const STATUS_CONFIG = {
     label: "Signed",
     icon: FileSignature,
     variant: "default" as const,
-    className: "bg-primary/10 text-primary border-primary/30",
+    className:
+      "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 border-blue-300 dark:border-blue-700",
   },
   submitted: {
     label: "Submitted",
@@ -109,7 +109,7 @@ export function VisitStatusDetail({ status }: { status: VisitStatus }) {
   return (
     <div className="flex items-start gap-3">
       <VisitStatusBadge status={status} />
-      <p className="text-muted-foreground flex-1 text-sm">
+      <p className="flex-1 text-sm text-zinc-600 dark:text-zinc-400">
         {descriptions[status]}
       </p>
     </div>

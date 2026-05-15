@@ -24,9 +24,9 @@ export default async function AdminTranscriptsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="page-hero">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">AI Transcripts</h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground">
           Manage AI-generated clinical notes, audio recordings, and retention
           policies
         </p>

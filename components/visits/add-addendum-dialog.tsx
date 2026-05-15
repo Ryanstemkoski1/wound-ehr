@@ -88,7 +88,7 @@ export function AddAddendumDialog({
             rows={8}
             className="resize-none"
           />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Your name, credentials, and timestamp will be automatically
             recorded.
           </p>

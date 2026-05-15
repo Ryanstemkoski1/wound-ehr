@@ -28,7 +28,7 @@ export function BottomNavBar({ surface, onMoreClick }: BottomNavBarProps) {
 
   return (
     <nav
-      className="border-border/50 bg-background/85 fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200 bg-white md:hidden dark:border-zinc-800 dark:bg-zinc-900"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Mobile navigation"
     >
@@ -41,31 +41,15 @@ export function BottomNavBar({ surface, onMoreClick }: BottomNavBarProps) {
               key={item.name}
               href={item.href}
               className={cn(
-                "relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[0.65rem] font-medium transition-colors",
+                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors",
                 active
-                  ? "text-primary"
-                  : "text-muted-foreground active:text-primary"
+                  ? "text-teal-600 dark:text-teal-400"
+                  : "text-zinc-500 active:text-teal-600 dark:text-zinc-400 dark:active:text-teal-400"
               )}
               aria-current={active ? "page" : undefined}
             >
-              <div
-                className={cn(
-                  "mb-0.5 flex h-7 w-7 items-center justify-center rounded-full transition-all duration-200",
-                  active ? "bg-primary/12 scale-110" : ""
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-5 w-5 transition-all duration-200",
-                    active ? "stroke-[2.2]" : ""
-                  )}
-                  aria-hidden="true"
-                />
-              </div>
+              <Icon className="h-5 w-5" aria-hidden="true" />
               {item.name}
-              {active && (
-                <span className="bg-primary absolute inset-x-4 bottom-0 h-0.5 rounded-t-full" />
-              )}
             </Link>
           );
         })}
@@ -73,14 +57,12 @@ export function BottomNavBar({ surface, onMoreClick }: BottomNavBarProps) {
           type="button"
           onClick={onMoreClick}
           className={cn(
-            "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[0.65rem] font-medium transition-colors",
-            "text-muted-foreground active:text-primary"
+            "flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors",
+            "text-zinc-500 active:text-teal-600 dark:text-zinc-400 dark:active:text-teal-400"
           )}
           aria-label="Open menu"
         >
-          <div className="mb-0.5 flex h-7 w-7 items-center justify-center">
-            <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-          </div>
+          <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
           More
         </button>
       </div>

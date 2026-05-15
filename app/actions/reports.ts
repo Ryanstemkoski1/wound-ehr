@@ -6,9 +6,6 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { auditPhiAccess } from "@/lib/audit-log";
-import { rateLimit, clientKey } from "@/lib/rate-limit";
-import { headers } from "next/headers";
 
 // ============================================================================
 // TYPES
@@ -107,26 +104,6 @@ export async function getVisitLog(filters: VisitLogFilters) {
     } = await supabase.auth.getUser();
     if (!user)
       return { success: false, error: "Unauthorized", data: [], total: 0 };
-
-    // Rate limit heavy report queries: 30 per minute per user
-    try {
-      const h = await headers();
-      const rl = rateLimit(
-        clientKey(h, "visit-log-report", user.id),
-        30,
-        60_000
-      );
-      if (!rl.allowed) {
-        return {
-          success: false,
-          error: `Too many requests. Try again in ${Math.ceil(rl.retryAfterMs / 1000)}s.`,
-          data: [],
-          total: 0,
-        };
-      }
-    } catch {
-      // headers() unavailable — skip
-    }
 
     const page = filters.page || 1;
     const limit = filters.limit || 50;
@@ -256,12 +233,6 @@ export async function getVisitLog(filters: VisitLogFilters) {
         };
       }) || [];
 
-    void auditPhiAccess({
-      action: "read",
-      table: "visits",
-      recordId: user.id,
-      recordType: "visit_log_report",
-    });
     return {
       success: true,
       data: results,

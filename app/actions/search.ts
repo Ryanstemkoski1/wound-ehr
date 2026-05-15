@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { auditPhiAccess } from "@/lib/audit-log";
 
 export type SearchResult = {
   id: string;
@@ -48,14 +47,6 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
           title: `${p.first_name} ${p.last_name}`,
           subtitle: `MRN: ${p.mrn} · DOB: ${new Date(p.dob).toLocaleDateString()}`,
           href: `/dashboard/patients/${p.id}`,
-        });
-      }
-      if (patients.length > 0) {
-        void auditPhiAccess({
-          action: "read",
-          table: "patients",
-          recordId: user.id,
-          recordType: "search",
         });
       }
     }

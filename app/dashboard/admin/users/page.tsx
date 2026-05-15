@@ -47,9 +47,9 @@ export default async function AdminUsersPage() {
         ]}
       />
 
-      <div className="page-hero">
-        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-        <p className="text-muted-foreground mt-1">
+      <div>
+        <h1 className="text-3xl font-bold">User Management</h1>
+        <p className="text-zinc-600 dark:text-zinc-400">
           Manage users and their roles in your organization
         </p>
       </div>
