@@ -28,7 +28,7 @@ import { LazyDashboardCharts } from "@/components/dashboard/lazy-dashboard-chart
 import { getUserRole } from "@/lib/rbac";
 import { getCorrectionsForClinician } from "@/app/actions/approval-workflow";
 import { CorrectionBanner } from "@/components/dashboard/correction-banner";
-import { getActiveSurface } from "@/lib/surface-server";
+import { getActiveSurface } from "@/lib/surface";
 import { getUserCredentials } from "@/lib/rbac";
 import {
   getClinicalDashboardStats,
