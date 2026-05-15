@@ -23,9 +23,11 @@ export default async function AdminHomeHealthAgenciesPage() {
         ]}
       />
 
-      <div>
-        <h1 className="text-3xl font-bold">Home Health Agencies</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Home Health Agencies
+        </h1>
+        <p className="text-muted-foreground mt-1">
           Partner agencies your patients receive home health services from.
         </p>
       </div>

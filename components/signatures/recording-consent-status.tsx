@@ -54,18 +54,18 @@ export function RecordingConsentStatus({
   // No consent at all
   if (!consent || !hasConsent || isExpired || isRevoked) {
     return (
-      <Card className="border-zinc-200 dark:border-zinc-700">
+      <Card className="border-border/60 dark:border-border">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <MicOff className="h-5 w-5 text-zinc-400" />
-              <CardTitle className="text-base text-zinc-700 dark:text-zinc-300">
+              <MicOff className="h-5 w-5 text-muted-foreground/60" />
+              <CardTitle className="text-base text-foreground">
                 AI Recording Consent
               </CardTitle>
             </div>
             <Badge
               variant="outline"
-              className="border-zinc-400 text-zinc-600 dark:text-zinc-400"
+              className="border-border text-muted-foreground"
             >
               {isRevoked ? "Revoked" : isExpired ? "Expired" : "Not Obtained"}
             </Badge>
@@ -99,12 +99,12 @@ export function RecordingConsentStatus({
     : null;
 
   return (
-    <Card className="border-teal-200 bg-teal-50/30 dark:border-teal-800 dark:bg-teal-950/10">
+    <Card className="border-primary/30 bg-primary/5/30 dark:border-primary/30 dark:bg-primary/5/10">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-            <CardTitle className="text-base text-teal-900 dark:text-teal-100">
+            <CheckCircle className="h-5 w-5 text-primary" />
+            <CardTitle className="text-base text-foreground text-foreground">
               AI Recording Consent
             </CardTitle>
           </div>
@@ -120,21 +120,21 @@ export function RecordingConsentStatus({
             )}
             <Badge
               variant="outline"
-              className="border-teal-600 text-teal-700 dark:text-teal-300"
+              className="border-primary text-primary text-primary"
             >
               <ShieldCheck className="mr-1 h-3 w-3" />
               Active
             </Badge>
           </div>
         </div>
-        <CardDescription className="text-teal-700 dark:text-teal-300">
+        <CardDescription className="text-primary text-primary">
           Patient has consented to audio recording for AI clinical documentation
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-sm text-teal-700 dark:text-teal-300">
+            <div className="flex items-center gap-4 text-sm text-primary text-primary">
               <div className="flex items-center gap-1.5">
                 <Mic className="h-3.5 w-3.5" />
                 <span>Obtained: {consentDate}</span>
@@ -145,7 +145,7 @@ export function RecordingConsentStatus({
                   <span>Expires: {expiresDate}</span>
                 </div>
               )}
-              <div className="text-xs text-teal-600 dark:text-teal-400">
+              <div className="text-xs text-primary">
                 v{consent.consent_version}
               </div>
             </div>
@@ -165,12 +165,12 @@ export function RecordingConsentStatus({
           </div>
 
           {/* AI processing consent sub-status */}
-          <div className="flex items-center justify-between border-t border-teal-200 pt-3 dark:border-teal-800">
+          <div className="flex items-center justify-between border-t border-primary/30 pt-3 dark:border-primary/30">
             <div className="flex items-center gap-2 text-sm">
               {consent.ai_processing_consent_given ? (
                 <>
-                  <ShieldCheck className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-                  <span className="text-teal-700 dark:text-teal-300">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <span className="text-primary text-primary">
                     AI processing authorized
                     {consent.ai_vendor ? ` (${consent.ai_vendor})` : ""}
                   </span>
@@ -189,7 +189,7 @@ export function RecordingConsentStatus({
               variant="outline"
               className={
                 consent.ai_processing_consent_given
-                  ? "border-teal-600 text-teal-700 dark:text-teal-300"
+                  ? "border-primary text-primary text-primary"
                   : "border-amber-500 text-amber-700 dark:text-amber-300"
               }
             >
@@ -225,7 +225,7 @@ export function RecordingConsentBadge({
     return (
       <Badge
         variant="outline"
-        className="gap-1 border-teal-300 text-teal-700 dark:border-teal-700 dark:text-teal-300"
+        className="gap-1 border-primary/30 text-primary dark:border-primary/30 text-primary"
       >
         <Mic className="h-3 w-3" />
         AI Ready
@@ -248,7 +248,7 @@ export function RecordingConsentBadge({
   return (
     <Badge
       variant="outline"
-      className="gap-1 border-zinc-300 text-zinc-500 dark:border-zinc-600 dark:text-zinc-400"
+      className="gap-1 border-border text-muted-foreground dark:border-border dark:text-muted-foreground/60"
     >
       <MicOff className="h-3 w-3" />
       No AI Consent

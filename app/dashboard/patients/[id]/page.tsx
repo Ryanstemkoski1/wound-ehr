@@ -147,12 +147,12 @@ export default async function PatientDetailPage({
       />
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="page-hero flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">
             {patient.firstName} {patient.lastName}
           </h1>
-          <p className="text-sm text-zinc-600 sm:text-base dark:text-zinc-400">
+          <p className="text-muted-foreground text-sm sm:text-base">
             MRN: {patient.mrn}
             {patient.facility && ` • ${patient.facility.name}`}
           </p>
@@ -242,18 +242,14 @@ export default async function PatientDetailPage({
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Date of Birth
-                  </p>
+                  <p className="text-muted-foreground text-sm">Date of Birth</p>
                   <p className="font-medium">
                     {new Date(patient.dob).toLocaleDateString()} ({age} years
                     old)
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Gender
-                  </p>
+                  <p className="text-muted-foreground text-sm">Gender</p>
                   <p className="font-medium">
                     {patient.gender || "Not specified"}
                   </p>
@@ -272,17 +268,13 @@ export default async function PatientDetailPage({
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Phone
-                  </p>
+                  <p className="text-muted-foreground text-sm">Phone</p>
                   <p className="font-medium">
                     {patient.phone || "Not provided"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Email
-                  </p>
+                  <p className="text-muted-foreground text-sm">Email</p>
                   <p className="font-medium">
                     {patient.email || "Not provided"}
                   </p>
@@ -290,7 +282,7 @@ export default async function PatientDetailPage({
               </div>
               {patient.address && (
                 <div>
-                  <p className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-muted-foreground flex items-center gap-1 text-sm">
                     <MapPin className="h-3 w-3" />
                     Address
                   </p>
@@ -319,19 +311,15 @@ export default async function PatientDetailPage({
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Name
-                    </p>
+                    <p className="text-muted-foreground text-sm">Name</p>
                     <p className="font-medium">{emergencyContact.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Phone
-                    </p>
+                    <p className="text-muted-foreground text-sm">Phone</p>
                     <p className="font-medium">{emergencyContact.phone}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-sm">
                       Relationship
                     </p>
                     <p className="font-medium">
@@ -353,16 +341,14 @@ export default async function PatientDetailPage({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Provider
-                  </p>
+                  <p className="text-muted-foreground text-sm">Provider</p>
                   <p className="font-medium">
                     {insuranceInfo.primary.provider}
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-sm">
                       Policy Number
                     </p>
                     <p className="font-medium">
@@ -370,7 +356,7 @@ export default async function PatientDetailPage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-sm">
                       Group Number
                     </p>
                     <p className="font-medium">
@@ -389,16 +375,14 @@ export default async function PatientDetailPage({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Provider
-                  </p>
+                  <p className="text-muted-foreground text-sm">Provider</p>
                   <p className="font-medium">
                     {insuranceInfo.secondary.provider}
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-sm">
                       Policy Number
                     </p>
                     <p className="font-medium">
@@ -406,7 +390,7 @@ export default async function PatientDetailPage({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-sm">
                       Group Number
                     </p>
                     <p className="font-medium">
@@ -420,7 +404,7 @@ export default async function PatientDetailPage({
 
           {!insuranceInfo?.primary && !insuranceInfo?.secondary && (
             <Card>
-              <CardContent className="py-12 text-center text-zinc-600 dark:text-zinc-400">
+              <CardContent className="text-muted-foreground py-12 text-center">
                 No insurance information on file
               </CardContent>
             </Card>
@@ -450,9 +434,7 @@ export default async function PatientDetailPage({
                   ))}
                 </div>
               ) : (
-                <p className="text-zinc-600 dark:text-zinc-400">
-                  No known allergies
-                </p>
+                <p className="text-muted-foreground">No known allergies</p>
               )}
             </CardContent>
           </Card>
@@ -469,13 +451,13 @@ export default async function PatientDetailPage({
                 <ul className="space-y-2">
                   {medicalHistory.map((condition, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                      <span className="bg-muted-foreground/30 mt-1.5 h-1.5 w-1.5 rounded-full" />
                       <span>{condition}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-zinc-600 dark:text-zinc-400">
+                <p className="text-muted-foreground">
                   No medical history recorded
                 </p>
               )}
@@ -495,7 +477,7 @@ export default async function PatientDetailPage({
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-muted-foreground text-sm">
               View all wound records and track healing progress over time. Click
               a wound to see its complete assessment history across all visits.
             </p>
@@ -515,7 +497,7 @@ export default async function PatientDetailPage({
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-muted-foreground text-sm">
               View documentation by visit date. Click a visit to see what was
               assessed and documented during that appointment.
             </p>
@@ -543,9 +525,7 @@ export default async function PatientDetailPage({
           ) : (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="mb-4 text-zinc-600 dark:text-zinc-400">
-                  No visits recorded
-                </p>
+                <p className="text-muted-foreground mb-4">No visits recorded</p>
                 <Link href={`/dashboard/patients/${patient.id}/visits/new`}>
                   <Button variant="outline" className="gap-2">
                     <Plus className="h-4 w-4" />

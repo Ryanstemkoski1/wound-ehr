@@ -46,7 +46,7 @@ export function ConsentDocumentViewer({
           <DialogDescription>{documentName}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden rounded-lg border bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 overflow-hidden rounded-lg border bg-muted/40">
           {loadError ? (
             <div className="flex h-full flex-col items-center justify-center p-8">
               <Alert variant="destructive" className="max-w-md">
@@ -81,8 +81,8 @@ export function ConsentDocumentViewer({
             </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-              <FileText className="mb-4 h-16 w-16 text-gray-400" />
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <FileText className="mb-4 h-16 w-16 text-muted-foreground/60" />
+              <p className="mb-4 text-sm text-muted-foreground">
                 Preview not available for this file type
               </p>
               <Button onClick={handleDownload}>

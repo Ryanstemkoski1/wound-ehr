@@ -100,7 +100,7 @@ export default function OfficeInboxClient({
       } else {
         toast.error(result.error || "Failed to approve note");
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred while approving the note");
     } finally {
       setLoadingVisitId(null);

@@ -8,15 +8,7 @@ import { resetPassword } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Lock } from "lucide-react";
+import { Lock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
@@ -72,127 +64,161 @@ export default function ResetPasswordPage() {
     }
   }
 
+  const PageShell = ({ children }: { children: React.ReactNode }) => (
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+      <div className="mb-10">
+        <Image
+          src="/logo.svg"
+          alt="WoundNote"
+          width={160}
+          height={48}
+          priority
+        />
+      </div>
+      <div className="w-full max-w-[22rem] space-y-8">{children}</div>
+    </div>
+  );
+
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent"></div>
-            </div>
-            <p className="mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
-              Verifying reset link...
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageShell>
+        <div className="flex flex-col items-center gap-4 py-8">
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-[3px] border-t-transparent" />
+          <p className="text-muted-foreground text-sm">Verifying reset link…</p>
+        </div>
+      </PageShell>
     );
   }
 
   if (!validSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <div className="mb-4 flex justify-center">
-              <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
-            </div>
-            <CardTitle className="text-center text-2xl">
+      <PageShell>
+        <div className="space-y-3 text-center">
+          <div className="bg-destructive/10 ring-destructive/20 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ring-1">
+            <AlertCircle className="text-destructive h-7 w-7" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">
               Invalid Reset Link
-            </CardTitle>
-            <CardDescription className="text-center">{error}</CardDescription>
-          </CardHeader>
-          <CardFooter className="flex flex-col space-y-4">
-            <Link href="/auth/forgot-password" className="w-full">
-              <Button className="w-full">Request New Reset Link</Button>
-            </Link>
-            <Link
-              href="/login"
-              className="text-center text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Back to login
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
+            </h2>
+            <p className="text-muted-foreground text-sm">{error}</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <Link href="/auth/forgot-password" className="block">
+            <Button className="h-11 w-full font-semibold">
+              Request New Reset Link
+            </Button>
+          </Link>
+          <Link
+            href="/login"
+            className="text-muted-foreground hover:text-foreground flex justify-center text-sm transition-colors"
+          >
+            Back to login
+          </Link>
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="mb-4 flex justify-center">
-            <Image src="/logo.svg" alt="WoundNote" width={200} height={60} />
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-6 py-12">
+      <div className="mb-10">
+        <Image
+          src="/logo.svg"
+          alt="WoundNote"
+          width={160}
+          height={48}
+          priority
+        />
+      </div>
+
+      <div className="w-full max-w-[22rem] space-y-8">
+        <div className="space-y-3 text-center">
+          <div className="bg-primary/10 ring-primary/20 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ring-1">
+            <Lock className="text-primary h-7 w-7" />
           </div>
-          <div className="flex justify-center">
-            <div className="rounded-full bg-teal-50 p-3 dark:bg-teal-950">
-              <Lock className="h-6 w-6 text-teal-600 dark:text-teal-400" />
-            </div>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight">
+              Reset your password
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Enter your new password below.
+            </p>
           </div>
-          <CardTitle className="text-center text-2xl">
-            Reset Your Password
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your new password below
-          </CardDescription>
-        </CardHeader>
-        <form action={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div
-                role="alert"
-                className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"
-              >
-                {error}
-              </div>
+        </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="border-destructive/30 bg-destructive/8 text-destructive flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <form action={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm font-medium">
+              New Password
+            </Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="At least 8 characters"
+              required
+              autoComplete="new-password"
+              autoFocus
+              minLength={8}
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-sm font-medium">
+              Confirm Password
+            </Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              placeholder="Re-enter your password"
+              required
+              autoComplete="new-password"
+              minLength={8}
+              className="h-11"
+            />
+          </div>
+          <div className="bg-muted/60 text-muted-foreground flex items-start gap-2 rounded-lg px-3 py-2.5 text-xs">
+            <CheckCircle2 className="text-primary/70 mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>
+              At least 8 characters. Mix of letters and numbers recommended.
+            </span>
+          </div>
+          <Button
+            type="submit"
+            className="h-11 w-full font-semibold"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Resetting…
+              </span>
+            ) : (
+              "Reset Password"
             )}
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="At least 8 characters"
-                required
-                autoComplete="new-password"
-                autoFocus
-                minLength={8}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Re-enter your password"
-                required
-                autoComplete="new-password"
-                minLength={8}
-              />
-            </div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              <p className="font-medium">Password requirements:</p>
-              <ul className="mt-1 list-inside list-disc space-y-1">
-                <li>At least 8 characters long</li>
-                <li>Mix of letters and numbers recommended</li>
-              </ul>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Resetting..." : "Reset Password"}
-            </Button>
-            <Link
-              href="/login"
-              className="text-center text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Back to login
-            </Link>
-          </CardFooter>
+          </Button>
         </form>
-      </Card>
+
+        <Link
+          href="/login"
+          className="text-muted-foreground hover:text-foreground flex justify-center text-sm transition-colors"
+        >
+          Back to login
+        </Link>
+      </div>
     </div>
   );
 }

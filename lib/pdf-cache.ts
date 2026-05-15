@@ -15,7 +15,8 @@
 import { createClient } from "@/lib/supabase/server";
 
 const PDF_CACHE_BUCKET = "pdf-cache";
-const CACHE_VERSION = "v1"; // Increment to invalidate all caches
+// Increment to invalidate all caches. Override via PDF_CACHE_VERSION env var.
+const CACHE_VERSION = process.env.PDF_CACHE_VERSION ?? "v1";
 
 type CacheOptions = {
   visitId: string;
@@ -100,26 +101,9 @@ export async function cachePDF(
     const supabase = await createClient();
     const cacheKey = generateCacheKey(options);
 
-    // Ensure bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some((b) => b.name === PDF_CACHE_BUCKET);
-
-    if (!bucketExists) {
-      const { error: createError } = await supabase.storage.createBucket(
-        PDF_CACHE_BUCKET,
-        {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        }
-      );
-
-      if (createError) {
-        console.error("Failed to create cache bucket:", createError);
-        return { success: false, error: createError.message };
-      }
-    }
-
-    // Upload PDF to cache
+    // Upload PDF to cache. The 'pdf-cache' bucket must be provisioned in
+    // advance via Supabase migrations (supabase/storage/) — not created here
+    // at runtime to avoid service-role permission anti-patterns.
     const { error: uploadError } = await supabase.storage
       .from(PDF_CACHE_BUCKET)
       .upload(cacheKey, pdfBuffer, {

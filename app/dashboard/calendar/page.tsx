@@ -41,25 +41,26 @@ export default function CalendarPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            <CalendarIcon
-              className="h-6 w-6 sm:h-8 sm:w-8"
-              aria-hidden="true"
-            />
-            Calendar
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Schedule and manage patient visits
-          </p>
+      <div className="page-hero flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 ring-primary/20 flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm ring-1">
+            <CalendarIcon className="text-primary h-6 w-6" aria-hidden="true" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Calendar
+            </h1>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              Schedule and manage patient visits
+            </p>
+          </div>
         </div>
         <Button
           onClick={() => setShowNewVisitDialog(true)}
           className="w-full sm:w-auto"
           aria-label="Schedule a new patient visit"
         >
-          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+          <Plus className="h-4 w-4" aria-hidden="true" />
           New Visit
         </Button>
       </div>
@@ -68,7 +69,7 @@ export default function CalendarPage() {
       <CalendarFilters onFilterChange={handleFilterChange} />
 
       {/* Calendar */}
-      <div className="bg-card rounded-lg border p-3 sm:p-6">
+      <div className="bg-card border-border/60 rounded-xl border p-3 shadow-sm sm:p-6">
         <CalendarView
           key={refreshKey}
           facilityId={facilityId}

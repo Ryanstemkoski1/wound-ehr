@@ -42,8 +42,8 @@ const STATUS_LABELS: Record<BillingStatus, string> = {
 };
 
 const STATUS_BADGE_CLASS: Record<BillingStatus, string> = {
-  draft: "bg-zinc-100 text-zinc-700 border-zinc-300",
-  ready: "bg-blue-100 text-blue-700 border-blue-300",
+  draft: "bg-muted text-muted-foreground border-border",
+  ready: "bg-primary/10 text-primary border-primary/30",
   submitted: "bg-amber-100 text-amber-700 border-amber-300",
   paid: "bg-emerald-100 text-emerald-700 border-emerald-300",
   denied: "bg-red-100 text-red-700 border-red-300",
@@ -517,7 +517,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                               {billing.patient.firstName}{" "}
                               {billing.patient.lastName}
                             </Link>
-                            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                            <p className="text-muted-foreground text-sm">
                               MRN: {billing.patient.mrn}
                             </p>
                           </div>
@@ -532,9 +532,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
 
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-zinc-600 dark:text-zinc-400">
-                              Date:
-                            </span>
+                            <span className="text-muted-foreground">Date:</span>
                             <span className="font-medium">
                               {format(
                                 new Date(billing.visit.visitDate),
@@ -543,7 +541,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-zinc-600 dark:text-zinc-400">
+                            <span className="text-muted-foreground">
                               Facility:
                             </span>
                             <span className="font-medium">
@@ -552,7 +550,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                           </div>
                           {billing.timeSpent && (
                             <div className="flex justify-between">
-                              <span className="text-zinc-600 dark:text-zinc-400">
+                              <span className="text-muted-foreground">
                                 Time-Based:
                               </span>
                               <Badge variant="default" className="bg-green-600">
@@ -566,7 +564,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                           {Array.isArray(billing.cptCodes) &&
                             billing.cptCodes.length > 0 && (
                               <div>
-                                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                <p className="text-muted-foreground mb-1 text-xs font-medium">
                                   CPT Codes:
                                 </p>
                                 <div className="flex flex-wrap gap-1">
@@ -586,7 +584,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                           {Array.isArray(billing.icd10Codes) &&
                             billing.icd10Codes.length > 0 && (
                               <div>
-                                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                <p className="text-muted-foreground mb-1 text-xs font-medium">
                                   ICD-10 Codes:
                                 </p>
                                 <div className="flex flex-wrap gap-1">
@@ -606,7 +604,7 @@ export function BillingReportsClient({ initialBillings, facilities }: Props) {
                           {Array.isArray(billing.modifiers) &&
                             billing.modifiers.length > 0 && (
                               <div>
-                                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                <p className="text-muted-foreground mb-1 text-xs font-medium">
                                   Modifiers:
                                 </p>
                                 <div className="flex flex-wrap gap-1">

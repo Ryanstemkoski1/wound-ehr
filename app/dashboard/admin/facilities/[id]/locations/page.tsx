@@ -52,9 +52,9 @@ export default async function FacilityServiceLocationsPage({
         ]}
       />
 
-      <div>
-        <h1 className="text-3xl font-bold">Service Locations</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">Service Locations</h1>
+        <p className="text-muted-foreground mt-1">
           Named visit locations at {facility.name} (e.g. &ldquo;Wound Clinic
           Suite A&rdquo;, &ldquo;Patient Room&rdquo;, &ldquo;Telehealth&rdquo;).
           These appear in the New Visit dropdown.

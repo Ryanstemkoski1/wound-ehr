@@ -184,15 +184,15 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-teal-500/10 text-teal-700 dark:text-teal-400";
+        return "bg-primary/10 text-primary";
       case "healing":
-        return "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+        return "bg-primary/10 text-primary";
       case "healed":
         return "bg-green-500/10 text-green-700 dark:text-green-400";
       case "closed":
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
+        return "bg-muted text-muted-foreground";
       default:
-        return "bg-gray-500/10 text-gray-700 dark:text-gray-400";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -234,7 +234,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card
-          className="cursor-pointer transition-all hover:border-teal-500 hover:shadow-md"
+          className="hover:border-primary cursor-pointer transition-all hover:shadow-md"
           onClick={() => {
             setQuickFilter("all");
             setStatusFilter("all");
@@ -252,7 +252,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
         </Card>
 
         <Card
-          className="cursor-pointer transition-all hover:border-teal-500 hover:shadow-md"
+          className="hover:border-primary cursor-pointer transition-all hover:shadow-md"
           onClick={() => {
             setQuickFilter("active");
             setStatusFilter("all");
@@ -265,7 +265,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-teal-600">
+            <div className="text-primary text-3xl font-bold">
               {stats.active}
             </div>
           </CardContent>
@@ -426,7 +426,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
             return (
               <Card
                 key={wound.id}
-                className="group transition-colors hover:border-teal-500"
+                className="group hover:border-primary transition-colors"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -450,7 +450,7 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
                   <div>
                     <Link
                       href={`/dashboard/patients/${patient.id}`}
-                      className="font-medium transition-colors hover:text-teal-600"
+                      className="hover:text-primary font-medium transition-colors"
                     >
                       {patient.first_name} {patient.last_name}
                     </Link>
@@ -504,7 +504,9 @@ export function WoundsBoard({ wounds }: WoundsBoardProps) {
                       size="sm"
                       className="flex-1"
                     >
-                      <Link href={`/dashboard/patients/${patient.id}/wounds/${wound.id}`}>
+                      <Link
+                        href={`/dashboard/patients/${patient.id}/wounds/${wound.id}`}
+                      >
                         <Activity className="mr-1 h-3 w-3" />
                         View Wound
                       </Link>

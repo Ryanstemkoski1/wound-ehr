@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { auditPhiAccess } from "@/lib/audit-log";
 import { revalidatePath } from "next/cache";
 import { assertUuid, ValidationError } from "@/lib/validations/common";
 
@@ -126,6 +127,13 @@ export async function createTreatment(formData: FormData): Promise<{
 
       if (error) throw error;
 
+      void auditPhiAccess({
+        action: "update",
+        table: "treatments",
+        recordId: existing.id,
+        recordType: "treatment",
+      });
+
       revalidatePath(`/dashboard/patients`);
       return { success: true, treatmentId: existing.id };
     }
@@ -144,6 +152,13 @@ export async function createTreatment(formData: FormData): Promise<{
       .single();
 
     if (error) throw error;
+
+    void auditPhiAccess({
+      action: "create",
+      table: "treatments",
+      recordId: data.id,
+      recordType: "treatment",
+    });
 
     revalidatePath(`/dashboard/patients`);
     return { success: true, treatmentId: data.id };
@@ -192,6 +207,13 @@ export async function updateTreatment(formData: FormData): Promise<{
       .eq("id", treatmentId);
 
     if (error) throw error;
+
+    void auditPhiAccess({
+      action: "update",
+      table: "treatments",
+      recordId: treatmentId,
+      recordType: "treatment",
+    });
 
     revalidatePath(`/dashboard/patients`);
     return { success: true };

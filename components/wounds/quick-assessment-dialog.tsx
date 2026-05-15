@@ -88,8 +88,8 @@ export function QuickAssessmentDialog({
             </div>
           ) : (
             <>
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                💡 <strong>Quick Tip:</strong> Select a recent visit or create a
+              <p className="text-primary/80 bg-primary/5 border-primary/20 rounded-lg border px-3 py-2 text-sm">
+                <strong>Quick Tip:</strong> Select a recent visit or create a
                 new one. You&apos;ll be able to choose the assessment type next.
               </p>
 

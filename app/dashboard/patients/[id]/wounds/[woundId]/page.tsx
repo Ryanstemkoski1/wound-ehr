@@ -165,7 +165,7 @@ export default async function WoundDetailPage({
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="page-hero flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">
@@ -275,8 +275,8 @@ export default async function WoundDetailPage({
         <CardContent>
           {assessments.length > 0 ? (
             <>
-              <p className="mb-6 text-sm text-blue-600 dark:text-blue-400">
-                💡 <strong>Quick Tip:</strong> Click any assessment card to view
+              <p className="text-primary/80 bg-primary/5 border-primary/20 mb-6 rounded-lg border px-3 py-2 text-sm">
+                <strong>Quick Tip:</strong> Click any assessment card to view
                 full details and edit. Click &quot;Add Assessment&quot; above to
                 document this wound at a specific visit.
               </p>

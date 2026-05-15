@@ -125,7 +125,7 @@ export function GlobalSearchDialog() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm transition-colors dark:border-zinc-700"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted border-border/70 flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors"
         aria-label="Search (Ctrl+K)"
       >
         <Search className="h-4 w-4" />

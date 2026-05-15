@@ -82,17 +82,15 @@ export function SignatureDisplay({
   }
 
   const containerClass = showBorder
-    ? "border-2 border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 p-4"
+    ? "border-2 border-border rounded-lg bg-background p-4"
     : "";
 
   return (
     <div className="space-y-2">
       {title && (
         <div className="flex items-center gap-2">
-          <FileSignature className="h-4 w-4 text-zinc-500" />
-          <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            {title}
-          </h4>
+          <FileSignature className="text-muted-foreground h-4 w-4" />
+          <h4 className="text-foreground text-sm font-medium">{title}</h4>
           <CheckCircle2 className="h-4 w-4 text-green-600" />
         </div>
       )}
@@ -107,7 +105,7 @@ export function SignatureDisplay({
       </div>
 
       {(signerName || signerRole || signedAt) && (
-        <div className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+        <div className="text-muted-foreground space-y-1 text-xs">
           {signerName && (
             <p>
               <span className="font-medium">Signed by:</span> {signerName}

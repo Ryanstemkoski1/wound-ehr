@@ -19,10 +19,12 @@ export default async function CorrectionsPage() {
   const { data: corrections } = await getCorrectionsForClinician(user.id);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Corrections Needed</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-6">
+      <div className="page-hero">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Corrections Needed
+        </h1>
+        <p className="text-muted-foreground mt-1">
           Visit notes that require corrections from the office
         </p>
       </div>
