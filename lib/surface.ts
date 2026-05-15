@@ -6,7 +6,6 @@
 // third role tier. Dual-surface users (Tenant Admin, anyone holding both an
 // admin role and a clinical credential) get a surface switcher in the top nav.
 
-import { cookies } from "next/headers";
 import type { UserRole } from "@/lib/rbac";
 import type { Credentials } from "@/lib/credentials";
 
@@ -96,28 +95,6 @@ export function getDefaultSurface(
     return "clinical";
   }
   return "admin";
-}
-
-/**
- * Read the active surface from the request cookie, falling back to the user's
- * default. Always returns a surface the user is actually entitled to (defends
- * against a stale cookie after a role change).
- */
-export async function getActiveSurface(
-  role: UserRole | null,
-  credentials: Credentials | null
-): Promise<Surface | null> {
-  const entitlements = getSurfaceEntitlements(role, credentials);
-  if (entitlements.length === 0) return null;
-
-  const cookieStore = await cookies();
-  const raw = cookieStore.get(SURFACE_COOKIE_NAME)?.value;
-
-  if (raw === "admin" || raw === "clinical") {
-    if (entitlements.includes(raw)) return raw;
-  }
-
-  return getDefaultSurface(role, credentials);
 }
 
 /**
