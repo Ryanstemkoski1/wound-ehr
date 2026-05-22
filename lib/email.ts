@@ -10,6 +10,16 @@ const resend = process.env.RESEND_API_KEY
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@wound-ehr.com";
 
+/** Escape untrusted values before interpolating into the email HTML. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 type SendInviteEmailParams = {
   to: string;
   inviteToken: string;
@@ -56,10 +66,10 @@ export async function sendInviteEmail({
           <h2 style="color: #0d9488; margin-top: 0;">You've Been Invited! 🎉</h2>
           
           <p style="font-size: 16px; color: #4b5563;">
-            <strong>${invitedBy}</strong> has invited you to join WoundNote as a <strong>${roleLabel}</strong>.
+            <strong>${escapeHtml(invitedBy)}</strong> has invited you to join WoundNote as a <strong>${escapeHtml(roleLabel)}</strong>.
           </p>
-          
-          ${facilityName ? `<p style="font-size: 16px; color: #4b5563;">Facility: <strong>${facilityName}</strong></p>` : ""}
+
+          ${facilityName ? `<p style="font-size: 16px; color: #4b5563;">Facility: <strong>${escapeHtml(facilityName)}</strong></p>` : ""}
           
           <p style="font-size: 16px; color: #4b5563;">
             Click the button below to accept your invitation and create your account:

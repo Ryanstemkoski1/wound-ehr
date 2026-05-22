@@ -23,24 +23,25 @@ export async function updatePhotoAssessmentId(
     }
 
     // Update photos that match wound_id and old assessment_id (or null)
-    const query = supabase
+    let query = supabase
       .from("photos")
       .update({ assessment_id: newAssessmentId })
       .eq("wound_id", woundId);
 
-    // If oldAssessmentId exists, update only those photos
-    // If undefined, update photos with null assessment_id
+    // Narrow to the matching assessment_id (or null). The filter builders
+    // return a NEW builder, so the result MUST be reassigned — the previous
+    // code discarded it and updated every photo for the wound.
     if (oldAssessmentId) {
-      query.eq("assessment_id", oldAssessmentId);
+      query = query.eq("assessment_id", oldAssessmentId);
     } else {
-      query.is("assessment_id", null);
+      query = query.is("assessment_id", null);
     }
 
     const { error: updateError } = await query;
 
     if (updateError) {
       console.error("Photo update error:", updateError);
-      return { error: `Failed to update photos: ${updateError.message}` };
+      return { error: "Failed to update photo links" };
     }
 
     return { success: true };
@@ -135,7 +136,7 @@ export async function uploadPhoto(formData: FormData) {
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
-      return { error: `Failed to upload photo: ${uploadError.message}` };
+      return { error: "Failed to upload photo" };
     }
 
     // Get public URL - ensure bucket is public in Supabase Storage settings

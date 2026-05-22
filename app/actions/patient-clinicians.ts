@@ -175,6 +175,11 @@ export async function getPatientClinicians(patientId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated", data: [] };
+
     const { data, error } = await supabase
       .from("patient_clinicians")
       .select("*")
@@ -224,6 +229,11 @@ export async function getClinicianPatients(userId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated", data: [] };
+
     const { data, error } = await supabase
       .from("patient_clinicians")
       .select(
@@ -271,6 +281,27 @@ export async function updateClinicianRole(
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    // Changing a clinician's role on a patient is an admin function.
+    const { data: callerRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+    if (
+      !callerRole ||
+      !["tenant_admin", "facility_admin"].includes(callerRole.role)
+    ) {
+      return {
+        success: false,
+        error: "Only administrators can change a clinician's role",
+      };
+    }
+
     const { data, error } = await supabase
       .from("patient_clinicians")
       .update({ role: newRole, updated_at: new Date().toISOString() })
@@ -284,6 +315,13 @@ export async function updateClinicianRole(
     revalidatePath(`/dashboard/patients/${patientId}`);
     revalidatePath("/dashboard/patients");
     revalidatePath("/dashboard/calendar");
+
+    void auditPhiAccess({
+      action: "update",
+      table: "patient_clinicians",
+      recordId: patientId,
+      recordType: "clinician_role_change",
+    });
 
     return { success: true, data };
   } catch (error) {
@@ -303,6 +341,12 @@ export async function getPrimaryClinician(patientId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return { success: false, error: "Not authenticated", data: null };
+
     const { data, error } = await supabase
       .from("patient_clinicians")
       .select("*")
@@ -350,6 +394,11 @@ export async function getAvailableClinicians(facilityId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated", data: [] };
+
     // Get all users in this facility with clinical credentials
     const { data: users, error } = await supabase
       .from("users")

@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { auditPhiAccess } from "@/lib/audit-log";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
 import { headers } from "next/headers";
+import { escapeCsvCell } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -755,10 +756,8 @@ export async function exportVisitLogToCSV(filters: VisitLogFilters) {
     ]);
 
     const csvContent = [
-      headers.join(","),
-      ...rows.map((row) =>
-        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")
-      ),
+      headers.map(escapeCsvCell).join(","),
+      ...rows.map((row) => row.map(escapeCsvCell).join(",")),
     ].join("\n");
 
     return { success: true, csv: csvContent };

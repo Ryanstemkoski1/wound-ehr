@@ -95,6 +95,24 @@ export async function isAdmin(): Promise<boolean> {
 }
 
 /**
+ * Operations-surface entitlement: an admin role OR the operations "Admin"
+ * credential. Mirrors the gate in `proxy.ts` for /dashboard/billing and
+ * /dashboard/reports, so Operations-only server actions (e.g. billing status
+ * changes) can enforce the same rule server-side.
+ */
+export async function hasAdminEntitlement(): Promise<boolean> {
+  const [role, credentials] = await Promise.all([
+    getUserRole(),
+    getUserCredentials(),
+  ]);
+  return (
+    role?.role === "tenant_admin" ||
+    role?.role === "facility_admin" ||
+    credentials === "Admin"
+  );
+}
+
+/**
  * Get current user's tenant ID
  */
 export async function getUserTenantId(): Promise<string | null> {
@@ -281,9 +299,16 @@ export async function canPerformProcedure(
     .from("procedure_scopes")
     .select("allowed_credentials")
     .eq("procedure_code", procedureCode)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return true; // Default allow if procedure not in scopes
+  // A real lookup error must never grant permission — fail closed.
+  if (error) {
+    console.error("Error checking procedure permission:", error);
+    return false;
+  }
+  // No scope row = the procedure carries no credential restriction
+  // (procedure_scopes is a restricted-list, not an allowlist) -> allowed.
+  if (!data) return true;
 
   return data.allowed_credentials.includes(credentials);
 }

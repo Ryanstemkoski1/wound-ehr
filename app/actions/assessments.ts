@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { validateAssessmentForm } from "@/lib/validations/assessment";
 
 // Validation schema
 const assessmentSchema = z.object({
@@ -29,6 +30,50 @@ const assessmentSchema = z.object({
   infectionSigns: z.string().optional(), // JSON array as string
   assessmentNotes: z.string().optional(),
 });
+
+type AssessmentInput = z.infer<typeof assessmentSchema>;
+
+/**
+ * Server-side clinical validation. The action must enforce the same invariants
+ * the client form does (tissue must total 100%, pressure stage required for
+ * pressure injuries, sane numeric ranges) — a server action can be invoked
+ * directly without the form. Returns an error message, or null when valid.
+ */
+function clinicalAssessmentError(v: AssessmentInput): string | null {
+  const num = (s?: string) =>
+    s !== undefined && s !== "" ? Number(s) : undefined;
+
+  const pain = num(v.painLevel);
+  if (pain !== undefined && (Number.isNaN(pain) || pain < 0 || pain > 10)) {
+    return "Pain level must be between 0 and 10.";
+  }
+  for (const [label, raw] of [
+    ["Length", v.length],
+    ["Width", v.width],
+    ["Depth", v.depth],
+  ] as const) {
+    const n = num(raw);
+    if (n !== undefined && (Number.isNaN(n) || n < 0)) {
+      return `${label} must be a non-negative number.`;
+    }
+  }
+
+  const result = validateAssessmentForm({
+    woundType: v.woundType || "",
+    pressureStage: v.pressureStage,
+    measurements: {
+      length: num(v.length) ?? 0,
+      width: num(v.width) ?? 0,
+      depth: num(v.depth) ?? 0,
+    },
+    tissueComposition: {
+      epithelial: num(v.epithelialPercent) ?? 0,
+      granulation: num(v.granulationPercent) ?? 0,
+      slough: num(v.sloughPercent) ?? 0,
+    },
+  });
+  return result.valid ? null : result.errors[0];
+}
 
 // Get all assessments for a visit
 export async function getAssessments(visitId: string) {
@@ -184,6 +229,11 @@ export async function createAssessment(formData: FormData) {
     // Validate
     const validated = assessmentSchema.parse(data);
 
+    const clinicalError = clinicalAssessmentError(validated);
+    if (clinicalError) {
+      return { error: clinicalError };
+    }
+
     // Check if user has access to this visit
     const { data: visit, error: visitError } = await supabase
       .from("visits")
@@ -333,6 +383,11 @@ export async function updateAssessment(
 
     // Validate
     const validated = assessmentSchema.parse(data);
+
+    const clinicalError = clinicalAssessmentError(validated);
+    if (clinicalError) {
+      return { error: clinicalError };
+    }
 
     // Check if user has access to this assessment
     const { data: existingAssessment, error: existingError } = await supabase

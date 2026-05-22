@@ -317,7 +317,10 @@ export async function updateUserRole(formData: FormData) {
     // facility scope below for facility_admin callers.
     await requireAdmin();
 
-    const supabase = await createClient();
+    // user_roles / user_facilities have no authenticated write policy and only
+    // self/co-tenant read (see 00046). Admin mutations of OTHER users' rows go
+    // through the service-role client AFTER the role checks performed below.
+    const serviceClient = createServiceClient();
     const tenantId = await getUserTenantId();
     const callerRole = await getUserRole();
 
@@ -361,7 +364,7 @@ export async function updateUserRole(formData: FormData) {
       }
       // Verify the *target* user is currently associated with the
       // caller's facility, either via user_roles or user_facilities.
-      const { data: targetRole } = await supabase
+      const { data: targetRole } = await serviceClient
         .from("user_roles")
         .select("id, role, facility_id, tenant_id")
         .eq("user_id", userId)
@@ -372,7 +375,7 @@ export async function updateUserRole(formData: FormData) {
 
       let inFacility = sameFacility;
       if (!inFacility) {
-        const { data: targetFacility } = await supabase
+        const { data: targetFacility } = await serviceClient
           .from("user_facilities")
           .select("facility_id")
           .eq("user_id", userId)
@@ -394,7 +397,6 @@ export async function updateUserRole(formData: FormData) {
     }
 
     // Update user credentials in users table using service role to bypass RLS
-    const serviceClient = createServiceClient();
     const { error: updateUserError } = await serviceClient
       .from("users")
       .update({ credentials })
@@ -406,7 +408,7 @@ export async function updateUserRole(formData: FormData) {
     }
 
     // Update user role
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceClient
       .from("user_roles")
       .update({
         role,
@@ -440,19 +442,20 @@ export async function removeUserFromTenant(userId: string) {
   try {
     await requireTenantAdmin();
 
-    const supabase = await createClient();
+    // Admin write to other users' user_roles -> service-role client (post-check).
+    const serviceClient = createServiceClient();
     const adminClient = createAdminClient();
     const tenantId = await getUserTenantId();
 
     // Check if user has roles in other tenants
-    const { data: otherRoles } = await supabase
+    const { data: otherRoles } = await serviceClient
       .from("user_roles")
       .select("id")
       .eq("user_id", userId)
       .neq("tenant_id", tenantId!);
 
     // Delete user role from current tenant
-    const { error: deleteRoleError } = await supabase
+    const { error: deleteRoleError } = await serviceClient
       .from("user_roles")
       .delete()
       .eq("user_id", userId)
@@ -570,8 +573,15 @@ export async function acceptInvite(inviteToken: string) {
       return { error: "Unauthorized" };
     }
 
+    // Invite acceptance is authorized by possession of the (256-bit) invite
+    // token, not by an admin role — the invitee is a brand-new non-admin user.
+    // The invite is not readable, and user_roles/user_facilities are not
+    // writable, by `authenticated` (see 00046), so this flow uses the
+    // service-role client. Email match + expiry are still enforced below.
+    const serviceClient = createServiceClient();
+
     // Get invite
-    const { data: invite, error: inviteError } = await supabase
+    const { data: invite, error: inviteError } = await serviceClient
       .from("user_invites")
       .select("*")
       .eq("invite_token", inviteToken)
@@ -593,7 +603,6 @@ export async function acceptInvite(inviteToken: string) {
     }
 
     // Update user credentials in users table using service role to bypass RLS
-    const serviceClient = createServiceClient();
     const { error: updateUserError } = await serviceClient
       .from("users")
       .update({ credentials: invite.credentials })
@@ -605,7 +614,7 @@ export async function acceptInvite(inviteToken: string) {
     }
 
     // Check if user already has a role in this tenant
-    const { data: existingRole } = await supabase
+    const { data: existingRole } = await serviceClient
       .from("user_roles")
       .select("*")
       .eq("user_id", user.id)
@@ -614,7 +623,7 @@ export async function acceptInvite(inviteToken: string) {
 
     if (existingRole) {
       // Update existing role
-      const { error: roleError } = await supabase
+      const { error: roleError } = await serviceClient
         .from("user_roles")
         .update({
           role: invite.role,
@@ -626,19 +635,21 @@ export async function acceptInvite(inviteToken: string) {
       if (roleError) throw roleError;
     } else {
       // Create new user role
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: user.id,
-        tenant_id: invite.tenant_id,
-        role: invite.role,
-        facility_id: invite.facility_id,
-      });
+      const { error: roleError } = await serviceClient
+        .from("user_roles")
+        .insert({
+          user_id: user.id,
+          tenant_id: invite.tenant_id,
+          role: invite.role,
+          facility_id: invite.facility_id,
+        });
 
       if (roleError) throw roleError;
     }
 
     // Create user_facilities entry if facility_id is provided
     if (invite.facility_id) {
-      const { error: facilityError } = await supabase
+      const { error: facilityError } = await serviceClient
         .from("user_facilities")
         .insert({
           user_id: user.id,
@@ -655,7 +666,7 @@ export async function acceptInvite(inviteToken: string) {
     }
 
     // Mark invite as accepted
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceClient
       .from("user_invites")
       .update({
         accepted_at: new Date().toISOString(),

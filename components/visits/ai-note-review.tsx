@@ -144,7 +144,7 @@ function FormattedNoteView({ note }: { note: string }) {
   const sections = parseNoteSections(note);
 
   if (sections.length <= 1) {
-    // No sections detected ΓÇö render as plain text
+    // No sections detected — render as plain text
     return (
       <div className="text-sm leading-relaxed whitespace-pre-wrap">{note}</div>
     );
@@ -292,7 +292,7 @@ function TranscriptAudioPlayer({
           className="text-muted-foreground hover:text-foreground shrink-0 rounded px-1.5 py-0.5 text-[0.65rem] font-medium transition-colors"
           title="Playback speed"
         >
-          {playbackRate}├ù
+          {playbackRate}×
         </button>
         <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
       </div>
@@ -618,7 +618,7 @@ export function AIReviewPanel({
           <div className="flex items-center gap-2">
             <BrainCircuit className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">
-              AI Clinical Note ΓÇö Review Required
+              AI Clinical Note — Review Required
             </CardTitle>
           </div>
           <div className="flex items-center gap-1">
@@ -723,7 +723,7 @@ export function AIReviewPanel({
               {wasEdited && (
                 <Badge variant="secondary" className="text-xs">
                   <Edit3 className="mr-1 h-3 w-3" />
-                  Edited ΓÇö changes will be tracked
+                  Edited — changes will be tracked
                 </Badge>
               )}
             </div>

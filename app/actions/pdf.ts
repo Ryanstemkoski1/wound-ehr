@@ -8,6 +8,7 @@ import {
 } from "@/lib/rbac";
 import { getUserPreferences } from "@/app/actions/preferences";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { escapeCsvCell } from "@/lib/utils";
 
 /**
  * Get comprehensive patient data for PDF generation
@@ -765,6 +766,7 @@ export async function generatePatientsCSV(
       .from("patients")
       .select(
         `
+        id,
         mrn,
         first_name,
         last_name,
@@ -789,7 +791,7 @@ export async function generatePatientsCSV(
         const { data: wounds } = await supabase
           .from("wounds")
           .select("id, status")
-          .eq("patient_id", patient.mrn);
+          .eq("patient_id", patient.id);
 
         const activeWounds =
           wounds?.filter((w) => w.status === "active").length || 0;
@@ -828,12 +830,12 @@ export async function generatePatientsCSV(
         patient.activeWounds.toString(),
         patient.totalWounds.toString(),
         patient.is_active ? "active" : "inactive",
-      ].map((cell: string) => `"${cell}"`);
+      ].map(escapeCsvCell);
     });
 
     // Combine headers and rows
     const csv = [
-      headers.join(","),
+      headers.map(escapeCsvCell).join(","),
       ...rows.map((row: string[]) => row.join(",")),
     ].join("\n");
 
@@ -925,7 +927,7 @@ export async function generateWoundsCSV(
         new Date(wound.onset_date).toLocaleDateString(),
         wound.status,
         wound.assessmentCount.toString(),
-      ].map((cell: string) => `"${cell}"`);
+      ].map(escapeCsvCell);
     });
 
     // Combine headers and rows

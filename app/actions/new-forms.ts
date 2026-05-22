@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { numericFieldError } from "@/lib/validations/common";
+import { auditPhiAccess } from "@/lib/audit-log";
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -180,6 +182,35 @@ export async function createDebridementAssessment(
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Unauthorized" };
 
+  const numError = numericFieldError(
+    data as unknown as Record<string, unknown>,
+    [
+      { field: "woundDurationYears", min: 0, max: 130 },
+      { field: "woundDurationMonths", min: 0, max: 1200 },
+      { field: "woundDurationWeeks", min: 0, max: 5200 },
+      { field: "preSizeLength", min: 0, max: 200 },
+      { field: "preSizeWidth", min: 0, max: 200 },
+      { field: "preSizeDepth", min: 0, max: 200 },
+      { field: "postSizeLength", min: 0, max: 200 },
+      { field: "postSizeWidth", min: 0, max: 200 },
+      { field: "postSizeDepth", min: 0, max: 200 },
+      { field: "tunnelingCm", min: 0, max: 100 },
+      { field: "preGranulationPercent", min: 0, max: 100 },
+      { field: "preFibroticPercent", min: 0, max: 100 },
+      { field: "preSloughPercent", min: 0, max: 100 },
+      { field: "preEscharPercent", min: 0, max: 100 },
+      { field: "postGranulationPercent", min: 0, max: 100 },
+      { field: "postFibroticPercent", min: 0, max: 100 },
+      { field: "postSloughPercent", min: 0, max: 100 },
+      { field: "postEscharPercent", min: 0, max: 100 },
+      { field: "painLevel", min: 0, max: 10 },
+      { field: "areaDebrided", min: 0, max: 10000 },
+      { field: "nextDebridementDays", min: 0, max: 3650 },
+      { field: "dressingChangeDays", min: 0, max: 3650 },
+    ]
+  );
+  if (numError) return { success: false, error: numError };
+
   try {
     const { data: result, error } = await supabase
       .from("debridement_assessments")
@@ -255,6 +286,12 @@ export async function createDebridementAssessment(
     revalidatePath(
       `/dashboard/patients/${data.patientId}/visits/${data.visitId}`
     );
+    void auditPhiAccess({
+      action: "create",
+      table: "debridement_assessments",
+      recordId: result.id,
+      recordType: "debridement_assessment",
+    });
     return { success: true, assessmentId: result.id };
   } catch (error) {
     console.error("Error creating debridement assessment:", error);
@@ -354,6 +391,12 @@ export async function createPatientNotSeenReport(
         `/dashboard/patients/${data.patientId}/visits/${data.visitId}`
       );
     }
+    void auditPhiAccess({
+      action: "create",
+      table: "patient_not_seen_reports",
+      recordId: result.id,
+      recordType: "patient_not_seen_report",
+    });
     return { success: true, reportId: result.id };
   } catch (error) {
     console.error("Error creating patient-not-seen report:", error);
@@ -446,6 +489,12 @@ export async function createIncidentReport(
     if (error) throw error;
 
     revalidatePath("/dashboard/admin");
+    void auditPhiAccess({
+      action: "create",
+      table: "incident_reports",
+      recordId: result.id,
+      recordType: "incident_report",
+    });
     return { success: true, reportId: result.id };
   } catch (error) {
     console.error("Error creating incident report:", error);
@@ -535,6 +584,12 @@ export async function createConsentToTreatment(
     if (error) throw error;
 
     revalidatePath(`/dashboard/patients/${data.patientId}`);
+    void auditPhiAccess({
+      action: "create",
+      table: "patient_consents",
+      recordId: result.id,
+      recordType: "consent_to_treatment",
+    });
     return { success: true, consentId: result.id };
   } catch (error) {
     console.error("Error creating consent to treatment:", error);
@@ -570,6 +625,12 @@ export async function createPhotoVideoConsent(
     if (error) throw error;
 
     revalidatePath(`/dashboard/patients/${data.patientId}`);
+    void auditPhiAccess({
+      action: "create",
+      table: "patient_consents",
+      recordId: result.id,
+      recordType: "photo_video_consent",
+    });
     return { success: true, consentId: result.id };
   } catch (error) {
     console.error("Error creating photo/video consent:", error);

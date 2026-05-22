@@ -1058,7 +1058,7 @@ export async function createAddendum(visitId: string, content: string) {
     // Verify visit exists and is signed/submitted
     const { data: visit, error: visitError } = await supabase
       .from("visits")
-      .select("id, status, addendum_count")
+      .select("id, status")
       .eq("id", visitId)
       .single();
 
@@ -1087,21 +1087,11 @@ export async function createAddendum(visitId: string, content: string) {
 
     if (addendumError) {
       console.error("Error creating addendum:", addendumError);
-      return { error: `Failed to create addendum: ${addendumError.message}` };
+      return { error: "Failed to create addendum" };
     }
 
-    // Increment addendum count on visit
-    const { error: updateError } = await supabase
-      .from("visits")
-      .update({
-        addendum_count: (visit.addendum_count || 0) + 1,
-      })
-      .eq("id", visitId);
-
-    if (updateError) {
-      console.error("Error updating addendum count:", updateError);
-      // Don't fail the request, addendum was created successfully
-    }
+    // addendum_count is maintained atomically by a DB trigger (migration
+    // 00050), so no manual read-modify-write here.
 
     // Invalidate PDF cache since visit content changed
     await invalidateVisitPDFCache(visitId);
@@ -1307,19 +1297,22 @@ export async function copyForwardToVisit(
     }));
 
   let assessmentsCopied = 0;
+  let copiedAssessmentIds: string[] = [];
   if (assessmentInserts.length > 0) {
-    const { error: aErr } = await supabase
+    const { data: inserted, error: aErr } = await supabase
       .from("assessments")
       .insert(
         assessmentInserts as Parameters<
           ReturnType<typeof supabase.from>["insert"]
         >[0]
-      );
+      )
+      .select("id");
     if (aErr) {
       console.error("Copy forward assessments error:", aErr);
       return { success: false, error: "Failed to copy assessments" };
     }
-    assessmentsCopied = assessmentInserts.length;
+    copiedAssessmentIds = (inserted ?? []).map((r) => r.id as string);
+    assessmentsCopied = copiedAssessmentIds.length;
   }
 
   // Check which wounds already have treatments on the target visit
@@ -1354,6 +1347,14 @@ export async function copyForwardToVisit(
       );
     if (tErr) {
       console.error("Copy forward treatments error:", tErr);
+      // Compensating rollback: remove the assessments we just copied so a
+      // failed treatment copy doesn't leave a partial copy-forward.
+      if (copiedAssessmentIds.length > 0) {
+        await supabase
+          .from("assessments")
+          .delete()
+          .in("id", copiedAssessmentIds);
+      }
       return { success: false, error: "Failed to copy treatments" };
     }
     treatmentsCopied = treatmentInserts.length;

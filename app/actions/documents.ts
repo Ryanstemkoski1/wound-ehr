@@ -187,6 +187,12 @@ export async function getPatientDocuments(
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return { success: false, error: "Not authenticated", documents: [] };
+
     let query = supabase
       .from("patient_documents")
       .select(
@@ -228,7 +234,12 @@ export async function getDocumentSignedUrl(documentId: string) {
   const supabase = await createClient();
 
   try {
-    // Get document metadata
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    // Get document metadata (RLS scopes this read to the caller's facilities)
     const { data: document, error: docError } = await supabase
       .from("patient_documents")
       .select("storage_path, document_name, mime_type")
@@ -400,6 +411,11 @@ export async function updatePatientDocument(
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     // Get document to find patient_id for revalidation
     const { data: document } = await supabase
       .from("patient_documents")
@@ -444,6 +460,11 @@ export async function getPatientDocumentCount(patientId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, count: 0 };
+
     const { data, error } = await supabase.rpc("get_patient_document_count", {
       patient_uuid: patientId,
     });

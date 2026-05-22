@@ -31,7 +31,7 @@ import {
   getReadOnlyReason,
 } from "@/lib/field-permissions";
 
-// Helper component for read-only field labels â€” defined outside PatientForm
+// Helper component for read-only field labels — defined outside PatientForm
 // to avoid React's "cannot create components during render" rule
 function ReadOnlyLabel({
   htmlFor,

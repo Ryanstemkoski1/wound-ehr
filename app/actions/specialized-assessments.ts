@@ -3,7 +3,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { auditPhiAccess } from "@/lib/audit-log";
-import { assertUuid, ValidationError } from "@/lib/validations/common";
+import {
+  assertUuid,
+  ValidationError,
+  numericFieldError,
+} from "@/lib/validations/common";
 
 // ============================================================================
 // TYPES
@@ -325,6 +329,25 @@ export async function createSkilledNursingAssessment(
     };
   }
 
+  const vitalsError = numericFieldError(
+    data as unknown as Record<string, unknown>,
+    [
+      { field: "painScale", min: 0, max: 10 },
+      { field: "temp", min: 80, max: 115 },
+      { field: "heartRate", min: 0, max: 400 },
+      { field: "bpSystolic", min: 0, max: 400 },
+      { field: "bpDiastolic", min: 0, max: 400 },
+      { field: "respiratoryRate", min: 0, max: 100 },
+      { field: "oxygenSaturation", min: 0, max: 100 },
+      { field: "bloodSugar", min: 0, max: 2000 },
+      { field: "edemaGrade", min: 0, max: 4 },
+      { field: "oxygenLpm", min: 0, max: 100 },
+      { field: "catheterSizeFr", min: 0, max: 100 },
+      { field: "catheterBalloonCc", min: 0, max: 100 },
+    ]
+  );
+  if (vitalsError) return { success: false, error: vitalsError };
+
   const supabase = await createClient();
 
   try {
@@ -529,7 +552,15 @@ export async function createSkilledNursingAssessment(
         .from("skilled_nursing_wounds")
         .insert(woundsData);
 
-      if (woundsError) throw woundsError;
+      if (woundsError) {
+        // Compensating delete: don't leave an orphaned parent assessment with
+        // no wounds if the child insert fails (no multi-statement txn here).
+        await supabase
+          .from("skilled_nursing_assessments")
+          .delete()
+          .eq("id", assessment.id);
+        throw woundsError;
+      }
     }
 
     revalidatePath(`/dashboard/patients/${data.patientId}`);
@@ -555,6 +586,13 @@ export async function getSkilledNursingAssessment(assessmentId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    // This RPC is SECURITY DEFINER; facility ownership (assessment -> facility)
+    // is enforced inside the function as of migration 00049.
     const { data, error } = await supabase.rpc(
       "get_skilled_nursing_assessment_with_wounds",
       { assessment_id_param: assessmentId }
@@ -575,6 +613,11 @@ export async function getVisitSkilledNursingAssessments(visitId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("skilled_nursing_assessments")
       .select("*, skilled_nursing_wounds(*)")
@@ -741,6 +784,11 @@ export async function getGTubeProcedure(procedureId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("gtube_procedures")
       .select("*")
@@ -762,6 +810,11 @@ export async function getPatientGTubeProcedures(patientId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("gtube_procedures")
       .select("*")
@@ -783,6 +836,11 @@ export async function getPatientGTubeProcedureCount(patientId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase.rpc(
       "get_patient_gtube_procedure_count",
       { patient_id_param: patientId }
@@ -966,6 +1024,11 @@ export async function getGraftingAssessment(assessmentId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("grafting_assessments")
       .select("*")
@@ -987,6 +1050,11 @@ export async function getVisitGraftingAssessments(visitId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("grafting_assessments")
       .select("*")
@@ -1177,6 +1245,11 @@ export async function getSkinSweepAssessment(assessmentId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("skin_sweep_assessments")
       .select("*")
@@ -1198,6 +1271,11 @@ export async function getVisitSkinSweepAssessments(visitId: string) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
     const { data, error } = await supabase
       .from("skin_sweep_assessments")
       .select("*")

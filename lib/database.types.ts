@@ -3597,6 +3597,10 @@ export type Database = {
           deleted_transcript_id: string
         }[]
       }
+      delete_expired_audio_cron: {
+        Args: { retention_days?: number }
+        Returns: number
+      }
       get_allowed_procedures: {
         Args: { user_credentials: string }
         Returns: {
@@ -3735,6 +3739,10 @@ export type Database = {
         Args: { p_facility_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_org_admin_for_facility: {
+        Args: { p_facility_id: string }
+        Returns: boolean
+      }
       is_tenant_admin: {
         Args: { p_tenant_id: string; p_user_id: string }
         Returns: boolean
@@ -3757,6 +3765,10 @@ export type Database = {
           p_user_agent?: string
         }
         Returns: string
+      }
+      user_belongs_to_tenant: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
       }
     }
     Enums: {

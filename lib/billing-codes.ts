@@ -83,7 +83,8 @@ export const COMMON_CPT_CODES = [
   // Photography
   {
     code: "96904",
-    description: "Laser treatment for inflammatory skin disease",
+    description:
+      "Whole body integumentary photography (e.g., monitoring high-risk patients)",
   },
 ];
 

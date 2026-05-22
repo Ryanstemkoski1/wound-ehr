@@ -273,17 +273,15 @@ export default async function DashboardPage() {
       }
     }
 
-    // Healing trends (mock data for now - would need assessment history)
-    healingTrends = [
-      { week: "Week 1", healing: 12, stable: 8, declined: 3 },
-      { week: "Week 2", healing: 15, stable: 7, declined: 2 },
-      { week: "Week 3", healing: 18, stable: 6, declined: 2 },
-      { week: "Week 4", healing: 20, stable: 5, declined: 1 },
-      { week: "Week 5", healing: 22, stable: 4, declined: 1 },
-      { week: "Week 6", healing: 25, stable: 3, declined: 1 },
-      { week: "Week 7", healing: 27, stable: 3, declined: 0 },
-      { week: "Week 8", healing: 30, stable: 2, declined: 0 },
-    ];
+    // Healing trends: a real per-week healing-status rollup is a planned
+    // enhancement (needs assessment-history aggregation). Until then we render
+    // an empty (zeroed) series rather than ship fabricated clinical trend data.
+    healingTrends = Array.from({ length: 8 }, (_, i) => ({
+      week: `Week ${i + 1}`,
+      healing: 0,
+      stable: 0,
+      declined: 0,
+    }));
   } catch {
     hasError = true;
     // Use dynamic month labels for fallback

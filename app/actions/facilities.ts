@@ -4,6 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { isTenantAdmin, getUserTenantId } from "@/lib/rbac";
 
 // Validation schema for facility
 const FACILITY_TYPES = [
@@ -39,6 +40,16 @@ export async function createFacility(formData: FormData) {
     return { error: "Unauthorized" };
   }
 
+  // Facility management is tenant-admin only (matches the /dashboard/admin/
+  // facilities route gate in proxy.ts).
+  if (!(await isTenantAdmin())) {
+    return { error: "Only tenant admins can create facilities." };
+  }
+  const tenantId = await getUserTenantId();
+  if (!tenantId) {
+    return { error: "No tenant found for current user." };
+  }
+
   // Validate input
   const validatedFields = facilitySchema.safeParse({
     name: formData.get("name"),
@@ -63,10 +74,12 @@ export async function createFacility(formData: FormData) {
   const data = validatedFields.data;
 
   try {
-    // Create facility
+    // Create facility (scoped to the caller's tenant — tenant_id is required
+    // for tenant-scoped queries and for the user_facilities admin policy).
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
       .insert({
+        tenant_id: tenantId,
         name: data.name,
         facility_type: data.facility_type,
         address: data.address || null,
@@ -115,6 +128,10 @@ export async function updateFacility(facilityId: string, formData: FormData) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  if (!(await isTenantAdmin())) {
+    return { error: "Only tenant admins can modify facilities." };
   }
 
   // Validate input
@@ -191,6 +208,10 @@ export async function deleteFacility(facilityId: string) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  if (!(await isTenantAdmin())) {
+    return { error: "Only tenant admins can delete facilities." };
   }
 
   try {

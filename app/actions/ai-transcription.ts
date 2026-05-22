@@ -23,15 +23,13 @@ import {
   regenerateClinicalNote as pipelineRegenerate,
 } from "@/lib/ai/transcription-pipeline";
 import { validateApiKey } from "@/lib/ai/openai-service";
+import { isAdmin, isTenantAdmin } from "@/lib/rbac";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 
 // =====================================================
 // TYPES
 // =====================================================
-
-export type UploadAudioResult = {
-  transcript?: TranscriptRecord;
-  error?: string;
-};
 
 export type TranscriptionResult = {
   transcript?: TranscriptRecord;
@@ -48,6 +46,29 @@ export type ConsentResult = {
   hasConsent?: boolean;
   error?: string;
 };
+
+/**
+ * Per-user, in-memory rate guard for the OpenAI-cost-incurring actions.
+ * Returns an error message string when the caller is over the limit, else null.
+ * (Single-instance; swap rate-limit.ts to Redis for horizontal scaling.)
+ */
+async function aiRateLimit(
+  userId: string,
+  scope: string,
+  limit: number,
+  windowMs: number
+): Promise<string | null> {
+  try {
+    const h = await headers();
+    const rl = rateLimit(clientKey(h, scope, userId), limit, windowMs);
+    if (!rl.allowed) {
+      return `Too many requests. Try again in ${Math.ceil(rl.retryAfterMs / 1000)}s.`;
+    }
+  } catch {
+    // headers() unavailable — skip rate limiting
+  }
+  return null;
+}
 
 // =====================================================
 // RECORDING CONSENT
@@ -272,142 +293,6 @@ export async function revokeAiProcessingConsent(
 }
 
 // =====================================================
-// AUDIO UPLOAD
-// =====================================================
-
-/**
- * Upload a visit audio recording to Supabase Storage
- * and create a transcript record in pending state
- */
-export async function uploadVisitAudio(
-  formData: FormData
-): Promise<UploadAudioResult> {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error("[uploadVisitAudio] Auth failed:", authError?.message);
-      return { error: "Unauthorized" };
-    }
-    const fileEntry = formData.get("file");
-    const visitId = formData.get("visitId");
-    const patientId = formData.get("patientId");
-
-    if (
-      !fileEntry ||
-      !(fileEntry instanceof File) ||
-      typeof visitId !== "string" ||
-      typeof patientId !== "string"
-    ) {
-      console.error("[uploadVisitAudio] Missing required fields", {
-        hasFile: !!fileEntry,
-        isFile: fileEntry instanceof File,
-        visitId,
-        patientId,
-      });
-      return { error: "File, visitId, and patientId are required" };
-    }
-
-    if (!tryUuid(visitId)) return { error: "Invalid visitId" };
-    if (!tryUuid(patientId)) return { error: "Invalid patientId" };
-
-    const file = fileEntry;
-    // Validate consent
-    const consentCheck = await checkRecordingConsent(patientId);
-    if (!consentCheck.hasConsent) {
-      console.error("[uploadVisitAudio] No consent for patient:", patientId);
-      return { error: "Patient has not consented to audio recording" };
-    }
-    // Validate file type — use startsWith to handle codec suffixes
-    // e.g. "audio/webm;codecs=opus" should match "audio/webm"
-    const baseMimeType = file.type.split(";")[0].trim();
-    if (!AI_CONFIG.AUDIO.ALLOWED_MIME_TYPES.includes(baseMimeType)) {
-      console.error(
-        "[uploadVisitAudio] Invalid MIME type:",
-        file.type,
-        "base:",
-        baseMimeType
-      );
-      return {
-        error: `Invalid file type "${file.type}". Allowed: ${AI_CONFIG.AUDIO.ALLOWED_MIME_TYPES.join(", ")}`,
-      };
-    }
-
-    // Validate file size
-    if (file.size > AI_CONFIG.AUDIO.MAX_FILE_SIZE_BYTES) {
-      return {
-        error: `File size exceeds ${AI_CONFIG.AUDIO.MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB limit`,
-      };
-    }
-
-    // Generate storage path: {visitId}/{timestamp}_{filename}
-    const timestamp = Date.now();
-    const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storagePath = `${visitId}/${timestamp}_${safeFilename}`;
-
-    // Convert File to Uint8Array for reliable server-side upload
-    // Node.js File polyfill may not stream correctly to Supabase's fetch-based upload
-    const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from(AI_CONFIG.AUDIO.STORAGE_BUCKET)
-      .upload(storagePath, uint8Array, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: baseMimeType,
-      });
-
-    if (uploadError) {
-      console.error("[uploadVisitAudio] Storage upload error:", uploadError);
-      return { error: `Failed to upload audio: ${uploadError.message}` };
-    }
-    // Create transcript record in pending state
-    const { data: transcript, error: dbError } = await supabase
-      .from("visit_transcripts")
-      .insert({
-        visit_id: visitId,
-        audio_url: storagePath,
-        audio_filename: file.name,
-        audio_size_bytes: file.size,
-        processing_status: "pending" as ProcessingStatus,
-        ai_service: "openai",
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      // Cleanup uploaded file on DB error
-      await supabase.storage
-        .from(AI_CONFIG.AUDIO.STORAGE_BUCKET)
-        .remove([storagePath]);
-      console.error("[uploadVisitAudio] Transcript record error:", dbError);
-      return {
-        error: `Failed to create transcript record: ${dbError.message}`,
-      };
-    }
-    // Link transcript to visit
-    await supabase
-      .from("visits")
-      .update({
-        has_ai_transcript: true,
-        ai_transcript_id: transcript.id,
-      })
-      .eq("id", visitId);
-
-    revalidatePath("/dashboard/patients");
-    return { transcript };
-  } catch (err) {
-    console.error("[uploadVisitAudio] Unhandled error:", err);
-    return { error: "Failed to upload audio recording" };
-  }
-}
-
-// =====================================================
 // TRANSCRIPTION PROCESSING
 // =====================================================
 
@@ -429,6 +314,9 @@ export async function processTranscription(
     if (authError || !user) {
       return { error: "Unauthorized" };
     }
+
+    const rlErr = await aiRateLimit(user.id, "ai-process", 30, 60 * 60_000);
+    if (rlErr) return { error: rlErr };
 
     const result = await runTranscriptionPipeline(transcriptId);
 
@@ -469,6 +357,9 @@ export async function retryFailedTranscription(
       return { error: "Unauthorized" };
     }
 
+    const rlErr = await aiRateLimit(user.id, "ai-retry", 20, 60 * 60_000);
+    if (rlErr) return { error: rlErr };
+
     const result = await pipelineRetry(transcriptId);
 
     revalidatePath("/dashboard/patients");
@@ -507,6 +398,9 @@ export async function regenerateAINote(
     if (authError || !user) {
       return { error: "Unauthorized" };
     }
+
+    const rlErr = await aiRateLimit(user.id, "ai-regenerate", 10, 60 * 60_000);
+    if (rlErr) return { error: rlErr };
 
     const result = await pipelineRegenerate(transcriptId);
 
@@ -603,6 +497,10 @@ export async function checkAIServiceHealth(): Promise<{
 
     if (authError || !user) {
       return { healthy: false, error: "Unauthorized" };
+    }
+
+    if (!(await isAdmin())) {
+      return { healthy: false, error: "Admin role required" };
     }
 
     const result = await validateApiKey();
@@ -829,6 +727,12 @@ export async function deleteVisitAudio(
       return { error: "Unauthorized" };
     }
 
+    // Audio deletion is a tenant-admin function (matches the visit-audio
+    // bucket DELETE policy).
+    if (!(await isTenantAdmin())) {
+      return { error: "Tenant admin role required" };
+    }
+
     // Fetch audio path
     const { data: transcript, error: fetchError } = await supabase
       .from("visit_transcripts")
@@ -981,6 +885,11 @@ export async function getAdminTranscripts(filters?: {
       return { error: "Unauthorized" };
     }
 
+    // Admin-only listing (cross-patient PHI: names, MRNs, costs).
+    if (!(await isAdmin())) {
+      return { error: "Admin role required" };
+    }
+
     // Build query
     let query = supabase
       .from("visit_transcripts")
@@ -1081,6 +990,11 @@ export async function cleanupExpiredAudio(
 
     if (authError || !user) {
       return { error: "Unauthorized" };
+    }
+
+    // Retention enforcement is a tenant-admin function.
+    if (!(await isTenantAdmin())) {
+      return { error: "Tenant admin role required" };
     }
 
     const retentionCutoff = new Date();

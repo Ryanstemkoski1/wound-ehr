@@ -438,7 +438,10 @@ export async function getWoundAssessments(woundId: string) {
         id: assessment.id,
         visitId: assessment.visit_id,
         woundId: assessment.wound_id,
-        assessmentType: assessment.assessment_type,
+        // Map to the columns the current write path actually populates
+        // (the legacy assessment_type/periwound_skin/pain/notes columns are
+        // never written, so reading them returned null).
+        assessmentType: assessment.wound_type,
         length: assessment.length,
         width: assessment.width,
         depth: assessment.depth,
@@ -448,10 +451,10 @@ export async function getWoundAssessments(woundId: string) {
         exudateType: assessment.exudate_type,
         odor: assessment.odor,
         edges: assessment.edges,
-        periwoundSkin: assessment.periwound_skin,
-        pain: assessment.pain,
+        periwoundSkin: assessment.periwound_condition,
+        pain: assessment.pain_level,
         healingStatus: assessment.healing_status,
-        notes: assessment.notes,
+        notes: assessment.assessment_notes,
         createdAt: assessment.created_at,
         updatedAt: assessment.updated_at,
         visit: assessment.visit

@@ -25,7 +25,10 @@ export async function getWoundNotes(woundId: string) {
       .eq("wound_id", woundId)
       .order("created_at", { ascending: false });
 
-    if (error) return { data: null, error: error.message };
+    if (error) {
+      console.error("Error fetching wound notes:", error);
+      return { data: null, error: "Failed to fetch wound notes" };
+    }
 
     void auditPhiAccess({
       action: "read",
@@ -68,7 +71,10 @@ export async function createWoundNote(formData: FormData) {
       .select()
       .single();
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error("Error creating wound note:", error);
+      return { error: "Failed to create wound note" };
+    }
 
     void auditPhiAccess({
       action: "create",
@@ -99,7 +105,10 @@ export async function updateWoundNote(noteId: string, note: string) {
       .eq("id", noteId)
       .eq("created_by", user.id);
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error("Error updating wound note:", error);
+      return { error: "Failed to update wound note" };
+    }
 
     void auditPhiAccess({
       action: "update",
@@ -130,7 +139,10 @@ export async function deleteWoundNote(noteId: string) {
       .eq("id", noteId)
       .eq("created_by", user.id);
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error("Error deleting wound note:", error);
+      return { error: "Failed to delete wound note" };
+    }
 
     void auditPhiAccess({
       action: "delete",

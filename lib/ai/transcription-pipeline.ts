@@ -91,6 +91,28 @@ export async function runTranscriptionPipeline(
     };
   }
 
+  // -----------------------------------------------
+  // CONSENT GATE: PHI (audio + transcript) is about to be transmitted to a
+  // third-party AI vendor. Re-verify AI-processing consent HERE — not only at
+  // upload time — because consent can be revoked between upload and processing.
+  // -----------------------------------------------
+  if (!(await hasAiProcessingConsent(supabase, transcript.visit_id))) {
+    await supabase
+      .from("visit_transcripts")
+      .update({
+        processing_status: "failed" as ProcessingStatus,
+        error_message:
+          "AI-processing consent is not on file (or was revoked) for this patient.",
+      })
+      .eq("id", transcriptId);
+    return {
+      success: false,
+      transcriptId,
+      error:
+        "AI-processing consent is not on file (or was revoked) for this patient.",
+    };
+  }
+
   // Atomic status guard + update: Prevent concurrent processing.
   // Only process from pending or failed states (allow retry on failure).
   // The WHERE clause ensures only one caller can "claim" this transcript.
@@ -368,6 +390,28 @@ export async function regenerateClinicalNote(
     };
   }
 
+  // Consent gate: the transcript is re-sent to the AI vendor on regeneration.
+  if (!(await hasAiProcessingConsent(supabase, transcript.visit_id))) {
+    return {
+      success: false,
+      transcriptId,
+      error:
+        "AI-processing consent is not on file (or was revoked) for this patient.",
+    };
+  }
+
+  // Cost guard: cap regenerations per transcript to bound third-party LLM spend.
+  const regenCount =
+    ((transcript.transcript_metadata as Record<string, unknown>)
+      ?.regeneration_count as number) || 0;
+  if (regenCount >= MAX_REGENERATIONS) {
+    return {
+      success: false,
+      transcriptId,
+      error: `This note has already been regenerated ${MAX_REGENERATIONS} times. Edit it manually instead.`,
+    };
+  }
+
   // Mark as processing and reset approval fields
   await supabase
     .from("visit_transcripts")
@@ -451,6 +495,38 @@ export async function regenerateClinicalNote(
 // =====================================================
 // INTERNAL HELPERS
 // =====================================================
+
+// Max number of times a single transcript's clinical note may be regenerated.
+const MAX_REGENERATIONS = 5;
+
+/**
+ * Re-verify the patient's third-party AI-processing consent before any PHI is
+ * sent to OpenAI. visit_transcripts has no patient_id column, so resolve the
+ * patient via the visit. Fails closed on any uncertainty.
+ */
+async function hasAiProcessingConsent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  visitId: string
+): Promise<boolean> {
+  const { data: visit } = await supabase
+    .from("visits")
+    .select("patient_id")
+    .eq("id", visitId)
+    .maybeSingle();
+  if (!visit?.patient_id) return false;
+
+  const { data: consent } = await supabase
+    .from("patient_recording_consents")
+    .select("consent_given, revoked_at, expires_at, ai_processing_consent_given")
+    .eq("patient_id", visit.patient_id)
+    .maybeSingle();
+  if (!consent) return false;
+  if (!consent.consent_given || consent.revoked_at) return false;
+  if (consent.expires_at && new Date(consent.expires_at) < new Date()) {
+    return false;
+  }
+  return consent.ai_processing_consent_given === true;
+}
 
 type PipelineError = {
   message: string;

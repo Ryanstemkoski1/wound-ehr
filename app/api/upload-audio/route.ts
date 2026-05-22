@@ -78,6 +78,24 @@ export async function POST(request: NextRequest) {
 
     const file = fileEntry;
 
+    // Verify the caller actually has access to this visit AND that the visit
+    // belongs to the claimed patient. The read is RLS-scoped, so a visit the
+    // caller cannot access (or a patient/visit mismatch) yields no row — this
+    // closes the gap where consent was checked on patientId while visitId was
+    // trusted blindly.
+    const { data: visit } = await supabase
+      .from("visits")
+      .select("id, patient_id")
+      .eq("id", visitId)
+      .maybeSingle();
+
+    if (!visit || visit.patient_id !== patientId) {
+      return NextResponse.json(
+        { error: "Visit not found or does not match the patient" },
+        { status: 403 }
+      );
+    }
+
     // Validate BOTH (a) recording consent and (b) AI-processing consent.
     // AI-processing consent is required because the audio + transcript
     // will be sent to a third-party AI vendor (OpenAI). This is a

@@ -337,10 +337,27 @@ export async function requiresPatientSignature(): Promise<boolean> {
 /**
  * Update visit status
  */
+// Statuses this generic setter may assign. Finalizing statuses ("signed",
+// "submitted") must go through signVisit / submitVisit so a signature is
+// actually created; "incomplete"/"complete" are calendar statuses owned by
+// calendar.ts's updateVisitStatus. They cannot be set through this setter.
+const MANUAL_VISIT_STATUSES: VisitStatus[] = ["draft", "ready_for_signature"];
+
 export async function updateVisitStatus(visitId: string, status: VisitStatus) {
   const supabase = await createClient();
 
   try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthorized" };
+
+    if (!MANUAL_VISIT_STATUSES.includes(status)) {
+      return {
+        error: `Status "${status}" cannot be set here — use the sign/submit action.`,
+      };
+    }
+
     const { error } = await supabase
       .from("visits")
       .update({ status })
@@ -348,7 +365,7 @@ export async function updateVisitStatus(visitId: string, status: VisitStatus) {
 
     if (error) {
       console.error("Error updating visit status:", error);
-      return { error: error.message };
+      return { error: "Failed to update visit status" };
     }
 
     revalidatePath("/dashboard/patients");

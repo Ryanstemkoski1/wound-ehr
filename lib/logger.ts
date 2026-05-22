@@ -23,16 +23,54 @@ export type Logger = {
 
 const isDev = process.env.NODE_ENV !== "production";
 
+// Context keys whose values are PHI / sensitive and must never be written to
+// logs. Patterns are anchored/specific so structural keys like `errorName`,
+// `tableName`, or `recordType` are NOT redacted.
+const REDACT_KEY_PATTERNS: RegExp[] = [
+  /^patient_?id$/i,
+  /mrn/i,
+  /^dob$/i,
+  /date_?of_?birth/i,
+  /ssn/i,
+  /^email$/i,
+  /^phone$/i,
+  /^address$/i,
+  /first_?name/i,
+  /last_?name/i,
+  /full_?name/i,
+  /patient_?name/i,
+  /signature_?data/i,
+  /audio_?url/i,
+  /transcript/i,
+  /^notes?$/i,
+];
+
+function redact(value: unknown, depth = 0): unknown {
+  if (depth > 4 || value === null || value === undefined) return value;
+  if (Array.isArray(value)) return value.map((v) => redact(v, depth + 1));
+  if (typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = REDACT_KEY_PATTERNS.some((re) => re.test(k))
+        ? "[redacted]"
+        : redact(v, depth + 1);
+    }
+    return out;
+  }
+  return value;
+}
+
 function serialize(
   level: string,
   message: string,
   context?: LogContext
 ): string {
+  const safe = context ? (redact(context) as LogContext) : undefined;
   return JSON.stringify({
     ts: new Date().toISOString(),
     level,
     message,
-    ...context,
+    ...safe,
   });
 }
 

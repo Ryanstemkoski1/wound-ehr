@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { validateBillingCodes } from "@/lib/procedures";
+import { hasAdminEntitlement } from "@/lib/rbac";
 import { auditPhiAccess } from "@/lib/audit-log";
 
 // Billing status type (mirrors the DB enum added in migration 00045)
@@ -16,6 +17,18 @@ const BILLING_STATUSES: BillingStatus[] = [
   "paid",
   "denied",
 ];
+
+// Allowed manual status transitions for setBillingStatus. Submission
+// (-> "submitted") is intentionally excluded: it must go through
+// submitBillingRecord so that submitted_at is always stamped and the CPT
+// guard runs. "paid" is terminal.
+const BILLING_TRANSITIONS: Record<BillingStatus, BillingStatus[]> = {
+  draft: ["ready"],
+  ready: ["draft"],
+  submitted: ["paid", "denied"],
+  denied: ["draft"],
+  paid: [],
+};
 
 // Validation schemas
 const billingSchema = z.object({
@@ -443,15 +456,32 @@ export async function setBillingStatus(
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Unauthorized" };
 
-  // Fetch existing record to get revalidation paths
+  // Billing status is an Operations/QA function.
+  if (!(await hasAdminEntitlement())) {
+    return {
+      success: false,
+      error: "Only operations admins can change billing status.",
+    };
+  }
+
+  // Fetch existing record for transition validation + revalidation paths
   const { data: existing, error: fetchErr } = await supabase
     .from("billings")
-    .select("id, visit_id, patient_id")
+    .select("id, visit_id, patient_id, billing_status")
     .eq("id", billingId)
     .maybeSingle();
 
   if (fetchErr || !existing) {
     return { success: false, error: "Billing record not found" };
+  }
+
+  // Validate the transition (idempotent no-op to the same status is allowed).
+  const current = (existing.billing_status ?? "draft") as BillingStatus;
+  if (current !== status && !BILLING_TRANSITIONS[current].includes(status)) {
+    return {
+      success: false,
+      error: `Cannot change billing status from "${current}" to "${status}".`,
+    };
   }
 
   const updatePayload: Record<string, unknown> = {
@@ -497,6 +527,14 @@ export async function submitBillingRecord(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Unauthorized" };
+
+  // Submission is an Operations/QA function.
+  if (!(await hasAdminEntitlement())) {
+    return {
+      success: false,
+      error: "Only operations admins can submit billing records.",
+    };
+  }
 
   const { data: billing, error: fetchErr } = await supabase
     .from("billings")
