@@ -334,17 +334,20 @@ function extractTreatmentData(formData: FormData) {
     /* ignore parse errors */
   }
 
+  // Forward-compat: client now sends 'openWound'; fall back to legacy 'topical'.
+  const openWound = state.openWound ?? state.topical ?? null;
+
   return {
     treatment_tab: treatmentTab || null,
     generated_order_text: generatedOrderText || null,
     treatment_orders: generatedOrderText || null,
     // Store all tab state unconditionally to prevent data loss when switching tabs
-    primary_dressings: state.topical ?? null,
+    primary_dressings: openWound,
     compression: state.compressionNpwt ?? null,
     moisture_management: state.skinMoisture ?? null,
     secondary_treatment: state.rashDermatitis ?? null,
-    cleanser: (state.topical?.cleanser as string) || null,
-    coverage: (state.topical?.coverage as string) || null,
+    cleanser: (openWound?.cleanser as string) || null,
+    coverage: (openWound?.coverage as string) || null,
     frequency_days: null,
     prn: false,
     npwt_pressure:
@@ -375,12 +378,15 @@ function extractAutosaveData(formData: Record<string, unknown>) {
     /* ignore */
   }
 
+  // Forward-compat: client now sends 'openWound'; fall back to legacy 'topical'.
+  const openWound = state.openWound ?? state.topical ?? null;
+
   return {
     treatment_tab: treatmentTab,
     generated_order_text: generatedOrderText,
     treatment_orders: generatedOrderText,
     // Store all tab state unconditionally to prevent data loss when switching tabs
-    primary_dressings: state.topical ?? null,
+    primary_dressings: openWound,
     compression: state.compressionNpwt ?? null,
     moisture_management: state.skinMoisture ?? null,
     secondary_treatment: state.rashDermatitis ?? null,

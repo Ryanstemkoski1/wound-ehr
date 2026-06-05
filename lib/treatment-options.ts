@@ -2,11 +2,13 @@
  * Treatment Order Builder — Constants & Types
  *
  * Phase 11.6: Provides all dropdown options, type definitions,
- * and sentence template builders for the 4-tab Treatment Order UI.
+ * and sentence template builders for the 7-tab Treatment Order UI.
  *
  * Source: Client's "TREATMENT MENU TABS" document + Aprima Wound Form
+ *         + Dr. May artifact (2026-05-29) — added Eschar, Graft Tx, Custom
  * Date: March 16, 2026
- * Updated: March 16, 2026 — Full alignment with client requirements
+ * Updated: 2026-06-05 — Expanded from 4 tabs to 7 tabs per Dr. May's artifact.
+ *          Renamed 'topical' -> 'open_wound' for clarity.
  */
 
 // ============================================================================
@@ -14,10 +16,13 @@
 // ============================================================================
 
 export type TreatmentTab =
-  | "topical"
+  | "open_wound"
+  | "eschar"
   | "compression_npwt"
   | "skin_moisture"
-  | "rash_dermatitis";
+  | "rash_dermatitis"
+  | "graft_tx"
+  | "custom";
 
 export const TREATMENT_TABS: {
   value: TreatmentTab;
@@ -25,9 +30,14 @@ export const TREATMENT_TABS: {
   description: string;
 }[] = [
   {
-    value: "topical",
+    value: "open_wound",
     label: "Open Wound",
     description: "Wound cleansing, topical applications, and dressings",
+  },
+  {
+    value: "eschar",
+    label: "Eschar",
+    description: "Stable eschar management — paint betadine, keep dry, or other",
   },
   {
     value: "compression_npwt",
@@ -44,7 +54,41 @@ export const TREATMENT_TABS: {
     label: "Rash / Dermatitis",
     description: "Topical creams and ointments for rash or dermatitis",
   },
+  {
+    value: "graft_tx",
+    label: "Graft Tx",
+    description: "Cellular tissue product / membrane application schedule",
+  },
+  {
+    value: "custom",
+    label: "Custom",
+    description: "Free-form custom order text",
+  },
 ];
+
+// ============================================================================
+// TreatmentTab Label Map (for compact UI labels / pill text)
+// ============================================================================
+
+export const TREATMENT_TAB_LABELS: Record<TreatmentTab, string> = {
+  open_wound: "Open Wound",
+  eschar: "Eschar",
+  compression_npwt: "Compression / NPWT",
+  skin_moisture: "Skin / Moisture",
+  rash_dermatitis: "Rash / Dermatitis",
+  graft_tx: "Graft Tx",
+  custom: "Custom",
+};
+
+/**
+ * Backward-compat helper: legacy rows persisted activeTab='topical'.
+ * Maps the legacy value to the new 'open_wound' key; otherwise returns
+ * the input typed as TreatmentTab.
+ */
+export function migrateLegacyTab(s: string): TreatmentTab {
+  if (s === "topical") return "open_wound";
+  return s as TreatmentTab;
+}
 
 // ============================================================================
 // Shared Option Types
@@ -405,7 +449,8 @@ export type TreatmentOrderData = {
   specialInstructions: string;
 
   // Tab 1: Open Wound / Topical Treatment
-  topical: {
+  // (renamed from 'topical' -> 'openWound' to mirror tab key)
+  openWound: {
     cleansingAction: string;
     cleanser: string;
     applicationMethod: string;
@@ -418,7 +463,14 @@ export type TreatmentOrderData = {
     prn: boolean;
   };
 
-  // Tab 2: Compression / NPWT
+  // Tab 2: Eschar (Dr. May artifact 2026-05-29)
+  eschar: {
+    selectedOption?: "paint_betadine" | "keep_dry" | "other";
+    paintBetadineCover?: "air" | "dry_dressing";
+    otherText?: string;
+  };
+
+  // Tab 3: Compression / NPWT
   compressionNpwt: {
     selectedType: string;
     compressionItems: string[];
@@ -430,7 +482,7 @@ export type TreatmentOrderData = {
     prn: boolean;
   };
 
-  // Tab 3: Skin / Moisture
+  // Tab 4: Skin / Moisture
   skinMoisture: {
     cleanser: string;
     treatment: string;
@@ -439,7 +491,7 @@ export type TreatmentOrderData = {
     prn: boolean;
   };
 
-  // Tab 4: Rash / Dermatitis
+  // Tab 5: Rash / Dermatitis
   rashDermatitis: {
     treatment: string;
     treatmentOther: string;
@@ -451,12 +503,26 @@ export type TreatmentOrderData = {
     frequency: string;
     prn: boolean;
   };
+
+  // Tab 6: Graft Tx (Dr. May artifact 2026-05-29)
+  graftTx: {
+    frequency?: "weekly" | "biweekly" | "as_indicated";
+    dressingChangeInterval?: "7_days" | "custom";
+    customInterval?: string;
+    ifSoiledDislodged?: "remove_secondary" | "cleanse_apply";
+    ifSoiledDressing?: string;
+  };
+
+  // Tab 7: Custom (Dr. May artifact 2026-05-29) — free-form text
+  custom: {
+    orderText?: string;
+  };
 };
 
 export const EMPTY_TREATMENT_ORDER: TreatmentOrderData = {
-  activeTab: "topical",
+  activeTab: "open_wound",
   specialInstructions: "",
-  topical: {
+  openWound: {
     cleansingAction: "cleanse",
     cleanser: "saline",
     applicationMethod: "loosely_apply",
@@ -467,6 +533,11 @@ export const EMPTY_TREATMENT_ORDER: TreatmentOrderData = {
     coverage: "dry_clean_dressing",
     frequency: "1",
     prn: true,
+  },
+  eschar: {
+    selectedOption: undefined,
+    paintBetadineCover: undefined,
+    otherText: "",
   },
   compressionNpwt: {
     selectedType: "",
@@ -495,6 +566,16 @@ export const EMPTY_TREATMENT_ORDER: TreatmentOrderData = {
     tertiaryDressing: "",
     frequency: "1",
     prn: true,
+  },
+  graftTx: {
+    frequency: undefined,
+    dressingChangeInterval: undefined,
+    customInterval: "",
+    ifSoiledDislodged: undefined,
+    ifSoiledDressing: "",
+  },
+  custom: {
+    orderText: "",
   },
 };
 
@@ -525,7 +606,9 @@ function formatFrequency(frequency: string, prn: boolean): string {
  * [Cleanse/Irrigate] wound w/ [cleanser] and pat dry and then loosely apply
  * __TREATMENT__ to wound bed and [coverage] every [frequency] and prn.
  */
-export function buildTopicalOrder(data: TreatmentOrderData["topical"]): string {
+export function buildTopicalOrder(
+  data: TreatmentOrderData["openWound"]
+): string {
   if (!data.primaryTreatment) return "";
 
   const action = getLabel(CLEANSING_ACTIONS, data.cleansingAction);
@@ -673,18 +756,116 @@ export function buildRashOrder(
 }
 
 /**
+ * Tab 2: Generate eschar order sentence
+ *
+ * Source: Dr. May artifact (2026-05-29) — Eschar management options.
+ *
+ * Selected option behavior:
+ *   - paint_betadine: "Paint wound bed with betadine, allow to air dry and
+ *     [leave open to air | cover with dry clean dressing] daily and PRN."
+ *   - keep_dry:       "Keep eschar clean, dry, and intact. Monitor for signs
+ *                      of infection or instability daily and PRN."
+ *   - other:          The free-form otherText, as entered.
+ */
+export function buildEscharOrder(data: TreatmentOrderData["eschar"]): string {
+  if (!data.selectedOption) return "";
+
+  switch (data.selectedOption) {
+    case "paint_betadine": {
+      const cover =
+        data.paintBetadineCover === "dry_dressing"
+          ? "cover with dry clean dressing"
+          : "leave open to air";
+      return `Paint wound bed with betadine, allow to air dry and ${cover} daily and PRN.`;
+    }
+    case "keep_dry":
+      return "Keep eschar clean, dry, and intact. Monitor for signs of infection or instability daily and PRN.";
+    case "other":
+      return (data.otherText || "").trim();
+    default:
+      return "";
+  }
+}
+
+/**
+ * Tab 6: Generate graft / cellular tissue product order sentence
+ *
+ * Source: Dr. May artifact (2026-05-29) — CTP / membrane application.
+ *
+ * ORDER FORMAT:
+ * "Wound evaluation, prep and membrane application by MD
+ *  [weekly | every 2 weeks | as indicated] to facilitate wound healing.
+ *  Change dressing in [7 days | custom interval].
+ *  If dressing becomes soiled or dislodged,
+ *   - [remove secondary dressing and notify provider]
+ *   - [cleanse with normal saline and apply <ifSoiledDressing>]."
+ */
+export function buildGraftTxOrder(
+  data: TreatmentOrderData["graftTx"]
+): string {
+  const freqText =
+    data.frequency === "biweekly"
+      ? "every 2 weeks"
+      : data.frequency === "as_indicated"
+        ? "as indicated"
+        : data.frequency === "weekly"
+          ? "weekly"
+          : "";
+
+  if (!freqText) return "";
+
+  let order = `Wound evaluation, prep and membrane application by MD ${freqText} to facilitate wound healing.`;
+
+  const interval =
+    data.dressingChangeInterval === "custom"
+      ? (data.customInterval || "").trim()
+      : data.dressingChangeInterval === "7_days"
+        ? "7 days"
+        : "";
+  if (interval) {
+    order += ` Change dressing in ${interval}.`;
+  }
+
+  if (data.ifSoiledDislodged === "remove_secondary") {
+    order +=
+      " If dressing becomes soiled or dislodged, remove secondary dressing and notify provider.";
+  } else if (data.ifSoiledDislodged === "cleanse_apply") {
+    const dressing = (data.ifSoiledDressing || "").trim();
+    order += ` If dressing becomes soiled or dislodged, cleanse with normal saline and apply ${dressing || "secondary dressing"}.`;
+  }
+
+  return order;
+}
+
+/**
+ * Tab 7: Generate custom order sentence
+ *
+ * Source: Dr. May artifact (2026-05-29) — free-form order text for
+ * cases not covered by the structured tabs. Returned as-is (trimmed).
+ */
+export function buildCustomOrder(data: TreatmentOrderData["custom"]): string {
+  return (data.orderText || "").trim();
+}
+
+/**
  * Generate the order text for whatever tab is currently active
  */
 export function buildOrderText(data: TreatmentOrderData): string {
   switch (data.activeTab) {
-    case "topical":
-      return buildTopicalOrder(data.topical);
+    case "open_wound":
+      return buildTopicalOrder(data.openWound);
+    case "eschar":
+      return buildEscharOrder(data.eschar);
     case "compression_npwt":
       return buildCompressionOrder(data.compressionNpwt);
     case "skin_moisture":
       return buildSkinMoistureOrder(data.skinMoisture);
     case "rash_dermatitis":
       return buildRashOrder(data.rashDermatitis);
+    case "graft_tx":
+      return buildGraftTxOrder(data.graftTx);
+    case "custom":
+      return buildCustomOrder(data.custom);
     default:
       return "";
   }

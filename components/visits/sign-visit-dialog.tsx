@@ -15,6 +15,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, FileCheck } from "lucide-react";
+import {
+  ATTESTATION_CHECKBOX_TEXT,
+  ATTESTATION_CERTIFICATION_TEXT,
+} from "@/lib/attestation";
 
 type SignVisitDialogProps = {
   visitId: string;
@@ -123,10 +127,7 @@ export function SignVisitDialog({
             htmlFor="attestation"
             className="text-sm leading-snug font-normal text-amber-900 dark:text-amber-100"
           >
-            I attest that the documentation is true, accurate, and complete;
-            that I personally performed (or directly supervised) the services
-            described; and that the record reflects the care delivered to this
-            patient.
+            {ATTESTATION_CHECKBOX_TEXT}
           </Label>
         </div>
 
@@ -137,7 +138,8 @@ export function SignVisitDialog({
             signerName={userName}
             title="Provider Signature"
             description="Sign to certify this visit documentation"
-            certificationText="By signing, I certify that I have reviewed all assessments and documentation for this visit, and that the information provided is accurate, complete, and represents the care delivered."
+            certificationText={ATTESTATION_CERTIFICATION_TEXT}
+            isSubmitting={isSubmitting}
           />
         ) : (
           <p className="border-border text-muted-foreground dark:border-border dark:text-muted-foreground/60 rounded-md border border-dashed p-6 text-center text-sm">

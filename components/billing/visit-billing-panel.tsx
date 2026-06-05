@@ -34,6 +34,12 @@ type Props = {
   billing: BillingRecord | null;
   /** Prevent edits when the visit is signed/submitted */
   locked?: boolean;
+  /**
+   * Whether the current user is permitted to view billing codes (CPT/ICD-10).
+   * Defaults to false so the panel fails closed — the parent server page must
+   * opt in by computing `hasAdminEntitlement()` and passing the result.
+   */
+  canViewBilling?: boolean;
 };
 
 const LOCKED_STATUSES: BillingStatus[] = ["submitted", "paid", "denied"];
@@ -43,7 +49,11 @@ export async function VisitBillingPanel({
   patientId,
   billing,
   locked = false,
+  canViewBilling = false,
 }: Props) {
+  // Fail-closed: clinicians without admin entitlement never see billing codes
+  if (!canViewBilling) return null;
+
   const isLocked =
     locked ||
     (billing ? LOCKED_STATUSES.includes(billing.billingStatus) : false);

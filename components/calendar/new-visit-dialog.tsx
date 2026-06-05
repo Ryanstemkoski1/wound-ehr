@@ -184,6 +184,7 @@ export default function NewVisitDialog({
         patientId: data.patientId,
         visitDate: visitDateTime,
         visitType: data.visitType,
+        visitKind: "wound_care",
         location: data.location,
         serviceLocationId:
           data.serviceLocationId && data.serviceLocationId !== NONE_VALUE

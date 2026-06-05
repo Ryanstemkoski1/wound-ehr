@@ -19,16 +19,22 @@ import { deletePatient } from "@/app/actions/patients";
 type PatientDeleteButtonProps = {
   patientId: string;
   patientName: string;
+  canDelete?: boolean;
 };
 
 export function PatientDeleteButton({
   patientId,
   patientName,
+  canDelete = true,
 }: PatientDeleteButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  if (!canDelete) {
+    return null;
+  }
 
   async function handleDelete() {
     setLoading(true);

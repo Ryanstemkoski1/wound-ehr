@@ -4,7 +4,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getUserRole, getUserCredentials } from "@/lib/rbac";
+import {
+  getUserRole,
+  getUserCredentials,
+  hasAdminEntitlement,
+} from "@/lib/rbac";
+import type { Credentials } from "@/lib/credentials";
 import { canEditDemographics, canEditInsurance } from "@/lib/field-permissions";
 import { auditPhiAccess } from "@/lib/audit-log";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
@@ -63,6 +68,33 @@ const patientSchema = z.object({
     .optional(),
 });
 
+/**
+ * Returns true when the caller holds a clinical credential (RN/LVN/MD/DO/PA/NP/CNA).
+ * Used together with !hasAdminEntitlement() to decide whether patient queries
+ * must be filtered through patient_clinicians assignment.
+ */
+async function isClinicalCredential(): Promise<boolean> {
+  const c = await getUserCredentials();
+  const clinical: Credentials[] = ["RN", "LVN", "MD", "DO", "PA", "NP", "CNA"];
+  return c !== null && (clinical as string[]).includes(c);
+}
+
+/**
+ * Fetch the set of patient ids that the current auth user is actively
+ * assigned to via patient_clinicians. Used to scope clinical-only callers
+ * to their assigned patients per the 2026-05-29 permissions audit.
+ */
+async function getAssignedPatientIds(userId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("patient_clinicians")
+    .select("patient_id")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+  if (error || !data) return [];
+  return data.map((r) => r.patient_id);
+}
+
 export async function createPatient(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -71,6 +103,13 @@ export async function createPatient(formData: FormData) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Permission gate (R-audit 2026-05-29): only admin-entitled users
+  // (tenant_admin / facility_admin / Admin credential) can create patients.
+  const isAdmin = await hasAdminEntitlement();
+  if (!isAdmin) {
+    return { error: "Only office/admin users can create patients." };
   }
 
   // Rate limit: 30 patient creations per hour per user
@@ -395,6 +434,14 @@ export async function deletePatient(patientId: string) {
     return { error: "Unauthorized" };
   }
 
+  // Permission gate (R-audit 2026-05-29): deletePatient is also the
+  // discharge path (sets is_active = false) and is restricted to admin
+  // entitlement (tenant_admin / facility_admin / Admin credential).
+  const isAdmin = await hasAdminEntitlement();
+  if (!isAdmin) {
+    return { error: "Only office/admin users can discharge patients." };
+  }
+
   try {
     // Soft delete (mark as inactive)
     const { error: deleteError } = await supabase
@@ -424,6 +471,17 @@ export async function getPatients(facilityId?: string, search?: string) {
     return [];
   }
 
+  // Clinical scoping (R-audit 2026-05-29): clinical-only callers (clinical
+  // credential + no admin role) see only patients they're assigned to via
+  // patient_clinicians.is_active.
+  const isAdmin = await hasAdminEntitlement();
+  const filterByAssignment = !isAdmin && (await isClinicalCredential());
+  let assignedIds: string[] | null = null;
+  if (filterByAssignment) {
+    assignedIds = await getAssignedPatientIds(user.id);
+    if (assignedIds.length === 0) return [];
+  }
+
   try {
     // Build query - start with patients that are active
     let query = supabase
@@ -442,6 +500,11 @@ export async function getPatients(facilityId?: string, search?: string) {
     // Filter by facility if specified
     if (facilityId) {
       query = query.eq("facility_id", facilityId);
+    }
+
+    // Clinical-only callers: restrict to assigned patient ids.
+    if (assignedIds) {
+      query = query.in("id", assignedIds);
     }
 
     // Search by name or MRN (sanitize for PostgREST filter syntax)
@@ -507,6 +570,24 @@ export async function getPatient(patientId: string) {
 
   if (!user) {
     return null;
+  }
+
+  // Clinical scoping (R-audit 2026-05-29): clinical-only callers can only
+  // open patients they're actively assigned to via patient_clinicians.
+  const isAdmin = await hasAdminEntitlement();
+  const filterByAssignment = !isAdmin && (await isClinicalCredential());
+  if (filterByAssignment) {
+    const { data: assignment } = await supabase
+      .from("patient_clinicians")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("patient_id", patientId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (!assignment) {
+      // Treat as not found (do not leak existence to unassigned clinicians).
+      return null;
+    }
   }
 
   // Audit PHI access (fire-and-forget)
@@ -711,7 +792,17 @@ export async function searchPatientsForEncounter(
   const sanitized = trimmed.replace(/[%_\\(),.*]/g, "");
   if (!sanitized) return [];
 
-  const { data, error } = await supabase
+  // Clinical scoping (R-audit 2026-05-29): clinical-only callers can only
+  // match their assigned patients in the encounter typeahead.
+  const isAdmin = await hasAdminEntitlement();
+  const filterByAssignment = !isAdmin && (await isClinicalCredential());
+  let assignedIds: string[] | null = null;
+  if (filterByAssignment) {
+    assignedIds = await getAssignedPatientIds(user.id);
+    if (assignedIds.length === 0) return [];
+  }
+
+  let pq = supabase
     .from("patients")
     .select(
       "id, first_name, last_name, mrn, dob, facility_id, facility:facilities(id, name)"
@@ -722,6 +813,12 @@ export async function searchPatientsForEncounter(
     )
     .order("last_name", { ascending: true })
     .limit(10);
+
+  if (assignedIds) {
+    pq = pq.in("id", assignedIds);
+  }
+
+  const { data, error } = await pq;
 
   if (error || !data) return [];
 

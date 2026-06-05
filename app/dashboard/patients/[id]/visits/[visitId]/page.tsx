@@ -7,6 +7,7 @@ import {
   getUserRole,
   getUserCredentials as getRbacCredentials,
   canViewVisitDetails,
+  hasAdminEntitlement,
 } from "@/lib/rbac";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,10 +44,14 @@ import { VisitTopbarPill } from "@/components/visits/visit-topbar-pill";
 import { WoundRail } from "@/components/wounds/wound-rail";
 import { SignedBar } from "@/components/visits/signed-bar";
 import { LockedOverlay } from "@/components/visits/locked-overlay";
-import { EmSubSections } from "@/components/visits/em-sub-sections";
 import { VisitBillingPanel } from "@/components/billing/visit-billing-panel";
 import type { BillingStatus } from "@/app/actions/billing";
 import { CopyForwardDialog } from "@/components/visits/copy-forward-dialog";
+import { VisitTabs } from "@/components/visits/visit-tabs";
+import { VisitHeaderBarServer } from "@/components/visits/visit-header-bar-server";
+import { WoundAssessmentTab } from "@/components/visits/tabs/wound-assessment-tab";
+import TimelineTab from "@/components/visits/tabs/timeline-tab";
+import { getWounds } from "@/app/actions/wounds";
 // Force dynamic rendering (requires auth)
 export const dynamic = "force-dynamic";
 
@@ -101,6 +106,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
     notSeenReport,
     { data: userData },
     priorVisits,
+    wounds,
   ] = await Promise.all([
     getBillingForVisit(visitId),
     getTreatmentsByVisit(visitId),
@@ -110,10 +116,14 @@ export default async function VisitDetailPage({ params }: PageProps) {
     getVisitNotSeenReport(visitId),
     supabase.rpc("get_current_user_credentials"),
     getVisitsForQuickAssessment(patientId),
+    getWounds(patientId),
   ]);
 
   // Phase 3 — opt-in WoundNote UX (R-060/061/062/064). Off by default.
   const clinicalUxV2 = await isTenantFeatureEnabled("clinical_ux_v2");
+
+  // Billing CPT/ICD-10 codes are admin-only — clinicians must not see them
+  const canViewBilling = await hasAdminEntitlement();
 
   const billing =
     billingResult.success && billingResult.billing
@@ -249,23 +259,64 @@ export default async function VisitDetailPage({ params }: PageProps) {
             (visit.status === "signed" || visit.status === "submitted")
           }
         >
-          {clinicalUxV2 && (
-            <EmSubSections
-              visitId={visitId}
-              initial={
-                (visit.emDocumentation as {
-                  vitals?: string;
-                  cc_hpi?: string;
-                  ros?: string;
-                  pe?: string;
-                } | null) ?? null
-              }
-              readOnly={
-                visit.status === "signed" || visit.status === "submitted"
-              }
-            />
-          )}
-          <div className="grid gap-6 lg:grid-cols-3">
+          {clinicalUxV2 ? (
+            <>
+              <VisitHeaderBarServer
+                visitId={visitId}
+                patientId={patientId}
+                patientName={`${visit.patient.firstName} ${visit.patient.lastName}`}
+                status={visit.status ?? "draft"}
+                canSign={
+                  visit.status !== "signed" && visit.status !== "submitted"
+                }
+                canCopyForward={priorVisits.length > 0}
+                format="leave-behind"
+                signedAtIso={
+                  visit.status === "signed" || visit.status === "submitted"
+                    ? (visit.updatedAt ?? null)
+                    : null
+                }
+              />
+              <VisitTabs
+                visitId={visitId}
+                patientId={patientId}
+                emDocumentation={
+                  visit.emDocumentation as {
+                    vitals?: string;
+                    cc_hpi?: string;
+                    ros?: string;
+                    pe?: string;
+                    clinical_notes?: string;
+                    rx_orders?: string;
+                  } | null
+                }
+                readOnly={
+                  visit.status === "signed" || visit.status === "submitted"
+                }
+                woundAssessmentSlot={
+                  <WoundAssessmentTab
+                    visitId={visitId}
+                    patientId={patientId}
+                    facilityId={visit.patient.facility?.id ?? ""}
+                    userId={user.id}
+                    readOnly={
+                      visit.status === "signed" || visit.status === "submitted"
+                    }
+                    wounds={(wounds ?? []).map((w) => ({
+                      id: w.id,
+                      location: w.location ?? "",
+                      woundNumber: w.woundNumber,
+                      woundType: w.woundType,
+                    }))}
+                  />
+                }
+                timelineSlot={
+                  <TimelineTab patientId={patientId} visitId={visitId} />
+                }
+              />
+            </>
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-3">
             {/* Visit Information */}
             <div className="space-y-6 lg:col-span-2">
               {/* AI Documentation Status */}
@@ -421,6 +472,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
                 locked={
                   visit.status === "signed" || visit.status === "submitted"
                 }
+                canViewBilling={canViewBilling}
               />
 
               {/* Treatment Orders */}
@@ -793,6 +845,7 @@ export default async function VisitDetailPage({ params }: PageProps) {
               </Card>
             </div>
           </div>
+          )}
         </LockedOverlay>
       </div>
     </div>

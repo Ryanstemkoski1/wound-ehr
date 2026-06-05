@@ -91,6 +91,7 @@ export function NewEncounterModal() {
         patientId: selected.id,
         visitDate,
         visitType: "routine",
+        visitKind: "wound_care",
         durationMinutes: 30,
       });
       if (!res.success || !res.visit) {

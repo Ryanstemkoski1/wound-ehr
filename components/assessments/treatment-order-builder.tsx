@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DressingPicker } from "./dressing-picker";
 import { AlertCircle, FileText, Stethoscope } from "lucide-react";
 import {
@@ -93,8 +94,8 @@ export default function TreatmentOrderBuilder({
 
   // Field updaters per tab
   const updateTopical = useCallback(
-    (field: keyof TreatmentOrderData["topical"], v: string | boolean) => {
-      onChange({ ...value, topical: { ...value.topical, [field]: v } });
+    (field: keyof TreatmentOrderData["openWound"], v: string | boolean) => {
+      onChange({ ...value, openWound: { ...value.openWound, [field]: v } });
     },
     [value, onChange]
   );
@@ -135,6 +136,45 @@ export default function TreatmentOrderBuilder({
     [value, onChange]
   );
 
+  const updateEschar = useCallback(
+    <K extends keyof TreatmentOrderData["eschar"]>(
+      field: K,
+      v: TreatmentOrderData["eschar"][K]
+    ) => {
+      onChange({
+        ...value,
+        eschar: { ...value.eschar, [field]: v },
+      });
+    },
+    [value, onChange]
+  );
+
+  const updateGraftTx = useCallback(
+    <K extends keyof TreatmentOrderData["graftTx"]>(
+      field: K,
+      v: TreatmentOrderData["graftTx"][K]
+    ) => {
+      onChange({
+        ...value,
+        graftTx: { ...value.graftTx, [field]: v },
+      });
+    },
+    [value, onChange]
+  );
+
+  const updateCustom = useCallback(
+    <K extends keyof TreatmentOrderData["custom"]>(
+      field: K,
+      v: TreatmentOrderData["custom"][K]
+    ) => {
+      onChange({
+        ...value,
+        custom: { ...value.custom, [field]: v },
+      });
+    },
+    [value, onChange]
+  );
+
   // Toggle compression item checkbox
   const toggleCompressionItem = useCallback(
     (item: string) => {
@@ -151,16 +191,16 @@ export default function TreatmentOrderBuilder({
   const selectedPrimaryOption = useMemo(
     () =>
       TOPICAL_TREATMENTS.find(
-        (t) => t.value === value.topical.primaryTreatment
+        (t) => t.value === value.openWound.primaryTreatment
       ),
-    [value.topical.primaryTreatment]
+    [value.openWound.primaryTreatment]
   );
   const selectedSecondaryOption = useMemo(
     () =>
       TOPICAL_TREATMENTS.find(
-        (t) => t.value === value.topical.secondaryTreatment
+        (t) => t.value === value.openWound.secondaryTreatment
       ),
-    [value.topical.secondaryTreatment]
+    [value.openWound.secondaryTreatment]
   );
   const selectedMoistureOption = useMemo(
     () =>
@@ -179,7 +219,7 @@ export default function TreatmentOrderBuilder({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Action</Label>
           <Select
-            value={value.topical.cleansingAction}
+            value={value.openWound.cleansingAction}
             onValueChange={(v) => updateTopical("cleansingAction", v)}
             disabled={disabled}
           >
@@ -199,7 +239,7 @@ export default function TreatmentOrderBuilder({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Cleanser</Label>
           <Select
-            value={value.topical.cleanser}
+            value={value.openWound.cleanser}
             onValueChange={(v) => updateTopical("cleanser", v)}
             disabled={disabled}
           >
@@ -221,7 +261,7 @@ export default function TreatmentOrderBuilder({
       <div className="space-y-2">
         <Label className="text-sm font-medium">Application Method</Label>
         <Select
-          value={value.topical.applicationMethod}
+          value={value.openWound.applicationMethod}
           onValueChange={(v) => updateTopical("applicationMethod", v)}
           disabled={disabled}
         >
@@ -242,11 +282,11 @@ export default function TreatmentOrderBuilder({
       <div className="space-y-2">
         <Label className="text-sm font-medium">Primary Treatment *</Label>
         <DressingPicker
-          value={value.topical.primaryTreatment}
+          value={value.openWound.primaryTreatment}
           onChange={(v) => {
             updateTopical("primaryTreatment", v);
             // Clear type box when treatment changes
-            if (v !== value.topical.primaryTreatment) {
+            if (v !== value.openWound.primaryTreatment) {
               updateTopical("primaryTreatmentType", "");
             }
           }}
@@ -263,7 +303,7 @@ export default function TreatmentOrderBuilder({
             {selectedPrimaryOption.typeBoxLabel || "Type"}
           </Label>
           <Input
-            value={value.topical.primaryTreatmentType}
+            value={value.openWound.primaryTreatmentType}
             onChange={(e) =>
               updateTopical("primaryTreatmentType", e.target.value)
             }
@@ -278,7 +318,7 @@ export default function TreatmentOrderBuilder({
         <div className="flex items-center gap-2">
           <Checkbox
             id="secondary-dressing"
-            checked={!!value.topical.secondaryTreatment}
+            checked={!!value.openWound.secondaryTreatment}
             onCheckedChange={(c) => {
               if (!c) {
                 updateTopical("secondaryTreatment", "");
@@ -295,11 +335,11 @@ export default function TreatmentOrderBuilder({
           </Label>
         </div>
 
-        {(value.topical.secondaryTreatment ||
-          !value.topical.secondaryTreatment) && (
+        {(value.openWound.secondaryTreatment ||
+          !value.openWound.secondaryTreatment) && (
           <div className="space-y-3 pl-6">
             <DressingPicker
-              value={value.topical.secondaryTreatment || ""}
+              value={value.openWound.secondaryTreatment || ""}
               onChange={(v) => {
                 updateTopical("secondaryTreatment", v);
                 updateTopical("secondaryTreatmentType", "");
@@ -311,9 +351,9 @@ export default function TreatmentOrderBuilder({
             />
 
             {selectedSecondaryOption?.hasTypeBox &&
-              value.topical.secondaryTreatment && (
+              value.openWound.secondaryTreatment && (
                 <Input
-                  value={value.topical.secondaryTreatmentType}
+                  value={value.openWound.secondaryTreatmentType}
                   onChange={(e) =>
                     updateTopical("secondaryTreatmentType", e.target.value)
                   }
@@ -329,7 +369,7 @@ export default function TreatmentOrderBuilder({
       <div className="space-y-2">
         <Label className="text-sm font-medium">Coverage / Dressing</Label>
         <Select
-          value={value.topical.coverage}
+          value={value.openWound.coverage}
           onValueChange={(v) => updateTopical("coverage", v)}
           disabled={disabled}
         >
@@ -351,7 +391,7 @@ export default function TreatmentOrderBuilder({
         <div className="w-40 space-y-2">
           <Label className="text-sm font-medium">Frequency</Label>
           <Select
-            value={value.topical.frequency}
+            value={value.openWound.frequency}
             onValueChange={(v) => updateTopical("frequency", v)}
             disabled={disabled}
           >
@@ -371,7 +411,7 @@ export default function TreatmentOrderBuilder({
         <div className="flex items-center gap-2 pb-2">
           <Checkbox
             id="topical-prn"
-            checked={value.topical.prn}
+            checked={value.openWound.prn}
             onCheckedChange={(c) => updateTopical("prn", c as boolean)}
             disabled={disabled}
           />
@@ -899,6 +939,336 @@ export default function TreatmentOrderBuilder({
   );
 
   // ============================================================================
+  // Tab 5: Eschar (Dr. May artifact 2026-05-29)
+  // ============================================================================
+
+  const EscharTab = (
+    <div className="space-y-4">
+      <div className="bg-muted/40 space-y-4 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
+          <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs font-semibold tracking-wide">
+            SELECT ONE TREATMENT OPTION
+          </span>
+        </div>
+
+        <RadioGroup
+          value={value.eschar.selectedOption ?? ""}
+          onValueChange={(v) =>
+            updateEschar(
+              "selectedOption",
+              v as TreatmentOrderData["eschar"]["selectedOption"]
+            )
+          }
+          disabled={disabled}
+          className="gap-4"
+        >
+          {/* Option 1: Paint betadine */}
+          <div className="space-y-3 rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="paint_betadine"
+                id="eschar-paint-betadine"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="eschar-paint-betadine"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Paint wound bed with betadine, allow to air dry and{" "}
+                <span className="font-medium">[select cover]</span> daily and
+                PRN.
+              </Label>
+            </div>
+            {value.eschar.selectedOption === "paint_betadine" && (
+              <div className="pl-7">
+                <Select
+                  value={value.eschar.paintBetadineCover ?? ""}
+                  onValueChange={(v) =>
+                    updateEschar(
+                      "paintBetadineCover",
+                      v as TreatmentOrderData["eschar"]["paintBetadineCover"]
+                    )
+                  }
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="w-full sm:w-80">
+                    <SelectValue placeholder="Select cover option..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="air">Leave open to air</SelectItem>
+                    <SelectItem value="dry_dressing">
+                      Cover with dry, clean dressing
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Option 2: Keep dry */}
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="keep_dry"
+                id="eschar-keep-dry"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="eschar-keep-dry"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Keep dry and cover with dry, clean dressing daily and PRN.
+              </Label>
+            </div>
+          </div>
+
+          {/* Option 3: Other */}
+          <div className="space-y-3 rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="other"
+                id="eschar-other"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="eschar-other"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Other:
+              </Label>
+            </div>
+            {value.eschar.selectedOption === "other" && (
+              <div className="pl-7">
+                <Input
+                  value={value.eschar.otherText ?? ""}
+                  onChange={(e) => updateEschar("otherText", e.target.value)}
+                  placeholder="Specify treatment..."
+                  disabled={disabled}
+                />
+              </div>
+            )}
+          </div>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  // ============================================================================
+  // Tab 6: Graft Tx (Dr. May artifact 2026-05-29)
+  // ============================================================================
+
+  const GraftTxTab = (
+    <div className="space-y-4">
+      {/* STEP 1 — Wound evaluation & frequency */}
+      <div className="bg-muted/40 space-y-3 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
+          <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs font-semibold tracking-wide">
+            STEP 1
+          </span>
+          <span className="text-sm font-medium">
+            Wound evaluation &amp; treatment order
+          </span>
+        </div>
+
+        <div className="text-sm leading-relaxed">
+          Wound evaluation, prep and membrane application by MD{" "}
+          <span className="inline-block align-middle">
+            <Select
+              value={value.graftTx.frequency ?? ""}
+              onValueChange={(v) =>
+                updateGraftTx(
+                  "frequency",
+                  v as TreatmentOrderData["graftTx"]["frequency"]
+                )
+              }
+              disabled={disabled}
+            >
+              <SelectTrigger className="h-8 w-48">
+                <SelectValue placeholder="Select frequency..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">weekly</SelectItem>
+                <SelectItem value="biweekly">every 2 weeks</SelectItem>
+                <SelectItem value="as_indicated">as indicated</SelectItem>
+              </SelectContent>
+            </Select>
+          </span>{" "}
+          to facilitate wound healing.
+        </div>
+
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          Continue daily treatment evaluation of wound, monitoring for
+          intactness of dressing as well as signs and symptoms of infection.
+        </p>
+      </div>
+
+      {/* STEP 2 — Dressing change interval */}
+      <div className="bg-muted/40 space-y-3 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
+          <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs font-semibold tracking-wide">
+            STEP 2
+          </span>
+          <span className="text-sm font-medium">
+            Dressing change interval
+          </span>
+        </div>
+
+        <RadioGroup
+          value={value.graftTx.dressingChangeInterval ?? ""}
+          onValueChange={(v) =>
+            updateGraftTx(
+              "dressingChangeInterval",
+              v as TreatmentOrderData["graftTx"]["dressingChangeInterval"]
+            )
+          }
+          disabled={disabled}
+          className="gap-3"
+        >
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="7_days"
+                id="graft-7-days"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="graft-7-days"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Change dressing in 7 days. Continue treatment, evaluation, and
+                monitor for signs of infection.
+              </Label>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="custom"
+                id="graft-custom-interval"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="graft-custom-interval"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Custom interval:
+              </Label>
+            </div>
+            {value.graftTx.dressingChangeInterval === "custom" && (
+              <div className="pl-7">
+                <Input
+                  value={value.graftTx.customInterval ?? ""}
+                  onChange={(e) =>
+                    updateGraftTx("customInterval", e.target.value)
+                  }
+                  placeholder="describe dressing change schedule..."
+                  disabled={disabled}
+                />
+              </div>
+            )}
+          </div>
+        </RadioGroup>
+      </div>
+
+      {/* STEP 3 — If soiled or dislodged before day 7 */}
+      <div className="bg-muted/40 space-y-3 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
+          <span className="bg-primary text-primary-foreground rounded px-2 py-0.5 text-xs font-semibold tracking-wide">
+            STEP 3
+          </span>
+          <span className="text-sm font-medium">
+            If dressing becomes soiled or dislodged before day 7
+          </span>
+        </div>
+
+        <RadioGroup
+          value={value.graftTx.ifSoiledDislodged ?? ""}
+          onValueChange={(v) =>
+            updateGraftTx(
+              "ifSoiledDislodged",
+              v as TreatmentOrderData["graftTx"]["ifSoiledDislodged"]
+            )
+          }
+          disabled={disabled}
+          className="gap-3"
+        >
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="remove_secondary"
+                id="graft-remove-secondary"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="graft-remove-secondary"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Remove secondary dry gauze dressing leaving graft and
+                non-adherent dressing in place. Replace gauze and re-secure.
+              </Label>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-md border bg-background p-3">
+            <div className="flex items-start gap-3">
+              <RadioGroupItem
+                value="cleanse_apply"
+                id="graft-cleanse-apply"
+                className="mt-1"
+              />
+              <Label
+                htmlFor="graft-cleanse-apply"
+                className="cursor-pointer text-sm leading-relaxed font-normal"
+              >
+                Cleanse wound with saline, pad dry and apply{" "}
+                <span className="font-medium">
+                  [select primary dressing]
+                </span>{" "}
+                as primary, cover with dry dressing daily.
+              </Label>
+            </div>
+            {value.graftTx.ifSoiledDislodged === "cleanse_apply" && (
+              <div className="pl-7">
+                <Input
+                  value={value.graftTx.ifSoiledDressing ?? ""}
+                  onChange={(e) =>
+                    updateGraftTx("ifSoiledDressing", e.target.value)
+                  }
+                  placeholder="Select primary dressing..."
+                  disabled={disabled}
+                />
+              </div>
+            )}
+          </div>
+        </RadioGroup>
+      </div>
+    </div>
+  );
+
+  // ============================================================================
+  // Tab 7: Custom (Dr. May artifact 2026-05-29)
+  // ============================================================================
+
+  const CustomTab = (
+    <div className="space-y-3">
+      <div className="bg-muted/40 space-y-3 rounded-lg border p-4">
+        <Label htmlFor="custom-order-text" className="text-sm font-medium">
+          Custom Order
+        </Label>
+        <Textarea
+          id="custom-order-text"
+          value={value.custom.orderText ?? ""}
+          onChange={(e) => updateCustom("orderText", e.target.value)}
+          placeholder="Type your custom order here..."
+          rows={6}
+          disabled={disabled}
+        />
+      </div>
+    </div>
+  );
+
+  // ============================================================================
   // Render
   // ============================================================================
 
@@ -924,13 +1294,13 @@ export default function TreatmentOrderBuilder({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* 4-Tab Selector */}
+        {/* 7-Tab Selector */}
         <Tabs
           value={value.activeTab}
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-3 md:grid-cols-7">
             {TREATMENT_TABS.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -943,8 +1313,12 @@ export default function TreatmentOrderBuilder({
             ))}
           </TabsList>
 
-          <TabsContent value="topical" className="mt-4">
+          <TabsContent value="open_wound" className="mt-4">
             {TopicalTab}
+          </TabsContent>
+
+          <TabsContent value="eschar" className="mt-4">
+            {EscharTab}
           </TabsContent>
 
           <TabsContent value="compression_npwt" className="mt-4">
@@ -957,6 +1331,14 @@ export default function TreatmentOrderBuilder({
 
           <TabsContent value="rash_dermatitis" className="mt-4">
             {RashTab}
+          </TabsContent>
+
+          <TabsContent value="graft_tx" className="mt-4">
+            {GraftTxTab}
+          </TabsContent>
+
+          <TabsContent value="custom" className="mt-4">
+            {CustomTab}
           </TabsContent>
         </Tabs>
 

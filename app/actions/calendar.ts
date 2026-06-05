@@ -31,13 +31,22 @@ const rescheduleVisitSchema = z.object({
 const createVisitFromCalendarSchema = z.object({
   patientId: z.string().uuid(),
   visitDate: z.date(),
-  visitType: z.string().default("routine"),
+  visitType: z.string().default("in_person"),
+  visitKind: z
+    .enum(["wound_care", "skilled_nursing", "skin_sweep", "patient_not_seen"])
+    .default("wound_care"),
   location: z.string().optional(),
   serviceLocationId: z.string().uuid().optional().nullable(),
   clinicianId: z.string().uuid().optional().nullable(),
   durationMinutes: z.number().int().min(5).max(480).default(30),
   notes: z.string().optional(),
 });
+
+// Visit kind values — mirror the CHECK constraint on visits.visit_kind
+// added in migration 00051. Exported so callers can type their forms.
+export type VisitKind = z.infer<
+  typeof createVisitFromCalendarSchema
+>["visitKind"];
 
 /**
  * Get calendar events for a date range
@@ -192,6 +201,9 @@ export async function createVisitFromCalendar(
         patient_id: validated.patientId,
         visit_date: scheduledStart.toISOString(),
         visit_type: validated.visitType,
+        // TODO: drop cast once Supabase types are regenerated to include
+        // visits.visit_kind (added in migration 00051).
+        visit_kind: validated.visitKind as never,
         location: validated.location || null,
         service_location_id: validated.serviceLocationId || null,
         clinician_id: validated.clinicianId || null,

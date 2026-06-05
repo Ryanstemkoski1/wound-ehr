@@ -152,7 +152,7 @@ export function getVisitFieldPermissions(
         treatments: "edit",
         visit_notes: "edit",
         signatures: "edit",
-        billing: "edit",
+        billing: "none", // Clinicians cannot touch billing (per client requirement)
       };
     } else {
       // Cannot edit another clinician's visit

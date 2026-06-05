@@ -339,9 +339,21 @@ export async function requiresPatientSignature(): Promise<boolean> {
  */
 // Statuses this generic setter may assign. Finalizing statuses ("signed",
 // "submitted") must go through signVisit / submitVisit so a signature is
-// actually created; "incomplete"/"complete" are calendar statuses owned by
-// calendar.ts's updateVisitStatus. They cannot be set through this setter.
-const MANUAL_VISIT_STATUSES: VisitStatus[] = ["draft", "ready_for_signature"];
+// actually created. Calendar-owned statuses ("completed", "in-progress",
+// "incomplete") are allowed here as transition *targets* only so a clinician
+// who quick-completed a visit from the calendar can re-open it back to
+// "ready_for_signature" and sign it.
+// NOTE: "completed" / "in-progress" are calendar-owned DB statuses (hyphen
+// form is canonical per the visits.status CHECK constraint and calendar.ts
+// VALID_STATUS_TRANSITIONS) not yet represented in the local VisitStatus
+// union (see line 19). Boundary cast until the type is regenerated.
+const MANUAL_VISIT_STATUSES: VisitStatus[] = [
+  "draft",
+  "ready_for_signature",
+  "completed" as VisitStatus,
+  "in-progress" as VisitStatus,
+  "incomplete",
+];
 
 export async function updateVisitStatus(visitId: string, status: VisitStatus) {
   const supabase = await createClient();
@@ -407,8 +419,20 @@ export async function signVisit(
       return { error: "Visit not found" };
     }
 
-    // Check if visit is in correct status
-    if (visit.status !== "draft" && visit.status !== "ready_for_signature") {
+    // Check if visit is in correct status. We allow signing from the
+    // calendar-owned statuses ("completed", "in-progress", "incomplete") so
+    // visits quick-completed from the calendar can still be signed without
+    // a separate "move back to ready_for_signature" step.
+    // Boundary cast: "completed"/"in-progress" are calendar-owned DB statuses
+    // not yet in the local VisitStatus union (see line 19).
+    const SIGNABLE_STATUSES: VisitStatus[] = [
+      "draft",
+      "ready_for_signature",
+      "completed" as VisitStatus,
+      "in-progress" as VisitStatus,
+      "incomplete",
+    ];
+    if (!SIGNABLE_STATUSES.includes(visit.status as VisitStatus)) {
       return { error: "Visit cannot be signed in current status" };
     }
 

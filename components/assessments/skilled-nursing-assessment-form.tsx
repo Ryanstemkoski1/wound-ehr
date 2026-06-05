@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Save, Send } from "lucide-react";
@@ -27,12 +28,23 @@ import type {
   SkilledNursingAssessmentData,
   SkilledNursingWoundData,
 } from "@/app/actions/specialized-assessments";
+import {
+  getMipsMeasures,
+  updateMipsMeasures,
+  type MipsMeasures,
+} from "@/app/actions/mips";
 
 type SkilledNursingAssessmentFormProps = {
   visitId: string;
   patientId: string;
   facilityId: string;
   userId: string;
+  /**
+   * When provided, the form hydrates MIPS measures for an existing
+   * skilled-nursing assessment. New-assessment flows omit this and
+   * MIPS state starts empty.
+   */
+  assessmentId?: string;
   onComplete?: () => void;
 };
 
@@ -41,10 +53,16 @@ export function SkilledNursingAssessmentForm({
   patientId,
   facilityId,
   userId,
+  assessmentId,
   onComplete,
 }: SkilledNursingAssessmentFormProps) {
   const [saving, setSaving] = useState(false);
   const [wounds] = useState<SkilledNursingWoundData[]>([]);
+
+  // MIPS / Quality Measures state. Kept outside react-hook-form because
+  // the values are persisted to a separate JSONB column via its own
+  // server action (updateMipsMeasures), not the main assessment payload.
+  const [mips, setMips] = useState<MipsMeasures>({});
 
   // Autosave state
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
@@ -99,6 +117,22 @@ export function SkilledNursingAssessmentForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Hydrate MIPS measures for existing assessments. New-assessment flows
+  // (no assessmentId) start with an empty object — initialized above.
+  useEffect(() => {
+    if (!assessmentId) return;
+    let cancelled = false;
+    (async () => {
+      const result = await getMipsMeasures(assessmentId);
+      if (!cancelled && result.success) {
+        setMips(result.data);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [assessmentId]);
+
   // Restore autosaved data
   const handleRestoreAutosave = () => {
     const { data } = loadSavedData();
@@ -130,6 +164,21 @@ export function SkilledNursingAssessmentForm({
       );
 
       if (result.success) {
+        // Persist MIPS / Quality Measures bound to the new (or existing)
+        // assessment row. Bound to explicit submit only — the localStorage
+        // autosave above never touches the server, so there is no race
+        // with the JSONB write. Failure here should not fail the whole
+        // submit: the main assessment already saved.
+        const targetId = result.assessmentId ?? assessmentId;
+        if (targetId && Object.keys(mips).length > 0) {
+          const mipsResult = await updateMipsMeasures(targetId, mips);
+          if (!mipsResult.success) {
+            toast.warning("MIPS measures not saved", {
+              description: mipsResult.error,
+            });
+          }
+        }
+
         clearSavedData(); // Clear autosave after successful submission
         toast.success(
           isDraft
@@ -1406,6 +1455,217 @@ export function SkilledNursingAssessmentForm({
                     {...register("problemsIssues")}
                     rows={3}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/*
+              MIPS / Quality Measures — required for CMS Merit-based
+              Incentive Payment System reporting. Persisted into the
+              `skilled_nursing_assessments.mips_measures` JSONB column
+              (migration 00058) via updateMipsMeasures on submit; not
+              part of the main react-hook-form payload.
+            */}
+            <Card>
+              <CardHeader>
+                <CardTitle>MIPS / Quality Measures</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="mips-medication-list-reviewed"
+                    checked={mips.medication_list_reviewed ?? false}
+                    onCheckedChange={(checked) =>
+                      setMips((prev) => ({
+                        ...prev,
+                        medication_list_reviewed: checked === true,
+                      }))
+                    }
+                  />
+                  <Label
+                    htmlFor="mips-medication-list-reviewed"
+                    className="cursor-pointer"
+                  >
+                    Medication List Reviewed / Reconciled
+                  </Label>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Smoking Status</Label>
+                  <RadioGroup
+                    value={mips.smoking_status ?? ""}
+                    onValueChange={(value) =>
+                      setMips((prev) => {
+                        const next: MipsMeasures = {
+                          ...prev,
+                          smoking_status:
+                            value as MipsMeasures["smoking_status"],
+                        };
+                        // Cessation counseling is only meaningful for
+                        // current/former smokers; clear it otherwise so
+                        // we don't carry stale data through the JSONB.
+                        if (value !== "current" && value !== "former") {
+                          next.cessation_counseling_offered = undefined;
+                        }
+                        return next;
+                      })
+                    }
+                    className="flex flex-wrap gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="current"
+                        id="mips-smoking-current"
+                      />
+                      <Label
+                        htmlFor="mips-smoking-current"
+                        className="cursor-pointer"
+                      >
+                        Current
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="former"
+                        id="mips-smoking-former"
+                      />
+                      <Label
+                        htmlFor="mips-smoking-former"
+                        className="cursor-pointer"
+                      >
+                        Former
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="never" id="mips-smoking-never" />
+                      <Label
+                        htmlFor="mips-smoking-never"
+                        className="cursor-pointer"
+                      >
+                        Never
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="unknown"
+                        id="mips-smoking-unknown"
+                      />
+                      <Label
+                        htmlFor="mips-smoking-unknown"
+                        className="cursor-pointer"
+                      >
+                        Unknown
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {(mips.smoking_status === "current" ||
+                  mips.smoking_status === "former") && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="mips-cessation-counseling"
+                      checked={mips.cessation_counseling_offered ?? false}
+                      onCheckedChange={(checked) =>
+                        setMips((prev) => ({
+                          ...prev,
+                          cessation_counseling_offered: checked === true,
+                        }))
+                      }
+                    />
+                    <Label
+                      htmlFor="mips-cessation-counseling"
+                      className="cursor-pointer"
+                    >
+                      Cessation counseling offered
+                    </Label>
+                  </div>
+                )}
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="mips-bmi">BMI</Label>
+                    <Input
+                      id="mips-bmi"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      min={0}
+                      max={200}
+                      placeholder="e.g. 24.5"
+                      value={mips.bmi ?? ""}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setMips((prev) => ({
+                          ...prev,
+                          bmi: raw === "" ? undefined : Number(raw),
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mips-fall-risk-score">
+                      Fall Risk Score
+                    </Label>
+                    <Input
+                      id="mips-fall-risk-score"
+                      type="number"
+                      inputMode="numeric"
+                      step="1"
+                      min={0}
+                      max={125}
+                      placeholder="e.g. 45 (Morse)"
+                      value={mips.fall_risk_score ?? ""}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setMips((prev) => ({
+                          ...prev,
+                          fall_risk_score:
+                            raw === "" ? undefined : Number.parseInt(raw, 10),
+                        }));
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Advance Directive on file</Label>
+                  <RadioGroup
+                    value={mips.advance_directive_on_file ?? ""}
+                    onValueChange={(value) =>
+                      setMips((prev) => ({
+                        ...prev,
+                        advance_directive_on_file:
+                          value as MipsMeasures["advance_directive_on_file"],
+                      }))
+                    }
+                    className="flex flex-wrap gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="mips-ad-yes" />
+                      <Label htmlFor="mips-ad-yes" className="cursor-pointer">
+                        Yes
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="mips-ad-no" />
+                      <Label htmlFor="mips-ad-no" className="cursor-pointer">
+                        No
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="declined"
+                        id="mips-ad-declined"
+                      />
+                      <Label
+                        htmlFor="mips-ad-declined"
+                        className="cursor-pointer"
+                      >
+                        Declined
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
               </CardContent>
             </Card>

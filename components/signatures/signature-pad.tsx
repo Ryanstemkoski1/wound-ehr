@@ -13,8 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eraser, Pen, Type } from "lucide-react";
+import { Eraser, Loader2, Pen, Type } from "lucide-react";
 import { useMobile } from "@/lib/hooks/use-media-query";
+import { ATTESTATION_CERTIFICATION_TEXT } from "@/lib/attestation";
 
 type SignaturePadProps = {
   onSave: (signatureData: string, method: "draw" | "type") => void;
@@ -23,6 +24,7 @@ type SignaturePadProps = {
   title?: string;
   description?: string;
   certificationText?: string;
+  isSubmitting?: boolean;
 };
 
 export function SignaturePad({
@@ -31,12 +33,14 @@ export function SignaturePad({
   signerName = "",
   title = "Sign Below",
   description = "Please sign using your finger, stylus, or mouse",
-  certificationText = "By signing, I certify that the information provided is accurate and complete.",
+  certificationText = ATTESTATION_CERTIFICATION_TEXT,
+  isSubmitting = false,
 }: SignaturePadProps) {
   const signatureRef = useRef<SignatureCanvas>(null);
   const [typedName, setTypedName] = useState(signerName);
   const [activeTab, setActiveTab] = useState<"draw" | "type">("draw");
   const [isEmpty, setIsEmpty] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const isMobile = useMobile();
 
   // Resize canvas when window resizes so the internal bitmap matches
@@ -67,36 +71,45 @@ export function SignaturePad({
       signatureRef.current.clear();
       setIsEmpty(true);
     }
+    setError(null);
   };
 
   const handleSave = () => {
+    setError(null);
     if (activeTab === "draw") {
-      if (signatureRef.current && !signatureRef.current.isEmpty()) {
-        const signatureData = signatureRef.current.toDataURL("image/png");
-        onSave(signatureData, "draw");
+      if (!signatureRef.current || signatureRef.current.isEmpty()) {
+        setError("Please draw your signature before saving.");
+        return;
       }
+      const signatureData = signatureRef.current.toDataURL("image/png");
+      onSave(signatureData, "draw");
     } else {
-      if (typedName.trim().length > 0) {
-        // Generate a signature image from typed name
-        const canvas = document.createElement("canvas");
-        canvas.width = 400;
-        canvas.height = 150;
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-          ctx.fillStyle = "white";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          ctx.font = "48px 'Brush Script MT', cursive";
-          ctx.fillStyle = "black";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(typedName, canvas.width / 2, canvas.height / 2);
-
-          const signatureData = canvas.toDataURL("image/png");
-          onSave(signatureData, "type");
-        }
+      if (typedName.trim().length === 0) {
+        setError("Please type your full name before saving.");
+        return;
       }
+      // Generate a signature image from typed name
+      const canvas = document.createElement("canvas");
+      canvas.width = 400;
+      canvas.height = 150;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        setError("Unable to render typed signature. Please try again.");
+        return;
+      }
+
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = "48px 'Brush Script MT', cursive";
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(typedName, canvas.width / 2, canvas.height / 2);
+
+      const signatureData = canvas.toDataURL("image/png");
+      onSave(signatureData, "type");
     }
   };
 
@@ -208,12 +221,34 @@ export function SignaturePad({
           </div>
         )}
 
+        {error && (
+          <p
+            role="alert"
+            className="text-destructive text-sm"
+            data-testid="signature-pad-error"
+          >
+            {error}
+          </p>
+        )}
+
         <div className="flex justify-end gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={isSaveDisabled}>
-            Save Signature
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isSubmitting || isSaveDisabled}
+          >
+            {isSubmitting && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {isSubmitting ? "Saving..." : "Save Signature"}
           </Button>
         </div>
       </CardContent>

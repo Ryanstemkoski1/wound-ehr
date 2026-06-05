@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   type TreatmentOrderData,
   EMPTY_TREATMENT_ORDER,
+  migrateLegacyTab,
 } from "@/lib/treatment-options";
 
 type PageProps = {
@@ -58,17 +59,19 @@ export default async function EditAssessmentPage({ params }: PageProps) {
   let existingTreatment: TreatmentOrderData | null = null;
   if (treatmentResult.treatment) {
     const t = treatmentResult.treatment;
-    const activeTab =
-      (t.treatment_tab as TreatmentOrderData["activeTab"]) || "topical";
+    // Apply legacy-tab migration: persisted 'topical' -> 'open_wound'
+    const activeTab = migrateLegacyTab(
+      (t.treatment_tab as string) || "open_wound"
+    );
 
     // Helper: detect new-format JSONB (full tab state stored as object)
     const isObj = (d: unknown): d is Record<string, unknown> =>
       d != null && typeof d === "object" && !Array.isArray(d);
 
-    const topical =
+    const openWound =
       isObj(t.primary_dressings) && "cleansingAction" in t.primary_dressings
-        ? { ...EMPTY_TREATMENT_ORDER.topical, ...t.primary_dressings }
-        : EMPTY_TREATMENT_ORDER.topical;
+        ? { ...EMPTY_TREATMENT_ORDER.openWound, ...t.primary_dressings }
+        : EMPTY_TREATMENT_ORDER.openWound;
 
     const compressionNpwt =
       isObj(t.compression) && "selectedType" in t.compression
@@ -88,10 +91,13 @@ export default async function EditAssessmentPage({ params }: PageProps) {
     existingTreatment = {
       activeTab,
       specialInstructions: (t.special_instructions as string) || "",
-      topical: topical as TreatmentOrderData["topical"],
+      openWound: openWound as TreatmentOrderData["openWound"],
+      eschar: EMPTY_TREATMENT_ORDER.eschar,
       compressionNpwt: compressionNpwt as TreatmentOrderData["compressionNpwt"],
       skinMoisture: skinMoisture as TreatmentOrderData["skinMoisture"],
       rashDermatitis: rashDermatitis as TreatmentOrderData["rashDermatitis"],
+      graftTx: EMPTY_TREATMENT_ORDER.graftTx,
+      custom: EMPTY_TREATMENT_ORDER.custom,
     };
   }
 

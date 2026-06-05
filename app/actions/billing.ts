@@ -63,6 +63,14 @@ export async function createBilling(data: BillingInput) {
       };
     }
 
+    const isAdmin = await hasAdminEntitlement();
+    if (!isAdmin) {
+      return {
+        success: false as const,
+        error: "Only admin users can create billing.",
+      };
+    }
+
     // Use RPC function to bypass RLS
     const { data: userDataArray } = await supabase.rpc(
       "get_current_user_credentials"
@@ -144,6 +152,14 @@ export async function updateBilling(
       };
     }
 
+    const isAdmin = await hasAdminEntitlement();
+    if (!isAdmin) {
+      return {
+        success: false as const,
+        error: "Only admin users can update billing.",
+      };
+    }
+
     // Use RPC function to bypass RLS
     const { data: userDataArray } = await supabase.rpc(
       "get_current_user_credentials"
@@ -216,6 +232,25 @@ export async function updateBilling(
 export async function deleteBilling(billingId: string) {
   try {
     const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false as const,
+        error: "User not authenticated",
+      };
+    }
+
+    const isAdmin = await hasAdminEntitlement();
+    if (!isAdmin) {
+      return {
+        success: false as const,
+        error: "Only admin users can delete billing.",
+      };
+    }
 
     const { data: billing, error: fetchError } = await supabase
       .from("billings")

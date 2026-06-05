@@ -11,6 +11,7 @@ import {
   getUserRole,
   getUserCredentials,
   canViewVisitDetails,
+  hasAdminEntitlement,
 } from "@/lib/rbac";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ export default async function PatientDetailPage({
     cliniciansResult,
     userRole,
     userCredentials,
+    canDeletePatient,
   ] = await Promise.all([
     getPatientConsent(id),
     checkRecordingConsent(id),
@@ -84,6 +86,7 @@ export default async function PatientDetailPage({
     getPatientClinicians(id),
     getUserRole(),
     getUserCredentials(),
+    hasAdminEntitlement(),
   ]);
 
   const hasConsent = !consentResult.error && consentResult.data !== null;
@@ -175,6 +178,7 @@ export default async function PatientDetailPage({
           <PatientDeleteButton
             patientId={patient.id}
             patientName={`${patient.firstName} ${patient.lastName}`}
+            canDelete={canDeletePatient}
           />
         </div>
       </div>

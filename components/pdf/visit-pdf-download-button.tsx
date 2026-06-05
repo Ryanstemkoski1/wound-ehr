@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileDown, Loader2 } from "lucide-react";
+import { FileDown, Loader2, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { pdf } from "@react-pdf/renderer";
 import VisitSummaryPDF from "@/components/pdf/visit-summary-pdf";
 import VisitFullNotePDF from "@/components/pdf/visit-full-note-pdf";
-import { getVisitDataForPDF, getVisitDataForFullPDF } from "@/app/actions/pdf";
+import VisitLeaveBehindPDF from "@/components/pdf/visit-leave-behind-pdf";
+import {
+  getVisitDataForPDF,
+  getVisitDataForFullPDF,
+  getVisitDataForLeaveBehindPDF,
+} from "@/app/actions/pdf";
 import { checkCachedVisitPDF, cacheVisitPDF } from "@/app/actions/pdf-cached";
 
 type VisitPDFDownloadButtonProps = {
@@ -16,7 +21,7 @@ type VisitPDFDownloadButtonProps = {
   patientName: string;
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
-  format?: "summary" | "full";
+  format?: "summary" | "full" | "leave-behind";
 };
 
 export default function VisitPDFDownloadButton({
@@ -32,7 +37,7 @@ export default function VisitPDFDownloadButton({
   const handleDownload = async () => {
     setIsGenerating(true);
     try {
-      // For full notes, skip cache — always fresh
+      // For full notes and leave-behind, skip cache — always fresh
       if (format === "summary") {
         // 1. Check if cached PDF exists (80-95% faster)
         const cacheCheck = await checkCachedVisitPDF(visitId);
@@ -51,10 +56,14 @@ export default function VisitPDFDownloadButton({
       }
 
       // Fetch data
-      const result =
-        format === "full"
-          ? await getVisitDataForFullPDF(visitId)
-          : await getVisitDataForPDF(visitId);
+      let result;
+      if (format === "leave-behind") {
+        result = await getVisitDataForLeaveBehindPDF(visitId);
+      } else if (format === "full") {
+        result = await getVisitDataForFullPDF(visitId);
+      } else {
+        result = await getVisitDataForPDF(visitId);
+      }
 
       if (!result.success) {
         toast.error(result.error);
@@ -62,24 +71,37 @@ export default function VisitPDFDownloadButton({
       }
 
       // Generate PDF
-      const element =
-        format === "full" ? (
-          <VisitFullNotePDF
-            data={result.data as Parameters<typeof VisitFullNotePDF>[0]["data"]}
-          />
-        ) : (
-          <VisitSummaryPDF data={result.data} />
-        );
+      let element;
+      if (format === "leave-behind") {
+        const data = result.data as unknown as Parameters<
+          typeof VisitLeaveBehindPDF
+        >[0]["data"];
+        element = <VisitLeaveBehindPDF data={data} />;
+      } else if (format === "full") {
+        const data = result.data as unknown as Parameters<
+          typeof VisitFullNotePDF
+        >[0]["data"];
+        element = <VisitFullNotePDF data={data} />;
+      } else {
+        const data = result.data as unknown as Parameters<
+          typeof VisitSummaryPDF
+        >[0]["data"];
+        element = <VisitSummaryPDF data={data} />;
+      }
       const blob = await pdf(element).toBlob();
 
       const safeName = patientName.replace(/\s+/g, "-");
       const safeDate = new Date(visitDate)
         .toLocaleDateString()
         .replace(/\//g, "-");
-      const filename =
-        format === "full"
-          ? `visit-full-note-${safeName}-${safeDate}.pdf`
-          : `visit-summary-${safeName}-${safeDate}.pdf`;
+      let filename;
+      if (format === "leave-behind") {
+        filename = `visit-leave-behind-${safeName}-${safeDate}.pdf`;
+      } else if (format === "full") {
+        filename = `visit-full-note-${safeName}-${safeDate}.pdf`;
+      } else {
+        filename = `visit-summary-${safeName}-${safeDate}.pdf`;
+      }
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -120,8 +142,16 @@ export default function VisitPDFDownloadButton({
         </>
       ) : (
         <>
-          <FileDown className="mr-2 h-4 w-4" />
-          {format === "full" ? "Full Note PDF" : "Summary PDF"}
+          {format === "leave-behind" ? (
+            <ScrollText className="mr-2 h-4 w-4" />
+          ) : (
+            <FileDown className="mr-2 h-4 w-4" />
+          )}
+          {format === "leave-behind"
+            ? "Download Leave-Behind PDF"
+            : format === "full"
+              ? "Full Note PDF"
+              : "Summary PDF"}
         </>
       )}
     </Button>

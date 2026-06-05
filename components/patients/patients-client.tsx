@@ -42,9 +42,11 @@ type Facility = {
 export default function PatientsClient({
   initialPatients,
   facilities,
+  canAddPatient = true,
 }: {
   initialPatients: Patient[];
   facilities: Facility[];
+  canAddPatient?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
@@ -86,13 +88,15 @@ export default function PatientsClient({
               facilityId={facilityFilter === "all" ? undefined : facilityFilter}
               variant="outline"
             />
-            <Link href="/dashboard/patients/new">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Patient</span>
-                <span className="sm:hidden">Add</span>
-              </Button>
-            </Link>
+            {canAddPatient && (
+              <Link href="/dashboard/patients/new">
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Patient</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -164,7 +168,7 @@ export default function PatientsClient({
                   ? "Get started by adding your first patient"
                   : "Try adjusting your search or filters"}
               </p>
-              {initialPatients.length === 0 && (
+              {initialPatients.length === 0 && canAddPatient && (
                 <Link href="/dashboard/patients/new">
                   <Button className="gap-2">
                     <Plus className="h-4 w-4" />

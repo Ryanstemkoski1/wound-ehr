@@ -585,6 +585,147 @@ export async function getVisitDataForFullPDF(visitId: string) {
 }
 
 /**
+ * Leave-Behind PDF — a patient-facing summary handed to the patient or
+ * facility staff at the end of an encounter. Reuses the full-note data
+ * fetch and reshapes it into the LeaveBehindData contract consumed by
+ * components/pdf/visit-leave-behind-pdf.tsx.
+ *
+ * @param visitId - ID of the visit
+ * @returns Leave-behind data or error
+ */
+export async function getVisitDataForLeaveBehindPDF(visitId: string) {
+  // Reuse the full-note fetch for patient/visit/assessments/treatments.
+  const base = await getVisitDataForFullPDF(visitId);
+  if (!base.success) return base;
+
+  try {
+    const supabase = await createClient();
+
+    // Resolve the provider (current user) for the footer / signature block.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    let provider: { name: string; credentials: string | null } | null = null;
+    if (user) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("name, credentials")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (userData?.name) {
+        provider = {
+          name: userData.name,
+          credentials: userData.credentials ?? null,
+        };
+      }
+    }
+
+    // Rebuild the per-wound treatment lookup so we can surface
+    // treatmentOrderSentence on each assessment row. (Mirrors lines
+    // 308-322 of getVisitDataForPDF; that lookup isn't exposed on the
+    // base return shape, so we re-derive it here.)
+    const { data: treatmentsData } = await supabase
+      .from("treatments")
+      .select("wound_id, generated_order_text, treatment_orders")
+      .eq("visit_id", visitId);
+    const treatmentByWound: Record<string, string> = {};
+    if (treatmentsData) {
+      for (const t of treatmentsData) {
+        if (t.wound_id) {
+          treatmentByWound[t.wound_id] =
+            t.generated_order_text || (t.treatment_orders as string) || "";
+        }
+      }
+    }
+
+    // We need wound_id per assessment to key into treatmentByWound; the
+    // base shape drops it, so fetch a thin lookup.
+    const assessmentIds = base.data.assessments.map((a) => a.id);
+    const woundIdByAssessment: Record<string, string> = {};
+    if (assessmentIds.length > 0) {
+      const { data: assessmentWoundRows } = await supabase
+        .from("assessments")
+        .select("id, wound_id")
+        .in("id", assessmentIds);
+      for (const row of assessmentWoundRows ?? []) {
+        if (row.wound_id) woundIdByAssessment[row.id] = row.wound_id;
+      }
+    }
+
+    // Shape assessments for the leave-behind view: surface
+    // woundLocation (from the joined wound) and the per-wound
+    // treatment order sentence.
+    const assessments = base.data.assessments.map((a) => ({
+      id: a.id,
+      woundLocation: a.wound.location,
+      length: a.length,
+      width: a.width,
+      depth: a.depth,
+      healingStatus: a.healingStatus,
+      treatmentOrderSentence:
+        treatmentByWound[woundIdByAssessment[a.id] ?? ""] ?? "",
+    }));
+
+    // Fetch procedure_documentation for these assessments.
+    // TODO: drop the `as never` boundary cast once Supabase types are
+    // regenerated to include the procedure_documentation table.
+    const { data: procedureRows } =
+      assessmentIds.length > 0
+        ? await supabase
+            .from("procedure_documentation" as never)
+            .select("id, assessment_id, procedure_type, payload")
+            .in("assessment_id", assessmentIds)
+        : { data: [] as Array<Record<string, unknown>> };
+
+    type ProcedureRow = {
+      id: string;
+      assessment_id: string;
+      procedure_type: string;
+      payload: Record<string, unknown> | null;
+    };
+    const woundLocationByAssessment: Record<string, string> = {};
+    for (const a of base.data.assessments) {
+      woundLocationByAssessment[a.id] = a.wound.location;
+    }
+    const procedures = ((procedureRows ?? []) as unknown as ProcedureRow[]).map(
+      (row) => ({
+        id: row.id,
+        assessmentId: row.assessment_id,
+        procedureType: row.procedure_type,
+        payload: row.payload ?? {},
+        woundLocation: woundLocationByAssessment[row.assessment_id] ?? "",
+      })
+    );
+
+    void auditPhiAccess({
+      action: "export",
+      table: "visits",
+      recordId: visitId,
+      recordType: "visit_leave_behind_pdf",
+      reason: "Leave-behind PDF generated",
+    });
+
+    return {
+      success: true as const,
+      data: {
+        visit: base.data.visit,
+        patient: base.data.patient,
+        facility: base.data.patient.facility,
+        provider,
+        assessments,
+        procedures,
+      },
+    };
+  } catch (error) {
+    console.error("getVisitDataForLeaveBehindPDF error:", error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Failed to load data",
+    };
+  }
+}
+
+/**
  * Get complete wound data for PDF generation
  * @param woundId - ID of the wound
  * @returns Wound data or error
