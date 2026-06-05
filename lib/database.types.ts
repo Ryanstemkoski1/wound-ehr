@@ -98,6 +98,7 @@ export type Database = {
           exudate_amount: string | null
           exudate_type: string | null
           granulation_percent: number | null
+          healing_sign_off: boolean
           healing_status: string | null
           id: string
           infection_signs: Json | null
@@ -106,6 +107,7 @@ export type Database = {
           pain_level: number | null
           periwound_condition: string | null
           pressure_stage: string | null
+          procedures_performed: string[]
           slough_percent: number | null
           tunneling: string | null
           undermining: string | null
@@ -125,6 +127,7 @@ export type Database = {
           exudate_amount?: string | null
           exudate_type?: string | null
           granulation_percent?: number | null
+          healing_sign_off?: boolean
           healing_status?: string | null
           id?: string
           infection_signs?: Json | null
@@ -133,6 +136,7 @@ export type Database = {
           pain_level?: number | null
           periwound_condition?: string | null
           pressure_stage?: string | null
+          procedures_performed?: string[]
           slough_percent?: number | null
           tunneling?: string | null
           undermining?: string | null
@@ -152,6 +156,7 @@ export type Database = {
           exudate_amount?: string | null
           exudate_type?: string | null
           granulation_percent?: number | null
+          healing_sign_off?: boolean
           healing_status?: string | null
           id?: string
           infection_signs?: Json | null
@@ -160,6 +165,7 @@ export type Database = {
           pain_level?: number | null
           periwound_condition?: string | null
           pressure_stage?: string | null
+          procedures_performed?: string[]
           slough_percent?: number | null
           tunneling?: string | null
           undermining?: string | null
@@ -1499,6 +1505,54 @@ export type Database = {
           },
         ]
       }
+      patient_icd10_codes: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          description: string | null
+          icd10_code: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          patient_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          description?: string | null
+          icd10_code: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          patient_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          description?: string | null
+          icd10_code?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_icd10_codes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patient_consent_status"
+            referencedColumns: ["patient_id"]
+          },
+          {
+            foreignKeyName: "patient_icd10_codes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_not_seen_reports: {
         Row: {
           clinician_name: string | null
@@ -1721,6 +1775,7 @@ export type Database = {
           medical_history: Json | null
           mrn: string
           phone: string | null
+          pmh_flags: Json
           state: string | null
           updated_at: string | null
           zip: string | null
@@ -1745,6 +1800,7 @@ export type Database = {
           medical_history?: Json | null
           mrn: string
           phone?: string | null
+          pmh_flags?: Json
           state?: string | null
           updated_at?: string | null
           zip?: string | null
@@ -1769,6 +1825,7 @@ export type Database = {
           medical_history?: Json | null
           mrn?: string
           phone?: string | null
+          pmh_flags?: Json
           state?: string | null
           updated_at?: string | null
           zip?: string | null
@@ -1853,6 +1910,44 @@ export type Database = {
             columns: ["wound_id"]
             isOneToOne: false
             referencedRelation: "wounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedure_documentation: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          payload: Json
+          procedure_type: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          procedure_type: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          procedure_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_documentation_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
             referencedColumns: ["id"]
           },
         ]
@@ -2093,6 +2188,7 @@ export type Database = {
           med_changes_since_last_visit: boolean | null
           med_compliant: boolean | null
           medication_notes: string | null
+          mips_measures: Json
           musculoskeletal_wnl: boolean | null
           nebulizer_time: string | null
           nebulizer_type: string | null
@@ -2255,6 +2351,7 @@ export type Database = {
           med_changes_since_last_visit?: boolean | null
           med_compliant?: boolean | null
           medication_notes?: string | null
+          mips_measures?: Json
           musculoskeletal_wnl?: boolean | null
           nebulizer_time?: string | null
           nebulizer_type?: string | null
@@ -2417,6 +2514,7 @@ export type Database = {
           med_changes_since_last_visit?: boolean | null
           med_compliant?: boolean | null
           medication_notes?: string | null
+          mips_measures?: Json
           musculoskeletal_wnl?: boolean | null
           nebulizer_time?: string | null
           nebulizer_type?: string | null
@@ -2901,6 +2999,47 @@ export type Database = {
         }
         Relationships: []
       }
+      treatment_orders: {
+        Row: {
+          assessment_id: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          payload: Json
+          rendered_text: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          rendered_text?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payload?: Json
+          rendered_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_orders_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treatments: {
         Row: {
           advanced_therapies: Json | null
@@ -3197,6 +3336,100 @@ export type Database = {
         }
         Relationships: []
       }
+      visit_studies_orders: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          ordered_at: string
+          ordered_by: string | null
+          test_code: string
+          test_name: string | null
+          visit_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string
+          ordered_by?: string | null
+          test_code: string
+          test_name?: string | null
+          visit_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string
+          ordered_by?: string | null
+          test_code?: string
+          test_name?: string | null
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_studies_orders_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visit_studies_results: {
+        Row: {
+          created_at: string
+          document_path: string | null
+          entered_by: string | null
+          flag: string
+          id: string
+          notes: string | null
+          result_date: string | null
+          result_value: string | null
+          test_code: string
+          test_name: string | null
+          visit_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_path?: string | null
+          entered_by?: string | null
+          flag?: string
+          id?: string
+          notes?: string | null
+          result_date?: string | null
+          result_value?: string | null
+          test_code: string
+          test_name?: string | null
+          visit_id: string
+        }
+        Update: {
+          created_at?: string
+          document_path?: string | null
+          entered_by?: string | null
+          flag?: string
+          id?: string
+          notes?: string | null
+          result_date?: string | null
+          result_value?: string | null
+          test_code?: string
+          test_name?: string | null
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_studies_results_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visit_transcripts: {
         Row: {
           ai_service: string | null
@@ -3319,6 +3552,7 @@ export type Database = {
           time_spent: boolean | null
           updated_at: string | null
           visit_date: string
+          visit_kind: string
           visit_type: string
           void_reason: string | null
           voided_at: string | null
@@ -3362,6 +3596,7 @@ export type Database = {
           time_spent?: boolean | null
           updated_at?: string | null
           visit_date: string
+          visit_kind?: string
           visit_type: string
           void_reason?: string | null
           voided_at?: string | null
@@ -3405,6 +3640,7 @@ export type Database = {
           time_spent?: boolean | null
           updated_at?: string | null
           visit_date?: string
+          visit_kind?: string
           visit_type?: string
           void_reason?: string | null
           voided_at?: string | null
@@ -3770,6 +4006,11 @@ export type Database = {
         Args: { p_tenant_id: string }
         Returns: boolean
       }
+      user_has_admin_entitlement: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      user_is_clinical_only: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
       billing_status: "draft" | "ready" | "submitted" | "paid" | "denied"
