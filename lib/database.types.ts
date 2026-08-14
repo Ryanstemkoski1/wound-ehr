@@ -623,6 +623,123 @@ export type Database = {
           },
         ]
       }
+      field_note_events: {
+        Row: {
+          edited_at: string
+          edited_by: string
+          event_type: string
+          id: string
+          note_id: string
+          payload: Json | null
+          section_key: string | null
+        }
+        Insert: {
+          edited_at?: string
+          edited_by: string
+          event_type?: string
+          id?: string
+          note_id: string
+          payload?: Json | null
+          section_key?: string | null
+        }
+        Update: {
+          edited_at?: string
+          edited_by?: string
+          event_type?: string
+          id?: string
+          note_id?: string
+          payload?: Json | null
+          section_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_note_events_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "field_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_notes: {
+        Row: {
+          added_sections: string[]
+          created_at: string
+          created_by: string
+          id: string
+          note_type: string
+          patient_id: string
+          prepped_at: string | null
+          prepped_by: string | null
+          room: string | null
+          sections: Json
+          sections_meta: Json
+          signature_id: string | null
+          time_in: string | null
+          time_out: string | null
+          updated_at: string
+          visit_id: string
+        }
+        Insert: {
+          added_sections?: string[]
+          created_at?: string
+          created_by: string
+          id?: string
+          note_type: string
+          patient_id: string
+          prepped_at?: string | null
+          prepped_by?: string | null
+          room?: string | null
+          sections?: Json
+          sections_meta?: Json
+          signature_id?: string | null
+          time_in?: string | null
+          time_out?: string | null
+          updated_at?: string
+          visit_id: string
+        }
+        Update: {
+          added_sections?: string[]
+          created_at?: string
+          created_by?: string
+          id?: string
+          note_type?: string
+          patient_id?: string
+          prepped_at?: string | null
+          prepped_by?: string | null
+          room?: string | null
+          sections?: Json
+          sections_meta?: Json
+          signature_id?: string | null
+          time_in?: string | null
+          time_out?: string | null
+          updated_at?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_notes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_notes_signature_id_fkey"
+            columns: ["signature_id"]
+            isOneToOne: false
+            referencedRelation: "signatures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_notes_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: true
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grafting_assessments: {
         Row: {
           activity_restrictions: string | null
@@ -3544,6 +3661,7 @@ export type Database = {
           primary_clinician_id: string | null
           provider_signature_id: string | null
           requires_patient_signature: boolean | null
+          scheduled_by: string | null
           scheduled_end_at: string | null
           scheduled_start_at: string | null
           sent_to_office_at: string | null
@@ -3588,6 +3706,7 @@ export type Database = {
           primary_clinician_id?: string | null
           provider_signature_id?: string | null
           requires_patient_signature?: boolean | null
+          scheduled_by?: string | null
           scheduled_end_at?: string | null
           scheduled_start_at?: string | null
           sent_to_office_at?: string | null
@@ -3632,6 +3751,7 @@ export type Database = {
           primary_clinician_id?: string | null
           provider_signature_id?: string | null
           requires_patient_signature?: boolean | null
+          scheduled_by?: string | null
           scheduled_end_at?: string | null
           scheduled_start_at?: string | null
           sent_to_office_at?: string | null
@@ -3844,6 +3964,15 @@ export type Database = {
           procedure_code: string
           procedure_name: string
         }[]
+      }
+      merge_field_note_section: {
+        Args: {
+          p_note_id: string
+          p_section_key: string
+          p_payload: Json
+          p_meta?: Json
+        }
+        Returns: undefined
       }
       get_current_user_credentials: {
         Args: never

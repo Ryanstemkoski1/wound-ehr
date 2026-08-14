@@ -1,18 +1,36 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+// Field surface — rebuilt login screen.
+// Same auth mechanics as before (the login() server action); new
+// presentation: a single centered card, WoundNote wordmark, calm
+// clinical styling. On success we land on "/" and the role-aware
+// root redirect decides where each user goes.
+
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { login } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, AlertCircle, Activity, Shield, Mic } from "lucide-react";
+
+function Wordmark() {
+  return (
+    <div className="text-center">
+      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        Wound Care Field Visits
+      </p>
+      <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
+        Wound<span className="text-primary">Note</span>
+      </p>
+    </div>
+  );
+}
 
 function LoginForm() {
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const successMessage = searchParams.get("message");
 
   const [error, setError] = useState<string>("");
@@ -27,8 +45,9 @@ function LoginForm() {
 
       if (result?.error) {
         setError(result.error);
-      } else if (result && "redirectTo" in result && result.redirectTo) {
-        router.push(result.redirectTo);
+      } else if (result?.success) {
+        // The role-aware root redirect decides where this user lands.
+        router.push("/");
         return;
       }
     } catch {
@@ -39,136 +58,47 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* ── Left panel — brand + features (desktop only) ── */}
-      <div
-        className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex lg:w-[46%]"
-        style={{
-          background:
-            "linear-gradient(150deg, oklch(0.22 0.055 168) 0%, oklch(0.17 0.052 176) 55%, oklch(0.13 0.04 186) 100%)",
-        }}
-      >
-        {/* Decorative circles */}
-        <div
-          className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full opacity-20"
-          style={{
-            background:
-              "radial-gradient(circle, oklch(0.72 0.14 174) 0%, transparent 70%)",
-          }}
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full opacity-15"
-          style={{
-            background:
-              "radial-gradient(circle, oklch(0.65 0.14 285) 0%, transparent 70%)",
-          }}
-          aria-hidden="true"
-        />
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-12">
+      <div className="w-full max-w-sm space-y-8">
+        <Wordmark />
 
-        {/* Logo */}
-        <div className="relative z-10">
-          <Image
-            src="/logo.svg"
-            alt="WoundNote"
-            width={160}
-            height={48}
-            priority
-          />
-        </div>
-
-        {/* Hero copy */}
-        <div className="relative z-10 space-y-6">
-          <div className="space-y-3">
-            <p className="text-sm font-semibold tracking-widest text-[oklch(0.72_0.14_174)] uppercase">
-              Clinical Documentation Platform
-            </p>
-            <h1 className="text-4xl leading-tight font-bold tracking-tight text-white">
-              Wound care documentation, simplified.
-            </h1>
-            <p className="text-lg leading-relaxed text-white/60">
-              Spend less time charting, more time caring. AI-assisted notes,
-              e-signatures, and real-time clinical workflows — all in one place.
-            </p>
-          </div>
-
-          {/* Feature list */}
-          <ul className="space-y-3.5">
-            {[
-              {
-                icon: Mic,
-                text: "AI voice transcription for hands-free charting",
-              },
-              { icon: Shield, text: "HIPAA-compliant with full audit trails" },
-              { icon: Activity, text: "Real-time wound healing analytics" },
-            ].map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
-                  <Icon className="h-4 w-4 text-[oklch(0.72_0.14_174)]" />
-                </div>
-                <span className="text-sm text-white/75">{text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Footer note */}
-        <div className="relative z-10">
-          <p className="text-xs text-white/30">
-            © {new Date().getFullYear()} The Wound Well Co. — Invite-only
-            platform.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Right panel — form ── */}
-      <div className="bg-background flex flex-1 flex-col items-center justify-center px-6 py-12">
-        {/* Mobile logo */}
-        <div className="mb-10 lg:hidden">
-          <Image
-            src="/logo.svg"
-            alt="WoundNote"
-            width={160}
-            height={48}
-            priority
-          />
-        </div>
-
-        <div className="w-full max-w-[22rem] space-y-8">
-          {/* Heading */}
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8">
           <div className="space-y-1.5">
-            <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
-            <p className="text-muted-foreground text-sm">
-              Sign in to your WoundNote account
+            <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
+            <p className="text-sm text-muted-foreground">
+              Use your work email and password.
             </p>
           </div>
 
-          {/* Alerts */}
           {successMessage === "password_updated" && (
             <div
               role="status"
-              className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300"
+              className="mt-5 flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
             >
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+              <CheckCircle2
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               Password updated — you can now sign in.
             </div>
           )}
+
           {error && (
             <div
               role="alert"
-              className="border-destructive/30 bg-destructive/8 text-destructive dark:bg-destructive/15 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
+              className="border-destructive/30 bg-destructive/10 text-destructive mt-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
             >
-              <AlertCircle className="h-4 w-4 shrink-0" />
+              <AlertCircle
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               {error}
             </div>
           )}
 
-          {/* Form */}
-          <form action={handleSubmit} className="space-y-5">
+          <form action={handleSubmit} className="mt-6 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email
-              </Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -182,9 +112,7 @@ function LoginForm() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </Label>
+                <Label htmlFor="password">Password</Label>
                 <Link
                   href="/auth/forgot-password"
                   className="text-primary hover:text-primary/80 text-xs font-medium transition-colors"
@@ -204,25 +132,17 @@ function LoginForm() {
 
             <Button
               type="submit"
-              className="h-11 w-full text-base font-semibold"
+              className="h-11 w-full font-semibold"
               disabled={loading}
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Signing in…
-                </span>
-              ) : (
-                "Sign in"
-              )}
+              {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-
-          {/* Footer */}
-          <p className="text-muted-foreground/70 text-center text-xs">
-            Access is invite-only. Contact your administrator for an account.
-          </p>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground">
+          Access is invite-only. Contact your administrator for an account.
+        </p>
       </div>
     </div>
   );
@@ -230,18 +150,10 @@ function LoginForm() {
 
 function LoginFallback() {
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-[22rem] space-y-4 px-6">
-        <div className="flex justify-center">
-          <Image
-            src="/logo.svg"
-            alt="WoundNote"
-            width={160}
-            height={48}
-            priority
-          />
-        </div>
-        <p className="text-muted-foreground text-center text-sm">Loading…</p>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-12">
+      <div className="w-full max-w-sm space-y-8">
+        <Wordmark />
+        <p className="text-center text-sm text-muted-foreground">Loading…</p>
       </div>
     </div>
   );

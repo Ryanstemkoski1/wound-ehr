@@ -27,7 +27,10 @@ export type TenantFeatureFlag =
   // Phase 3 — opt-in WoundNote-style clinical UX (collapsible cards,
   // wound rail, attestation overlay, E/M sub-sections). Off by default
   // so existing tenants keep the legacy assessment UI until they opt in.
-  | "clinical_ux_v2";
+  | "clinical_ux_v2"
+  // Field Ops rebuild (Aug 2026) — the nurse field-visit surface
+  // (app/(field)): schedule, field notes, QA inbox, paper-mirror PDF.
+  | "field_ops";
 
 type Row = { enabled: boolean; payload: unknown };
 

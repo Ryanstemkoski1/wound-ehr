@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { isFieldVisit } from "@/lib/field-note/server-helpers";
 
 // Calendar event type for React Big Calendar
 export type CalendarEvent = {
@@ -295,6 +296,14 @@ export async function rescheduleVisit(
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(validated.visitId)) {
+      return {
+        success: false,
+        error: "This visit is managed in the Field Ops app",
+      };
+    }
+
     // Check current status — cannot reschedule finalized visits
     const { data: currentVisit } = await supabase
       .from("visits")
@@ -397,6 +406,14 @@ export async function updateVisitStatus(visitId: string, status: string) {
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return {
+        success: false,
+        error: "This visit is managed in the Field Ops app",
+      };
+    }
+
     // Validate status transition
     const { data: currentVisit } = await supabase
       .from("visits")
@@ -461,6 +478,14 @@ export async function deleteVisit(visitId: string) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return {
+        success: false,
+        error: "This visit is managed in the Field Ops app",
+      };
+    }
 
     // Check current status — cannot delete finalized visits
     const { data: currentVisit } = await supabase

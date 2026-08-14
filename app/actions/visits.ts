@@ -10,6 +10,7 @@ import { invalidateVisitPDFCache } from "@/app/actions/pdf-cached";
 import { auditPhiAccess } from "@/lib/audit-log";
 import { rateLimit, clientKey } from "@/lib/rate-limit";
 import { headers } from "next/headers";
+import { isFieldVisit } from "@/lib/field-note/server-helpers";
 
 // Validation schema
 const visitSchema = z.object({
@@ -558,6 +559,11 @@ export async function updateVisit(visitId: string, formData: FormData) {
     return { error: "Unauthorized" };
   }
 
+  // Field Ops guard: legacy mutators must not touch field visits.
+  if (await isFieldVisit(visitId)) {
+    return { error: "This visit is managed in the Field Ops app" };
+  }
+
   // Get user permissions
   const userRole = await getUserRole();
   const userCredentials = await getUserCredentials();
@@ -668,6 +674,11 @@ export async function deleteVisit(visitId: string) {
     return { error: "Unauthorized" };
   }
 
+  // Field Ops guard: legacy mutators must not touch field visits.
+  if (await isFieldVisit(visitId)) {
+    return { error: "This visit is managed in the Field Ops app" };
+  }
+
   try {
     // Check if user has access to this visit
     const { data: visit, error: visitError } = await supabase
@@ -722,6 +733,11 @@ export async function markVisitComplete(visitId: string) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Field Ops guard: legacy mutators must not touch field visits.
+  if (await isFieldVisit(visitId)) {
+    return { error: "This visit is managed in the Field Ops app" };
   }
 
   try {
@@ -785,6 +801,11 @@ export async function setVisitNoShow(
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Field Ops guard: legacy mutators must not touch field visits.
+  if (await isFieldVisit(visitId)) {
+    return { error: "This visit is managed in the Field Ops app" };
   }
 
   const trimmed = reason?.trim() ?? "";
@@ -871,6 +892,11 @@ export async function updateVisitEmDocumentation(
     return { error: parsed.error.issues[0].message };
   }
 
+  // Field Ops visits are documented via field_notes, never via em_documentation.
+  if (await isFieldVisit(visitId)) {
+    return { error: "This visit is managed in the Field Ops app" };
+  }
+
   // Fetch status + patient_id for lock check + revalidation
   const { data: visit, error: fetchErr } = await supabase
     .from("visits")
@@ -928,6 +954,15 @@ export async function autosaveVisitDraft(
   try {
     // If visitId exists, update the draft
     if (visitId) {
+      // Field Ops guard: legacy mutators must not touch field visits.
+      // (The create branch below is unrelated — new drafts are never field visits.)
+      if (await isFieldVisit(visitId)) {
+        return {
+          success: false,
+          error: "This visit is managed in the Field Ops app",
+        };
+      }
+
       const { data: existingVisit } = await supabase
         .from("visits")
         .select("status")
@@ -1242,6 +1277,14 @@ export async function copyForwardToVisit(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Unauthorized" };
+
+  // Field Ops guard: legacy mutators must not touch field visits.
+  if (await isFieldVisit(targetVisitId)) {
+    return {
+      success: false,
+      error: "This visit is managed in the Field Ops app",
+    };
+  }
 
   // Target visit must be a draft (editable)
   const { data: targetVisit, error: tvErr } = await supabase

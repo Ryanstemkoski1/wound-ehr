@@ -53,14 +53,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect to dashboard if user is authenticated and tries to access login/signup
+  // Redirect to the role-aware root if user is authenticated and tries to
+  // access login/signup (app/page.tsx decides where each role lands)
   if (
     user &&
     (request.nextUrl.pathname.startsWith("/login") ||
       request.nextUrl.pathname.startsWith("/signup"))
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 

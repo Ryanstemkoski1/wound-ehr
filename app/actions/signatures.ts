@@ -9,6 +9,7 @@ import { requiresPatientSignature as requiresPatientSig } from "@/lib/credential
 import type { Credentials } from "@/lib/credentials";
 import { auditPhiAccess } from "@/lib/audit-log";
 import { assertUuid, tryUuid, ValidationError } from "@/lib/validations/common";
+import { isFieldVisit } from "@/lib/field-note/server-helpers";
 
 // =====================================================
 // TYPES
@@ -364,6 +365,11 @@ export async function updateVisitStatus(visitId: string, status: VisitStatus) {
     } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthorized" };
 
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return { error: "This visit is managed in the Field Ops app" };
+    }
+
     if (!MANUAL_VISIT_STATUSES.includes(status)) {
       return {
         error: `Status "${status}" cannot be set here — use the sign/submit action.`,
@@ -408,6 +414,11 @@ export async function signVisit(
   }
 
   try {
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return { error: "This visit is managed in the Field Ops app" };
+    }
+
     // Get visit details
     const { data: visit, error: visitError } = await supabase
       .from("visits")
@@ -520,6 +531,11 @@ export async function addPatientSignature(
   const supabase = await createClient();
 
   try {
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return { error: "This visit is managed in the Field Ops app" };
+    }
+
     // Get visit details
     const { data: visit, error: visitError } = await supabase
       .from("visits")
@@ -583,6 +599,11 @@ export async function submitVisit(visitId: string) {
   const supabase = await createClient();
 
   try {
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return { error: "This visit is managed in the Field Ops app" };
+    }
+
     // Get visit details
     const { data: visit, error: visitError } = await supabase
       .from("visits")

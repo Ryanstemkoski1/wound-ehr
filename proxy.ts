@@ -22,6 +22,14 @@ const SHARED_ADMIN_ROUTES = [
 // See docs/PROJECT_PLAN.md §7.1 (R-007, R-008).
 const ADMIN_SURFACE_ROUTES = ["/dashboard/billing", "/dashboard/reports"];
 
+// Field-surface routes (app/(field)). Office roles (tenant_admin /
+// facility_admin) get the Inbox / Schedule / Admin screens; clinical
+// users are sent to their own visit list instead.
+const FIELD_ADMIN_ROUTES = ["/inbox", "/schedule", "/admin"];
+// Field routes any authenticated user may reach (RLS + the field server
+// actions scope what each user can actually see).
+const FIELD_AUTH_ROUTES = ["/visits", "/notes", "/patients"];
+
 export async function proxy(request: NextRequest) {
   // Update Supabase session
   const response = await updateSession(request);
@@ -33,8 +41,15 @@ export async function proxy(request: NextRequest) {
   const isAdminSurfaceRoute = ADMIN_SURFACE_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
+  const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isFieldAdminRoute = FIELD_ADMIN_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+  const isFieldAuthRoute = FIELD_AUTH_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
 
-  if (isAdminRoute || isAdminSurfaceRoute) {
+  if (isDashboardRoute || isFieldAdminRoute || isFieldAuthRoute) {
     const supabase = await createClient();
 
     const {
@@ -46,6 +61,12 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
+    // Field auth-only routes (/visits, /notes, /patients): authentication
+    // is sufficient — no role lookup needed.
+    if (isFieldAuthRoute) {
+      return response;
+    }
+
     // Get user role using RPC to avoid RLS recursion
     const { data: userRoleData, error: roleError } = await supabase.rpc(
       "get_user_role_info",
@@ -53,14 +74,34 @@ export async function proxy(request: NextRequest) {
     );
 
     if (roleError || !userRoleData || userRoleData.length === 0) {
-      // No role assigned, redirect to dashboard with error
-      return NextResponse.redirect(
-        new URL("/dashboard?error=no_role", request.url)
-      );
+      // No role assigned — send to the role-aware root redirect (never
+      // back into /dashboard, which would loop on the gate below)
+      return NextResponse.redirect(new URL("/?error=no_role", request.url));
     }
 
     const userRole = userRoleData[0];
     const roleName: string = userRole.role;
+
+    // Field admin routes (/inbox, /schedule, /admin): office roles only.
+    if (
+      isFieldAdminRoute &&
+      roleName !== "tenant_admin" &&
+      roleName !== "facility_admin"
+    ) {
+      return NextResponse.redirect(new URL("/visits", request.url));
+    }
+
+    // Legacy /dashboard is tenant-admin-only during the field-ops
+    // transition — except /dashboard/admin|billing|reports, which keep
+    // their existing (more specific) rules below.
+    if (
+      isDashboardRoute &&
+      !isAdminRoute &&
+      !isAdminSurfaceRoute &&
+      roleName !== "tenant_admin"
+    ) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
 
     // Look up the user's credential to compute admin entitlement.
     // (Credentials live on `users`, not `user_roles`.)

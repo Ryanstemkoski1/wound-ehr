@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { auditPhiAccess } from "@/lib/audit-log";
+import { isFieldVisit } from "@/lib/field-note/server-helpers";
 
 // =====================================================
 // TYPES
@@ -47,6 +48,14 @@ export async function sendNoteToOffice(visitId: string) {
   if (!user) return { success: false, error: "Unauthorized" };
 
   try {
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return {
+        success: false,
+        error: "This visit is managed in the Field Ops app",
+      };
+    }
+
     // Verify visit is in a sendable status
     const { data: currentVisit } = await supabase
       .from("visits")
@@ -107,6 +116,7 @@ export async function sendNoteToOffice(visitId: string) {
 // REQUEST CORRECTION
 // =====================================================
 
+// Intentionally NOT field-guarded: requesting a correction is semantically compatible with Field Ops visits.
 export async function requestCorrection(visitId: string, notes: string) {
   const supabase = await createClient();
 
@@ -193,6 +203,14 @@ export async function markAsCorrected(visitId: string) {
   if (!user) return { success: false, error: "Unauthorized" };
 
   try {
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return {
+        success: false,
+        error: "This visit is managed in the Field Ops app",
+      };
+    }
+
     // Verify visit is in needs_correction status
     const { data: currentVisit } = await supabase
       .from("visits")
@@ -237,6 +255,7 @@ export async function markAsCorrected(visitId: string) {
 // APPROVE NOTE
 // =====================================================
 
+// Intentionally NOT field-guarded: approving is semantically compatible with Field Ops visits.
 export async function approveNote(visitId: string) {
   const supabase = await createClient();
 
@@ -301,6 +320,14 @@ export async function voidNote(visitId: string, reason: string) {
   const supabase = await createClient();
 
   try {
+    // Field Ops guard: legacy mutators must not touch field visits.
+    if (await isFieldVisit(visitId)) {
+      return {
+        success: false,
+        error: "This visit is managed in the Field Ops app",
+      };
+    }
+
     // Get current user
     const {
       data: { user },
