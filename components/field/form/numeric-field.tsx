@@ -6,7 +6,7 @@
 // value from the payload so the server schema can't reject the save),
 // and optional auto-advance for rapid L×W×D entry.
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -41,12 +41,16 @@ export function NumericField({
   className,
 }: NumericFieldProps) {
   const [text, setText] = useState(value == null ? "" : String(value));
-  const focusedRef = useRef(false);
+  const [focused, setFocused] = useState(false);
 
-  // Sync external value in when the field isn't being typed in.
-  useEffect(() => {
-    if (!focusedRef.current) setText(value == null ? "" : String(value));
-  }, [value]);
+  // Sync external value in when the field isn't being typed in. Adjusting
+  // state while rendering (instead of in an effect) avoids an extra render
+  // pass with stale text.
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (!focused) setText(value == null ? "" : String(value));
+  }
 
   const parsed = text === "" || text === "-" || text === "." ? null : Number(text);
   const outOfRange =
@@ -94,10 +98,10 @@ export function NumericField({
           disabled={disabled}
           aria-invalid={outOfRange || undefined}
           onFocus={() => {
-            focusedRef.current = true;
+            setFocused(true);
           }}
           onBlur={() => {
-            focusedRef.current = false;
+            setFocused(false);
             if (!outOfRange) setText(value == null ? "" : String(value));
           }}
           onChange={(e) => handleChange(e.target.value)}

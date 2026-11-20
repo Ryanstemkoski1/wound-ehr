@@ -196,10 +196,19 @@ export function NoteEditor({ note }: { note: FieldNoteDTO }) {
     if (!hash.startsWith("#section-")) return;
     const key = hash.slice("#section-".length);
     if (!SECTION_MAP[key]) return;
-    setCollapsed((prev) => ({ ...prev, [key]: false }));
-    window.setTimeout(() => {
-      document.getElementById(`section-${key}`)?.scrollIntoView({ block: "start" });
-    }, 60);
+    // Expand on the next frame rather than synchronously inside the effect,
+    // then scroll once the section has rendered open.
+    let scrollTimer: number | undefined;
+    const frame = window.requestAnimationFrame(() => {
+      setCollapsed((prev) => ({ ...prev, [key]: false }));
+      scrollTimer = window.setTimeout(() => {
+        document.getElementById(`section-${key}`)?.scrollIntoView({ block: "start" });
+      }, 60);
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(scrollTimer);
+    };
   }, []);
 
   // Track which section is in view for the rail highlight.

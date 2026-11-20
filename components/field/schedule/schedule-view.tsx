@@ -4,7 +4,7 @@
 // columns = Mon–Sun), a prep-queue panel, a week pager driven by
 // ?week=, a mobile day view with a day-pager, and the new-visit sheet.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { addDays, format, isSameDay, isToday, parseISO } from "date-fns";
@@ -16,6 +16,10 @@ import { UNASSIGNED_ROW_ID, cardStart, fmtTime } from "./helpers";
 import { NewVisitSheet, type NewVisitDefaults } from "./new-visit-sheet";
 import type { FacilityOption, NurseOption } from "./types";
 import { VisitBlock } from "./visit-popover";
+
+// Nothing to subscribe to: used with useSyncExternalStore purely to tell the
+// hydration render (server snapshot) apart from later client renders.
+const subscribeNoop = () => () => {};
 
 interface ScheduleRow {
   id: string;
@@ -77,12 +81,18 @@ export function ScheduleView({
       return rowId === UNASSIGNED_ROW_ID ? !c.nurseId : c.nurseId === rowId;
     });
 
-  // Mobile day pager.
-  const [dayIdx, setDayIdx] = useState(0);
-  useEffect(() => {
-    const idx = days.findIndex((d) => isToday(d));
-    setDayIdx(idx >= 0 ? idx : 0);
-  }, [days]);
+  // Mobile day pager. Defaults to today's column, resolved only after
+  // hydration so the server and client render the same first frame; resets
+  // to that default whenever the week changes.
+  const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const todayIdx = hydrated ? days.findIndex((d) => isToday(d)) : -1;
+  const [pagedIdx, setPagedIdx] = useState<number | null>(null);
+  const [pagerWeek, setPagerWeek] = useState(weekStart);
+  if (pagerWeek !== weekStart) {
+    setPagerWeek(weekStart);
+    setPagedIdx(null);
+  }
+  const dayIdx = pagedIdx ?? (todayIdx >= 0 ? todayIdx : 0);
   const selectedDay = days[Math.min(Math.max(dayIdx, 0), 6)];
 
   // New-visit sheet.
@@ -314,7 +324,7 @@ export function ScheduleView({
               size="icon-lg"
               aria-label="Previous day"
               disabled={dayIdx === 0}
-              onClick={() => setDayIdx((i) => Math.max(0, i - 1))}
+              onClick={() => setPagedIdx(Math.max(0, dayIdx - 1))}
             >
               <ChevronLeft />
             </Button>
@@ -334,7 +344,7 @@ export function ScheduleView({
               size="icon-lg"
               aria-label="Next day"
               disabled={dayIdx === 6}
-              onClick={() => setDayIdx((i) => Math.min(6, i + 1))}
+              onClick={() => setPagedIdx(Math.min(6, dayIdx + 1))}
             >
               <ChevronRight />
             </Button>
