@@ -146,12 +146,32 @@ npm run lint             # Run ESLint
 npm run lint:fix         # Auto-fix ESLint issues
 npm run format           # Format with Prettier
 npm run format:check     # Check formatting
+npm run typecheck        # Type-check with tsc
+
+# Testing
+npm test                 # Run the unit test suite once (Vitest)
+npm run test:watch       # Re-run tests on file changes
 
 # Database
 npm run db:types         # Generate TypeScript types from Supabase
 npm run seed             # Seed test data
 npm run seed:reset       # Reset and re-seed database
 ```
+
+### Tests
+
+Unit tests live in `tests/`, mirroring the source tree (`tests/lib/...` for
+`lib/`, `tests/actions/...` for `app/actions/`). They run offline:
+
+- `tests/setup.ts` replaces the Supabase clients (`@/lib/supabase/server` and
+  `@/lib/supabase/service`) and the Next.js request APIs with test doubles.
+- `tests/helpers/supabase.ts` is an in-memory fake Supabase client. Register
+  responses per table with `db.on("visits", "select", { data })`, then assert
+  on the recorded queries (`db.queries("visits", "update")`, `eqValue(q, "id")`).
+- `tests/helpers/fixtures.ts` holds factories for synthetic users and roles.
+
+CI (`.github/workflows/ci.yml`) lints and type-checks the project and runs
+the test suite on every pull request and on pushes to `master`.
 
 ---
 
